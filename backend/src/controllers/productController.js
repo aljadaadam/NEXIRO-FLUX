@@ -733,31 +733,15 @@ async function getPublicProducts(req, res) {
     const { getPool } = require('../config/db');
     const pool = getPool();
 
-    // أولاً: التحقق من وجود الأعمدة image, status, category
-    const [columns] = await pool.query(
-      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
-    );
-    const columnNames = columns.map(c => c.COLUMN_NAME);
-    const hasImage = columnNames.includes('image');
-    const hasStatus = columnNames.includes('status');
-    const hasCategory = columnNames.includes('category');
+    // محاولة إضافة الأعمدة المفقودة (تتجاهل الخطأ إذا موجودة مسبقاً)
+    const addColumnSafe = async (col, def) => {
+      try { await pool.query(`ALTER TABLE products ADD COLUMN ${col} ${def}`); console.log(`✅ Added column: ${col}`); } catch(e) { /* already exists */ }
+    };
+    await addColumnSafe('image', 'VARCHAR(500) DEFAULT NULL');
+    await addColumnSafe('status', "VARCHAR(20) DEFAULT 'active'");
+    await addColumnSafe('category', "VARCHAR(100) DEFAULT 'digital-services'");
 
-    // إضافة الأعمدة المفقودة تلقائياً
-    if (!hasImage) {
-      await pool.query('ALTER TABLE products ADD COLUMN image VARCHAR(500) DEFAULT NULL');
-      console.log('✅ Added missing column: image');
-    }
-    if (!hasStatus) {
-      await pool.query("ALTER TABLE products ADD COLUMN status VARCHAR(20) DEFAULT 'active'");
-      console.log('✅ Added missing column: status');
-    }
-    if (!hasCategory) {
-      await pool.query("ALTER TABLE products ADD COLUMN category VARCHAR(100) DEFAULT 'digital-services'");
-      console.log('✅ Added missing column: category');
-    }
-
-    // جلب المنتجات - عرض الكل أو فقط active
+    // جلب المنتجات - عرض الكل باستثناء المعطلة
     const [products] = await pool.query(
       `SELECT id, name, description, price, image, status, category, service_type, group_name, created_at
        FROM products
