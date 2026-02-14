@@ -67,7 +67,11 @@ function AppContent() {
   if (isAdminPage) {
     return (
       <Routes>
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<AdminOverview />} />
           <Route path="templates" element={<AdminTemplates />} />
           <Route path="users" element={<AdminUsers />} />
