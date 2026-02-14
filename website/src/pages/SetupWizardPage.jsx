@@ -70,6 +70,21 @@ export default function SetupWizardPage() {
   // Dynamic gateways from server
   const [enabledGateways, setEnabledGateways] = useState([]);
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
+  const [paypalLoading, setPaypalLoading] = useState(false);
+
+  // Detect return from PayPal redirect
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment_status');
+    const paymentId = searchParams.get('payment_id');
+    if (paymentStatus === 'success' && paymentId) {
+      setPaymentConfirmed(true);
+      setForm(prev => ({ ...prev, payment_reference: `PAYPAL-${paymentId}` }));
+    } else if (paymentStatus === 'cancelled') {
+      setError(isRTL ? 'تم إلغاء عملية الدفع عبر PayPal' : 'PayPal payment was cancelled');
+    } else if (paymentStatus === 'failed') {
+      setError(isRTL ? 'فشلت عملية الدفع عبر PayPal' : 'PayPal payment failed');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setGatewaysLoading(true);
@@ -476,36 +491,123 @@ export default function SetupWizardPage() {
                   </h4>
 
                   {selectedGw.type === 'paypal' && (
-                    <div className="space-y-2">
-                      <p className="text-dark-400 text-sm">
-                        {isRTL ? 'أرسل المبلغ إلى حساب PayPal التالي:' : 'Send the amount to the following PayPal account:'}
-                      </p>
-                      {cfg.email && (
-                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                          <code className="text-blue-400 text-sm flex-1 font-mono">{cfg.email}</code>
-                          <button onClick={() => handleCopy(cfg.email)} className="text-dark-400 hover:text-white transition-colors">
-                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                          </button>
+                    <div className="space-y-3">
+                      {paymentConfirmed ? (
+                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                          <p className="text-emerald-400 text-sm font-medium">
+                            {isRTL ? 'تم الدفع بنجاح عبر PayPal ✓' : 'PayPal payment completed successfully ✓'}
+                          </p>
                         </div>
+                      ) : (
+                        <>
+                          <p className="text-dark-400 text-sm">
+                            {isRTL
+                              ? 'سيتم توجيهك إلى موقع PayPal لإكمال عملية الدفع بأمان.'
+                              : 'You will be redirected to PayPal to complete your payment securely.'}
+                          </p>
+                          <button
+                            onClick={async () => {
+                              setPaypalLoading(true);
+                              setError('');
+                              try {
+                                const currentUrl = window.location.origin + window.location.pathname;
+                                const returnUrl = `${currentUrl}?template=${templateId}&plan=${plan}`;
+                                const data = await api.initCheckout({
+                                  gateway_id: parseInt(form.payment_method),
+                                  amount: templatePrice,
+                                  currency: 'USD',
+                                  description: `${templateName} - ${plan} plan`,
+                                  return_url: returnUrl,
+                                  cancel_url: returnUrl,
+                                });
+                                if (data.redirectUrl) {
+                                  window.location.href = data.redirectUrl;
+                                } else {
+                                  setError(isRTL ? 'لم يتم الحصول على رابط PayPal' : 'Failed to get PayPal redirect URL');
+                                }
+                              } catch (err) {
+                                setError(err.error || (isRTL ? 'فشل بدء الدفع عبر PayPal' : 'Failed to initiate PayPal payment'));
+                              } finally {
+                                setPaypalLoading(false);
+                              }
+                            }}
+                            disabled={paypalLoading}
+                            className="w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 bg-[#0070ba] hover:bg-[#005ea6] text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {paypalLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {isRTL ? 'جارٍ التوجيه...' : 'Redirecting...'}
+                              </>
+                            ) : (
+                              <>
+                                <Wallet className="w-4 h-4" />
+                                {isRTL ? `ادفع $${templatePrice} عبر PayPal` : `Pay $${templatePrice} with PayPal`}
+                              </>
+                            )}
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
 
                   {selectedGw.type === 'binance' && (
-                    <div className="space-y-2">
-                      <p className="text-dark-400 text-sm">
-                        {isRTL ? 'أرسل المبلغ عبر Binance Pay:' : 'Send the amount via Binance Pay:'}
-                      </p>
-                      {cfg.binance_id && (
-                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                          <code className="text-yellow-400 text-sm flex-1 font-mono">{cfg.binance_id}</code>
-                          <button onClick={() => handleCopy(cfg.binance_id)} className="text-dark-400 hover:text-white transition-colors">
-                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                          </button>
+                    <div className="space-y-3">
+                      {paymentConfirmed ? (
+                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                          <p className="text-emerald-400 text-sm font-medium">
+                            {isRTL ? 'تم الدفع بنجاح عبر Binance Pay ✓' : 'Binance Pay payment completed successfully ✓'}
+                          </p>
                         </div>
-                      )}
-                      {cfg.binance_email && (
-                        <p className="text-dark-500 text-xs">{isRTL ? 'الإيميل:' : 'Email:'} {cfg.binance_email}</p>
+                      ) : (
+                        <>
+                          <p className="text-dark-400 text-sm">
+                            {isRTL
+                              ? 'سيتم توجيهك إلى Binance Pay لإكمال عملية الدفع.'
+                              : 'You will be redirected to Binance Pay to complete your payment.'}
+                          </p>
+                          <button
+                            onClick={async () => {
+                              setPaypalLoading(true);
+                              setError('');
+                              try {
+                                const data = await api.initCheckout({
+                                  gateway_id: parseInt(form.payment_method),
+                                  amount: templatePrice,
+                                  currency: 'USDT',
+                                  description: `${templateName} - ${plan} plan`,
+                                });
+                                if (data.checkoutUrl) {
+                                  window.open(data.checkoutUrl, '_blank');
+                                  // Show confirm button after opening Binance
+                                  setError('');
+                                } else {
+                                  setError(isRTL ? 'لم يتم الحصول على رابط Binance Pay' : 'Failed to get Binance Pay URL');
+                                }
+                              } catch (err) {
+                                setError(err.error || (isRTL ? 'فشل بدء الدفع عبر Binance' : 'Failed to initiate Binance payment'));
+                              } finally {
+                                setPaypalLoading(false);
+                              }
+                            }}
+                            disabled={paypalLoading}
+                            className="w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 bg-[#F0B90B] hover:bg-[#d4a30a] text-black disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {paypalLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {isRTL ? 'جارٍ التحميل...' : 'Loading...'}
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="w-4 h-4" />
+                                {isRTL ? `ادفع $${templatePrice} عبر Binance Pay` : `Pay $${templatePrice} with Binance Pay`}
+                              </>
+                            )}
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
@@ -568,7 +670,9 @@ export default function SetupWizardPage() {
                     </div>
                   )}
 
-                  {/* Payment Reference */}
+                  {/* Payment Reference — only for manual methods (bank/usdt) */}
+                  {(selectedGw.type === 'bank_transfer' || selectedGw.type === 'usdt') && (
+                  <>
                   <div className="pt-2">
                     <label className="block text-sm text-dark-300 mb-2">
                       {isRTL ? 'رقم العملية / المرجع (اختياري)' : 'Transaction ID / Reference (optional)'}
@@ -603,6 +707,8 @@ export default function SetupWizardPage() {
                       </>
                     )}
                   </button>
+                  </>
+                  )}
                 </div>
                 );
               })()}

@@ -63,8 +63,11 @@ async function initCheckout(req, res) {
 
     const referenceId = `NF-${payment.id}-${Date.now()}`;
     const baseUrl = req.headers.origin || `${req.protocol}://${req.get('host')}`;
-    const returnUrl = `${baseUrl}/api/checkout/callback/${payment.id}`;
-    const cancelUrl = `${baseUrl}/api/checkout/cancel/${payment.id}`;
+    // Support custom frontend return URLs (e.g. Setup Wizard wants to come back to /setup)
+    const frontendReturnUrl = req.body.return_url || '';
+    const frontendCancelUrl = req.body.cancel_url || '';
+    const returnUrl = `${baseUrl}/api/checkout/callback/${payment.id}${frontendReturnUrl ? `?frontend_return=${encodeURIComponent(frontendReturnUrl)}` : ''}`;
+    const cancelUrl = `${baseUrl}/api/checkout/cancel/${payment.id}${frontendCancelUrl ? `?frontend_return=${encodeURIComponent(frontendCancelUrl)}` : ''}`;
 
     let result;
 
@@ -199,15 +202,30 @@ async function paypalCallback(req, res) {
       });
 
       // ✅ إعادة توجيه لصفحة نجاح
+      const frontendReturn = req.query.frontend_return;
+      if (frontendReturn) {
+        const sep = frontendReturn.includes('?') ? '&' : '?';
+        return res.redirect(`${frontendReturn}${sep}payment_id=${payment.id}&payment_status=success`);
+      }
       const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
       return res.redirect(`${frontendUrl}/checkout/success?payment_id=${payment.id}`);
     } else {
       await Payment.updateStatus(payment.id, SITE_KEY, 'failed');
+      const frontendReturn = req.query.frontend_return;
+      if (frontendReturn) {
+        const sep = frontendReturn.includes('?') ? '&' : '?';
+        return res.redirect(`${frontendReturn}${sep}payment_id=${payment.id}&payment_status=failed`);
+      }
       const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
       return res.redirect(`${frontendUrl}/checkout/failed?payment_id=${payment.id}`);
     }
   } catch (error) {
     console.error('❌ PayPal callback error:', error);
+    const frontendReturn = req.query.frontend_return;
+    if (frontendReturn) {
+      const sep = frontendReturn.includes('?') ? '&' : '?';
+      return res.redirect(`${frontendReturn}${sep}payment_status=failed&error=${encodeURIComponent(error.message)}`);
+    }
     const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
     return res.redirect(`${frontendUrl}/checkout/failed?error=${encodeURIComponent(error.message)}`);
   }
@@ -218,6 +236,11 @@ async function cancelCallback(req, res) {
   try {
     const { id } = req.params;
     await Payment.updateStatus(parseInt(id), SITE_KEY, 'cancelled');
+    const frontendReturn = req.query.frontend_return;
+    if (frontendReturn) {
+      const sep = frontendReturn.includes('?') ? '&' : '?';
+      return res.redirect(`${frontendReturn}${sep}payment_id=${id}&payment_status=cancelled`);
+    }
     const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
     return res.redirect(`${frontendUrl}/checkout/cancelled?payment_id=${id}`);
   } catch (error) {
