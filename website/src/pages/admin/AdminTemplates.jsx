@@ -118,7 +118,9 @@ export default function AdminTemplates() {
   const saveEdit = async () => {
     setSaving(true);
     try {
-      await api.updateProduct(editingId, {
+      // Use _apiId (numeric DB id) for the API call, not the string slug
+      const dbId = editForm._apiId || editingId;
+      await api.updateProduct(dbId, {
         name: editForm.name,
         description: editForm.description,
         price: editForm.price?.monthly || editForm.price,
@@ -148,8 +150,9 @@ export default function AdminTemplates() {
     setTemplates(prev => prev.map(t =>
       t.id === template.id ? { ...t, status: newStatus, comingSoon: newStatus === 'coming-soon' } : t
     ));
-    // Try API update silently
-    api.updateProduct(template.id, { status: newStatus }).catch(() => {});
+    // Try API update silently — use _apiId for DB
+    const dbId = template._apiId || template.id;
+    api.updateProduct(dbId, { status: newStatus }).catch(() => {});
   };
 
   const activeCount = templates.filter(t => (t.status || (t.comingSoon ? 'coming-soon' : 'active')) === 'active').length;
