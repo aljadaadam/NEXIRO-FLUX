@@ -179,6 +179,14 @@ class ApiService {
     return this.request(`/products${query ? '?' + query : ''}`);
   }
 
+  async getPublicProducts() {
+    const url = `${this.baseUrl}/products/public`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data;
+  }
+
   async createProduct(productData) {
     return this.request('/products', {
       method: 'POST',

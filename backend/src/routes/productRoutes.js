@@ -8,11 +8,15 @@ const {
   importProducts,
   syncProducts,
   importFromExternalApi,
-  getProductsStats
+  getProductsStats,
+  getPublicProducts
 } = require('../controllers/productController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 const { checkPermission } = require('../middlewares/permissionMiddleware');
+
+// ─── Public (بدون مصادقة) ───
+router.get('/public', getPublicProducts);
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);

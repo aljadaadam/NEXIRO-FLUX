@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, ShoppingCart, Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Eye, ShoppingCart, Sparkles, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { templates, categories } from '../../data/templates';
+import { templates as staticTemplates, categories } from '../../data/templates';
+import api from '../../services/api';
 
 function useInView(ref) {
   const [visible, setVisible] = useState(false);
@@ -16,9 +17,57 @@ function useInView(ref) {
 
 export default function TemplatesGallery() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [templates, setTemplates] = useState(staticTemplates);
+  const [loading, setLoading] = useState(true);
   const { t, isRTL } = useLanguage();
   const ref = useRef();
   const visible = useInView(ref);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getPublicProducts()
+      .then(res => {
+        if (!cancelled && res.products?.length > 0) {
+          // Merge API products: override static data with live API data
+          const apiMap = new Map(res.products.map(p => [p.id, p]));
+          const merged = staticTemplates.map(st => {
+            const live = apiMap.get(st.id);
+            if (live) {
+              return {
+                ...st,
+                name: live.name || st.name,
+                description: live.description || st.description,
+                price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : st.price,
+                image: live.image || st.image,
+                status: live.status,
+              };
+            }
+            return st;
+          });
+          // Add any new API products not in static data
+          res.products.forEach(p => {
+            if (!staticTemplates.find(st => st.id === p.id)) {
+              merged.push({
+                id: p.id,
+                name: p.name,
+                nameEn: p.name,
+                description: p.description || '',
+                descriptionEn: p.description || '',
+                category: p.category || 'digital-services',
+                image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
+                price: { monthly: p.price || 0, yearly: (p.price || 0) * 10, lifetime: (p.price || 0) * 25 },
+                features: [], featuresEn: [],
+                color: 'from-purple-500 to-indigo-600',
+              });
+            }
+          });
+          setTemplates(merged);
+        }
+      })
+      .catch(() => { /* fallback to static */ })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = activeCategory === 'all' 
     ? templates 

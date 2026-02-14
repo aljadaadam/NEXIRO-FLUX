@@ -724,6 +724,26 @@ async function getProductsStats(req, res) {
   }
 }
 
+// جلب المنتجات العامة (بدون مصادقة - للواجهة الأمامية)
+async function getPublicProducts(req, res) {
+  try {
+    const { SITE_KEY } = require('../config/env');
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const [products] = await pool.query(
+      `SELECT id, name, description, price, image, status, category, service_type, created_at
+       FROM products
+       WHERE site_key = ? AND status = 'active'
+       ORDER BY created_at DESC`,
+      [SITE_KEY]
+    );
+    res.json({ products });
+  } catch (error) {
+    console.error('Error in getPublicProducts:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتجات' });
+  }
+}
+
 module.exports = {
   getAllProducts,
   createProduct,
@@ -732,5 +752,6 @@ module.exports = {
   importProducts,
   syncProducts,
   importFromExternalApi,
-  getProductsStats
+  getProductsStats,
+  getPublicProducts
 };

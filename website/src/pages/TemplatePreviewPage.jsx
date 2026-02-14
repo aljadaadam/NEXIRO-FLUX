@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { templates } from '../data/templates';
+import { templates as staticTemplates } from '../data/templates';
+import api from '../services/api';
 import YCZStoreDemo from '../components/templates/YCZStoreDemo';
 
 // Map of template IDs to their custom demo components
@@ -16,8 +17,37 @@ export default function TemplatePreviewPage() {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [previewDevice, setPreviewDevice] = useState('desktop');
+  const [template, setTemplate] = useState(() => staticTemplates.find(tp => tp.id === id));
+  const [loading, setLoading] = useState(true);
 
-  const template = templates.find(tp => tp.id === id);
+  useEffect(() => {
+    let cancelled = false;
+    api.getPublicProducts()
+      .then(res => {
+        if (cancelled) return;
+        const live = res.products?.find(p => p.id === id);
+        const staticT = staticTemplates.find(tp => tp.id === id);
+        if (live && staticT) {
+          setTemplate({
+            ...staticT,
+            name: live.name || staticT.name,
+            description: live.description || staticT.description,
+            price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : staticT.price,
+            image: live.image || staticT.image,
+          });
+        } else if (live) {
+          setTemplate({
+            id: live.id, name: live.name, nameEn: live.name,
+            description: live.description || '', descriptionEn: live.description || '',
+            image: live.image || '', features: [], featuresEn: [],
+            price: { monthly: live.price || 0, yearly: (live.price || 0) * 10, lifetime: (live.price || 0) * 25 },
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [id]);
 
   // If this template has a custom demo component, render it
   const CustomDemo = customDemos[id];

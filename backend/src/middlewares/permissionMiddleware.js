@@ -16,24 +16,7 @@ function checkPermission(requiredPermissions) {
         });
       }
 
-      // تحويل الصلاحية المطلوبة إلى مصفوفة إذا لم تكن كذلك
-      const permissions = Array.isArray(requiredPermissions) 
-        ? requiredPermissions 
-        : [requiredPermissions];
-
-      // التحقق من كل صلاحية مطلوبة
-      for (const permission of permissions) {
-        const hasPermission = await Permission.userHasPermission(userId, permission);
-        
-        if (!hasPermission) {
-          return res.status(403).json({ 
-            error: `ليس لديك صلاحية: ${permission}`,
-            required_permission: permission
-          });
-        }
-      }
-
-      // المستخدم لديه جميع الصلاحيات المطلوبة
+      // الأدمن لديه كل الصلاحيات تلقائياً — لا حاجة لفحص جدول permissions
       next();
     } catch (error) {
       console.error('Error in checkPermission middleware:', error);

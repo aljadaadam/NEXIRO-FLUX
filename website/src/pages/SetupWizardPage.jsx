@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles, Globe, Store, Mail, CheckCircle2, ArrowRight,
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
-import { templates } from '../data/templates';
+import { templates as staticTemplates } from '../data/templates';
 
 const STEPS = [
   { id: 'payment', iconAr: '💳', iconEn: '💳', labelAr: 'الدفع', labelEn: 'Payment' },
@@ -34,10 +34,31 @@ export default function SetupWizardPage() {
   const templateId = searchParams.get('template') || 'digital-services-store';
   const plan = searchParams.get('plan') || 'monthly';
 
-  // Find template data for pricing
-  const templateData = templates.find(t => t.id === templateId);
+  // Find template data for pricing — start with static, override with API
+  const [templateData, setTemplateData] = useState(() => staticTemplates.find(t => t.id === templateId));
   const templatePrice = templateData?.price?.[plan] || 0;
   const templateName = isRTL ? (templateData?.name || templateId) : (templateData?.nameEn || templateId);
+
+  useEffect(() => {
+    api.getPublicProducts()
+      .then(res => {
+        const live = res.products?.find(p => p.id === templateId);
+        const staticT = staticTemplates.find(t => t.id === templateId);
+        if (live && staticT) {
+          setTemplateData({
+            ...staticT,
+            name: live.name || staticT.name,
+            price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : staticT.price,
+          });
+        } else if (live) {
+          setTemplateData({
+            id: live.id, name: live.name, nameEn: live.name,
+            price: { monthly: live.price || 0, yearly: (live.price || 0) * 10, lifetime: (live.price || 0) * 25 },
+          });
+        }
+      })
+      .catch(() => {});
+  }, [templateId]);
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
