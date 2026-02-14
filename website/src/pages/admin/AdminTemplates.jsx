@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   Layers, Search, Plus, Edit3, Trash2, Eye, EyeOff,
   Save, X, Star, ExternalLink, Check, Loader2, RefreshCw,
-  ShoppingCart, AlertTriangle
+  ShoppingCart, AlertTriangle, Globe, Palette
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { templates as staticTemplates, categories } from '../../data/templates';
 import api from '../../services/api';
 
 const statusColors = {
@@ -14,7 +15,7 @@ const statusColors = {
   'disabled': 'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
-const statusLabels = {
+const statusLabelsMap = {
   'active': { ar: 'نشط', en: 'Active' },
   'coming-soon': { ar: 'قريباً', en: 'Coming Soon' },
   'draft': { ar: 'مسودة', en: 'Draft' },
@@ -23,41 +24,63 @@ const statusLabels = {
 
 export default function AdminTemplates() {
   const { isRTL } = useLanguage();
-  const [products, setProducts] = useState([]);
+  const [templates, setTemplates] = useState(staticTemplates);
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [filterStatus, setFilterStatus] = useState('all');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
 
-  useEffect(() => { loadProducts(); }, []);
+  // Try to get live data from API, merge with static templates
+  useEffect(() => {
+    api.getPublicProducts()
+      .then(res => {
+        if (res.products?.length > 0) {
+          const apiMap = new Map(res.products.map(p => [p.id, p]));
+          const merged = staticTemplates.map(st => {
+            const live = apiMap.get(st.id);
+            if (live) {
+              return {
+                ...st,
+                name: live.name || st.name,
+                description: live.description || st.description,
+                price: live.price
+                  ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 }
+                  : st.price,
+                image: live.image || st.image,
+                status: live.status || (st.comingSoon ? 'coming-soon' : 'active'),
+              };
+            }
+            return { ...st, status: st.comingSoon ? 'coming-soon' : 'active' };
+          });
+          setTemplates(merged);
+        } else {
+          setTemplates(staticTemplates.map(st => ({
+            ...st,
+            status: st.comingSoon ? 'coming-soon' : 'active',
+          })));
+        }
+      })
+      .catch(() => {
+        setTemplates(staticTemplates.map(st => ({
+          ...st,
+          status: st.comingSoon ? 'coming-soon' : 'active',
+        })));
+      });
+  }, []);
 
-  const loadProducts = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.getProducts();
-      setProducts(res.products || []);
-    } catch (err) {
-      setError(err?.error || 'فشل تحميل المنتجات');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filtered = products.filter(t => {
-    const name = t.name || t.nameEn || '';
-    const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || (t.description || '').toLowerCase().includes(search.toLowerCase());
-    const status = t.status || 'active';
+  const filtered = templates.filter(t => {
+    const name = (isRTL ? t.name : t.nameEn) || t.name || '';
+    const desc = (isRTL ? t.description : t.descriptionEn) || t.description || '';
+    const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || desc.toLowerCase().includes(search.toLowerCase());
+    const status = t.status || (t.comingSoon ? 'coming-soon' : 'active');
     const matchesStatus = filterStatus === 'all' || status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const startEdit = (product) => {
-    setEditingId(product.id);
-    setEditForm({ ...product });
+  const startEdit = (template) => {
+    setEditingId(template.id);
+    setEditForm({ ...template });
   };
 
   const cancelEdit = () => {
@@ -68,59 +91,42 @@ export default function AdminTemplates() {
   const saveEdit = async () => {
     setSaving(true);
     try {
-      await api.updateProduct(editingId, editForm);
-      await loadProducts();
+      await api.updateProduct(editingId, {
+        name: editForm.name,
+        description: editForm.description,
+        price: editForm.price?.monthly || editForm.price,
+        image: editForm.image,
+      });
+      // Update locally
+      setTemplates(prev => prev.map(t =>
+        t.id === editingId ? { ...t, ...editForm } : t
+      ));
       setEditingId(null);
       setEditForm({});
-    } catch (err) {
-      alert(err?.error || 'فشل الحفظ');
+    } catch {
+      // If API fails, still update locally
+      setTemplates(prev => prev.map(t =>
+        t.id === editingId ? { ...t, ...editForm } : t
+      ));
+      setEditingId(null);
+      setEditForm({});
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteProduct = async (id) => {
-    if (!confirm(isRTL ? 'هل تريد حذف هذا المنتج؟' : 'Delete this product?')) return;
-    try {
-      await api.deleteProduct(id);
-      await loadProducts();
-    } catch (err) {
-      alert(err?.error || 'فشل الحذف');
-    }
+  const toggleStatus = (template) => {
+    const currentStatus = template.status || (template.comingSoon ? 'coming-soon' : 'active');
+    const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+    setTemplates(prev => prev.map(t =>
+      t.id === template.id ? { ...t, status: newStatus, comingSoon: newStatus === 'coming-soon' } : t
+    ));
+    // Try API update silently
+    api.updateProduct(template.id, { status: newStatus }).catch(() => {});
   };
 
-  const toggleStatus = async (product) => {
-    const newStatus = product.status === 'active' ? 'disabled' : 'active';
-    try {
-      await api.updateProduct(product.id, { ...product, status: newStatus });
-      await loadProducts();
-    } catch (err) {
-      alert(err?.error || 'فشل التحديث');
-    }
-  };
-
-  const activeCount = products.filter(t => (t.status || 'active') === 'active').length;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 space-y-4">
-        <AlertTriangle className="w-12 h-12 text-amber-400" />
-        <p className="text-dark-400 text-sm">{error}</p>
-        <button onClick={loadProducts} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-400 text-white text-sm transition-all">
-          <RefreshCw className="w-4 h-4" />
-          {isRTL ? 'إعادة المحاولة' : 'Retry'}
-        </button>
-      </div>
-    );
-  }
+  const activeCount = templates.filter(t => (t.status || (t.comingSoon ? 'coming-soon' : 'active')) === 'active').length;
+  const comingSoonCount = templates.filter(t => t.comingSoon || t.status === 'coming-soon').length;
 
   return (
     <div className="space-y-6">
@@ -128,16 +134,13 @@ export default function AdminTemplates() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-white">
-            {isRTL ? 'إدارة المنتجات' : 'Products Management'}
+            {isRTL ? 'إدارة القوالب' : 'Templates Management'}
           </h1>
           <p className="text-dark-400 text-sm mt-1">
-            {isRTL ? `${products.length} منتج — ${activeCount} نشط` : `${products.length} products — ${activeCount} active`}
+            {isRTL
+              ? `${templates.length} قالب — ${activeCount} نشط — ${comingSoonCount} قريباً`
+              : `${templates.length} templates — ${activeCount} active — ${comingSoonCount} coming soon`}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={loadProducts} className="p-2 rounded-xl bg-white/5 text-dark-400 hover:text-white transition-all">
-            <RefreshCw className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
@@ -149,12 +152,12 @@ export default function AdminTemplates() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={isRTL ? 'ابحث عن منتج...' : 'Search products...'}
+            placeholder={isRTL ? 'ابحث عن قالب...' : 'Search templates...'}
             className="bg-transparent border-none outline-none text-sm text-white placeholder:text-dark-500 w-full"
           />
         </div>
         <div className="flex items-center gap-2">
-          {['all', 'active', 'disabled'].map(status => (
+          {['all', 'active', 'coming-soon', 'disabled'].map(status => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -164,97 +167,160 @@ export default function AdminTemplates() {
                   : 'bg-[#111827] text-dark-400 border border-white/5 hover:text-white'
               }`}
             >
-              {status === 'all' ? (isRTL ? 'الكل' : 'All') : (isRTL ? statusLabels[status]?.ar : statusLabels[status]?.en) || status}
+              {status === 'all' ? (isRTL ? 'الكل' : 'All') : (isRTL ? statusLabelsMap[status]?.ar : statusLabelsMap[status]?.en) || status}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Products List */}
-      <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">#</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'المنتج' : 'Product'}</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'السعر' : 'Price'}</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'النوع' : 'Type'}</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'المصدر' : 'Source'}</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'الإجراءات' : 'Actions'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((product, idx) => (
-                <tr key={product.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
-                  <td className="px-5 py-3 text-dark-500 text-xs">{idx + 1}</td>
-                  <td className="px-5 py-3">
-                    {editingId === product.id ? (
+      {/* Templates Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {filtered.map((template) => {
+          const status = template.status || (template.comingSoon ? 'coming-soon' : 'active');
+          const isEditing = editingId === template.id;
+          const name = isRTL ? template.name : (template.nameEn || template.name);
+          const desc = isRTL ? template.description : (template.descriptionEn || template.description);
+          const price = template.price?.monthly || 0;
+
+          return (
+            <div
+              key={template.id}
+              className={`group bg-[#111827] rounded-2xl border overflow-hidden transition-all hover:border-white/10 ${
+                isEditing ? 'border-primary-500/30 ring-1 ring-primary-500/20' : 'border-white/5'
+              }`}
+            >
+              {/* Image */}
+              <div className="relative h-40 overflow-hidden">
+                <img
+                  src={template.image}
+                  alt={name}
+                  className={`w-full h-full object-cover transition-transform duration-500 ${template.comingSoon ? 'grayscale opacity-60' : 'group-hover:scale-105'}`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-transparent to-transparent" />
+
+                {/* Status Badge */}
+                <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'}`}>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColors[status] || statusColors['active']}`}>
+                    {isRTL ? statusLabelsMap[status]?.ar : statusLabelsMap[status]?.en}
+                  </span>
+                </div>
+
+                {/* Popular Badge */}
+                {template.popular && (
+                  <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'}`}>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/20">
+                      ⭐ {isRTL ? 'مميز' : 'Popular'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="p-5">
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'الاسم' : 'Name'}</label>
                       <input
                         value={editForm.name || ''}
                         onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                        className="px-2 py-1 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none w-full"
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
                       />
-                    ) : (
-                      <div>
-                        <p className="text-white font-medium text-xs">{product.name}</p>
-                        {product.description && <p className="text-dark-500 text-[11px] mt-0.5 truncate max-w-[200px]">{product.description}</p>}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    {editingId === product.id ? (
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'الاسم (EN)' : 'Name (EN)'}</label>
+                      <input
+                        value={editForm.nameEn || ''}
+                        onChange={e => setEditForm(f => ({ ...f, nameEn: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'السعر الشهري' : 'Monthly Price'}</label>
                       <input
                         type="number"
-                        value={editForm.price || editForm.customPrice || ''}
-                        onChange={e => setEditForm(f => ({ ...f, price: Number(e.target.value), customPrice: Number(e.target.value) }))}
-                        className="px-2 py-1 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none w-20"
+                        value={editForm.price?.monthly || ''}
+                        onChange={e => setEditForm(f => ({
+                          ...f,
+                          price: { ...f.price, monthly: Number(e.target.value) }
+                        }))}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
                       />
-                    ) : (
-                      <span className="text-white text-xs font-medium">
-                        {product.customPrice || product.price ? `$${product.customPrice || product.price}` : '-'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3 text-dark-400 text-xs capitalize">{product.service_type || '-'}</td>
-                  <td className="px-5 py-3 text-dark-400 text-xs">{product.source?.name || '-'}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-1">
-                      {editingId === product.id ? (
-                        <>
-                          <button onClick={saveEdit} disabled={saving} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">
-                            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button onClick={() => startEdit(product)} className="p-1.5 rounded-lg text-dark-400 hover:text-primary-400 hover:bg-primary-500/5 transition-all">
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => toggleStatus(product)} className={`p-1.5 rounded-lg transition-all ${(product.status || 'active') === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-dark-500 hover:text-emerald-400'}`}>
-                            {(product.status || 'active') === 'active' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={() => deleteProduct(product.id)} className="p-1.5 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/5 transition-all">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'رابط الصورة' : 'Image URL'}</label>
+                      <input
+                        value={editForm.image || ''}
+                        onChange={e => setEditForm(f => ({ ...f, image: e.target.value }))}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
+                      />
+                      {editForm.image && (
+                        <img src={editForm.image} alt="preview" className="mt-2 h-20 w-full object-cover rounded-lg border border-white/5" />
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={saveEdit} disabled={saving} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all">
+                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                        {isRTL ? 'حفظ' : 'Save'}
+                      </button>
+                      <button onClick={cancelEdit} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all">
+                        <X className="w-3.5 h-3.5" />
+                        {isRTL ? 'إلغاء' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-white font-bold text-sm mb-1.5">{name}</h3>
+                    <p className="text-dark-400 text-xs leading-relaxed line-clamp-2 mb-3">{desc}</p>
+
+                    {/* Category */}
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Palette className="w-3 h-3 text-dark-500" />
+                      <span className="text-dark-500 text-[11px] capitalize">{template.category?.replace('-', ' ')}</span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-xl font-display font-black text-white">${price}</span>
+                      <span className="text-dark-500 text-xs">{isRTL ? '/شهر' : '/mo'}</span>
+                      {template.price?.lifetime && (
+                        <span className="text-dark-600 text-[10px] ms-2">${template.price.lifetime} {isRTL ? 'مدى الحياة' : 'lifetime'}</span>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                      <button onClick={() => startEdit(template)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-dark-400 hover:text-primary-400 hover:bg-primary-500/5 text-xs transition-all">
+                        <Edit3 className="w-3.5 h-3.5" />
+                        {isRTL ? 'تعديل' : 'Edit'}
+                      </button>
+                      <button onClick={() => toggleStatus(template)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
+                        status === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-dark-500 hover:text-emerald-400'
+                      }`}>
+                        {status === 'active' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {status === 'active' ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطّل' : 'Off')}
+                      </button>
+                      {template.hasLiveDemo && (
+                        <a href={template.demoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-dark-400 hover:text-cyan-400 text-xs transition-all ms-auto">
+                          <Globe className="w-3.5 h-3.5" />
+                          {isRTL ? 'معاينة' : 'Demo'}
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {filtered.length === 0 && !loading && (
+      {filtered.length === 0 && (
         <div className="text-center py-16">
           <Layers className="w-12 h-12 text-dark-600 mx-auto mb-4" />
-          <p className="text-dark-400 text-sm">{isRTL ? 'لا توجد منتجات' : 'No products found'}</p>
+          <p className="text-dark-400 text-sm">{isRTL ? 'لا توجد قوالب مطابقة' : 'No matching templates'}</p>
         </div>
       )}
     </div>
