@@ -37,17 +37,20 @@ export default function AdminTemplates() {
       .then(res => {
         if (res.products?.length > 0) {
           const apiProducts = res.products;
-          const apiMapById = new Map(apiProducts.map(p => [String(p.id), p]));
-          
+          const apiByName = new Map(apiProducts.map(p => [p.name?.trim(), p]));
+          const matchedApiNames = new Set();
+
           const merged = staticTemplates.map(st => {
-            const live = apiMapById.get(String(st.id));
+            const live = apiByName.get(st.name?.trim());
             if (live) {
+              matchedApiNames.add(live.name?.trim());
+              const price = parseFloat(live.price);
               return {
                 ...st,
                 name: live.name || st.name,
                 description: live.description || st.description,
-                price: live.price
-                  ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 }
+                price: price
+                  ? { monthly: price, yearly: price * 10, lifetime: price * 25 }
                   : st.price,
                 image: live.image || st.image,
                 status: live.status || (st.comingSoon ? 'coming-soon' : 'active'),
@@ -56,27 +59,27 @@ export default function AdminTemplates() {
             }
             return { ...st, status: st.comingSoon ? 'coming-soon' : 'active' };
           });
-          
+
           // Add API products not matched to static templates
-          const matchedApiIds = new Set(merged.filter(m => m._apiId).map(m => String(m._apiId)));
           apiProducts.forEach(p => {
-            if (!matchedApiIds.has(String(p.id))) {
+            if (!matchedApiNames.has(p.name?.trim())) {
+              const price = parseFloat(p.price) || 0;
               merged.push({
                 id: p.id,
                 name: p.name,
                 nameEn: p.name,
                 description: p.description || '',
                 descriptionEn: p.description || '',
-                category: p.category || p.group_name || 'digital-services',
+                category: p.category || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
-                price: { monthly: p.price || 0, yearly: (p.price || 0) * 10, lifetime: (p.price || 0) * 25 },
+                price: { monthly: price, yearly: price * 10, lifetime: price * 25 },
                 features: [], featuresEn: [],
                 color: 'from-purple-500 to-indigo-600',
                 status: p.status || 'active',
               });
             }
           });
-          
+
           setTemplates(merged);
         } else {
           setTemplates(staticTemplates.map(st => ({

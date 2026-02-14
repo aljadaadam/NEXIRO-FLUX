@@ -28,46 +28,46 @@ export default function TemplatesGallery() {
     api.getPublicProducts()
       .then(res => {
         if (!cancelled && res.products?.length > 0) {
-          // Merge API products: override static data with live API data
-          // Match by id (string or number) and also by name similarity
           const apiProducts = res.products;
-          const apiMapById = new Map(apiProducts.map(p => [String(p.id), p]));
-          
+          // Build a map of API products by normalized name for matching
+          const apiByName = new Map(apiProducts.map(p => [p.name?.trim(), p]));
+          const matchedApiNames = new Set();
+
+          // Merge: use static template as rich base, overlay API live data
           const merged = staticTemplates.map(st => {
-            // Try to match by id first
-            let live = apiMapById.get(String(st.id));
-            
+            const live = apiByName.get(st.name?.trim());
             if (live) {
+              matchedApiNames.add(live.name?.trim());
+              const price = parseFloat(live.price);
               return {
                 ...st,
+                _apiId: live.id,
                 name: live.name || st.name,
                 description: live.description || st.description,
-                price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : st.price,
+                price: price ? { monthly: price, yearly: price * 10, lifetime: price * 25 } : st.price,
                 image: live.image || st.image,
-                status: live.status,
-                _apiId: live.id, // keep reference to API id
               };
             }
             return st;
           });
-          
-          // Add any API products that weren't matched to static templates
-          const matchedApiIds = new Set(merged.filter(m => m._apiId).map(m => String(m._apiId)));
+
+          // Add API-only products (not matched to any static template)
           apiProducts.forEach(p => {
-            if (!matchedApiIds.has(String(p.id))) {
+            if (!matchedApiNames.has(p.name?.trim())) {
+              const price = parseFloat(p.price) || 0;
               merged.push({
                 id: p.id,
                 name: p.name,
                 nameEn: p.name,
                 description: p.description || '',
                 descriptionEn: p.description || '',
-                category: p.category || p.group_name || 'digital-services',
+                category: p.category || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
-                price: { monthly: p.price || 0, yearly: (p.price || 0) * 10, lifetime: (p.price || 0) * 25 },
+                price: { monthly: price, yearly: price * 10, lifetime: price * 25 },
                 features: [], featuresEn: [],
                 color: 'from-purple-500 to-indigo-600',
-                badge: p.status === 'active' ? null : '🔜 قريباً',
-                comingSoon: p.status !== 'active' && p.status !== null,
+                badge: null,
+                comingSoon: false,
               });
             }
           });
