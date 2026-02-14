@@ -72,17 +72,30 @@ export default function SetupWizardPage() {
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
   const [paypalLoading, setPaypalLoading] = useState(false);
 
-  // Detect return from PayPal redirect
+  // Detect return from PayPal / Binance redirect
   useEffect(() => {
     const paymentStatus = searchParams.get('payment_status');
     const paymentId = searchParams.get('payment_id');
+    const returnedGateway = searchParams.get('gateway') || 'paypal';
     if (paymentStatus === 'success' && paymentId) {
       setPaymentConfirmed(true);
-      setForm(prev => ({ ...prev, payment_reference: `PAYPAL-${paymentId}` }));
+      setForm(prev => ({ ...prev, payment_reference: `${returnedGateway.toUpperCase()}-${paymentId}` }));
     } else if (paymentStatus === 'cancelled') {
-      setError(isRTL ? 'تم إلغاء عملية الدفع عبر PayPal' : 'PayPal payment was cancelled');
+      setError(isRTL ? 'تم إلغاء عملية الدفع' : 'Payment was cancelled');
     } else if (paymentStatus === 'failed') {
-      setError(isRTL ? 'فشلت عملية الدفع عبر PayPal' : 'PayPal payment failed');
+      setError(isRTL ? 'فشلت عملية الدفع' : 'Payment failed');
+    } else if (returnedGateway === 'binance' && paymentId && !paymentStatus) {
+      // Binance returnUrl doesn't include payment_status — check via API
+      setPaypalLoading(true);
+      api.checkPaymentStatusPublic(paymentId)
+        .then(res => {
+          if (res.status === 'completed' || res.status === 'paid') {
+            setPaymentConfirmed(true);
+            setForm(prev => ({ ...prev, payment_reference: `BINANCE-${paymentId}` }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => setPaypalLoading(false));
     }
   }, [searchParams]);
 
@@ -573,23 +586,24 @@ export default function SetupWizardPage() {
                               setPaypalLoading(true);
                               setError('');
                               try {
+                                const currentUrl = window.location.origin + window.location.pathname;
+                                const returnBase = `${currentUrl}?template=${templateId}&plan=${plan}&gateway=binance`;
                                 const data = await api.initCheckout({
                                   gateway_id: parseInt(form.payment_method),
                                   amount: templatePrice,
                                   currency: 'USDT',
                                   description: `${templateName} - ${plan} plan`,
+                                  return_url: `${returnBase}&payment_id=__PAYMENT_ID__`,
                                 });
                                 if (data.checkoutUrl) {
-                                  window.open(data.checkoutUrl, '_blank');
-                                  // Show confirm button after opening Binance
-                                  setError('');
+                                  window.location.href = data.checkoutUrl;
                                 } else {
                                   setError(isRTL ? 'لم يتم الحصول على رابط Binance Pay' : 'Failed to get Binance Pay URL');
+                                  setPaypalLoading(false);
                                 }
                               } catch (err) {
                                 const detail = err.details ? ` (${err.details})` : '';
                                 setError((err.error || (isRTL ? 'فشل بدء الدفع عبر Binance' : 'Failed to initiate Binance payment')) + detail);
-                              } finally {
                                 setPaypalLoading(false);
                               }
                             }}

@@ -95,9 +95,11 @@ async function initCheckout(req, res) {
       // ━━━━━ Binance Pay ━━━━━
       case 'binance': {
         const binance = new BinancePayProcessor(gateway.config);
-        // Binance returnUrl goes to frontend (not server callback), webhookUrl is for server notifications
+        // Binance returnUrl goes to frontend directly, webhookUrl is for server notifications
         const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
-        const binanceReturnUrl = req.body.return_url || `${frontendUrl}/checkout/success`;
+        let binanceReturnUrl = req.body.return_url || `${frontendUrl}/checkout/success`;
+        // Replace placeholder with actual payment ID
+        binanceReturnUrl = binanceReturnUrl.replace('__PAYMENT_ID__', payment.id);
         const binanceWebhookUrl = `${req.protocol}://${req.get('host')}/api/checkout/webhooks/binance`;
         const order = await binance.createOrder({
           amount,
