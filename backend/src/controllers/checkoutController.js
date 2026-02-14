@@ -61,7 +61,7 @@ async function initCheckout(req, res) {
       gateway_type: gateway.type,
     });
 
-    const referenceId = `NF-${payment.id}-${Date.now()}`;
+    const referenceId = `NF${payment.id}T${Date.now()}`;
     const baseUrl = req.headers.origin || `${req.protocol}://${req.get('host')}`;
     // Support custom frontend return URLs (e.g. Setup Wizard wants to come back to /setup)
     const frontendReturnUrl = req.body.return_url || '';
