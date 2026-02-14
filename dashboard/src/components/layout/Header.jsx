@@ -1,24 +1,39 @@
 // src/components/layout/Header.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { getNotifications, markNotificationAsRead as markNotifRead, markAllNotificationsAsRead } from '../../services/api';
 
 const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = false }) => {
   const { language, dir, currentLanguage, theme, toggleLanguage, toggleTheme, t } = useLanguage();
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: t('newOrder'), message: t('newOrderMessage'), time: t('5MinutesAgo'), read: false },
-    { id: 2, title: t('newReview'), message: t('newReviewMessage'), time: t('1HourAgo'), read: false },
-    { id: 3, title: t('systemUpdate'), message: t('systemUpdateMessage'), time: t('1DayAgo'), read: true },
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const notificationsRef = useRef(null);
+
+  // جلب الإشعارات من API
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await getNotifications({ limit: 10 });
+      const data = res.data?.notifications || res.data || [];
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    // تحديث كل 60 ثانية
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -77,13 +92,42 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
     }, 800);
   };
 
-  const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(notification => 
-      notification.id === id ? { ...notification, read: true } : notification
-    ));
+  const markNotificationAsRead = async (id) => {
+    try {
+      await markNotifRead(id);
+      setNotifications(notifications.map(notification => 
+        notification.id === id ? { ...notification, read: true, is_read: 1 } : notification
+      ));
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
   };
 
-  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+  const unreadNotificationsCount = notifications.filter(n => !n.read && !n.is_read).length;
+
+  // تنسيق وقت الإشعار
+  const formatNotifTime = (notif) => {
+    if (notif.time) return notif.time;
+    if (!notif.created_at) return '';
+    const date = new Date(notif.created_at);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (dir === 'rtl') {
+      if (diffMins < 1) return 'الآن';
+      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+      return `منذ ${diffDays} يوم`;
+    }
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  const isNotifRead = (n) => n.read || n.is_read;
 
   // نص زر المينو حسب اللغة
   const menuLabel = dir === 'rtl' ? 'القائمة' : 'menu';
@@ -230,7 +274,12 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                 className={`text-sm hover:opacity-80 ${
                   theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
                 }`}
-                onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                onClick={async () => {
+                  try {
+                    await markAllNotificationsAsRead();
+                    setNotifications(notifications.map(n => ({ ...n, read: true, is_read: 1 })));
+                  } catch (err) { console.error(err); }
+                }}
               >
                 {t('markAllAsRead')}
               </button>
@@ -241,7 +290,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                   <div 
                     key={notification.id} 
                     className={`p-3 border-b rounded-lg transition ${
-                      !notification.read 
+                      !isNotifRead(notification) 
                         ? (theme === 'dark' ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-100') 
                         : (theme === 'dark' ? 'border-gray-700' : 'border-gray-100')
                     } ${
@@ -253,7 +302,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                       <div className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                         {notification.title}
                       </div>
-                      {!notification.read && (
+                      {!isNotifRead(notification) && (
                         <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                       )}
                     </div>
@@ -261,7 +310,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                       {notification.message}
                     </p>
                     <div className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {notification.time}
+                      {formatNotifTime(notification)}
                     </div>
                   </div>
                 ))
@@ -351,7 +400,12 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                     className={`text-sm hover:opacity-80 ${
                       theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
                     }`}
-                    onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                    onClick={async () => {
+                      try {
+                        await markAllNotificationsAsRead();
+                        setNotifications(notifications.map(n => ({ ...n, read: true, is_read: 1 })));
+                      } catch (err) { console.error(err); }
+                    }}
                   >
                     {t('markAllAsRead')}
                   </button>
@@ -363,7 +417,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                       <div 
                         key={notification.id} 
                         className={`p-3 border-b rounded-lg transition ${
-                          !notification.read 
+                          !isNotifRead(notification) 
                             ? (theme === 'dark' ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-100') 
                             : (theme === 'dark' ? 'border-gray-700' : 'border-gray-100')
                         } ${
@@ -375,7 +429,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                           <div className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                             {notification.title}
                           </div>
-                          {!notification.read && (
+                          {!isNotifRead(notification) && (
                             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           )}
                         </div>
@@ -383,7 +437,7 @@ const Header = ({ onToggleSidebar, onToggleMobileSidebar, mobileSidebarOpen = fa
                           {notification.message}
                         </p>
                         <div className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                          {notification.time}
+                          {formatNotifTime(notification)}
                         </div>
                       </div>
                     ))

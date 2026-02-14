@@ -87,4 +87,26 @@ api.interceptors.response.use(
   }
 );
 
+// =================== Dashboard Stats ===================
+export const getDashboardStats = () => api.get('/dashboard/stats');
+
+// =================== Notifications ===================
+export const getNotifications = (params = {}) => api.get('/notifications', { params });
+export const markNotificationAsRead = (id) => api.put(`/notifications/${id}/read`);
+export const markAllNotificationsAsRead = () => api.put('/notifications/read-all');
+
+// =================== Recent Activities ===================
+export const getRecentActivities = (limit = 10) => api.get('/dashboard/activities', { params: { limit } });
+
+// =================== Orders ===================
+export const getOrders = (params = {}) => api.get('/orders', { params });
+export const getOrderStats = () => api.get('/orders/stats');
+
+// =================== Products ===================
+export const getProducts = (params = {}) => api.get('/products', { params });
+export const getProductsStats = () => api.get('/products/stats');
+
+// =================== Customers ===================
+export const getCustomers = (params = {}) => api.get('/customers', { params });
+
 export default api;

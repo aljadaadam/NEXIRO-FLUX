@@ -6,6 +6,7 @@ const Payment = require('../models/Payment');
 const Ticket = require('../models/Ticket');
 const Notification = require('../models/Notification');
 const Subscription = require('../models/Subscription');
+const ActivityLog = require('../models/ActivityLog');
 
 async function getDashboardStats(req, res) {
   try {
@@ -82,6 +83,23 @@ async function getDashboardStats(req, res) {
   }
 }
 
+async function getRecentActivities(req, res) {
+  try {
+    const { site_key } = req.user;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const activities = await ActivityLog.findBySiteKey(site_key, { limit, page: 1 });
+    
+    res.json({ activities });
+  } catch (error) {
+    console.error('Error in getRecentActivities:', error);
+    res.status(500).json({ 
+      error: 'حدث خطأ أثناء جلب سجل النشاطات' 
+    });
+  }
+}
+
 module.exports = {
-  getDashboardStats
+  getDashboardStats,
+  getRecentActivities
 };
