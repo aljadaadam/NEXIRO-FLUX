@@ -587,7 +587,8 @@ export default function SetupWizardPage() {
                                   setError(isRTL ? 'لم يتم الحصول على رابط Binance Pay' : 'Failed to get Binance Pay URL');
                                 }
                               } catch (err) {
-                                setError(err.error || (isRTL ? 'فشل بدء الدفع عبر Binance' : 'Failed to initiate Binance payment'));
+                                const detail = err.details ? ` (${err.details})` : '';
+                                setError((err.error || (isRTL ? 'فشل بدء الدفع عبر Binance' : 'Failed to initiate Binance payment')) + detail);
                               } finally {
                                 setPaypalLoading(false);
                               }

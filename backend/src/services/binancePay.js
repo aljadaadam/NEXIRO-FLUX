@@ -39,7 +39,7 @@ class BinancePayProcessor {
   }
 
   // ─── إنشاء طلب دفع ───
-  async createOrder({ amount, currency = 'USDT', description, referenceId, returnUrl, cancelUrl }) {
+  async createOrder({ amount, currency = 'USDT', description, referenceId, returnUrl, cancelUrl, webhookUrl }) {
     const timestamp = Date.now();
     const nonce = this._generateNonce();
 
@@ -52,29 +52,41 @@ class BinancePayProcessor {
       currency: currency,
       description: description || 'NEXIRO-FLUX Payment',
       goodsType: '02', // Virtual goods
-      returnUrl: returnUrl,
-      cancelUrl: cancelUrl,
-      webhookUrl: null, // سيتم تعيينه من الـ controller
     };
+
+    // Only include optional URLs if provided
+    if (returnUrl) body.returnUrl = returnUrl;
+    if (cancelUrl) body.cancelUrl = cancelUrl;
+    if (webhookUrl) body.webhookUrl = webhookUrl;
 
     const signature = this._generateSignature(timestamp, nonce, body);
 
-    const { data } = await axios.post(
-      `${this.baseUrl}/binancepay/openapi/v3/order`,
-      body,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'BinancePay-Timestamp': timestamp,
-          'BinancePay-Nonce': nonce,
-          'BinancePay-Certificate-SN': this.apiKey,
-          'BinancePay-Signature': signature,
-        },
+    let data;
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/binancepay/openapi/v3/order`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'BinancePay-Timestamp': String(timestamp),
+            'BinancePay-Nonce': nonce,
+            'BinancePay-Certificate-SN': this.apiKey,
+            'BinancePay-Signature': signature,
+          },
+        }
+      );
+      data = response.data;
+    } catch (axiosErr) {
+      const respData = axiosErr.response?.data;
+      if (respData?.errorMessage) {
+        throw new Error(`Binance Pay API [${respData.code}]: ${respData.errorMessage}`);
       }
-    );
+      throw new Error(`Binance Pay request failed: ${axiosErr.message}`);
+    }
 
     if (data.status !== 'SUCCESS') {
-      throw new Error(`Binance Pay Error: ${data.errorMessage || 'Unknown error'}`);
+      throw new Error(`Binance Pay Error [${data.code || 'UNKNOWN'}]: ${data.errorMessage || JSON.stringify(data)}`);
     }
 
     return {

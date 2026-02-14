@@ -95,13 +95,18 @@ async function initCheckout(req, res) {
       // ━━━━━ Binance Pay ━━━━━
       case 'binance': {
         const binance = new BinancePayProcessor(gateway.config);
+        // Binance returnUrl goes to frontend (not server callback), webhookUrl is for server notifications
+        const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
+        const binanceReturnUrl = req.body.return_url || `${frontendUrl}/checkout/success`;
+        const binanceWebhookUrl = `${req.protocol}://${req.get('host')}/api/checkout/webhooks/binance`;
         const order = await binance.createOrder({
           amount,
           currency: 'USDT',
           description,
           referenceId,
-          returnUrl,
-          cancelUrl,
+          returnUrl: binanceReturnUrl,
+          cancelUrl: req.body.cancel_url || `${frontendUrl}/checkout/cancelled`,
+          webhookUrl: binanceWebhookUrl,
         });
         await Payment.updateExternalId(payment.id, SITE_KEY, order.merchantTradeNo);
         result = {
@@ -168,7 +173,7 @@ async function initCheckout(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ Checkout error:', error);
+    console.error('❌ Checkout error:', error.message, error.response?.data || '');
     res.status(500).json({ error: 'فشل في بدء عملية الدفع', details: error.message });
   }
 }
