@@ -9,7 +9,8 @@ const {
   syncProducts,
   importFromExternalApi,
   getProductsStats,
-  getPublicProducts
+  getPublicProducts,
+  seedTemplateProducts
 } = require('../controllers/productController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -17,6 +18,9 @@ const { checkPermission } = require('../middlewares/permissionMiddleware');
 
 // ─── Public (بدون مصادقة) ───
 router.get('/public', getPublicProducts);
+
+// ─── تعبئة القوالب الافتراضية (بدون مصادقة — يُنفَّذ مرة واحدة) ───
+router.get('/seed-templates', seedTemplateProducts);
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);

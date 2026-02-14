@@ -756,6 +756,127 @@ async function getPublicProducts(req, res) {
   }
 }
 
+// ─── تعبئة المنتجات الافتراضية (القوالب) ───
+async function seedTemplateProducts(req, res) {
+  try {
+    const { SITE_KEY } = require('../config/env');
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+
+    // التأكد من وجود الأعمدة 
+    const addColumnSafe = async (col, def) => {
+      try { await pool.query(`ALTER TABLE products ADD COLUMN ${col} ${def}`); } catch(e) { /* already exists */ }
+    };
+    await addColumnSafe('image', 'VARCHAR(500) DEFAULT NULL');
+    await addColumnSafe('status', "VARCHAR(20) DEFAULT 'active'");
+    await addColumnSafe('category', "VARCHAR(100) DEFAULT 'digital-services'");
+
+    // القوالب الافتراضية
+    const templates = [
+      {
+        name: 'متجر خدمات رقمية',
+        description: 'قالب متجر خدمات رقمية متكامل مع محفظة إلكترونية، بوابات دفع متعددة، لوحة تحكم إدارية، ونظام دعم فني بالتذاكر',
+        price: 39,
+        category: 'digital-services',
+        image: 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'متجر إلكتروني احترافي',
+        description: 'قالب متجر إلكتروني متكامل مع سلة شراء، بوابة دفع، وإدارة منتجات متقدمة',
+        price: 29,
+        category: 'e-commerce',
+        image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'موقع مطعم فاخر',
+        description: 'قالب مطعم أنيق مع قائمة طعام تفاعلية، نظام حجوزات، وطلبات أونلاين',
+        price: 19,
+        category: 'restaurant',
+        image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'بورتفوليو إبداعي',
+        description: 'قالب بورتفوليو مذهل لعرض أعمالك بأسلوب فني راقي يجذب العملاء',
+        price: 14,
+        category: 'portfolio',
+        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'لوحة تحكم SaaS',
+        description: 'قالب لوحة تحكم متقدم مع تحليلات بيانات، رسوم بيانية، وإدارة مستخدمين',
+        price: 39,
+        category: 'dashboard',
+        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'صفحة هبوط تسويقية',
+        description: 'صفحة هبوط احترافية لإطلاق منتجك أو خدمتك بتصميم يحقق أعلى معدل تحويل',
+        price: 9,
+        category: 'landing',
+        image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'عيادة طبية',
+        description: 'قالب عيادة طبية مع نظام مواعيد، ملفات مرضى، وسجلات طبية إلكترونية',
+        price: 34,
+        category: 'medical',
+        image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+    ];
+
+    // التحقق من وجود منتجات مسبقاً
+    const [existing] = await pool.query(
+      'SELECT COUNT(*) as count FROM products WHERE site_key = ?', [SITE_KEY]
+    );
+
+    if (existing[0].count > 0) {
+      return res.json({
+        message: `يوجد بالفعل ${existing[0].count} منتج في قاعدة البيانات. استخدم ?force=true لإعادة التعبئة.`,
+        existingCount: existing[0].count,
+      });
+    }
+
+    // إدخال القوالب 
+    let inserted = 0;
+    for (const t of templates) {
+      try {
+        await pool.query(
+          `INSERT INTO products (site_key, name, description, price, image, status, category, service_type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [SITE_KEY, t.name, t.description, t.price, t.image, t.status, t.category, t.service_type]
+        );
+        inserted++;
+      } catch (e) {
+        console.error(`❌ Failed to insert template "${t.name}":`, e.message);
+      }
+    }
+
+    res.json({
+      message: `✅ تم تعبئة ${inserted} قالب بنجاح في قاعدة البيانات!`,
+      inserted,
+      total: templates.length,
+      site_key: SITE_KEY,
+    });
+  } catch (error) {
+    console.error('Error in seedTemplateProducts:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تعبئة المنتجات', details: error.message });
+  }
+}
+
 module.exports = {
   getAllProducts,
   createProduct,
@@ -765,5 +886,6 @@ module.exports = {
   syncProducts,
   importFromExternalApi,
   getProductsStats,
-  getPublicProducts
+  getPublicProducts,
+  seedTemplateProducts
 };
