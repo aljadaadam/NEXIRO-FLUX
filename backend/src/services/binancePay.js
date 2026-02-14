@@ -1,81 +1,76 @@
 /**
  * ─── Binance Pay Processor ───
- * يدعم: إنشاء طلب دفع → QR Code / رابط → Webhook تأكيد
+ * يدعم: إنشاء طلب دفع → رابط دفع / QR → Webhook تأكيد
  *
  * Flow:
- * 1. createOrder() → يرجع QR code URL ورابط الدفع
+ * 1. createOrder() → يرجع رابط الدفع
  * 2. العميل يدفع عبر تطبيق Binance
  * 3. Webhook يأكد الدفع تلقائياً
  */
 const axios = require('axios');
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
+
+const BINANCE_PAY_URL = 'https://bpay.binanceapi.com/binancepay/openapi/v3/order';
 
 class BinancePayProcessor {
   constructor(config) {
     this.apiKey = config.api_key;
     this.apiSecret = config.api_secret;
     this.merchantId = config.binance_id;
-    this.baseUrl = 'https://bpay.binanceapi.com';
   }
 
-  // ─── إنشاء توقيع ───
-  _generateSignature(timestamp, nonce, body) {
-    const payload = `${timestamp}\n${nonce}\n${JSON.stringify(body)}\n`;
+  // ─── إنشاء توقيع HMAC-SHA512 ───
+  _createSignature(payload, timestamp, nonce) {
+    const payloadString = JSON.stringify(payload);
+    const dataToSign = `${timestamp}\n${nonce}\n${payloadString}\n`;
     return crypto
       .createHmac('sha512', this.apiSecret)
-      .update(payload)
+      .update(dataToSign, 'utf8')
       .digest('hex')
       .toUpperCase();
   }
 
-  // ─── إنشاء Nonce عشوائي ───
-  _generateNonce(length = 32) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  }
-
   // ─── إنشاء طلب دفع ───
   async createOrder({ amount, currency = 'USDT', description, referenceId, returnUrl, cancelUrl, webhookUrl }) {
-    const timestamp = Date.now();
-    const nonce = this._generateNonce();
+    const timestamp = Date.now().toString();
+    const nonce = uuidv4().replace(/-/g, '');
+    const tradeNo = referenceId || `NF${Date.now()}`;
 
-    const body = {
+    const payload = {
       env: {
-        terminalType: 'WEB',
+        terminalType: 'APP',
       },
-      merchantTradeNo: referenceId || `NF${timestamp}`,
+      merchantTradeNo: tradeNo,
       orderAmount: parseFloat(amount).toFixed(2),
       currency: currency,
       description: description || 'NEXIRO-FLUX Payment',
-      goodsType: '02', // Virtual goods
+      goodsDetails: [{
+        goodsType: '01',
+        goodsCategory: '6000',
+        referenceGoodsId: tradeNo,
+        goodsName: description || 'NEXIRO-FLUX Service',
+      }],
     };
 
     // Only include optional URLs if provided
-    if (returnUrl) body.returnUrl = returnUrl;
-    if (cancelUrl) body.cancelUrl = cancelUrl;
-    if (webhookUrl) body.webhookUrl = webhookUrl;
+    if (returnUrl) payload.returnUrl = returnUrl;
+    if (webhookUrl) payload.webhookUrl = webhookUrl;
 
-    const signature = this._generateSignature(timestamp, nonce, body);
+    const signature = this._createSignature(payload, timestamp, nonce);
 
     let data;
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/binancepay/openapi/v3/order`,
-        body,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'BinancePay-Timestamp': String(timestamp),
-            'BinancePay-Nonce': nonce,
-            'BinancePay-Certificate-SN': this.apiKey,
-            'BinancePay-Signature': signature,
-          },
-        }
-      );
+      const response = await axios.post(BINANCE_PAY_URL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'BinancePay-Timestamp': timestamp,
+          'BinancePay-Nonce': nonce,
+          'BinancePay-Certificate-SN': this.apiKey,
+          'BinancePay-Signature': signature,
+          'User-Agent': 'BinancePay/1.0',
+        },
+      });
       data = response.data;
     } catch (axiosErr) {
       const respData = axiosErr.response?.data;
@@ -91,23 +86,23 @@ class BinancePayProcessor {
 
     return {
       orderId: data.data.prepayId,
-      checkoutUrl: data.data.universalUrl || data.data.deeplink,
+      checkoutUrl: data.data.checkoutUrl || data.data.universalUrl || data.data.deeplink,
       qrContent: data.data.qrcodeLink,
-      merchantTradeNo: body.merchantTradeNo,
+      merchantTradeNo: tradeNo,
       status: 'PENDING',
     };
   }
 
   // ─── التحقق من حالة الطلب ───
   async queryOrder(merchantTradeNo) {
-    const timestamp = Date.now();
-    const nonce = this._generateNonce();
+    const timestamp = Date.now().toString();
+    const nonce = uuidv4().replace(/-/g, '');
 
     const body = { merchantTradeNo };
-    const signature = this._generateSignature(timestamp, nonce, body);
+    const signature = this._createSignature(body, timestamp, nonce);
 
     const { data } = await axios.post(
-      `${this.baseUrl}/binancepay/openapi/v2/order/query`,
+      'https://bpay.binanceapi.com/binancepay/openapi/v2/order/query',
       body,
       {
         headers: {
@@ -116,6 +111,7 @@ class BinancePayProcessor {
           'BinancePay-Nonce': nonce,
           'BinancePay-Certificate-SN': this.apiKey,
           'BinancePay-Signature': signature,
+          'User-Agent': 'BinancePay/1.0',
         },
       }
     );
@@ -137,10 +133,11 @@ class BinancePayProcessor {
 
   // ─── التحقق من صحة Webhook ───
   verifyWebhook(timestamp, nonce, body, receivedSignature) {
-    const payload = `${timestamp}\n${nonce}\n${JSON.stringify(body)}\n`;
+    const payloadString = JSON.stringify(body);
+    const dataToSign = `${timestamp}\n${nonce}\n${payloadString}\n`;
     const expectedSignature = crypto
       .createHmac('sha512', this.apiSecret)
-      .update(payload)
+      .update(dataToSign, 'utf8')
       .digest('hex')
       .toUpperCase();
 
