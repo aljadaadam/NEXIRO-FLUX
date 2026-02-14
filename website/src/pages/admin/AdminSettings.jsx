@@ -1,66 +1,117 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings, Save, Globe, Palette, Shield, Bell, CreditCard,
-  Mail, Server, Key, Eye, EyeOff, CheckCircle, Upload, Image as ImageIcon
+  Eye, EyeOff, CheckCircle, Upload, Loader2, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import api from '../../services/api';
 
 export default function AdminSettings() {
   const { isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState('general');
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [general, setGeneral] = useState({
-    siteName: 'NEXIRO-FLUX',
-    siteDescription: 'منصة رائدة لبناء المواقع الإلكترونية الاحترافية',
-    siteDescriptionEn: 'A leading platform for building professional websites',
-    contactEmail: 'support@nexiro-flux.com',
-    logoUrl: '',
-    faviconUrl: '',
-    maintenanceMode: false,
+  const [siteInfo, setSiteInfo] = useState({
+    name: '',
+    domain: '',
+    site_key: '',
   });
 
-  const [appearance, setAppearance] = useState({
-    primaryColor: '#7c3aed',
-    accentColor: '#06b6d4',
-    darkMode: true,
-    showBanner: true,
-    bannerTextAr: '🚀 أطلق مشروعك الرقمي اليوم',
-    bannerTextEn: '🚀 Launch your digital project today',
+  const [customization, setCustomization] = useState({
+    primary_color: '#7c3aed',
+    secondary_color: '#06b6d4',
+    dark_mode: true,
+    show_banner: true,
+    button_radius: '12',
+    header_style: 'default',
+    font_family: 'Inter',
+    theme_id: 'default',
   });
 
-  const [notifications, setNotifications] = useState({
-    emailOnPurchase: true,
-    emailOnRegistration: true,
-    emailOnTicket: true,
-    emailWeeklyReport: false,
-    pushEnabled: false,
-  });
-
-  const [payment, setPayment] = useState({
-    stripeKey: '',
-    paypalEmail: '',
-    bankTransfer: true,
-    currency: 'USD',
-    taxRate: 0,
+  const [subscription, setSubscription] = useState({
+    plan: '',
+    status: '',
+    billing_cycle: '',
+    expires_at: '',
   });
 
   const [showKeys, setShowKeys] = useState({});
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => { loadSettings(); }, []);
+
+  const loadSettings = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [siteRes, customRes] = await Promise.allSettled([
+        api.getMySite(),
+        api.getCustomization(),
+      ]);
+      if (siteRes.status === 'fulfilled') {
+        const s = siteRes.value;
+        setSiteInfo({
+          name: s.site?.name || '',
+          domain: s.site?.domain || '',
+          site_key: s.site?.site_key || '',
+        });
+        if (s.subscription) {
+          setSubscription({
+            plan: s.subscription.plan || '',
+            status: s.subscription.status || '',
+            billing_cycle: s.subscription.billing_cycle || '',
+            expires_at: s.subscription.expires_at || '',
+          });
+        }
+      }
+      if (customRes.status === 'fulfilled') {
+        const c = customRes.value?.customization || customRes.value || {};
+        setCustomization(prev => ({
+          ...prev,
+          primary_color: c.primary_color || prev.primary_color,
+          secondary_color: c.secondary_color || prev.secondary_color,
+          dark_mode: c.dark_mode ?? prev.dark_mode,
+          show_banner: c.show_banner ?? prev.show_banner,
+          button_radius: c.button_radius || prev.button_radius,
+          header_style: c.header_style || prev.header_style,
+          font_family: c.font_family || prev.font_family,
+          theme_id: c.theme_id || prev.theme_id,
+        }));
+      }
+    } catch (err) {
+      setError(err?.error || 'فشل تحميل الإعدادات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (activeTab === 'general') {
+        await api.updateSiteSettings({ name: siteInfo.name, domain: siteInfo.domain });
+      } else if (activeTab === 'appearance') {
+        await api.updateCustomization(customization);
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      alert(err?.error || 'فشل الحفظ');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [
     { id: 'general', labelAr: 'عام', labelEn: 'General', icon: Settings },
     { id: 'appearance', labelAr: 'المظهر', labelEn: 'Appearance', icon: Palette },
-    { id: 'notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
-    { id: 'payment', labelAr: 'الدفع', labelEn: 'Payment', icon: CreditCard },
+    { id: 'subscription', labelAr: 'الاشتراك', labelEn: 'Subscription', icon: CreditCard },
     { id: 'security', labelAr: 'الأمان', labelEn: 'Security', icon: Shield },
   ];
 
-  const InputField = ({ label, value, onChange, type = 'text', placeholder, secret }) => (
+  const InputField = ({ label, value, onChange, type = 'text', placeholder, secret, disabled }) => (
     <div>
       <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{label}</label>
       <div className="relative">
@@ -69,7 +120,8 @@ export default function AdminSettings() {
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50 transition-all"
+          disabled={disabled}
+          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50 transition-all disabled:opacity-50"
         />
         {secret && (
           <button
@@ -94,6 +146,27 @@ export default function AdminSettings() {
     </label>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <AlertTriangle className="w-12 h-12 text-amber-400" />
+        <p className="text-dark-400 text-sm">{error}</p>
+        <button onClick={loadSettings} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-400 text-white text-sm transition-all">
+          <RefreshCw className="w-4 h-4" />
+          {isRTL ? 'إعادة المحاولة' : 'Retry'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -103,19 +176,20 @@ export default function AdminSettings() {
             {isRTL ? 'الإعدادات' : 'Settings'}
           </h1>
           <p className="text-dark-400 text-sm mt-1">
-            {isRTL ? 'إعدادات المنصة والتكوينات' : 'Platform settings and configurations'}
+            {isRTL ? 'إعدادات المنصة والتكوينات — بيانات حية' : 'Platform settings — live data'}
           </p>
         </div>
         <button
           onClick={handleSave}
+          disabled={saving}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
             saved
               ? 'bg-emerald-500 text-white'
               : 'bg-primary-500 hover:bg-primary-400 text-white'
           }`}
         >
-          {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          {saved ? (isRTL ? 'تم الحفظ!' : 'Saved!') : (isRTL ? 'حفظ التغييرات' : 'Save Changes')}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+          {saved ? (isRTL ? 'تم الحفظ!' : 'Saved!') : saving ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : (isRTL ? 'حفظ التغييرات' : 'Save Changes')}
         </button>
       </div>
 
@@ -150,47 +224,9 @@ export default function AdminSettings() {
                 <Settings className="w-5 h-5 text-primary-400" />
                 {isRTL ? 'الإعدادات العامة' : 'General Settings'}
               </h3>
-              <InputField label={isRTL ? 'اسم الموقع' : 'Site Name'} value={general.siteName} onChange={v => setGeneral(g => ({ ...g, siteName: v }))} />
-              <InputField label={isRTL ? 'الوصف (عربي)' : 'Description (AR)'} value={general.siteDescription} onChange={v => setGeneral(g => ({ ...g, siteDescription: v }))} />
-              <InputField label={isRTL ? 'الوصف (إنجليزي)' : 'Description (EN)'} value={general.siteDescriptionEn} onChange={v => setGeneral(g => ({ ...g, siteDescriptionEn: v }))} />
-              <InputField label={isRTL ? 'إيميل التواصل' : 'Contact Email'} value={general.contactEmail} onChange={v => setGeneral(g => ({ ...g, contactEmail: v }))} type="email" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'رابط الشعار' : 'Logo URL'}</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={general.logoUrl}
-                      onChange={e => setGeneral(g => ({ ...g, logoUrl: e.target.value }))}
-                      placeholder="https://..."
-                      className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50"
-                    />
-                    <button className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-dark-400 hover:text-white transition-all">
-                      <Upload className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'Favicon' : 'Favicon URL'}</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={general.faviconUrl}
-                      onChange={e => setGeneral(g => ({ ...g, faviconUrl: e.target.value }))}
-                      placeholder="https://..."
-                      className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50"
-                    />
-                    <button className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-dark-400 hover:text-white transition-all">
-                      <Upload className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="pt-3 border-t border-white/5">
-                <Toggle
-                  label={isRTL ? 'وضع الصيانة' : 'Maintenance Mode'}
-                  checked={general.maintenanceMode}
-                  onChange={v => setGeneral(g => ({ ...g, maintenanceMode: v }))}
-                />
-              </div>
+              <InputField label={isRTL ? 'اسم الموقع' : 'Site Name'} value={siteInfo.name} onChange={v => setSiteInfo(s => ({ ...s, name: v }))} />
+              <InputField label={isRTL ? 'النطاق' : 'Domain'} value={siteInfo.domain} onChange={v => setSiteInfo(s => ({ ...s, domain: v }))} />
+              <InputField label={isRTL ? 'مفتاح الموقع' : 'Site Key'} value={siteInfo.site_key} onChange={() => {}} disabled />
             </div>
           )}
 
@@ -207,85 +243,101 @@ export default function AdminSettings() {
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
-                      value={appearance.primaryColor}
-                      onChange={e => setAppearance(a => ({ ...a, primaryColor: e.target.value }))}
+                      value={customization.primary_color}
+                      onChange={e => setCustomization(c => ({ ...c, primary_color: e.target.value }))}
                       className="w-10 h-10 rounded-lg border-2 border-white/10 cursor-pointer"
                     />
                     <input
-                      value={appearance.primaryColor}
-                      onChange={e => setAppearance(a => ({ ...a, primaryColor: e.target.value }))}
+                      value={customization.primary_color}
+                      onChange={e => setCustomization(c => ({ ...c, primary_color: e.target.value }))}
                       className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'لون التمييز' : 'Accent Color'}</label>
+                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'اللون الثانوي' : 'Secondary Color'}</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
-                      value={appearance.accentColor}
-                      onChange={e => setAppearance(a => ({ ...a, accentColor: e.target.value }))}
+                      value={customization.secondary_color}
+                      onChange={e => setCustomization(c => ({ ...c, secondary_color: e.target.value }))}
                       className="w-10 h-10 rounded-lg border-2 border-white/10 cursor-pointer"
                     />
                     <input
-                      value={appearance.accentColor}
-                      onChange={e => setAppearance(a => ({ ...a, accentColor: e.target.value }))}
+                      value={customization.secondary_color}
+                      onChange={e => setCustomization(c => ({ ...c, secondary_color: e.target.value }))}
                       className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50"
                     />
                   </div>
                 </div>
               </div>
-              <InputField label={isRTL ? 'نص البانر (عربي)' : 'Banner Text (AR)'} value={appearance.bannerTextAr} onChange={v => setAppearance(a => ({ ...a, bannerTextAr: v }))} />
-              <InputField label={isRTL ? 'نص البانر (إنجليزي)' : 'Banner Text (EN)'} value={appearance.bannerTextEn} onChange={v => setAppearance(a => ({ ...a, bannerTextEn: v }))} />
-              <div className="space-y-3 pt-3 border-t border-white/5">
-                <Toggle label={isRTL ? 'إظهار البانر' : 'Show Banner'} checked={appearance.showBanner} onChange={v => setAppearance(a => ({ ...a, showBanner: v }))} />
-              </div>
-            </div>
-          )}
-
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-5">
-              <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                <Bell className="w-5 h-5 text-primary-400" />
-                {isRTL ? 'إعدادات الإشعارات' : 'Notification Settings'}
-              </h3>
-              <div className="space-y-4">
-                <Toggle label={isRTL ? 'إيميل عند شراء جديد' : 'Email on new purchase'} checked={notifications.emailOnPurchase} onChange={v => setNotifications(n => ({ ...n, emailOnPurchase: v }))} />
-                <Toggle label={isRTL ? 'إيميل عند تسجيل مستخدم' : 'Email on new registration'} checked={notifications.emailOnRegistration} onChange={v => setNotifications(n => ({ ...n, emailOnRegistration: v }))} />
-                <Toggle label={isRTL ? 'إيميل عند تذكرة دعم' : 'Email on support ticket'} checked={notifications.emailOnTicket} onChange={v => setNotifications(n => ({ ...n, emailOnTicket: v }))} />
-                <Toggle label={isRTL ? 'تقرير أسبوعي بالإيميل' : 'Weekly email report'} checked={notifications.emailWeeklyReport} onChange={v => setNotifications(n => ({ ...n, emailWeeklyReport: v }))} />
-                <Toggle label={isRTL ? 'إشعارات Push' : 'Push Notifications'} checked={notifications.pushEnabled} onChange={v => setNotifications(n => ({ ...n, pushEnabled: v }))} />
-              </div>
-            </div>
-          )}
-
-          {/* Payment */}
-          {activeTab === 'payment' && (
-            <div className="space-y-5">
-              <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-primary-400" />
-                {isRTL ? 'إعدادات الدفع' : 'Payment Settings'}
-              </h3>
-              <InputField label={isRTL ? 'مفتاح Stripe' : 'Stripe Secret Key'} value={payment.stripeKey} onChange={v => setPayment(p => ({ ...p, stripeKey: v }))} secret placeholder="sk_live_..." />
-              <InputField label={isRTL ? 'إيميل PayPal' : 'PayPal Email'} value={payment.paypalEmail} onChange={v => setPayment(p => ({ ...p, paypalEmail: v }))} type="email" />
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'العملة' : 'Currency'}</label>
+                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'الخط' : 'Font Family'}</label>
                   <select
-                    value={payment.currency}
-                    onChange={e => setPayment(p => ({ ...p, currency: e.target.value }))}
+                    value={customization.font_family}
+                    onChange={e => setCustomization(c => ({ ...c, font_family: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50 appearance-none"
                   >
-                    {['USD', 'EUR', 'SAR', 'AED', 'KWD', 'BHD'].map(c => (
-                      <option key={c} value={c} className="bg-dark-900">{c}</option>
+                    {['Inter', 'Cairo', 'Tajawal', 'Poppins', 'Roboto'].map(f => (
+                      <option key={f} value={f} className="bg-dark-900">{f}</option>
                     ))}
                   </select>
                 </div>
-                <InputField label={isRTL ? 'نسبة الضريبة %' : 'Tax Rate %'} value={payment.taxRate} onChange={v => setPayment(p => ({ ...p, taxRate: Number(v) }))} type="number" />
+                <div>
+                  <label className="block text-[11px] text-dark-500 mb-1.5 font-medium">{isRTL ? 'نمط الهيدر' : 'Header Style'}</label>
+                  <select
+                    value={customization.header_style}
+                    onChange={e => setCustomization(c => ({ ...c, header_style: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white outline-none focus:border-primary-500/50 appearance-none"
+                  >
+                    {['default', 'centered', 'minimal'].map(s => (
+                      <option key={s} value={s} className="bg-dark-900 capitalize">{s}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="pt-3 border-t border-white/5">
-                <Toggle label={isRTL ? 'تفعيل التحويل البنكي' : 'Enable Bank Transfer'} checked={payment.bankTransfer} onChange={v => setPayment(p => ({ ...p, bankTransfer: v }))} />
+              <InputField
+                label={isRTL ? 'حجم الزوايا (px)' : 'Button Radius (px)'}
+                value={customization.button_radius}
+                onChange={v => setCustomization(c => ({ ...c, button_radius: v }))}
+                type="number"
+              />
+              <div className="space-y-3 pt-3 border-t border-white/5">
+                <Toggle label={isRTL ? 'الوضع الداكن' : 'Dark Mode'} checked={customization.dark_mode} onChange={v => setCustomization(c => ({ ...c, dark_mode: v }))} />
+                <Toggle label={isRTL ? 'إظهار البانر' : 'Show Banner'} checked={customization.show_banner} onChange={v => setCustomization(c => ({ ...c, show_banner: v }))} />
+              </div>
+            </div>
+          )}
+
+          {/* Subscription */}
+          {activeTab === 'subscription' && (
+            <div className="space-y-5">
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary-400" />
+                {isRTL ? 'الاشتراك' : 'Subscription'}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'الخطة' : 'Plan'}</p>
+                  <p className="text-white text-sm font-bold capitalize">{subscription.plan || '-'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'الحالة' : 'Status'}</p>
+                  <p className={`text-sm font-bold capitalize ${subscription.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {subscription.status || '-'}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'دورة الفوترة' : 'Billing Cycle'}</p>
+                  <p className="text-white text-sm font-bold capitalize">{subscription.billing_cycle || '-'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'تاريخ الانتهاء' : 'Expires'}</p>
+                  <p className="text-white text-sm font-bold">
+                    {subscription.expires_at ? new Date(subscription.expires_at).toLocaleDateString() : '-'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -300,26 +352,18 @@ export default function AdminSettings() {
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400 text-sm font-medium">{isRTL ? 'شهادة SSL نشطة' : 'SSL Certificate Active'}</span>
+                  <span className="text-emerald-400 text-sm font-medium">{isRTL ? 'JWT Authentication نشط' : 'JWT Authentication Active'}</span>
                 </div>
-                <p className="text-dark-400 text-xs">{isRTL ? 'جميع الاتصالات مشفّرة ومحمية' : 'All connections are encrypted and secured'}</p>
+                <p className="text-dark-400 text-xs">{isRTL ? 'جميع طلبات API محمية بمصادقة JWT' : 'All API requests are protected with JWT authentication'}</p>
               </div>
-              <InputField label={isRTL ? 'JWT Secret Key' : 'JWT Secret Key'} value="••••••••••••••••••••" onChange={() => {}} secret />
-              <InputField label={isRTL ? 'مفتاح التشفير' : 'Encryption Key'} value="••••••••••••••••••••" onChange={() => {}} secret />
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
-                <h4 className="text-sm font-medium text-white">{isRTL ? 'سجل آخر الدخول' : 'Recent Login Activity'}</h4>
-                {[
-                  { ip: '192.168.1.x', time: isRTL ? 'اليوم 10:30 ص' : 'Today 10:30 AM', device: 'Chrome / Windows' },
-                  { ip: '192.168.1.x', time: isRTL ? 'أمس 3:15 م' : 'Yesterday 3:15 PM', device: 'Safari / iPhone' },
-                ].map((log, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                    <div>
-                      <p className="text-dark-300 text-xs">{log.device}</p>
-                      <p className="text-dark-600 text-[11px]">{log.ip}</p>
-                    </div>
-                    <span className="text-dark-500 text-[11px]">{log.time}</span>
-                  </div>
-                ))}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <p className="text-dark-500 text-[11px] mb-2">{isRTL ? 'معلومات الأمان' : 'Security Info'}</p>
+                <div className="space-y-2 text-xs text-dark-300">
+                  <p>• {isRTL ? 'التشفير: bcrypt لكلمات المرور' : 'Encryption: bcrypt for passwords'}</p>
+                  <p>• {isRTL ? 'المصادقة: JWT + Bearer Token' : 'Auth: JWT + Bearer Token'}</p>
+                  <p>• {isRTL ? 'الصلاحيات: نظام أذونات متعدد المستويات' : 'Permissions: Multi-level permission system'}</p>
+                  <p>• {isRTL ? 'CORS: محدد للنطاقات المسموحة' : 'CORS: Restricted to allowed origins'}</p>
+                </div>
               </div>
             </div>
           )}

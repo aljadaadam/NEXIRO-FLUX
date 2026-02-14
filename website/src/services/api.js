@@ -168,6 +168,10 @@ class ApiService {
     return this.request('/dashboard/stats');
   }
 
+  async getDashboardActivities(limit = 10) {
+    return this.request(`/dashboard/activities?limit=${limit}`);
+  }
+
   // ─── Products ───
 
   async getProducts(params = {}) {
