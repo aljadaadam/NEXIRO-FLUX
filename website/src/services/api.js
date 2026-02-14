@@ -347,6 +347,43 @@ class ApiService {
     return this.request('/payments/stats');
   }
 
+  // ─── Payment Gateways ───
+
+  async getPaymentGateways() {
+    return this.request('/payment-gateways');
+  }
+
+  async getEnabledPaymentGateways(country = null) {
+    const q = country ? `?country=${country}` : '';
+    return this.request(`/payment-gateways/enabled${q}`);
+  }
+
+  async createPaymentGateway(data) {
+    return this.request('/payment-gateways', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePaymentGateway(id, data) {
+    return this.request(`/payment-gateways/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async togglePaymentGateway(id) {
+    return this.request(`/payment-gateways/${id}/toggle`, {
+      method: 'PATCH',
+    });
+  }
+
+  async deletePaymentGateway(id) {
+    return this.request(`/payment-gateways/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ─── Permissions ───
 
   async getAllPermissions() {

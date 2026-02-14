@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
-  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard
+  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
   { to: '/admin/announcements', icon: Megaphone, labelAr: 'الإعلانات', labelEn: 'Announcements' },
   { to: '/admin/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
+  { to: '/admin/payment-gateways', icon: Landmark, labelAr: 'بوابات الدفع', labelEn: 'Payment Gateways' },
   { to: '/admin/settings', icon: Settings, labelAr: 'الإعدادات', labelEn: 'Settings' },
 ];
 
