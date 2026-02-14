@@ -384,6 +384,32 @@ class ApiService {
     });
   }
 
+  // ─── Checkout ───
+
+  async initCheckout(data) {
+    return this.request('/checkout/init', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async checkPaymentStatusPublic(paymentId) {
+    return this.request(`/checkout/status/${paymentId}`);
+  }
+
+  async checkUsdtPayment(paymentId) {
+    return this.request(`/checkout/check-usdt/${paymentId}`, {
+      method: 'POST',
+    });
+  }
+
+  async uploadBankReceipt(paymentId, data) {
+    return this.request(`/checkout/receipt/${paymentId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // ─── Permissions ───
 
   async getAllPermissions() {

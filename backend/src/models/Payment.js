@@ -1,9 +1,20 @@
 const { getPool } = require('../config/db');
 
 class Payment {
+  // ─── التأكد من وجود الأعمدة الإضافية ───
+  static async ensureColumns() {
+    const pool = getPool();
+    const addCol = async (col, def) => {
+      try { await pool.query(`ALTER TABLE payments ADD COLUMN ${col} ${def}`); } catch(e) { /* exists */ }
+    };
+    await addCol('external_id', 'VARCHAR(255) DEFAULT NULL');
+    await addCol('meta', 'JSON DEFAULT NULL');
+  }
+
   // إنشاء عملية دفع
   static async create({ site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description }) {
     const pool = getPool();
+    await this.ensureColumns();
 
     const [result] = await pool.query(
       `INSERT INTO payments (site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description)
@@ -70,6 +81,52 @@ class Payment {
       todayRevenue: parseFloat(todayRows[0].total),
       totalDeposits: parseFloat(depositRows[0].total)
     };
+  }
+
+  // ─── تحديث external_id ───
+  static async updateExternalId(id, site_key, externalId) {
+    const pool = getPool();
+    await this.ensureColumns();
+    await pool.query(
+      'UPDATE payments SET external_id = ? WHERE id = ? AND site_key = ?',
+      [externalId, id, site_key]
+    );
+  }
+
+  // ─── البحث بالـ external_id ───
+  static async findByExternalId(externalId, site_key) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const [rows] = await pool.query(
+      'SELECT * FROM payments WHERE external_id = ? AND site_key = ?',
+      [externalId, site_key]
+    );
+    return rows[0] || null;
+  }
+
+  // ─── تحديث metadata ───
+  static async updateMeta(id, site_key, newMeta) {
+    const pool = getPool();
+    await this.ensureColumns();
+    // جلب meta الحالي ودمجه
+    const [rows] = await pool.query('SELECT meta FROM payments WHERE id = ? AND site_key = ?', [id, site_key]);
+    let existing = {};
+    if (rows[0]?.meta) {
+      existing = typeof rows[0].meta === 'string' ? JSON.parse(rows[0].meta) : rows[0].meta;
+    }
+    const merged = { ...existing, ...newMeta };
+    await pool.query(
+      'UPDATE payments SET meta = ? WHERE id = ? AND site_key = ?',
+      [JSON.stringify(merged), id, site_key]
+    );
+  }
+
+  // ─── جلب metadata ───
+  static async getMeta(id, site_key) {
+    const pool = getPool();
+    const [rows] = await pool.query('SELECT meta FROM payments WHERE id = ? AND site_key = ?', [id, site_key]);
+    if (!rows[0]?.meta) return null;
+    return typeof rows[0].meta === 'string' ? JSON.parse(rows[0].meta) : rows[0].meta;
   }
 }
 
