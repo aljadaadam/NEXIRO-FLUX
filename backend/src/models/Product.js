@@ -180,7 +180,7 @@ class Product {
     return rows;
   }
 
-  static async update(id, site_key, { name, description, price, service_type, source_id }) {
+  static async update(id, site_key, { name, description, price, service_type, source_id, image, status, category }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -197,6 +197,9 @@ class Product {
     }
     if (service_type !== undefined) { updates.push('service_type = ?'); values.push(service_type); }
     if (source_id !== undefined) { updates.push('source_id = ?'); values.push(source_id); }
+    if (image !== undefined) { updates.push('image = ?'); values.push(image); }
+    if (status !== undefined) { updates.push('status = ?'); values.push(status); }
+    if (category !== undefined) { updates.push('category = ?'); values.push(category); }
     
     if (updates.length === 0) return this.findById(id);
     

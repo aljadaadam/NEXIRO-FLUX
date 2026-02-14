@@ -129,34 +129,36 @@ async function updateProduct(req, res) {
     // دعم تنسيقات مختلفة من Dashboard
     const name = req.body.name || req.body.SERVICENAME || req.body.servicename;
     const price = req.body.price || req.body.CREDIT || req.body.credit;
-    const description = req.body.description || '';
-    const service_type = req.body.service_type || req.body.SERVICETYPE || 'SERVER';
+    const description = req.body.description !== undefined ? req.body.description : undefined;
+    const service_type = req.body.service_type || req.body.SERVICETYPE;
     const source_id = req.body.source_id !== undefined ? req.body.source_id : undefined;
+    const image = req.body.image !== undefined ? req.body.image : undefined;
+    const status = req.body.status !== undefined ? req.body.status : undefined;
+    const category = req.body.category !== undefined ? req.body.category : undefined;
 
-    // التحقق من المدخلات
-    if (!name || !price) {
-      return res.status(400).json({ 
-        error: 'الاسم والسعر مطلوبان' 
-      });
+    // بناء بيانات التحديث ديناميكياً
+    const updateData = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (price !== undefined) {
+      if (isNaN(price) || parseFloat(price) <= 0) {
+        return res.status(400).json({ error: 'السعر يجب أن يكون رقم موجب' });
+      }
+      updateData.price = parseFloat(price);
     }
-
-    // التحقق من أن السعر رقم موجب
-    if (isNaN(price) || parseFloat(price) <= 0) {
-      return res.status(400).json({ 
-        error: 'السعر يجب أن يكون رقم موجب' 
-      });
-    }
-
-    const updateData = {
-      name,
-      description: description || '',
-      price: parseFloat(price),
-      service_type
-    };
+    if (service_type !== undefined) updateData.service_type = service_type;
+    if (image !== undefined) updateData.image = image;
+    if (status !== undefined) updateData.status = status;
+    if (category !== undefined) updateData.category = category;
     
     // Add source_id if provided (can be null to unlink from source)
     if (source_id !== undefined) {
       updateData.source_id = source_id === null || source_id === 'null' || source_id === '' ? null : parseInt(source_id);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'لا توجد بيانات للتحديث' });
     }
 
     const product = await Product.update(id, site_key, updateData);
@@ -730,17 +732,43 @@ async function getPublicProducts(req, res) {
     const { SITE_KEY } = require('../config/env');
     const { getPool } = require('../config/db');
     const pool = getPool();
+
+    // أولاً: التحقق من وجود الأعمدة image, status, category
+    const [columns] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
+    );
+    const columnNames = columns.map(c => c.COLUMN_NAME);
+    const hasImage = columnNames.includes('image');
+    const hasStatus = columnNames.includes('status');
+    const hasCategory = columnNames.includes('category');
+
+    // إضافة الأعمدة المفقودة تلقائياً
+    if (!hasImage) {
+      await pool.query('ALTER TABLE products ADD COLUMN image VARCHAR(500) DEFAULT NULL');
+      console.log('✅ Added missing column: image');
+    }
+    if (!hasStatus) {
+      await pool.query("ALTER TABLE products ADD COLUMN status VARCHAR(20) DEFAULT 'active'");
+      console.log('✅ Added missing column: status');
+    }
+    if (!hasCategory) {
+      await pool.query("ALTER TABLE products ADD COLUMN category VARCHAR(100) DEFAULT 'digital-services'");
+      console.log('✅ Added missing column: category');
+    }
+
+    // جلب المنتجات - عرض الكل أو فقط active
     const [products] = await pool.query(
-      `SELECT id, name, description, price, image, status, category, service_type, created_at
+      `SELECT id, name, description, price, image, status, category, service_type, group_name, created_at
        FROM products
-       WHERE site_key = ? AND status = 'active'
+       WHERE site_key = ? AND (status = 'active' OR status IS NULL)
        ORDER BY created_at DESC`,
       [SITE_KEY]
     );
     res.json({ products });
   } catch (error) {
     console.error('Error in getPublicProducts:', error);
-    res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتجات' });
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتجات', details: error.message });
   }
 }
 

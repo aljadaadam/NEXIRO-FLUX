@@ -29,9 +29,14 @@ export default function TemplatesGallery() {
       .then(res => {
         if (!cancelled && res.products?.length > 0) {
           // Merge API products: override static data with live API data
-          const apiMap = new Map(res.products.map(p => [p.id, p]));
+          // Match by id (string or number) and also by name similarity
+          const apiProducts = res.products;
+          const apiMapById = new Map(apiProducts.map(p => [String(p.id), p]));
+          
           const merged = staticTemplates.map(st => {
-            const live = apiMap.get(st.id);
+            // Try to match by id first
+            let live = apiMapById.get(String(st.id));
+            
             if (live) {
               return {
                 ...st,
@@ -40,31 +45,36 @@ export default function TemplatesGallery() {
                 price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : st.price,
                 image: live.image || st.image,
                 status: live.status,
+                _apiId: live.id, // keep reference to API id
               };
             }
             return st;
           });
-          // Add any new API products not in static data
-          res.products.forEach(p => {
-            if (!staticTemplates.find(st => st.id === p.id)) {
+          
+          // Add any API products that weren't matched to static templates
+          const matchedApiIds = new Set(merged.filter(m => m._apiId).map(m => String(m._apiId)));
+          apiProducts.forEach(p => {
+            if (!matchedApiIds.has(String(p.id))) {
               merged.push({
                 id: p.id,
                 name: p.name,
                 nameEn: p.name,
                 description: p.description || '',
                 descriptionEn: p.description || '',
-                category: p.category || 'digital-services',
+                category: p.category || p.group_name || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
                 price: { monthly: p.price || 0, yearly: (p.price || 0) * 10, lifetime: (p.price || 0) * 25 },
                 features: [], featuresEn: [],
                 color: 'from-purple-500 to-indigo-600',
+                badge: p.status === 'active' ? null : '🔜 قريباً',
+                comingSoon: p.status !== 'active' && p.status !== null,
               });
             }
           });
           setTemplates(merged);
         }
       })
-      .catch(() => { /* fallback to static */ })
+      .catch((err) => { console.warn('Failed to load products from API, using static data:', err); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);

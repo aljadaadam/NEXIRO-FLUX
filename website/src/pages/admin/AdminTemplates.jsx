@@ -36,9 +36,11 @@ export default function AdminTemplates() {
     api.getPublicProducts()
       .then(res => {
         if (res.products?.length > 0) {
-          const apiMap = new Map(res.products.map(p => [p.id, p]));
+          const apiProducts = res.products;
+          const apiMapById = new Map(apiProducts.map(p => [String(p.id), p]));
+          
           const merged = staticTemplates.map(st => {
-            const live = apiMap.get(st.id);
+            const live = apiMapById.get(String(st.id));
             if (live) {
               return {
                 ...st,
@@ -49,10 +51,32 @@ export default function AdminTemplates() {
                   : st.price,
                 image: live.image || st.image,
                 status: live.status || (st.comingSoon ? 'coming-soon' : 'active'),
+                _apiId: live.id,
               };
             }
             return { ...st, status: st.comingSoon ? 'coming-soon' : 'active' };
           });
+          
+          // Add API products not matched to static templates
+          const matchedApiIds = new Set(merged.filter(m => m._apiId).map(m => String(m._apiId)));
+          apiProducts.forEach(p => {
+            if (!matchedApiIds.has(String(p.id))) {
+              merged.push({
+                id: p.id,
+                name: p.name,
+                nameEn: p.name,
+                description: p.description || '',
+                descriptionEn: p.description || '',
+                category: p.category || p.group_name || 'digital-services',
+                image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
+                price: { monthly: p.price || 0, yearly: (p.price || 0) * 10, lifetime: (p.price || 0) * 25 },
+                features: [], featuresEn: [],
+                color: 'from-purple-500 to-indigo-600',
+                status: p.status || 'active',
+              });
+            }
+          });
+          
           setTemplates(merged);
         } else {
           setTemplates(staticTemplates.map(st => ({
