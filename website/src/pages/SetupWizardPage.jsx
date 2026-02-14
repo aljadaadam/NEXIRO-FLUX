@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles, Globe, Store, Mail, CheckCircle2, ArrowRight,
   ArrowLeft, Loader2, AlertCircle, Eye, EyeOff, Lock, User,
-  Palette, ChevronRight, CreditCard, Wallet, Building2, Banknote, Copy, Check
+  Palette, ChevronRight, CreditCard, Wallet, Building2, Banknote, Copy, Check, Bitcoin, Landmark
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
@@ -17,14 +17,13 @@ const STEPS = [
   { id: 'done', iconAr: '✅', iconEn: '✅', labelAr: 'تم', labelEn: 'Done' },
 ];
 
-const PAYMENT_METHODS = [
-  { id: 'binance', icon: '🪙', labelAr: 'Binance Pay', labelEn: 'Binance Pay', color: 'from-yellow-500/20 to-yellow-600/10', border: 'border-yellow-500/30' },
-  { id: 'paypal', icon: '🅿️', labelAr: 'PayPal', labelEn: 'PayPal', color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/30' },
-  { id: 'credit_card', icon: '💳', labelAr: 'بطاقة ائتمان', labelEn: 'Credit Card', color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500/30' },
-  { id: 'bank_transfer', icon: '🏦', labelAr: 'تحويل بنكي', labelEn: 'Bank Transfer', color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/30' },
-  { id: 'e_wallet', icon: '📱', labelAr: 'محفظة إلكترونية', labelEn: 'E-Wallet (STC Pay, etc.)', color: 'from-pink-500/20 to-pink-600/10', border: 'border-pink-500/30' },
-  { id: 'crypto', icon: '₿', labelAr: 'عملات رقمية أخرى', labelEn: 'Other Crypto', color: 'from-orange-500/20 to-orange-600/10', border: 'border-orange-500/30' },
-];
+// Gateway type → icon and colors mapping
+const gatewayStyle = {
+  paypal: { Icon: Wallet, color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/30', textColor: 'text-blue-400' },
+  bank_transfer: { Icon: Landmark, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/30', textColor: 'text-emerald-400' },
+  usdt: { Icon: Bitcoin, color: 'from-green-500/20 to-teal-600/10', border: 'border-green-500/30', textColor: 'text-green-400' },
+  binance: { Icon: CreditCard, color: 'from-yellow-500/20 to-yellow-600/10', border: 'border-yellow-500/30', textColor: 'text-yellow-400' },
+};
 
 export default function SetupWizardPage() {
   const { isRTL } = useLanguage();
@@ -68,9 +67,22 @@ export default function SetupWizardPage() {
   const [copied, setCopied] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
+  // Dynamic gateways from server
+  const [enabledGateways, setEnabledGateways] = useState([]);
+  const [gatewaysLoading, setGatewaysLoading] = useState(true);
+
+  useEffect(() => {
+    setGatewaysLoading(true);
+    api.getEnabledPaymentGateways()
+      .then(data => setEnabledGateways(data.gateways || []))
+      .catch(() => setEnabledGateways([]))
+      .finally(() => setGatewaysLoading(false));
+  }, []);
+
   const [form, setForm] = useState({
     // Step 0: Payment
     payment_method: '',
+    payment_method_type: '',
     payment_reference: '',
     // Step 1: Account
     owner_name: '',
@@ -400,133 +412,159 @@ export default function SetupWizardPage() {
                 </div>
               </div>
 
-              {/* Payment Methods */}
+              {/* Payment Methods — from server */}
               <div>
                 <label className="block text-sm text-dark-300 mb-3">{isRTL ? 'اختر طريقة الدفع' : 'Select Payment Method'}</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {PAYMENT_METHODS.map(method => (
-                    <button
-                      key={method.id}
-                      onClick={() => {
-                        handleChange('payment_method', method.id);
-                        setPaymentConfirmed(false);
-                      }}
-                      className={`relative p-4 rounded-xl border transition-all duration-300 text-start ${
-                        form.payment_method === method.id
-                          ? `bg-gradient-to-br ${method.color} ${method.border} border-2 scale-[1.02]`
-                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <span className="text-2xl block mb-1">{method.icon}</span>
-                      <span className={`text-sm font-medium ${form.payment_method === method.id ? 'text-white' : 'text-dark-300'}`}>
-                        {isRTL ? method.labelAr : method.labelEn}
-                      </span>
-                      {form.payment_method === method.id && (
-                        <div className="absolute top-2 end-2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                {gatewaysLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-primary-400 animate-spin" />
+                  </div>
+                ) : enabledGateways.length === 0 ? (
+                  <div className="text-center py-6 text-dark-500 text-sm">
+                    {isRTL ? 'لا توجد طرق دفع متاحة حالياً' : 'No payment methods available'}
+                  </div>
+                ) : (
+                  <div className={`grid ${enabledGateways.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                    {enabledGateways.map(gw => {
+                      const style = gatewayStyle[gw.type] || gatewayStyle.paypal;
+                      const GwIcon = style.Icon;
+                      const selected = form.payment_method === String(gw.id);
+                      return (
+                        <button
+                          key={gw.id}
+                          onClick={() => {
+                            handleChange('payment_method', String(gw.id));
+                            handleChange('payment_method_type', gw.type);
+                            setPaymentConfirmed(false);
+                          }}
+                          className={`relative p-4 rounded-xl border transition-all duration-300 text-start ${
+                            selected
+                              ? `bg-gradient-to-br ${style.color} ${style.border} border-2 scale-[1.02]`
+                              : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${style.color} flex items-center justify-center mb-2`}>
+                            <GwIcon className={`w-4 h-4 ${style.textColor}`} />
+                          </div>
+                          <span className={`text-sm font-medium ${selected ? 'text-white' : 'text-dark-300'}`}>
+                            {isRTL ? gw.name : (gw.name_en || gw.name)}
+                          </span>
+                          {selected && (
+                            <div className="absolute top-2 end-2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* Payment Instructions */}
-              {form.payment_method && (
+              {/* Payment Instructions — dynamic from selected gateway */}
+              {form.payment_method && (() => {
+                const selectedGw = enabledGateways.find(g => String(g.id) === form.payment_method);
+                if (!selectedGw) return null;
+                const cfg = selectedGw.config || {};
+                const style = gatewayStyle[selectedGw.type] || gatewayStyle.paypal;
+
+                return (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
                   <h4 className="text-sm font-semibold text-white flex items-center gap-2">
                     <Banknote className="w-4 h-4 text-primary-400" />
                     {isRTL ? 'تعليمات الدفع' : 'Payment Instructions'}
                   </h4>
 
-                  {form.payment_method === 'binance' && (
-                    <div className="space-y-2">
-                      <p className="text-dark-400 text-sm">
-                        {isRTL ? 'أرسل المبلغ إلى عنوان Binance Pay التالي:' : 'Send the amount to the following Binance Pay ID:'}
-                      </p>
-                      <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                        <code className="text-yellow-400 text-sm flex-1 font-mono">nexiro@binance.pay</code>
-                        <button onClick={() => handleCopy('nexiro@binance.pay')} className="text-dark-400 hover:text-white transition-colors">
-                          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <p className="text-dark-500 text-xs">{isRTL ? 'العملة: USDT (شبكة BEP20)' : 'Currency: USDT (BEP20 Network)'}</p>
-                    </div>
-                  )}
-
-                  {form.payment_method === 'paypal' && (
+                  {selectedGw.type === 'paypal' && (
                     <div className="space-y-2">
                       <p className="text-dark-400 text-sm">
                         {isRTL ? 'أرسل المبلغ إلى حساب PayPal التالي:' : 'Send the amount to the following PayPal account:'}
                       </p>
-                      <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                        <code className="text-blue-400 text-sm flex-1 font-mono">payments@nexiro-flux.com</code>
-                        <button onClick={() => handleCopy('payments@nexiro-flux.com')} className="text-dark-400 hover:text-white transition-colors">
-                          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      {cfg.email && (
+                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
+                          <code className="text-blue-400 text-sm flex-1 font-mono">{cfg.email}</code>
+                          <button onClick={() => handleCopy(cfg.email)} className="text-dark-400 hover:text-white transition-colors">
+                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {form.payment_method === 'credit_card' && (
+                  {selectedGw.type === 'binance' && (
                     <div className="space-y-2">
                       <p className="text-dark-400 text-sm">
-                        {isRTL ? 'سيتم توجيهك لبوابة الدفع الآمنة بعد تأكيد الطلب.' : 'You will be redirected to the secure payment gateway after confirming.'}
+                        {isRTL ? 'أرسل المبلغ عبر Binance Pay:' : 'Send the amount via Binance Pay:'}
                       </p>
-                      <div className="flex items-center gap-2 text-dark-500 text-xs">
-                        <Lock className="w-3 h-3" />
-                        {isRTL ? 'مشفر ومؤمن بـ SSL 256-bit' : 'Encrypted & secured with 256-bit SSL'}
-                      </div>
+                      {cfg.binance_id && (
+                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
+                          <code className="text-yellow-400 text-sm flex-1 font-mono">{cfg.binance_id}</code>
+                          <button onClick={() => handleCopy(cfg.binance_id)} className="text-dark-400 hover:text-white transition-colors">
+                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      )}
+                      {cfg.binance_email && (
+                        <p className="text-dark-500 text-xs">{isRTL ? 'الإيميل:' : 'Email:'} {cfg.binance_email}</p>
+                      )}
                     </div>
                   )}
 
-                  {form.payment_method === 'bank_transfer' && (
+                  {selectedGw.type === 'bank_transfer' && (
                     <div className="space-y-2">
                       <p className="text-dark-400 text-sm">
                         {isRTL ? 'حوّل المبلغ إلى الحساب البنكي التالي:' : 'Transfer the amount to the following bank account:'}
                       </p>
                       <div className="bg-dark-900/50 rounded-lg p-3 space-y-1.5 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-dark-500">{isRTL ? 'البنك' : 'Bank'}</span>
-                          <span className="text-white font-mono">Al Rajhi Bank</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-dark-500">IBAN</span>
-                          <span className="text-emerald-400 font-mono text-xs">SA0380000000608010167519</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-dark-500">{isRTL ? 'اسم المستفيد' : 'Beneficiary'}</span>
-                          <span className="text-white font-mono">NEXIRO-FLUX LLC</span>
-                        </div>
+                        {cfg.bank_name && (
+                          <div className="flex justify-between">
+                            <span className="text-dark-500">{isRTL ? 'البنك' : 'Bank'}</span>
+                            <span className="text-white font-mono">{cfg.bank_name}</span>
+                          </div>
+                        )}
+                        {cfg.iban && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-dark-500">IBAN</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-emerald-400 font-mono text-xs">{cfg.iban}</span>
+                              <button onClick={() => handleCopy(cfg.iban)} className="text-dark-400 hover:text-white transition-colors">
+                                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {cfg.account_holder && (
+                          <div className="flex justify-between">
+                            <span className="text-dark-500">{isRTL ? 'اسم المستفيد' : 'Beneficiary'}</span>
+                            <span className="text-white font-mono">{cfg.account_holder}</span>
+                          </div>
+                        )}
+                        {cfg.currency && (
+                          <div className="flex justify-between">
+                            <span className="text-dark-500">{isRTL ? 'العملة' : 'Currency'}</span>
+                            <span className="text-white font-mono">{cfg.currency}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  {form.payment_method === 'e_wallet' && (
+                  {selectedGw.type === 'usdt' && (
                     <div className="space-y-2">
                       <p className="text-dark-400 text-sm">
-                        {isRTL ? 'أرسل المبلغ عبر STC Pay أو أي محفظة إلكترونية إلى:' : 'Send amount via STC Pay or any e-wallet to:'}
+                        {isRTL ? `أرسل USDT إلى العنوان التالي (شبكة ${cfg.network || 'TRC20'}):` : `Send USDT to the following address (${cfg.network || 'TRC20'} network):`}
                       </p>
-                      <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                        <code className="text-pink-400 text-sm flex-1 font-mono">+966 5X XXX XXXX</code>
-                        <button onClick={() => handleCopy('+966 5X XXX XXXX')} className="text-dark-400 hover:text-white transition-colors">
-                          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {form.payment_method === 'crypto' && (
-                    <div className="space-y-2">
-                      <p className="text-dark-400 text-sm">
-                        {isRTL ? 'أرسل USDT إلى العنوان التالي (شبكة TRC20):' : 'Send USDT to the following address (TRC20 network):'}
-                      </p>
-                      <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                        <code className="text-orange-400 text-xs flex-1 font-mono break-all">TXYz...demo...address</code>
-                        <button onClick={() => handleCopy('TXYz...demo...address')} className="text-dark-400 hover:text-white transition-colors">
-                          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      {cfg.wallet_address && (
+                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
+                          <code className="text-green-400 text-xs flex-1 font-mono break-all">{cfg.wallet_address}</code>
+                          <button onClick={() => handleCopy(cfg.wallet_address)} className="text-dark-400 hover:text-white transition-colors">
+                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      )}
+                      {cfg.network && (
+                        <p className="text-dark-500 text-xs">{isRTL ? 'الشبكة:' : 'Network:'} {cfg.network}</p>
+                      )}
                     </div>
                   )}
 
@@ -566,7 +604,8 @@ export default function SetupWizardPage() {
                     )}
                   </button>
                 </div>
-              )}
+                );
+              })()}
 
               {/* Trial notice */}
               <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-xl px-4 py-3 flex items-start gap-3">
