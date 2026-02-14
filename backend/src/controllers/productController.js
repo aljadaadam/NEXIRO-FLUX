@@ -743,16 +743,48 @@ async function getPublicProducts(req, res) {
 
     // جلب المنتجات - عرض الكل باستثناء المعطلة
     const [products] = await pool.query(
-      `SELECT id, name, description, price, image, status, category, service_type, group_name, created_at
+      `SELECT id, name, description, price, image, status, category, service_type, created_at
        FROM products
        WHERE site_key = ? AND (status = 'active' OR status IS NULL)
        ORDER BY created_at DESC`,
       [SITE_KEY]
     );
-    res.json({ products });
+    res.json({ products, site_key: SITE_KEY, count: products.length });
   } catch (error) {
     console.error('Error in getPublicProducts:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتجات', details: error.message });
+  }
+}
+
+// ─── تشخيص المنتجات (debug) ───
+async function debugProducts(req, res) {
+  try {
+    const { SITE_KEY } = require('../config/env');
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+
+    // عدد المنتجات الكلي
+    const [allProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products LIMIT 20');
+    
+    // عدد المنتجات لهذا الموقع
+    const [siteProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products WHERE site_key = ?', [SITE_KEY]);
+    
+    // الأعمدة الموجودة
+    const [columns] = await pool.query(
+      `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
+    );
+
+    res.json({
+      site_key: SITE_KEY,
+      totalInDB: allProducts.length,
+      forThisSite: siteProducts.length,
+      allProducts: allProducts,
+      siteProducts: siteProducts,
+      columns: columns.map(c => `${c.COLUMN_NAME} (${c.DATA_TYPE}, default: ${c.COLUMN_DEFAULT})`),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 }
 
@@ -887,5 +919,6 @@ module.exports = {
   importFromExternalApi,
   getProductsStats,
   getPublicProducts,
-  seedTemplateProducts
+  seedTemplateProducts,
+  debugProducts
 };

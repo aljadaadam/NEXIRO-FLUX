@@ -10,7 +10,8 @@ const {
   importFromExternalApi,
   getProductsStats,
   getPublicProducts,
-  seedTemplateProducts
+  seedTemplateProducts,
+  debugProducts
 } = require('../controllers/productController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -21,6 +22,9 @@ router.get('/public', getPublicProducts);
 
 // ─── تعبئة القوالب الافتراضية (بدون مصادقة — يُنفَّذ مرة واحدة) ───
 router.get('/seed-templates', seedTemplateProducts);
+
+// ─── تشخيص (debug) ───
+router.get('/debug', debugProducts);
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);
