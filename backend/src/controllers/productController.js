@@ -733,26 +733,29 @@ async function getPublicProducts(req, res) {
     const { getPool } = require('../config/db');
     const pool = getPool();
 
-    // محاولة إضافة الأعمدة المفقودة (تتجاهل الخطأ إذا موجودة مسبقاً)
-    const addColumnSafe = async (col, def) => {
-      try { await pool.query(`ALTER TABLE products ADD COLUMN ${col} ${def}`); console.log(`✅ Added column: ${col}`); } catch(e) { /* already exists */ }
-    };
-    await addColumnSafe('image', 'VARCHAR(500) DEFAULT NULL');
-    await addColumnSafe('status', "VARCHAR(20) DEFAULT 'active'");
-    await addColumnSafe('category', "VARCHAR(100) DEFAULT 'digital-services'");
+    console.log('🔵 getPublicProducts called, SITE_KEY:', SITE_KEY);
 
-    // جلب المنتجات - عرض الكل باستثناء المعطلة
+    // استعلام بسيط - نفس استعلام debug
     const [products] = await pool.query(
-      `SELECT id, name, description, price, image, status, category, service_type, created_at
-       FROM products
-       WHERE site_key = ? AND (status = 'active' OR status IS NULL)
-       ORDER BY created_at DESC`,
+      'SELECT * FROM products WHERE site_key = ?',
       [SITE_KEY]
     );
-    res.json({ products, site_key: SITE_KEY, count: products.length });
+
+    console.log('🔵 getPublicProducts found:', products.length, 'products');
+
+    res.json({ 
+      products, 
+      site_key: SITE_KEY, 
+      count: products.length,
+      version: 'v3'
+    });
   } catch (error) {
-    console.error('Error in getPublicProducts:', error);
-    res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتجات', details: error.message });
+    console.error('❌ Error in getPublicProducts:', error);
+    res.status(500).json({ 
+      error: 'حدث خطأ أثناء جلب المنتجات', 
+      details: error.message,
+      version: 'v3'
+    });
   }
 }
 
