@@ -25,14 +25,18 @@ export default function TemplatePreviewPage() {
     api.getPublicProducts()
       .then(res => {
         if (cancelled) return;
-        const live = res.products?.find(p => p.id === id);
         const staticT = staticTemplates.find(tp => tp.id === id);
+        // Match API product by name (DB has no slug field)
+        const apiByName = new Map((res.products || []).map(p => [p.name?.trim(), p]));
+        const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
         if (live && staticT) {
+          const price = parseFloat(live.price);
           setTemplate({
             ...staticT,
+            _apiId: live.id,
             name: live.name || staticT.name,
             description: live.description || staticT.description,
-            price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : staticT.price,
+            price: price ? { monthly: price, yearly: price * 10, lifetime: price * 25 } : staticT.price,
             image: live.image || staticT.image,
           });
         } else if (live) {

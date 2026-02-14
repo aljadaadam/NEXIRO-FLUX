@@ -41,13 +41,16 @@ export default function SetupWizardPage() {
   useEffect(() => {
     api.getPublicProducts()
       .then(res => {
-        const live = res.products?.find(p => p.id === templateId);
         const staticT = staticTemplates.find(t => t.id === templateId);
+        // Match API product by name (DB has no slug field)
+        const apiByName = new Map((res.products || []).map(p => [p.name?.trim(), p]));
+        const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
         if (live && staticT) {
+          const price = parseFloat(live.price);
           setTemplateData({
             ...staticT,
             name: live.name || staticT.name,
-            price: live.price ? { monthly: live.price, yearly: live.price * 10, lifetime: live.price * 25 } : staticT.price,
+            price: price ? { monthly: price, yearly: price * 10, lifetime: price * 25 } : staticT.price,
           });
         } else if (live) {
           setTemplateData({

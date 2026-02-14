@@ -89,7 +89,7 @@ class Product {
         service_type = VALUES(service_type),
         name = VALUES(name),
         description = VALUES(description),
-        price = VALUES(price),
+        price = IF(is_custom_price = 1, price, VALUES(price)),
         credit = VALUES(credit),
         credit_raw = VALUES(credit_raw),
         source_price = VALUES(source_price),
