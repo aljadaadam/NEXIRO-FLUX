@@ -1,0 +1,485 @@
+/* src/styles/main.css */
+
+/* Tailwind Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======== Design System Colors ======== */
+/* Default = Light theme */
+:root {
+  /* Surfaces */
+  --card-bg: #FFFFFF;
+  --border-color: #E5E7EB;
+  --sidebar-bg: #FFFFFF;
+  --header-bg: #FFFFFF;
+  --page-bg: #F3F4F6;
+
+  /* States */
+  --active-bg: #EEF2FF;
+  --hover-bg: rgba(17, 24, 39, 0.04);
+
+  /* Text */
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+
+  /* Accent */
+  --accent-primary: #6366F1;
+  --accent-secondary: #FF8C5F;
+}
+
+/* Dark theme overrides (existing palette) */
+.dark {
+  color-scheme: dark;
+  --card-bg: #363740;
+  --border-color: #3A3A3E;
+  --sidebar-bg: #242529;
+  --header-bg: #242529;
+  --page-bg: #242529;
+  --active-bg: #363740;
+  --hover-bg: rgba(54, 55, 64, 0.4);
+  --text-primary: #ECECEC;
+  --text-secondary: #A0A0A5;
+  --text-muted: #6F6F74;
+  --accent-primary: #6366F1;
+  --accent-secondary: #FF8C5F;
+}
+
+.light {
+  color-scheme: light;
+}
+
+/* ======== New Button Styles ======== */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2 rounded-lg font-medium transition-all duration-200;
+    background-color: var(--accent-primary);
+    color: #fff;
+  }
+  
+  .btn-primary:hover {
+    background-color: #8b8fd8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(163, 167, 246, 0.4);
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-2 rounded-lg font-medium transition-all duration-200;
+    background-color: #5F6067;
+    color: #fff;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #4a4b52;
+    transform: translateY(-1px);
+  }
+  
+  .card-bg {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+  }
+  
+  .sidebar-bg {
+    background-color: var(--sidebar-bg);
+  }
+  
+  .border-custom {
+    border-color: var(--border-color);
+  }
+  
+  .text-primary {
+    color: var(--text-primary);
+  }
+  
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  
+  .text-muted {
+    color: var(--text-muted);
+  }
+  
+  .active-bg {
+    background-color: var(--active-bg);
+    color: #fff;
+  }
+  
+  .active-item {
+    background-color: var(--active-bg);
+    color: #fff;
+    border-color: var(--active-bg);
+  }
+  
+  .active-item:hover {
+    background-color: #757c85;
+  }
+}
+
+/* ======== ثبيت عرض الصفحة ومنع حركة الـ scrollbar ======== */
+html {
+  overflow-y: scroll;
+}
+
+/* ======== أنماات الانتقالات والحركات ======== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* 3️⃣ Staggered Reveal للقوائم الفرعية */
+@keyframes slideInSubmenu {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* RTL version */
+@keyframes slideInSubmenuRTL {
+  0% {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+[dir="rtl"] li {
+  animation-name: slideInSubmenuRTL !important;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+/* Slide Down Animation for Toast Notifications */
+@keyframes slideDown {
+  0% {
+    transform: translate(-50%, -120%);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  50% {
+    filter: blur(2px);
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Shimmer Animation for Skeleton - LTR */
+@keyframes shimmer-ltr {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer-ltr {
+  animation: shimmer-ltr 2s infinite;
+}
+
+/* Shimmer Animation for Skeleton - RTL */
+@keyframes shimmer-rtl {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-shimmer-rtl {
+  animation: shimmer-rtl 2s infinite;
+}
+
+body {
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+}
+
+.dark body {
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+}
+
+/* ======== أنماط المكونات للوضع الداكن ======== */
+.dark .bg-white {
+  background-color: #1f2937;
+}
+
+.dark .bg-gray-50 {
+  background-color: #111827;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1f2937;
+}
+
+.dark .bg-gray-200 {
+  background-color: #374151;
+}
+
+.dark .text-gray-800 {
+  color: #f3f4f6;
+}
+
+.dark .text-gray-700 {
+  color: #e5e7eb;
+}
+
+.dark .text-gray-600 {
+  color: #d1d5db;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af;
+}
+
+.dark .text-gray-400 {
+  color: #9ca3af;
+}
+
+.dark .border-gray-200 {
+  border-color: #374151;
+}
+
+.dark .border-gray-300 {
+  border-color: #4b5563;
+}
+
+.dark .border-gray-100 {
+  border-color: #374151;
+}
+
+/* ======== أنماط الإدخال ======== */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ======== أنماط الجداول ======== */
+.dark table {
+  color: #e5e7eb;
+}
+
+.dark thead {
+  background-color: #374151;
+}
+
+.dark tbody tr:hover {
+  background-color: #374151;
+}
+
+/* ======== أنماط الأزرار ======== */
+.dark .btn-primary {
+  background: linear-gradient(to right, #1d4ed8, #3730a3);
+}
+
+.dark .btn-primary:hover {
+  background: linear-gradient(to right, #1e40af, #312e81);
+}
+
+/* ======== أنماط القوائم المنبثقة ======== */
+.dark .dropdown-menu {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+.dark .dropdown-item:hover {
+  background-color: #374151;
+}
+
+/* ======== أنماط شريط التمرير ======== */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* ======== أنميشن ======== */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ======== أنماط الانتقال ======== */
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* ======== أنماط RTL/LTR ======== */
+[dir="rtl"] .text-start {
+  text-align: right;
+}
+
+[dir="ltr"] .text-start {
+  text-align: left;
+}
+
+[dir="rtl"] .text-end {
+  text-align: left;
+}
+
+[dir="ltr"] .text-end {
+  text-align: right;
+}
+
+/* ======== أنماط خاصة بالمشروع ======== */
+.shadow-soft {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.dark .shadow-soft {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+/* ======== أنماط Sidebar Logo ======== */
+.sidebar-logo-container[dir="rtl"] {
+  direction: rtl !important;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+}
+
+.sidebar-logo-container[dir="ltr"] {
+  direction: ltr !important;
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+/* ======== Sidebar Logo Spacing ======== */
+.sidebar-logo-ar .logo-icon {
+  margin-left: 12px !important;
+  margin-right: 0 !important;
+}
+
+.sidebar-logo-en .logo-icon {
+  margin-right: 12px !important;
+  margin-left: 0 !important;
+}
+
+/* ======== Live Login Background ======== */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes blobMove {
+  0% { transform: translate(-10%, -10%) scale(1); }
+  50% { transform: translate(10%, 10%) scale(1.15); }
+  100% { transform: translate(-10%, -10%) scale(1); }
+}
+
+.login-live-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(120deg, #e0f2fe 0%, #dbeafe 25%, #e9d5ff 50%, #c7d2fe 75%, #e0f2fe 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+  filter: saturate(1.05);
+}
+
+.login-live-bg::before {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  left: -10%;
+  top: -10%;
+  background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.16), transparent 30%), radial-gradient(circle at 70% 70%, rgba(59,130,246,0.12), transparent 35%);
+  filter: blur(60px);
+  animation: blobMove 14s ease-in-out infinite;
+  z-index: 0;
+}
+
+.login-card {
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.logo-box {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}

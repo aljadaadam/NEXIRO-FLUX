@@ -1,0 +1,45 @@
+{
+  "SUCCESS": [
+    {
+      "MESSAGE": "IMEI Service List",
+      "LIST": {
+        "Global Frp Tool GFT": {
+          "GROUPNAME": "Global Frp Tool GFT",
+          "GROUPTYPE": "SERVER",
+          "SERVICES": {
+            "20155": {
+              "SERVICEID": 181400,
+              "SERVICETYPE": "SERVER",
+              "SERVICENAME": "Global Frp Tool - GFT Xiaomi Credit",
+              "CREDIT": "1.000",
+              "TIME": " Instant",
+              "INFO": "Instant unlock service"
+            }
+          }
+        },
+        "Dragon Frp Tool": {
+          "GROUPNAME": "Dragon Frp Tool",
+          "GROUPTYPE": "SERVER",
+          "SERVICES": {
+            "20122": {
+              "SERVICEID": 181103,
+              "SERVICETYPE": "SERVER",
+              "SERVICENAME": "Dragon Frp Samsung/Xiaomi/MTK Frp Tool",
+              "CREDIT": "0.930",
+              "TIME": "1-5 Minutes",
+              "INFO": "Fast FRP removal"
+            },
+            "20153": {
+              "SERVICEID": 181382,
+              "SERVICETYPE": "SERVER",
+              "SERVICENAME": "Dragon FRP Extended Service",
+              "CREDIT": "1.100",
+              "TIME": " Instant",
+              "INFO": "Extended FRP service"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
