@@ -76,15 +76,24 @@ export const adminApi = {
 // ─── تحويل منتج الباكند لشكل الفرونت ───
 function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
   const serviceTypeIcons: Record<string, string> = { IMEI: '📱', SERVER: '🔧', REMOTE: '🖥️', FILE: '📁', CODE: '🔑' };
-  const serviceTypeCategories: Record<string, string> = { IMEI: 'IMEI', SERVER: 'خدمات', REMOTE: 'ريموت', FILE: 'ملفات', CODE: 'أكواد' };
-  const sType = String(p.service_type || 'SERVER');
+  const serviceTypeCategories: Record<string, string> = {
+    IMEI: 'خدمات IMEI',
+    SERVER: 'منتجات سوفت وير',
+    REMOTE: 'ريموت',
+    FILE: 'ملفات',
+    CODE: 'أكواد',
+  };
+  const sType = String(p.service_type || p.SERVICETYPE || 'SERVER').toUpperCase();
+  const mappedCategory = sType === 'IMEI' || sType === 'SERVER'
+    ? serviceTypeCategories[sType]
+    : String(p.group_name || serviceTypeCategories[sType] || 'خدمات');
   return {
     id: p.id,
     name: p.name,
     price: typeof p.price === 'number' || (typeof p.price === 'string' && !p.price.startsWith('$')) ? `$${Number(p.final_price || p.price || 0).toFixed(2)}` : p.price,
     originalPrice: p.source_price && Number(p.source_price) > Number(p.final_price || p.price) ? `$${Number(p.source_price).toFixed(2)}` : undefined,
     icon: serviceTypeIcons[sType] || '🔧',
-    category: String(p.group_name || serviceTypeCategories[sType] || 'خدمات'),
+    category: mappedCategory,
     desc: String(p.description || p.service_info || p.name || ''),
     stock: Number(p.qnt || p.stock || 999),
     status: 'نشط',

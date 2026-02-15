@@ -80,7 +80,7 @@ export default function ServicesPage() {
 
   const DEFAULT_CATEGORIES = [
     { id: 'all', name: 'الكل', icon: '📦' },
-    { id: 'أدوات سوفتوير', name: 'أدوات سوفتوير', icon: '🛠️' },
+    { id: 'منتجات سوفت وير', name: 'منتجات سوفت وير', icon: '🛠️' },
     { id: 'IMEI', name: 'خدمات IMEI', icon: '📱' },
     { id: 'ألعاب', name: 'ألعاب', icon: '🎮' },
   ];
