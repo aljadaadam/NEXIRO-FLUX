@@ -1,29 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { adminApi } from '@/lib/api';
 import {
   Plus, RefreshCcw, Settings, Trash2, Wifi, CreditCard,
-  Package, Clock, CheckCircle, AlertCircle, PlugZap,
+  Package, Clock, CheckCircle, AlertCircle, PlugZap, Loader2,
 } from 'lucide-react';
+
+interface ConnectedSource {
+  id: number;
+  name: string;
+  icon: string;
+  type: string;
+  url: string;
+  status: string;
+  statusColor: string;
+  lastSync: string;
+  products: number;
+  balance: string;
+}
+
+interface AvailableSource {
+  name: string;
+  icon: string;
+  desc: string;
+  category: string;
+  fields: string[];
+}
+
+interface SyncLog {
+  time: string;
+  source: string;
+  action: string;
+  count: string;
+  status: string;
+}
+
+// بيانات احتياطية تُعرض عند عدم توفر الـ API
+const FALLBACK_CONNECTED: ConnectedSource[] = [];
+const FALLBACK_AVAILABLE: AvailableSource[] = [
+  { name: 'DHRU FUSION', icon: '⚡', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
+];
 
 export default function ExternalSourcesPage() {
   const [activeTab, setActiveTab] = useState('connected');
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState<number | null>(null);
+  const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>(FALLBACK_CONNECTED);
+  const [availableSources, setAvailableSources] = useState<AvailableSource[]>(FALLBACK_AVAILABLE);
+  const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [stats, setStats] = useState({ connected: 0, balance: '$0.00', imported: 0, lastSync: '--' });
 
-  const connectedSources = [
-    { id: 1, name: 'SD-UNLOCKER', icon: '🔓', type: 'DHRU FUSION', url: 'sd-unlocker.com', status: 'متصل', statusColor: '#16a34a', lastSync: 'منذ 5 دقائق', products: 1250, balance: '$45.30' },
-  ];
+  // ─── جلب المصادر من الباك اند ───
+  const fetchSources = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await adminApi.getSources();
+      if (data.connected) setConnectedSources(data.connected);
+      if (data.available) setAvailableSources(data.available);
+      if (data.logs) setSyncLogs(data.logs);
+      if (data.stats) setStats(data.stats);
+    } catch {
+      console.warn('[Sources] فشل جلب المصادر من الخادم');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const availableSources = [
-    { name: 'DHRU FUSION', icon: '⚡', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
-  ];
+  useEffect(() => { fetchSources(); }, [fetchSources]);
 
-  const syncLogs = [
-    { time: '14:32', source: 'SD-UNLOCKER', action: 'مزامنة خدمات', count: '120 خدمة محدّثة', status: 'success' },
-    { time: '13:15', source: 'SD-UNLOCKER', action: 'فحص طلبات', count: '3 طلبات مكتملة', status: 'success' },
-    { time: '12:00', source: 'SD-UNLOCKER', action: 'فحص الرصيد', count: 'الرصيد: $45.30', status: 'success' },
-    { time: '10:30', source: 'SD-UNLOCKER', action: 'إرسال طلب IMEI', count: 'المرجع: REF-78452', status: 'success' },
-    { time: '09:00', source: 'SD-UNLOCKER', action: 'مزامنة أسعار', count: '1250 سعر محدّث', status: 'success' },
-  ];
+  // ─── مزامنة مصدر ───
+  const handleSync = async (sourceId: number) => {
+    setSyncing(sourceId);
+    try {
+      await adminApi.syncSource(sourceId);
+      await fetchSources(); // تحديث البيانات
+    } catch {
+      console.warn('[Sources] فشل مزامنة المصدر');
+    } finally {
+      setSyncing(null);
+    }
+  };
 
   return (
     <>
@@ -43,10 +100,10 @@ export default function ExternalSourcesPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'مصادر متصلة', value: '1', icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
-          { label: 'الرصيد', value: '$45.30', icon: CreditCard, color: '#3b82f6', bg: '#eff6ff' },
-          { label: 'خدمات مستوردة', value: '1,250', icon: Package, color: '#7c5cff', bg: '#f5f3ff' },
-          { label: 'آخر مزامنة', value: '5 د', icon: RefreshCcw, color: '#f59e0b', bg: '#fffbeb' },
+          { label: 'مصادر متصلة', value: String(stats.connected), icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
+          { label: 'الرصيد', value: stats.balance, icon: CreditCard, color: '#3b82f6', bg: '#eff6ff' },
+          { label: 'خدمات مستوردة', value: String(stats.imported), icon: Package, color: '#7c5cff', bg: '#f5f3ff' },
+          { label: 'آخر مزامنة', value: stats.lastSync, icon: RefreshCcw, color: '#f59e0b', bg: '#fffbeb' },
         ].map((s, i) => {
           const Icon = s.icon;
           return (

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { COLOR_THEMES } from '@/lib/themes';
+import { adminApi } from '@/lib/api';
 import {
   Image, Upload, Palette, Layout, Monitor, Moon,
   Megaphone, Zap, Check, Paintbrush, ShoppingCart,
@@ -30,13 +31,31 @@ const RADIUS_OPTIONS = [
 export default function CustomizePage() {
   const theme = useTheme();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentTheme = COLOR_THEMES.find(t => t.id === theme.themeId) || COLOR_THEMES[0];
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await adminApi.updateCustomize({
+        theme_id: theme.themeId,
+        logo_url: theme.logoPreview,
+        font_family: theme.fontFamily,
+        dark_mode: theme.darkMode,
+        button_radius: theme.buttonRadius,
+        header_style: theme.headerStyle,
+        show_banner: theme.showBanner,
+        store_name: theme.storeName,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      console.warn('[Customize] فشل حفظ التخصيص');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,16 +74,17 @@ export default function CustomizePage() {
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🎨 تخصيص المتجر</h2>
         <button
           onClick={handleSave}
+          disabled={saving}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '0.6rem 1.5rem', borderRadius: 10,
-            background: saved ? '#16a34a' : '#7c5cff', color: '#fff',
+            background: saved ? '#16a34a' : saving ? '#94a3b8' : '#7c5cff', color: '#fff',
             border: 'none', fontSize: '0.82rem', fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+            cursor: saving ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
             transition: 'all 0.3s',
           }}
         >
-          {saved ? <><Check size={16} /> تم الحفظ</> : <><Paintbrush size={16} /> حفظ التعديلات</>}
+          {saved ? <><Check size={16} /> تم الحفظ</> : saving ? 'جاري الحفظ...' : <><Paintbrush size={16} /> حفظ التعديلات</>}
         </button>
       </div>
 
