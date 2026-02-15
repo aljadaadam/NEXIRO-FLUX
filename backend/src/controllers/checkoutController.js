@@ -28,6 +28,8 @@ async function initCheckout(req, res) {
       customer_name,
       customer_email,
       country,
+      template_id,
+      plan,
     } = req.body;
 
     // تحقق
@@ -65,6 +67,8 @@ async function initCheckout(req, res) {
       customer_email,
       country,
       gateway_type: gateway.type,
+      template_id: template_id || product_id || null,
+      plan: plan || null,
     });
 
     const referenceId = `NF${payment.id}T${Date.now()}`;

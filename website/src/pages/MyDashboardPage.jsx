@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Globe, Settings, ExternalLink, CreditCard, Clock, CheckCircle2,
   AlertTriangle, LayoutDashboard, Sparkles, Mail, Palette, Key,
-  ChevronRight, LogOut, RefreshCw, Loader2, Store, Shield, Zap
+  ChevronRight, LogOut, RefreshCw, Loader2, Store, Shield, Zap, Wrench
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ export default function MyDashboardPage() {
   const navigate = useNavigate();
 
   const [siteData, setSiteData] = useState(null);
+  const [pendingSetup, setPendingSetup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null); // 'store' | 'smtp' | null
   const [saving, setSaving] = useState(false);
@@ -39,6 +40,7 @@ export default function MyDashboardPage() {
     try {
       const data = await api.getMySite();
       setSiteData(data);
+      setPendingSetup(data.pendingSetup || null);
 
       let settings = data.site?.settings || {};
       setForm({
@@ -104,6 +106,10 @@ export default function MyDashboardPage() {
 
   // ─── حالة: لا يوجد موقع بعد (مستخدم جديد لم يشترِ قالب) ───
   if (!site) {
+    const setupUrl = pendingSetup
+      ? `/setup?payment_ref=${pendingSetup.payment_id}&template=${pendingSetup.template_id || ''}&plan=${pendingSetup.plan || ''}&payment_status=success`
+      : null;
+
     return (
       <div className="min-h-screen bg-[#0a0e1a]" dir={isRTL ? 'rtl' : 'ltr'}>
         <header className="bg-[#0d1221]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30">
@@ -131,36 +137,87 @@ export default function MyDashboardPage() {
         </header>
 
         <main className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="bg-[#111827] rounded-3xl border border-white/5 p-10 sm:p-14">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center mx-auto mb-6">
-              <Store className="w-10 h-10 text-primary-400" />
+          {/* ═══ بانر إكمال الإعداد ═══ */}
+          {pendingSetup && (
+            <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 rounded-3xl border border-amber-500/20 p-8 sm:p-10 mb-8 text-start">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <Wrench className="w-7 h-7 text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-display font-bold text-white mb-2">
+                    {isRTL ? 'أكمل إعداد موقعك!' : 'Complete Your Site Setup!'}
+                  </h2>
+                  <p className="text-dark-400 text-sm leading-relaxed mb-1">
+                    {isRTL 
+                      ? 'لقد تم الدفع بنجاح ولكن لم تكمل إعداد موقعك بعد. أكمل الإعداد الآن لتفعيل متجرك.'
+                      : "Your payment was successful but you haven't completed the site setup yet. Complete the setup now to activate your store."
+                    }
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-dark-500 mb-5">
+                    {pendingSetup.template_id && (
+                      <span className="inline-flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-lg">
+                        <LayoutDashboard className="w-3 h-3" />
+                        {pendingSetup.template_id.replace(/-/g, ' ')}
+                      </span>
+                    )}
+                    {pendingSetup.plan && (
+                      <span className="inline-flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-lg">
+                        <Zap className="w-3 h-3" />
+                        {pendingSetup.plan}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-lg">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {isRTL ? 'تم الدفع' : 'Paid'} — ${pendingSetup.amount}
+                    </span>
+                  </div>
+                  <Link
+                    to={setupUrl}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all text-sm"
+                  >
+                    <Wrench className="w-4 h-4" />
+                    {isRTL ? 'أكمل إعداد الموقع' : 'Complete Site Setup'}
+                    <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                  </Link>
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl font-display font-bold text-white mb-3">
-              {isRTL ? 'مرحباً بك في NEXIRO-FLUX! 👋' : 'Welcome to NEXIRO-FLUX! 👋'}
-            </h1>
-            <p className="text-dark-400 text-sm leading-relaxed mb-8 max-w-md mx-auto">
-              {isRTL 
-                ? 'لم تقم بشراء قالب بعد. اختر قالبًا لتبدأ في إنشاء متجرك الإلكتروني واحصل على لوحة تحكم خاصة بك.'
-                : "You haven't purchased a template yet. Choose a template to start building your online store and get your own admin dashboard."
-              }
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link 
-                to="/templates" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all text-sm"
-              >
-                <Sparkles className="w-4 h-4" />
-                {isRTL ? 'تصفح القوالب' : 'Browse Templates'}
-              </Link>
-              <Link 
-                to="/pricing" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-medium rounded-xl hover:bg-white/10 border border-white/10 transition-all text-sm"
-              >
-                <CreditCard className="w-4 h-4" />
-                {isRTL ? 'الأسعار والخطط' : 'Pricing & Plans'}
-              </Link>
+          )}
+
+          {/* ═══ لا يوجد موقع ولا دفعة معلقة ═══ */}
+          {!pendingSetup && (
+            <div className="bg-[#111827] rounded-3xl border border-white/5 p-10 sm:p-14">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center mx-auto mb-6">
+                <Store className="w-10 h-10 text-primary-400" />
+              </div>
+              <h1 className="text-2xl font-display font-bold text-white mb-3">
+                {isRTL ? 'مرحباً بك في NEXIRO-FLUX!' : 'Welcome to NEXIRO-FLUX!'}
+              </h1>
+              <p className="text-dark-400 text-sm leading-relaxed mb-8 max-w-md mx-auto">
+                {isRTL 
+                  ? 'لم تقم بشراء قالب بعد. اختر قالبًا لتبدأ في إنشاء متجرك الإلكتروني واحصل على لوحة تحكم خاصة بك.'
+                  : "You haven't purchased a template yet. Choose a template to start building your online store and get your own admin dashboard."
+                }
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link 
+                  to="/templates" 
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all text-sm"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isRTL ? 'تصفح القوالب' : 'Browse Templates'}
+                </Link>
+                <Link 
+                  to="/pricing" 
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-medium rounded-xl hover:bg-white/10 border border-white/10 transition-all text-sm"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  {isRTL ? 'الأسعار والخطط' : 'Pricing & Plans'}
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
     );

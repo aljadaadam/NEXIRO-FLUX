@@ -386,8 +386,37 @@ async function getMySite(req, res) {
     }
 
     if (!site) {
-      // لم يشترِ قالب بعد
-      return res.json({ site: null, subscription: null, customization: null });
+      // لم يشترِ قالب بعد — لكن ربما دفع ولم يكمل الإعداد
+      let pendingSetup = null;
+      try {
+        const pool = require('../config/db').getPool();
+        const [pendingPayments] = await pool.query(
+          `SELECT id, amount, currency, meta, created_at 
+           FROM payments 
+           WHERE status = 'completed' 
+             AND meta IS NOT NULL 
+             AND JSON_EXTRACT(meta, '$.customer_email') = ?
+             AND JSON_EXTRACT(meta, '$.provisioned_site_key') IS NULL
+           ORDER BY created_at DESC LIMIT 1`,
+          [currentUser.email]
+        );
+        if (pendingPayments.length > 0) {
+          const p = pendingPayments[0];
+          const meta = typeof p.meta === 'string' ? JSON.parse(p.meta) : (p.meta || {});
+          pendingSetup = {
+            payment_id: p.id,
+            template_id: meta.template_id || null,
+            plan: meta.plan || null,
+            amount: p.amount,
+            currency: p.currency,
+            paid_at: p.created_at,
+          };
+        }
+      } catch (e) {
+        console.error('Error checking pending setup:', e);
+      }
+
+      return res.json({ site: null, subscription: null, customization: null, pendingSetup });
     }
 
     const subscription = await Subscription.findActiveBySiteKey(site.site_key);

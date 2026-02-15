@@ -185,6 +185,8 @@ export default function TemplateBuyPage() {
         amount: price,
         currency: selectedGateway.type === 'binance' ? 'USDT' : 'USD',
         description: `${templateName} - ${planLabel}`,
+        template_id: templateId,
+        plan: plan,
         return_url: selectedGateway.type === 'binance' ? `${returnUrl}&payment_id=__PAYMENT_ID__` : returnUrl,
         cancel_url: `${returnUrl}&payment_status=cancelled`,
       });
