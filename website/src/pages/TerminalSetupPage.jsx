@@ -167,7 +167,7 @@ export default function TerminalSetupPage() {
       template_id: templateId,
       billing_cycle: codeInfo?.billing_cycle || plan,
       store_name: storeName,
-      domain_slug: domain.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+      custom_domain: domain.toLowerCase().replace(/\s/g, ''),
       payment_method: codeVerified ? 'purchase_code' : 'manual',
       payment_reference: paymentRef || 'SETUP-' + Date.now(),
       amount: templateData?.price?.[plan] || 0,
@@ -204,6 +204,7 @@ export default function TerminalSetupPage() {
       setBuildProgress(prev => [...prev, `❌ ${err.error || 'Build failed'}`]);
       setError(err.error || (isRTL ? 'فشل بناء الموقع' : 'Site build failed'));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo]);
 
   // ─── Handle Enter key for each phase ───
@@ -217,11 +218,11 @@ export default function TerminalSetupPage() {
         break;
       case 2: // Domain
         if (!domain.trim()) {
-          setError(isRTL ? 'يرجى إدخال اسم الدومين' : 'Please enter a domain name');
+          setError(isRTL ? 'يرجى إدخال الدومين' : 'Please enter a domain');
           return;
         }
-        if (domain.trim().length < 3) {
-          setError(isRTL ? 'اسم الدومين يجب أن يكون 3 أحرف على الأقل' : 'Domain must be at least 3 characters');
+        if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z]{2,})+$/i.test(domain.trim())) {
+          setError(isRTL ? 'يرجى إدخال دومين صحيح مثل: example.com' : 'Please enter a valid domain like: example.com');
           return;
         }
         setPhase(3);
@@ -260,7 +261,7 @@ export default function TerminalSetupPage() {
   };
 
   // ─── Computed values ───
-  const fullDomain = domain ? `${domain.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com` : '';
+  const fullDomain = domain ? domain.toLowerCase().replace(/\s/g, '') : '';
   const serverIP = '154.56.60.195'; // Hosting server IP
 
   return (
@@ -385,12 +386,12 @@ export default function TerminalSetupPage() {
             {phase >= 2 && introComplete && (
               <div className="space-y-2">
                 <TermLine prefix="[2/6]" color="text-cyan-400">
-                  {isRTL ? '🌐 أدخل اسم الدومين (الرابط) لموقعك:' : '🌐 Enter your site domain name:'}
+                  {isRTL ? '🌐 أدخل دومين موقعك:' : '🌐 Enter your site domain:'}
                 </TermLine>
                 <TermLine prefix="" color="text-gray-600">
                   {isRTL
-                    ? 'سيكون رابط موقعك: [اسمك].nexiroflux.com'
-                    : 'Your site URL will be: [name].nexiroflux.com'}
+                    ? 'أدخل الدومين الخاص بك مثل: mystore.com'
+                    : 'Enter your own domain like: mystore.com'}
                 </TermLine>
 
                 {phase === 2 ? (
@@ -401,18 +402,17 @@ export default function TerminalSetupPage() {
                         ref={inputRef}
                         type="text"
                         value={domain}
-                        onChange={e => setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        onChange={e => setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9.\-]/g, ''))}
                         onKeyDown={handleKeyDown}
-                        placeholder="my-store"
+                        placeholder="mystore.com"
                         className="flex-1 bg-transparent text-white text-lg outline-none caret-emerald-400 placeholder:text-gray-700 font-mono"
                         autoFocus
                       />
-                      <span className="text-gray-600 text-lg">.nexiroflux.com</span>
                     </div>
-                    {domain && (
+                    {domain && /\.[a-z]{2,}$/i.test(domain) && (
                       <div className="mt-2 ml-5">
                         <span className="text-gray-500 text-xs">
-                          {isRTL ? 'الرابط الكامل: ' : 'Full URL: '}
+                          {isRTL ? 'الدومين: ' : 'Domain: '}
                         </span>
                         <span className="text-emerald-400 text-xs">{fullDomain}</span>
                       </div>
@@ -484,8 +484,8 @@ export default function TerminalSetupPage() {
                   <div className="border-t border-white/5 pt-2">
                     <p className="text-gray-400 text-[11px] leading-relaxed">
                       {isRTL
-                        ? '💡 يمكنك إعداد DNS لاحقًا. حالياً سيعمل موقعك على الرابط الفرعي ([اسمك].nexiroflux.com) بدون إعداد DNS.'
-                        : '💡 You can configure DNS later. Your site will work on the subdomain ([name].nexiroflux.com) without DNS setup.'}
+                        ? '💡 يجب توجيه دومينك إلى سيرفرنا حتى يعمل الموقع. يمكنك إعداد DNS الآن أو لاحقًا.'
+                        : '💡 You must point your domain to our server for the site to work. You can set up DNS now or later.'}
                     </p>
                   </div>
                 </div>

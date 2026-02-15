@@ -33,6 +33,7 @@ async function provisionSite(req, res) {
       // بيانات الموقع
       store_name,
       domain_slug,
+      custom_domain,
       // إعدادات البريد (اختيارية)
       smtp_host,
       smtp_port,
@@ -69,14 +70,27 @@ async function provisionSite(req, res) {
 
     // ─── توليد site_key و domain ───
     const site_key = generateSiteKey(store_name);
-    const domain = domain_slug
+    // الدومين الأساسي (داخلي) — دائماً subdomain
+    const internalDomain = domain_slug
       ? `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com`
       : `${site_key}.nexiroflux.com`;
+    // الدومين الحقيقي للعميل
+    const clientDomain = custom_domain
+      ? custom_domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim()
+      : null;
+    // الدومين المعروض — الحقيقي إن وُجد، وإلا الداخلي
+    const domain = clientDomain || internalDomain;
 
     // التحقق من عدم تكرار الدومين
     const existingDomain = await Site.findByDomain(domain);
     if (existingDomain) {
-      return res.status(400).json({ error: 'هذا النطاق مستخدم بالفعل، اختر اسمًا آخر' });
+      return res.status(400).json({ error: 'هذا النطاق مستخدم بالفعل، اختر اسمًا آخر', errorEn: 'This domain is already in use, choose another name' });
+    }
+    if (clientDomain) {
+      const existingCustom = await Site.findByDomain(clientDomain);
+      if (existingCustom) {
+        return res.status(400).json({ error: 'هذا الدومين مربوط بموقع آخر بالفعل', errorEn: 'This domain is already linked to another site' });
+      }
     }
 
     // ─── تحديد السعر حسب الخطة ───
@@ -111,11 +125,12 @@ async function provisionSite(req, res) {
     const pool = getPool();
 
     await pool.query(
-      `INSERT INTO sites (site_key, domain, name, template_id, plan, status, owner_email, settings)
-       VALUES (?, ?, ?, ?, ?, 'active', ?, ?)`,
+      `INSERT INTO sites (site_key, domain, custom_domain, name, template_id, plan, status, owner_email, settings)
+       VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
       [
         site_key,
-        domain,
+        clientDomain || internalDomain,
+        clientDomain || null,
         store_name,
         template_id,
         cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
