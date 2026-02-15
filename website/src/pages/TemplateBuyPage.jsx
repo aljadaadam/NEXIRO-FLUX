@@ -6,6 +6,7 @@ import {
   Globe, RefreshCw, Upload, AlertCircle, ChevronLeft, QrCode, Sparkles, Check
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { templates as staticTemplates } from '../data/templates';
 
@@ -33,6 +34,7 @@ export default function TemplateBuyPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { isRTL } = useLanguage();
+  const { user } = useAuth();
 
   const templateId = params.get('template') || 'digital-services-store';
   const plan = params.get('plan') || 'monthly';
@@ -101,7 +103,12 @@ export default function TemplateBuyPage() {
     const returnedGateway = params.get('gateway');
 
     if (paymentStatus === 'success' && pid) {
-      // Payment successful, redirect to setup
+      // Payment successful — store in localStorage for dashboard fallback
+      try {
+        localStorage.setItem('nexiro_pending_setup', JSON.stringify({
+          payment_id: pid, template_id: templateId, plan, paid_at: new Date().toISOString(),
+        }));
+      } catch(e) {}
       navigate(`/setup?template=${templateId}&plan=${plan}&payment_ref=${pid}&payment_status=success&gateway=${returnedGateway || 'gateway'}`, { replace: true });
     } else if (paymentStatus === 'cancelled') {
       setError(isRTL ? 'تم إلغاء عملية الدفع' : 'Payment was cancelled');
@@ -187,6 +194,8 @@ export default function TemplateBuyPage() {
         description: `${templateName} - ${planLabel}`,
         template_id: templateId,
         plan: plan,
+        customer_email: user?.email || null,
+        customer_name: user?.name || null,
         return_url: selectedGateway.type === 'binance' ? `${returnUrl}&payment_id=__PAYMENT_ID__` : returnUrl,
         cancel_url: `${returnUrl}&payment_status=cancelled`,
       });
@@ -232,6 +241,7 @@ export default function TemplateBuyPage() {
     try {
       const result = await api.checkUsdtPayment(paymentId);
       if (result.confirmed) {
+        try { localStorage.setItem('nexiro_pending_setup', JSON.stringify({ payment_id: paymentId, template_id: templateId, plan, paid_at: new Date().toISOString() })); } catch(e) {}
         navigate(`/setup?template=${templateId}&plan=${plan}&payment_ref=${paymentId}&payment_status=success&gateway=usdt`);
       } else {
         if (result.remaining !== undefined) {
@@ -279,6 +289,7 @@ export default function TemplateBuyPage() {
     try {
       const result = await api.checkPaymentStatusPublic(paymentId);
       if (result.status === 'completed') {
+        try { localStorage.setItem('nexiro_pending_setup', JSON.stringify({ payment_id: paymentId, template_id: templateId, plan, paid_at: new Date().toISOString() })); } catch(e) {}
         navigate(`/setup?template=${templateId}&plan=${plan}&payment_ref=${paymentId}&payment_status=success&gateway=binance`);
       } else {
         setError(isRTL ? 'لم يتم تأكيد الدفع بعد' : 'Payment not confirmed yet');

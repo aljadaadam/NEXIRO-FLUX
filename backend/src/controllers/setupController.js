@@ -390,26 +390,41 @@ async function getMySite(req, res) {
       let pendingSetup = null;
       try {
         const pool = require('../config/db').getPool();
+        // البحث بالإيميل في meta (الأساسي)، أو بالإيميل في description كـ fallback
         const [pendingPayments] = await pool.query(
-          `SELECT id, amount, currency, meta, created_at 
+          `SELECT id, amount, currency, meta, description, created_at 
            FROM payments 
            WHERE status = 'completed' 
-             AND meta IS NOT NULL 
-             AND JSON_EXTRACT(meta, '$.customer_email') = ?
-             AND JSON_EXTRACT(meta, '$.provisioned_site_key') IS NULL
-           ORDER BY created_at DESC LIMIT 1`,
+             AND type = 'purchase'
+             AND (
+               (meta IS NOT NULL AND JSON_EXTRACT(meta, '$.customer_email') = ? AND JSON_EXTRACT(meta, '$.provisioned_site_key') IS NULL)
+               OR
+               (meta IS NOT NULL AND JSON_EXTRACT(meta, '$.customer_email') IS NULL AND JSON_EXTRACT(meta, '$.provisioned_site_key') IS NULL)
+             )
+           ORDER BY created_at DESC LIMIT 5`,
           [currentUser.email]
         );
-        if (pendingPayments.length > 0) {
-          const p = pendingPayments[0];
-          const meta = typeof p.meta === 'string' ? JSON.parse(p.meta) : (p.meta || {});
+        
+        // أولوية: الدفعات التي تطابق الإيميل
+        let matchedPayment = pendingPayments.find(p => {
+          const m = typeof p.meta === 'string' ? JSON.parse(p.meta) : (p.meta || {});
+          return m.customer_email === currentUser.email;
+        });
+        
+        // fallback: أي دفعة مكتملة بدون إيميل وبدون موقع مُجهز
+        if (!matchedPayment && pendingPayments.length > 0) {
+          matchedPayment = pendingPayments[0];
+        }
+
+        if (matchedPayment) {
+          const meta = typeof matchedPayment.meta === 'string' ? JSON.parse(matchedPayment.meta) : (matchedPayment.meta || {});
           pendingSetup = {
-            payment_id: p.id,
-            template_id: meta.template_id || null,
+            payment_id: matchedPayment.id,
+            template_id: meta.template_id || meta.product_id || null,
             plan: meta.plan || null,
-            amount: p.amount,
-            currency: p.currency,
-            paid_at: p.created_at,
+            amount: matchedPayment.amount,
+            currency: matchedPayment.currency,
+            paid_at: matchedPayment.created_at,
           };
         }
       } catch (e) {

@@ -192,6 +192,8 @@ export default function TerminalSetupPage() {
         localStorage.setItem('nf_token', data.token);
         localStorage.setItem('nf_user', JSON.stringify(data.user));
         localStorage.setItem('nf_site', JSON.stringify(data.site));
+        // مسح بيانات الإعداد المعلق
+        try { localStorage.removeItem('nexiro_pending_setup'); } catch(e) {}
       }
       setBuildProgress(prev => [...prev, steps[steps.length - 1].msg]);
       setResult(data);

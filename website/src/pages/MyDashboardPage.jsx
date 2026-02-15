@@ -40,7 +40,39 @@ export default function MyDashboardPage() {
     try {
       const data = await api.getMySite();
       setSiteData(data);
-      setPendingSetup(data.pendingSetup || null);
+
+      // ─── تحقق من pendingSetup: API أولاً ثم localStorage كـ fallback ───
+      let pending = data.pendingSetup || null;
+      if (!pending && !data.site) {
+        try {
+          const stored = localStorage.getItem('nexiro_pending_setup');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.payment_id) {
+              // تحقق من حالة الدفعة من السيرفر
+              const paymentStatus = await api.checkPaymentStatusPublic(parsed.payment_id);
+              if (paymentStatus.status === 'completed') {
+                pending = {
+                  payment_id: parsed.payment_id,
+                  template_id: parsed.template_id || null,
+                  plan: parsed.plan || null,
+                  amount: paymentStatus.amount || null,
+                  currency: paymentStatus.currency || 'USD',
+                  paid_at: parsed.paid_at,
+                };
+              } else {
+                // الدفعة ليست مكتملة — حذف من localStorage
+                localStorage.removeItem('nexiro_pending_setup');
+              }
+            }
+          }
+        } catch (e) { /* ignore localStorage errors */ }
+      }
+      // إذا وجد موقع محجوز → مسح localStorage
+      if (data.site) {
+        try { localStorage.removeItem('nexiro_pending_setup'); } catch(e) {}
+      }
+      setPendingSetup(pending);
 
       let settings = data.site?.settings || {};
       setForm({
