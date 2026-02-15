@@ -71,17 +71,7 @@ import SettingsAdminPage from './pages/SettingsAdminPage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const {
-    currentTheme, themeId, setThemeId,
-    logoPreview, setLogoPreview,
-    storeName, setStoreName,
-    darkMode, setDarkMode,
-    buttonRadius, setButtonRadius,
-    headerStyle, setHeaderStyle,
-    showBanner, setShowBanner,
-    fontFamily, setFontFamily,
-    colorThemes,
-  } = useTheme();
+  const { currentTheme, logoPreview, storeName } = useTheme();
 
   const [currentPage, setCurrentPage] = useState('overview');
   const [collapsed, setCollapsed] = useState(false);
@@ -95,17 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [router]);
 
-  const customize = {
-    themeId, setThemeId,
-    logoPreview, setLogoPreview,
-    storeName, setStoreName,
-    darkMode, setDarkMode,
-    buttonRadius, setButtonRadius,
-    headerStyle, setHeaderStyle,
-    showBanner, setShowBanner,
-    fontFamily, setFontFamily,
-    currentTheme, colorThemes,
-  };
+
 
   const pages: Record<string, React.ReactNode> = {
     overview: <OverviewPage theme={currentTheme} />,
@@ -114,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     users: <UsersAdminPage theme={currentTheme} />,
     payments: <PaymentsPage />,
     sources: <ExternalSourcesPage />,
-    customize: <CustomizePage customize={customize} />,
+    customize: <CustomizePage />,
     announcements: <AnnouncementsPage />,
     settings: <SettingsAdminPage />,
   };
