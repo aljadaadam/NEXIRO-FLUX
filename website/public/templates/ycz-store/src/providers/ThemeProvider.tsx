@@ -63,17 +63,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     async function fetchConfig() {
       try {
-        // جلب معلومات المتجر (اسم، دومين، إعدادات)
-        const storeRes = await fetch('/api/store/info');
-        if (storeRes.ok) {
-          const info = await storeRes.json();
-          if (info.name) setStoreName(info.name);
-        }
+        const token = localStorage.getItem('admin_key') || localStorage.getItem('auth_token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
         // جلب التخصيص (ألوان، خط، تخطيط)
-        const customRes = await fetch('/api/store/customization');
+        const customRes = await fetch('/api/customization', { headers });
         if (customRes.ok) {
-          const c = await customRes.json();
+          const data = await customRes.json();
+          const c = data.customization || data;
           if (c.theme_id) setThemeId(c.theme_id);
           if (c.logo_url) setLogoPreview(c.logo_url);
           if (c.font_family) setFontFamily(c.font_family);
@@ -81,6 +79,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           if (c.button_radius) setButtonRadius(c.button_radius);
           if (c.header_style) setHeaderStyle(c.header_style);
           if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
+          if (c.store_name) setStoreName(c.store_name);
           // حفظ في localStorage كـ cache
           try {
             localStorage.setItem('ycz_configTimestamp', String(Date.now()));
@@ -115,12 +114,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // ─── 4. حفظ التخصيص في الباك اند عند التعديل من الأدمن ───
   const saveToServer = useCallback(async () => {
-    const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') : null;
-    if (!adminKey) return; // فقط الأدمن يحفظ
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('admin_key') || localStorage.getItem('auth_token'))
+      : null;
+    if (!token) return; // فقط الأدمن يحفظ
     try {
-      await fetch('/api/admin/customize', {
+      await fetch('/api/customization', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           theme_id: themeId,
           logo_url: logoPreview,
@@ -129,10 +130,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           button_radius: buttonRadius,
           header_style: headerStyle,
           show_banner: showBanner,
+          store_name: storeName,
         }),
       });
     } catch { /* silent */ }
-  }, [themeId, logoPreview, fontFamily, darkMode, buttonRadius, headerStyle, showBanner]);
+  }, [themeId, logoPreview, fontFamily, darkMode, buttonRadius, headerStyle, showBanner, storeName]);
 
   const currentTheme = getTheme(themeId);
 

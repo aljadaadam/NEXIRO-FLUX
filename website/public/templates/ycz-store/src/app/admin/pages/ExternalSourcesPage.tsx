@@ -246,10 +246,44 @@ export default function ExternalSourcesPage() {
     try {
       setLoading(true);
       const data = await adminApi.getSources();
-      if (data.connected) setConnectedSources(data.connected);
-      if (data.available) setAvailableSources(data.available);
-      if (data.logs) setSyncLogs(data.logs);
-      if (data.stats) setStats(data.stats);
+
+      // الباكند يرجع مصفوفة مسطحة من المصادر
+      const rawList = Array.isArray(data) ? data : (data?.sources || data?.connected || []);
+      const mapped: ConnectedSource[] = rawList.map((s: Record<string, unknown>) => {
+        const typeIcons: Record<string, string> = {
+          'dhru-fusion': 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg',
+          'sd-unlocker': '🔓',
+          'unlock-world': '🌍',
+          'custom-api': '🔧',
+        };
+        const statusMap: Record<string, { label: string; color: string }> = {
+          connected: { label: 'متصل', color: '#16a34a' },
+          disconnected: { label: 'غير متصل', color: '#dc2626' },
+          unknown: { label: 'غير محدد', color: '#f59e0b' },
+        };
+        const st = statusMap[String(s.connectionStatus)] || statusMap.unknown;
+        return {
+          id: Number(s.id),
+          name: String(s.name || ''),
+          icon: typeIcons[String(s.type)] || '🔧',
+          type: String(s.type || ''),
+          url: String(s.url || ''),
+          status: st.label,
+          statusColor: st.color,
+          lastSync: s.lastConnectionCheckedAt ? new Date(String(s.lastConnectionCheckedAt)).toLocaleString('ar-EG') : '--',
+          products: Number(s.productsCount || 0),
+          balance: s.lastAccountBalance ? `${s.lastAccountBalance} ${s.lastAccountCurrency || ''}`.trim() : '--',
+        };
+      });
+
+      setConnectedSources(mapped);
+      // تحديث الإحصائيات
+      setStats({
+        connected: mapped.length,
+        balance: mapped.find(m => m.balance !== '--')?.balance || '$0.00',
+        imported: mapped.reduce((sum, m) => sum + m.products, 0),
+        lastSync: mapped.find(m => m.lastSync !== '--')?.lastSync || '--',
+      });
     } catch {
       console.warn('[Sources] فشل جلب المصادر من الخادم');
     } finally {
@@ -347,6 +381,19 @@ export default function ExternalSourcesPage() {
       {/* Connected Sources */}
       {activeTab === 'connected' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {connectedSources.length === 0 && !loading && (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: '2rem', marginBottom: 8 }}>🔗</p>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0b1020', marginBottom: 4 }}>لا توجد مصادر متصلة بعد</p>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 16 }}>اربط مصدر من تبويب "المصادر المتاحة" لبدء جلب الخدمات</p>
+              <button onClick={() => setActiveTab('available')} style={{
+                padding: '0.55rem 1.25rem', borderRadius: 10, border: 'none',
+                background: '#7c5cff', color: '#fff', fontSize: '0.82rem', fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}><Plus size={15} /> ربط مصدر جديد</button>
+            </div>
+          )}
           {connectedSources.map(src => (
             <div key={src.id} style={{
               background: '#fff', borderRadius: 14, padding: '1.25rem',
@@ -505,7 +552,7 @@ export default function ExternalSourcesPage() {
         <ConnectSourceModal
           source={connectingSource}
           onClose={() => setConnectingSource(null)}
-          onSuccess={() => fetchSources()}
+          onSuccess={() => { fetchSources(); setActiveTab('connected'); }}
         />
       )}
     </>
