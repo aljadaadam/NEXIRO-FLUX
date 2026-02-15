@@ -295,78 +295,55 @@ export default function TerminalSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#0c0c0c] flex items-center justify-center p-4"
+      className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-2 sm:p-4"
       onClick={() => inputRef.current?.focus()}
     >
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-2xl">
         {/* ─── Terminal Window ─── */}
-        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
-          {/* Title Bar */}
-          <div className="bg-[#1a1a2e] px-4 py-3 flex items-center gap-3 border-b border-white/5">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+        <div className="rounded-lg overflow-hidden border border-white/[0.06]">
+          {/* Title Bar — minimal */}
+          <div className="bg-[#111] px-3 py-2 flex items-center gap-2 border-b border-white/[0.04]">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
             </div>
-            <div className="flex-1 text-center">
-              <span className="text-gray-500 text-xs font-mono">
-                nexiro-flux — site-setup
-              </span>
-            </div>
-            <div className="w-14" />
+            <span className="text-gray-600 text-[10px] font-mono mx-auto">setup@nexiro-flux ~ </span>
           </div>
 
           {/* Terminal Body */}
           <div
             ref={terminalRef}
-            className="bg-[#0d1117] p-6 min-h-[500px] max-h-[80vh] overflow-y-auto font-mono text-sm leading-relaxed space-y-1"
+            className="bg-[#0a0a0a] p-4 sm:p-5 min-h-[70vh] max-h-[85vh] overflow-y-auto font-mono text-[13px] leading-[1.7] space-y-0"
             dir="ltr"
           >
-            {/* ═══ Phase 0: Intro ═══ */}
-            <pre className="text-emerald-400 whitespace-pre-wrap text-xs mb-4 select-none">
-{`
- ███╗   ██╗███████╗██╗  ██╗██╗██████╗  ██████╗ 
+            {/* ═══ Intro ═══ */}
+            <pre className="text-emerald-500/80 whitespace-pre-wrap text-[10px] select-none mb-3">
+{` ███╗   ██╗███████╗██╗  ██╗██╗██████╗  ██████╗ 
  ████╗  ██║██╔════╝╚██╗██╔╝██║██╔══██╗██╔═══██╗
  ██╔██╗ ██║█████╗   ╚███╔╝ ██║██████╔╝██║   ██║
  ██║╚██╗██║██╔══╝   ██╔██╗ ██║██╔══██╗██║   ██║
  ██║ ╚████║███████╗██╔╝ ╚██╗██║██║  ██║╚██████╔╝
  ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝`}
             </pre>
-
-            <TermLine prefix="$" color="text-blue-400">
-              {isRTL ? 'نظام إعداد المواقع — NEXIRO-FLUX v2.0' : 'NEXIRO-FLUX Site Setup System v2.0'}
-            </TermLine>
-            <TermLine prefix="→" color="text-gray-500">
-              {isRTL ? `القالب: ${templateName} | الخطة: ${plan}` : `Template: ${templateName} | Plan: ${plan}`}
-            </TermLine>
+            <div className="text-gray-500 text-xs mb-1">
+              {isRTL ? `القالب: ${templateName} | الخطة: ${plan}` : `template: ${templateName} | plan: ${plan}`}
+            </div>
+            <div className="text-gray-600 text-xs mb-4">{'─'.repeat(50)}</div>
 
             {!introComplete && (
-              <div className="mt-4">
-                <TermLine prefix="⏳" color="text-yellow-500">
-                  {isRTL ? 'جارٍ تهيئة البيئة...' : 'Initializing environment...'}
-                  <Cursor />
-                </TermLine>
-              </div>
+              <div className="text-yellow-500/70 text-xs">{isRTL ? 'جارٍ التهيئة...' : 'initializing...'} <Cursor /></div>
             )}
-
-            {introComplete && <div className="border-t border-white/5 my-4" />}
 
             {/* ═══ Phase 1: Purchase Code ═══ */}
             {phase >= 1 && introComplete && (
-              <div className="space-y-2">
-                <TermLine prefix="[1/6]" color="text-cyan-400">
-                  {isRTL ? '🔑 أدخل كود الشراء:' : '🔑 Enter Purchase Code:'}
-                </TermLine>
-                <TermLine prefix="" color="text-gray-600">
-                  {isRTL
-                    ? 'أدخل الكود الذي حصلت عليه لتفعيل موقعك'
-                    : 'Enter the code you received to activate your site'}
-                </TermLine>
-
+              <>
+                <div className="text-cyan-400 text-xs">{isRTL ? '── كود الشراء ──' : '── purchase code ──'}</div>
                 {phase === 1 ? (
-                  <div className="mt-3 mb-2">
-                    <div className="flex items-center gap-0">
-                      <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
+                  <>
+                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل كود التفعيل:' : 'enter activation code:'}</div>
+                    <div className="flex items-center mt-1">
+                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
                       <input
                         ref={inputRef}
                         type="text"
@@ -375,58 +352,31 @@ export default function TerminalSetupPage() {
                         onKeyDown={handleKeyDown}
                         placeholder="NX-XXXX-XXXX-XXXX"
                         disabled={codeLoading}
-                        className="flex-1 bg-transparent text-white text-lg outline-none caret-emerald-400 placeholder:text-gray-700 font-mono tracking-widest"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono tracking-wider"
                         autoFocus
                       />
                     </div>
-                    {codeLoading && (
-                      <div className="mt-2 ml-5">
-                        <span className="text-yellow-400 text-xs animate-pulse">
-                          {isRTL ? 'جارٍ التحقق...' : 'Verifying...'}
-                        </span>
-                      </div>
-                    )}
-                    <div className="mt-2 ml-5">
-                      <span className="text-gray-600 text-[11px]">
-                        {isRTL ? 'اضغط Enter للتحقق من الكود' : 'Press Enter to verify the code'}
-                      </span>
-                    </div>
-                  </div>
+                    {codeLoading && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'verifying...'} <Cursor /></div>}
+                  </>
                 ) : (
-                  <div className="space-y-1">
-                    <TermLine prefix="✓" color="text-emerald-400">
-                      {purchaseCode} {codeInfo?.discount_type === 'full'
-                        ? (isRTL ? '(مجاني بالكامل)' : '(Full access)')
-                        : codeInfo?.discount_type === 'percentage'
-                          ? `(${codeInfo.discount_value}% ${isRTL ? 'خصم' : 'discount'})`
-                          : ''}
-                    </TermLine>
-                    {codeInfo?.billing_cycle && (
-                      <TermLine prefix="→" color="text-gray-500">
-                        {isRTL ? 'الخطة: ' : 'Plan: '}{codeInfo.billing_cycle}
-                      </TermLine>
-                    )}
-                  </div>
+                  <>
+                    <div className="text-gray-400 text-xs">code: <span className="text-emerald-400">{purchaseCode}</span> <span className="text-green-600">✓</span></div>
+                    {codeInfo?.discount_type === 'full' && <div className="text-gray-600 text-xs">{isRTL ? 'النوع: مجاني بالكامل' : 'type: full access'}</div>}
+                    {codeInfo?.discount_type === 'percentage' && <div className="text-gray-600 text-xs">{isRTL ? `النوع: خصم ${codeInfo.discount_value}%` : `type: ${codeInfo.discount_value}% discount`}</div>}
+                  </>
                 )}
-              </div>
+              </>
             )}
 
-            {/* ═══ Phase 2: Domain Input ═══ */}
-            {phase >= 2 && introComplete && (
-              <div className="space-y-2">
-                <TermLine prefix="[2/6]" color="text-cyan-400">
-                  {isRTL ? '🌐 أدخل دومين موقعك:' : '🌐 Enter your site domain:'}
-                </TermLine>
-                <TermLine prefix="" color="text-gray-600">
-                  {isRTL
-                    ? 'أدخل الدومين الخاص بك مثل: mystore.com'
-                    : 'Enter your own domain like: mystore.com'}
-                </TermLine>
-
+            {/* ═══ Phase 2: Domain ═══ */}
+            {phase >= 2 && (
+              <>
+                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── الدومين ──' : '── domain ──'}</div>
                 {phase === 2 ? (
-                  <div className="mt-3 mb-2">
-                    <div className="flex items-center gap-0">
-                      <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
+                  <>
+                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل دومين موقعك:' : 'enter your domain:'}</div>
+                    <div className="flex items-center mt-1">
+                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
                       <input
                         ref={inputRef}
                         type="text"
@@ -434,410 +384,238 @@ export default function TerminalSetupPage() {
                         onChange={e => setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9.\-]/g, ''))}
                         onKeyDown={handleKeyDown}
                         placeholder="mystore.com"
-                        className="flex-1 bg-transparent text-white text-lg outline-none caret-emerald-400 placeholder:text-gray-700 font-mono"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
                         autoFocus
                       />
                     </div>
-                    {domain && /\.[a-z]{2,}$/i.test(domain) && (
-                      <div className="mt-2 ml-5">
-                        <span className="text-gray-500 text-xs">
-                          {isRTL ? 'الدومين: ' : 'Domain: '}
-                        </span>
-                        <span className="text-emerald-400 text-xs">{fullDomain}</span>
-                      </div>
-                    )}
-                  </div>
+                  </>
                 ) : (
-                  <TermLine prefix="✓" color="text-emerald-400">
-                    {fullDomain}
-                  </TermLine>
+                  <div className="text-gray-400 text-xs">domain: <span className="text-emerald-400">{fullDomain}</span> <span className="text-green-600">✓</span></div>
                 )}
-              </div>
+              </>
             )}
 
-            {/* ═══ Phase 3: DNS Instructions ═══ */}
+            {/* ═══ Phase 3: DNS ═══ */}
             {phase >= 3 && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[3/6]" color="text-cyan-400">
-                  {isRTL ? '🔧 إعداد DNS — توجيه الدومين' : '🔧 DNS Setup — Domain Pointing'}
-                </TermLine>
-
-                <div className="bg-[#161b22] rounded-xl p-4 border border-white/5 mt-2 space-y-3">
-                  <p className="text-yellow-400 text-xs font-bold mb-2">
-                    {isRTL 
-                      ? `⚠️ مطلوب: أضف سجل DNS التالي في لوحة تحكم الدومين (${fullDomain}):` 
-                      : `⚠️ Required: Add this DNS record in your domain panel (${fullDomain}):`}
-                  </p>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-500 block mb-1">Type</span>
-                      <span className="text-white bg-white/5 px-2 py-1 rounded">A</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block mb-1">Name</span>
-                      <span className="text-white bg-white/5 px-2 py-1 rounded">@</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block mb-1">Value</span>
-                      <button 
-                        onClick={() => {navigator.clipboard.writeText(serverIP)}}
-                        className="text-emerald-400 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors cursor-pointer"
-                      >
-                        {serverIP} 📋
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-white/5 pt-2">
-                    <p className="text-gray-500 text-[11px]">
-                      {isRTL ? 'أو بدل ذلك، أضف سجل CNAME:' : 'Or alternatively, add a CNAME record:'}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2 text-xs mt-1">
-                      <div>
-                        <span className="text-white bg-white/5 px-2 py-1 rounded">CNAME</span>
-                      </div>
-                      <div>
-                        <span className="text-white bg-white/5 px-2 py-1 rounded">@</span>
-                      </div>
-                      <div>
-                        <button 
-                          onClick={() => {navigator.clipboard.writeText('nexiroflux.com')}}
-                          className="text-emerald-400 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors cursor-pointer"
-                        >
-                          nexiroflux.com 📋
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-white/5 pt-2">
-                    <p className="text-gray-400 text-[11px] leading-relaxed">
-                      {isRTL
-                        ? '💡 بعد إضافة السجل، انتظر 5 إلى 10 دقائق ثم اضغط "تحقق من DNS". قد يستغرق انتشار DNS حتى 24 ساعة.'
-                        : '💡 After adding the record, wait 5-10 minutes then click "Verify DNS". DNS propagation may take up to 24 hours.'}
-                    </p>
-                  </div>
+              <>
+                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── إعداد DNS ──' : '── dns setup ──'}</div>
+                <div className="text-yellow-500/80 text-xs mt-1">
+                  {isRTL
+                    ? `أضف السجل التالي في لوحة تحكم دومينك (${fullDomain}):`
+                    : `add this record in your domain panel (${fullDomain}):`}
+                </div>
+                <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800">
+                  <div>Type: <span className="text-white">A</span></div>
+                  <div>Name: <span className="text-white">@</span></div>
+                  <div>Value: <span className="text-emerald-400 cursor-pointer hover:underline" onClick={() => navigator.clipboard.writeText(serverIP)}>{serverIP}</span> <span className="text-gray-600 text-[10px]">(click to copy)</span></div>
+                </div>
+                <div className="text-gray-600 text-[10px] mt-1 pl-2">
+                  {isRTL ? 'أو CNAME → @' : 'or CNAME → @'} → nexiroflux.com
                 </div>
 
                 {phase === 3 ? (
-                  <div className="mt-3 space-y-3">
-                    {/* DNS check result */}
+                  <>
+                    <div className="text-gray-500 text-[11px] mt-2">
+                      {isRTL
+                        ? '⏳ بعد الإضافة، انتظر 5-10 دقائق ثم اضغط Enter للتحقق'
+                        : '⏳ after adding, wait 5-10 min then press Enter to verify'}
+                    </div>
+
+                    {/* DNS result */}
                     {dnsResult && !dnsResult.verified && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                        <p className="text-red-400 text-xs font-bold mb-1">
-                          {isRTL ? '❌ الدومين لا يشير إلى سيرفرنا بعد' : '❌ Domain is not pointing to our server yet'}
-                        </p>
+                      <div className="mt-1">
+                        <div className="text-red-400 text-xs">
+                          ✗ {isRTL ? 'الدومين لا يشير إلى سيرفرنا بعد' : 'domain not pointing to our server yet'}
+                        </div>
                         {dnsResult.dns?.current_ip && (
-                          <p className="text-gray-400 text-[11px]">
-                            {isRTL 
-                              ? `يشير حالياً إلى: ${dnsResult.dns.current_ip} — المطلوب: ${dnsResult.server_ip}`
-                              : `Currently points to: ${dnsResult.dns.current_ip} — Required: ${dnsResult.server_ip}`}
-                          </p>
+                          <div className="text-gray-500 text-[10px] pl-2">
+                            {isRTL ? `حالياً: ${dnsResult.dns.current_ip} — المطلوب: ${dnsResult.server_ip}` : `current: ${dnsResult.dns.current_ip} — expected: ${dnsResult.server_ip}`}
+                          </div>
                         )}
                         {dnsResult.dns?.type === 'NONE' && (
-                          <p className="text-gray-400 text-[11px]">
-                            {isRTL ? 'لم يتم العثور على أي سجلات DNS لهذا الدومين' : 'No DNS records found for this domain'}
-                          </p>
+                          <div className="text-gray-500 text-[10px] pl-2">{isRTL ? 'لا توجد سجلات DNS' : 'no dns records found'}</div>
                         )}
-                        <p className="text-yellow-400 text-[11px] mt-1">
-                          {isRTL ? '⏳ انتظر 5-10 دقائق وأعد المحاولة' : '⏳ Wait 5-10 minutes and try again'}
-                        </p>
                       </div>
                     )}
 
                     {dnsResult?.verified && (
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-                        <p className="text-emerald-400 text-xs font-bold">
-                          {isRTL ? '✅ تم التحقق! الدومين يشير بشكل صحيح إلى سيرفرنا' : '✅ Verified! Domain is correctly pointing to our server'}
-                        </p>
-                        <p className="text-gray-400 text-[11px] mt-1">
-                          {isRTL ? 'اضغط Enter أو "التالي" للمتابعة' : 'Press Enter or "Next" to continue'}
-                        </p>
+                      <div className="text-emerald-400 text-xs mt-1">
+                        ✓ {isRTL ? 'DNS يشير بشكل صحيح — اضغط Enter للمتابعة' : 'dns verified — press Enter to continue'}
                       </div>
                     )}
 
-                    {/* Buttons */}
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={checkDNS}
-                        disabled={dnsChecking}
-                        className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50 flex items-center gap-2 font-mono"
-                      >
-                        {dnsChecking ? (
-                          <><span className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /> {isRTL ? 'جاري التحقق...' : 'Checking...'}</>
-                        ) : (
-                          <>{isRTL ? '🔍 تحقق من DNS' : '🔍 Verify DNS'}</>
-                        )}
-                      </button>
+                    {dnsChecking && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'checking dns...'} <Cursor /></div>}
 
-                      {dnsVerified && (
-                        <button
-                          onClick={() => setPhase(4)}
-                          className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-500/30 transition-colors font-mono"
-                        >
-                          {isRTL ? 'التالي ←' : 'Next →'}
-                        </button>
-                      )}
-
-                      {!dnsVerified && (
-                        <button
-                          onClick={() => { setDnsVerified(false); setPhase(4); }}
-                          className="px-4 py-2 bg-white/5 text-gray-500 rounded-lg text-xs hover:bg-white/10 hover:text-gray-400 transition-colors font-mono"
-                        >
-                          {isRTL ? 'تخطي الآن ←' : 'Skip for now →'}
-                        </button>
-                      )}
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center">
+                        <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
+                        <span className="text-gray-600 text-xs cursor-pointer hover:text-gray-400" onClick={() => { setError(''); checkDNS(); }}>
+                          [{isRTL ? 'Enter = تحقق' : 'Enter = verify'}]
+                        </span>
+                      </div>
+                      <span className="text-gray-700 text-xs cursor-pointer hover:text-gray-500" onClick={() => { setDnsVerified(false); setPhase(4); }}>
+                        [{isRTL ? 'S = تخطي' : 'S = skip'}]
+                      </span>
                     </div>
 
                     <input
                       ref={inputRef}
                       type="text"
-                      onKeyDown={handleKeyDown}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); setError(''); checkDNS(); }
+                        if (e.key === 's' || e.key === 'S') { e.preventDefault(); setDnsVerified(false); setPhase(4); }
+                      }}
                       className="opacity-0 absolute w-0 h-0"
                       autoFocus
                     />
-                  </div>
+                  </>
                 ) : (
-                  <TermLine prefix={dnsVerified ? "✓" : "⊘"} color={dnsVerified ? "text-emerald-400" : "text-yellow-500"}>
-                    {dnsVerified 
-                      ? (isRTL ? 'DNS — تم التحقق ✅' : 'DNS — Verified ✅')
-                      : (isRTL ? 'DNS — تم التخطي (يمكن الإعداد لاحقاً)' : 'DNS — Skipped (can be set up later)')}
-                  </TermLine>
+                  <div className={`text-xs mt-1 ${dnsVerified ? 'text-emerald-400' : 'text-yellow-500/70'}`}>
+                    {dnsVerified
+                      ? (isRTL ? 'dns: موثق ✓' : 'dns: verified ✓')
+                      : (isRTL ? 'dns: تم التخطي — يمكن الإعداد لاحقاً' : 'dns: skipped — set up later')}
+                  </div>
                 )}
-              </div>
+              </>
             )}
 
-            {/* ═══ Phase 4: Account Info ═══ */}
+            {/* ═══ Phase 4: Account ═══ */}
             {phase >= 4 && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[4/6]" color="text-cyan-400">
-                  {isRTL ? '👤 إنشاء حساب المدير (الأدمن):' : '👤 Create Admin Account:'}
-                </TermLine>
-
+              <>
+                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── حساب المدير ──' : '── admin account ──'}</div>
                 {phase === 4 ? (
-                  <div className="space-y-4 mt-3" onKeyDown={handleKeyDown}>
-                    {/* Name */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'الاسم الكامل:' : 'Full Name:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          value={ownerName}
-                          onChange={e => setOwnerName(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-email')?.focus(); }}}
-                          placeholder={isRTL ? 'أحمد محمد' : 'Ahmed Mohammed'}
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
+                  <div className="space-y-1.5 mt-1" onKeyDown={handleKeyDown}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'الاسم:' : 'name:'}</span>
+                      <span className="text-emerald-500 text-xs">$</span>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={ownerName}
+                        onChange={e => setOwnerName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-email')?.focus(); }}}
+                        placeholder={isRTL ? 'أحمد' : 'Ahmed'}
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
+                      />
                     </div>
-                    {/* Email */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'البريد:' : 'Email:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="setup-email"
-                          type="email"
-                          value={ownerEmail}
-                          onChange={e => setOwnerEmail(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-password')?.focus(); }}}
-                          placeholder="admin@example.com"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'البريد:' : 'email:'}</span>
+                      <span className="text-emerald-500 text-xs">$</span>
+                      <input
+                        id="setup-email"
+                        type="email"
+                        value={ownerEmail}
+                        onChange={e => setOwnerEmail(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-password')?.focus(); }}}
+                        placeholder="admin@example.com"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
+                      />
                     </div>
-                    {/* Password */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'كلمة المرور:' : 'Password:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="setup-password"
-                          type="password"
-                          value={ownerPassword}
-                          onChange={e => setOwnerPassword(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="••••••••"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'كلمة السر:' : 'password:'}</span>
+                      <span className="text-emerald-500 text-xs">$</span>
+                      <input
+                        id="setup-password"
+                        type="password"
+                        value={ownerPassword}
+                        onChange={e => setOwnerPassword(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="••••••"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
+                      />
                     </div>
-                    <div className="ml-32">
-                      <span className="text-gray-600 text-[11px]">
-                        {isRTL ? 'اضغط Enter بعد كلمة المرور للمتابعة' : 'Press Enter after password to continue'}
-                      </span>
-                    </div>
+                    <div className="text-gray-700 text-[10px] pl-24">{isRTL ? 'Enter بعد كلمة السر للمتابعة' : 'Enter after password to continue'}</div>
                   </div>
                 ) : (
-                  <div className="space-y-1">
-                    <TermLine prefix="✓" color="text-emerald-400">{ownerName}</TermLine>
-                    <TermLine prefix="✓" color="text-emerald-400">{ownerEmail}</TermLine>
-                    <TermLine prefix="✓" color="text-emerald-400">{'••••••••'}</TermLine>
+                  <div className="text-xs space-y-0">
+                    <div className="text-gray-400">name: <span className="text-emerald-400">{ownerName}</span> <span className="text-green-600">✓</span></div>
+                    <div className="text-gray-400">email: <span className="text-emerald-400">{ownerEmail}</span> <span className="text-green-600">✓</span></div>
+                    <div className="text-gray-400">password: <span className="text-emerald-400">••••••</span> <span className="text-green-600">✓</span></div>
                   </div>
                 )}
-              </div>
+              </>
             )}
 
-            {/* ═══ Phase 5: Email / SMTP ═══ */}
+            {/* ═══ Phase 5: SMTP ═══ */}
             {phase >= 5 && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[5/6]" color="text-cyan-400">
-                  {isRTL ? '📧 إعداد البريد (SMTP) — اختياري:' : '📧 Email Setup (SMTP) — Optional:'}
-                </TermLine>
-
-                <div className="bg-[#161b22] rounded-xl p-4 border border-white/5 mt-2">
-                  <p className="text-gray-400 text-xs leading-relaxed mb-3">
-                    {isRTL
-                      ? '💡 للحصول على بيانات SMTP، ادخل لوحة تحكم استضافتك (مثل cPanel، Hostinger، Namecheap) → ابحث عن Email Accounts أو SMTP Settings.'
-                      : '💡 To get SMTP credentials, go to your hosting panel (cPanel, Hostinger, Namecheap) → look for Email Accounts or SMTP Settings.'}
-                  </p>
-                  <div className="text-[11px] text-gray-500 space-y-1">
-                    <p>• Hostinger: smtp.hostinger.com | Port: 465 (SSL)</p>
-                    <p>• cPanel: mail.yourdomain.com | Port: 587 (TLS)</p>
-                    <p>• Gmail: smtp.gmail.com | Port: 587 (App Password)</p>
-                  </div>
+              <>
+                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── البريد (اختياري) ──' : '── email smtp (optional) ──'}</div>
+                <div className="text-gray-600 text-[10px] mt-0.5">
+                  {isRTL ? 'بيانات SMTP من لوحة الاستضافة — أو اضغط Enter للتخطي' : 'smtp credentials from your hosting panel — or press Enter to skip'}
                 </div>
-
                 {phase === 5 ? (
-                  <div className="space-y-3 mt-3" onKeyDown={handleKeyDown}>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">SMTP Host:</span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          value={smtpHost}
-                          onChange={e => setSmtpHost(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-port')?.focus(); }}}
-                          placeholder="smtp.hostinger.com"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
+                  <div className="space-y-1.5 mt-1" onKeyDown={handleKeyDown}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs w-20 text-right">host:</span>
+                      <span className="text-emerald-500 text-xs">$</span>
+                      <input ref={inputRef} type="text" value={smtpHost} onChange={e => setSmtpHost(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (!smtpHost) { setPhase(6); return; } document.getElementById('smtp-port')?.focus(); }}}
+                        placeholder="smtp.hostinger.com"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">Port:</span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="smtp-port"
-                          type="text"
-                          value={smtpPort}
-                          onChange={e => setSmtpPort(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-user')?.focus(); }}}
-                          placeholder="465"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'المستخدم:' : 'Username:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="smtp-user"
-                          type="text"
-                          value={smtpUser}
-                          onChange={e => setSmtpUser(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-pass')?.focus(); }}}
-                          placeholder="info@yourdomain.com"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'كلمة المرور:' : 'Password:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="smtp-pass"
-                          type="password"
-                          value={smtpPass}
-                          onChange={e => setSmtpPass(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-from')?.focus(); }}}
-                          placeholder="••••••••"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">
-                        {isRTL ? 'بريد المرسل:' : 'From Email:'}
-                      </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-emerald-400 mr-2">{'>'}</span>
-                        <input
-                          id="smtp-from"
-                          type="text"
-                          value={smtpFrom}
-                          onChange={e => setSmtpFrom(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="noreply@yourdomain.com"
-                          className="flex-1 bg-transparent text-white outline-none caret-emerald-400 placeholder:text-gray-700 font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="ml-32 flex items-center gap-3 mt-2">
-                      <button
-                        onClick={() => setPhase(6)}
-                        className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-500/30 transition-colors font-mono"
-                      >
-                        {smtpHost 
-                          ? (isRTL ? 'التالي ←' : 'Next →') 
-                          : (isRTL ? '⏭ تخطي — إعداد لاحقاً' : '⏭ Skip — Set up later')}
-                      </button>
-                      <span className="text-gray-600 text-[11px]">
-                        {isRTL 
-                          ? 'أو اضغط Enter للمتابعة' 
-                          : 'or press Enter to continue'}
-                      </span>
+                    {smtpHost && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs w-20 text-right">port:</span>
+                          <span className="text-emerald-500 text-xs">$</span>
+                          <input id="smtp-port" type="text" value={smtpPort} onChange={e => setSmtpPort(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-user')?.focus(); }}}
+                            placeholder="465"
+                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'المستخدم:' : 'user:'}</span>
+                          <span className="text-emerald-500 text-xs">$</span>
+                          <input id="smtp-user" type="text" value={smtpUser} onChange={e => setSmtpUser(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-pass')?.focus(); }}}
+                            placeholder="info@domain.com"
+                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'كلمة السر:' : 'pass:'}</span>
+                          <span className="text-emerald-500 text-xs">$</span>
+                          <input id="smtp-pass" type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-from')?.focus(); }}}
+                            placeholder="••••••"
+                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'المرسل:' : 'from:'}</span>
+                          <span className="text-emerald-500 text-xs">$</span>
+                          <input id="smtp-from" type="text" value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="noreply@domain.com"
+                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
+                        </div>
+                      </>
+                    )}
+                    <div className="text-gray-700 text-[10px] pl-24">
+                      {smtpHost
+                        ? (isRTL ? 'Enter بعد آخر حقل للمتابعة' : 'Enter after last field to continue')
+                        : (isRTL ? 'Enter للتخطي' : 'Enter to skip')}
                     </div>
                   </div>
                 ) : (
-                  <div>
+                  <div className="text-xs mt-0.5">
                     {smtpHost ? (
-                      <div className="space-y-1">
-                        <TermLine prefix="✓" color="text-emerald-400">{smtpHost}:{smtpPort}</TermLine>
-                        <TermLine prefix="✓" color="text-emerald-400">{smtpUser}</TermLine>
-                      </div>
+                      <div className="text-gray-400">smtp: <span className="text-emerald-400">{smtpHost}:{smtpPort}</span> <span className="text-green-600">✓</span></div>
                     ) : (
-                      <TermLine prefix="⊘" color="text-yellow-500">
-                        {isRTL ? 'تم التخطي — سيتم استخدام البريد الافتراضي' : 'Skipped — default email will be used'}
-                      </TermLine>
+                      <div className="text-yellow-500/60">{isRTL ? 'تم التخطي' : 'skipped'}</div>
                     )}
                   </div>
                 )}
-              </div>
+              </>
             )}
 
             {/* ═══ Phase 6: Store Name ═══ */}
             {phase >= 6 && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[6/6]" color="text-cyan-400">
-                  {isRTL ? '🏪 اسم الموقع / المتجر:' : '🏪 Site / Store Name:'}
-                </TermLine>
-
+              <>
+                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── اسم المتجر ──' : '── store name ──'}</div>
                 {phase === 6 ? (
-                  <div className="mt-3">
-                    <div className="flex items-center gap-0">
-                      <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
+                  <>
+                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل اسم موقعك:' : 'enter your site name:'}</div>
+                    <div className="flex items-center mt-1">
+                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
                       <input
                         ref={inputRef}
                         type="text"
@@ -845,139 +623,90 @@ export default function TerminalSetupPage() {
                         onChange={e => setStoreName(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={isRTL ? 'متجر أحمد' : 'Ahmed Store'}
-                        className="flex-1 bg-transparent text-white text-lg outline-none caret-emerald-400 placeholder:text-gray-700 font-mono"
+                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
                         autoFocus
                       />
                     </div>
-                    <div className="mt-2 ml-5">
-                      <span className="text-gray-600 text-[11px]">
-                        {isRTL ? 'اضغط Enter لبدء بناء الموقع 🚀' : 'Press Enter to start building site 🚀'}
-                      </span>
-                    </div>
-                  </div>
+                    <div className="text-gray-700 text-[10px] mt-1">{isRTL ? 'Enter لبدء البناء 🚀' : 'Enter to start build 🚀'}</div>
+                  </>
                 ) : (
-                  <TermLine prefix="✓" color="text-emerald-400">{storeName}</TermLine>
+                  <div className="text-gray-400 text-xs">name: <span className="text-emerald-400">{storeName}</span> <span className="text-green-600">✓</span></div>
                 )}
-              </div>
+              </>
             )}
 
             {/* ═══ Phase 7: Building ═══ */}
             {phase === 7 && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="$" color="text-yellow-400">
-                  {isRTL ? 'جارٍ بناء الموقع...' : 'Building site...'}
-                </TermLine>
-                <div className="mt-2">
-                  {/* Progress bar */}
-                  <div className="w-full bg-white/5 rounded-full h-1.5 mb-4 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(100, (buildProgress.length / 8) * 100)}%` }}
-                    />
-                  </div>
-                  {buildProgress.map((msg, i) => (
-                    <TermLine key={i} prefix="→" color="text-gray-500">{msg}</TermLine>
-                  ))}
-                  {!error && buildProgress.length < 8 && <Cursor />}
+              <>
+                <div className="text-gray-600 text-xs mt-3">{'─'.repeat(50)}</div>
+                <div className="text-yellow-500 text-xs mt-1">{isRTL ? 'جارٍ بناء الموقع...' : 'building site...'}</div>
+                <div className="w-full bg-white/[0.03] h-0.5 mt-2 mb-2 overflow-hidden rounded-full">
+                  <div
+                    className="h-full bg-emerald-500/60 transition-all duration-700 rounded-full"
+                    style={{ width: `${Math.min(100, (buildProgress.length / 8) * 100)}%` }}
+                  />
                 </div>
-              </div>
+                {buildProgress.map((msg, i) => (
+                  <div key={i} className="text-gray-500 text-xs">  {msg}</div>
+                ))}
+                {!error && buildProgress.length < 8 && <Cursor />}
+              </>
             )}
 
             {/* ═══ Phase 8: Done ═══ */}
             {phase === 8 && result && (
-              <div className="space-y-2 mt-4">
-                <div className="border-t border-white/5 my-3" />
-                <pre className="text-emerald-400 whitespace-pre-wrap text-xs select-none mt-2">
-{`
- ╔═══════════════════════════════════════════╗
- ║                                           ║
- ║   ✅  ${isRTL ? 'تم بناء الموقع بنجاح!' : 'Site Built Successfully!'}          ║
- ║                                           ║
- ╚═══════════════════════════════════════════╝`}
-                </pre>
-
-                <div className="bg-[#161b22] rounded-xl p-5 border border-emerald-500/20 mt-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">{isRTL ? 'اسم الموقع' : 'Site Name'}</span>
-                    <span className="text-white font-mono text-sm">{result.site?.name}</span>
-                  </div>
-                  <div className="border-t border-white/5" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">{isRTL ? 'الرابط' : 'URL'}</span>
-                    <span className="text-emerald-400 font-mono text-sm">{result.site?.domain}</span>
-                  </div>
-                  <div className="border-t border-white/5" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">{isRTL ? 'الخطة' : 'Plan'}</span>
-                    <span className="text-cyan-400 font-mono text-sm capitalize">{result.site?.plan}</span>
-                  </div>
-                  <div className="border-t border-white/5" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">{isRTL ? 'الحالة' : 'Status'}</span>
-                    <span className="text-emerald-400 font-mono text-sm">● {isRTL ? 'نشط' : 'Active'}</span>
-                  </div>
+              <>
+                <div className="text-gray-600 text-xs mt-3">{'─'.repeat(50)}</div>
+                <div className="text-emerald-400 text-xs mt-2">
+                  ✓ {isRTL ? 'تم بناء الموقع بنجاح!' : 'site built successfully!'}
+                </div>
+                <div className="text-xs mt-2 space-y-0.5 pl-2 border-l border-emerald-500/20">
+                  <div className="text-gray-400">{isRTL ? 'الاسم' : 'name'}: <span className="text-white">{result.site?.name}</span></div>
+                  <div className="text-gray-400">{isRTL ? 'الرابط' : 'url'}: <span className="text-emerald-400">{result.site?.domain}</span></div>
+                  <div className="text-gray-400">{isRTL ? 'الخطة' : 'plan'}: <span className="text-cyan-400">{result.site?.plan}</span></div>
+                  <div className="text-gray-400">{isRTL ? 'الحالة' : 'status'}: <span className="text-emerald-400">● {isRTL ? 'نشط' : 'active'}</span></div>
                   {result.subscription?.trial_ends_at && (
-                    <>
-                      <div className="border-t border-white/5" />
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500 text-xs">{isRTL ? 'تجريبي' : 'Trial'}</span>
-                        <span className="text-yellow-400 font-mono text-sm">{isRTL ? '14 يوم مجاني' : '14 days free'}</span>
-                      </div>
-                    </>
+                    <div className="text-gray-400">{isRTL ? 'تجريبي' : 'trial'}: <span className="text-yellow-400">{isRTL ? '14 يوم' : '14 days'}</span></div>
                   )}
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                  <button
+                <div className="text-gray-600 text-xs mt-4">{'─'.repeat(50)}</div>
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <div
+                    className="text-emerald-400 text-xs cursor-pointer hover:text-emerald-300 transition-colors"
                     onClick={() => navigate('/admin')}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white py-3.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 font-mono"
                   >
-                    {'>'} {isRTL ? 'الدخول للوحة التحكم' : 'Open Dashboard'}
-                  </button>
-                  <button
+                    $ <span className="underline underline-offset-2">{isRTL ? 'الدخول للوحة التحكم' : 'open dashboard'}</span> →
+                  </div>
+                  <div
+                    className="text-gray-400 text-xs cursor-pointer hover:text-gray-300 transition-colors"
                     onClick={() => window.open(`https://${result.site?.domain}`, '_blank')}
-                    className="flex-1 bg-white/5 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-white/10 transition-all border border-white/10 flex items-center justify-center gap-2 font-mono"
                   >
-                    {'>'} {isRTL ? 'زيارة الموقع' : 'Visit Site'} ↗
-                  </button>
-                </div>
-
-                <div className="text-center mt-4">
-                  <button
+                    $ <span className="underline underline-offset-2">{isRTL ? 'زيارة الموقع' : 'visit site'}</span> ↗
+                  </div>
+                  <div
+                    className="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors"
                     onClick={() => navigate('/my-dashboard')}
-                    className="text-gray-500 hover:text-white text-xs transition-colors font-mono"
                   >
-                    {'>'} {isRTL ? 'الذهاب لإدارة موقعي' : 'Go to My Dashboard'}
-                  </button>
+                    $ <span className="underline underline-offset-2">{isRTL ? 'إدارة موقعي' : 'my dashboard'}</span>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* ═══ Error Display ═══ */}
             {error && (
-              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <TermLine prefix="✗" color="text-red-400">{error}</TermLine>
+              <div className="mt-2">
+                <div className="text-red-400 text-xs">✗ {error}</div>
                 {phase === 7 && (
-                  <button
-                    onClick={() => { setError(''); runBuild(); }}
-                    className="mt-2 text-yellow-400 text-xs hover:text-yellow-300 font-mono"
-                  >
-                    {'>'} {isRTL ? 'إعادة المحاولة' : 'Retry'}
-                  </button>
+                  <div className="text-yellow-500 text-xs cursor-pointer hover:text-yellow-400 mt-1" onClick={() => { setError(''); runBuild(); }}>
+                    $ {isRTL ? 'إعادة المحاولة' : 'retry'}
+                  </div>
                 )}
               </div>
             )}
           </div>
         </div>
-
-        {/* Bottom hint */}
-        {phase < 7 && (
-          <p className="text-center text-gray-700 text-[11px] mt-3 font-mono">
-            {isRTL ? 'اضغط Enter للمتابعة بين الخطوات' : 'Press Enter to navigate between steps'}
-          </p>
-        )}
       </div>
     </div>
   );
