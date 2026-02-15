@@ -12,7 +12,7 @@ const emailService = require('../services/email');
 
 // Helper: get siteKey from request
 function getSiteKey(req) {
-  return req.siteKey || req.user?.getSiteKey(req);
+  return req.siteKey || req.user?.site_key;
 }
 
 // ─── بدء عملية الدفع ───
@@ -45,7 +45,7 @@ async function initCheckout(req, res) {
 
     // إنشاء سجل الدفع بحالة pending
     const payment = await Payment.create({
-      getSiteKey(req): getSiteKey(req),
+      site_key: getSiteKey(req),
       customer_id: null,
       order_id: null,
       type: 'purchase',
@@ -192,7 +192,7 @@ async function paypalCallback(req, res) {
     const { token } = req.query; // PayPal order ID from query
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
+    if (!payment || payment.site_key !== getSiteKey(req)) {
       return res.redirect(`/?payment=error&msg=not_found`);
     }
 
@@ -343,7 +343,7 @@ async function checkUsdtPayment(req, res) {
     const { id } = req.params;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
+    if (!payment || payment.site_key !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
@@ -410,7 +410,7 @@ async function uploadBankReceipt(req, res) {
     const { receipt_url, notes } = req.body;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
+    if (!payment || payment.site_key !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
@@ -449,7 +449,7 @@ async function checkPaymentStatus(req, res) {
     const { id } = req.params;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
+    if (!payment || payment.site_key !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
