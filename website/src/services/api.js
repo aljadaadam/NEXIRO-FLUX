@@ -479,6 +479,23 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  async updateCustomDomain(custom_domain) {
+    return this.request('/setup/my-site/domain', {
+      method: 'PUT',
+      body: JSON.stringify({ custom_domain }),
+    });
+  }
+
+  async removeCustomDomain() {
+    return this.request('/setup/my-site/domain', {
+      method: 'DELETE',
+    });
+  }
+
+  async verifyDNS() {
+    return this.request('/setup/my-site/verify-dns');
+  }
 }
 
 // Singleton

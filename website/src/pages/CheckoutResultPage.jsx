@@ -56,12 +56,21 @@ export default function CheckoutResultPage({ type = 'success' }) {
           </p>
         )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            to="/"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-medium hover:shadow-lg transition-all"
-          >
-            {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
-          </Link>
+          {type === 'success' ? (
+            <Link
+              to={`/setup?payment_ref=${paymentId || ''}&template=${params.get('template') || ''}&plan=${params.get('plan') || ''}`}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg transition-all"
+            >
+              {isRTL ? 'متابعة إعداد الموقع →' : 'Continue to Site Setup →'}
+            </Link>
+          ) : (
+            <Link
+              to="/"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-medium hover:shadow-lg transition-all"
+            >
+              {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
+            </Link>
+          )}
           {type !== 'success' && (
             <Link
               to="/checkout"

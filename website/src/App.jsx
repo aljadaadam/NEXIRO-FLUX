@@ -18,6 +18,7 @@ import RefundPage from './pages/RefundPage';
 import NotFoundPage from './pages/NotFoundPage';
 import CheckoutPage from './pages/CheckoutPage';
 import CheckoutResultPage from './pages/CheckoutResultPage';
+import TerminalSetupPage from './pages/TerminalSetupPage';
 import YCZStoreLiveDemo from './pages/demo/YCZStoreLiveDemo';
 import YCZDashboardLiveDemo from './pages/demo/YCZDashboardLiveDemo';
 
@@ -36,6 +37,7 @@ function AppContent() {
   const isDemoPage = location.pathname.startsWith('/demo/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const isSetupPage = location.pathname === '/setup';
+  const isTerminalSetup = location.pathname === '/terminal-setup';
   const isMyDashboard = location.pathname === '/my-dashboard';
   const isCheckoutPage = location.pathname.startsWith('/checkout');
 
@@ -48,10 +50,11 @@ function AppContent() {
     );
   }
 
-  if (isSetupPage) {
+  if (isSetupPage || isTerminalSetup) {
     return (
       <Routes>
-        <Route path="/setup" element={<SetupWizardPage />} />
+        <Route path="/setup" element={<TerminalSetupPage />} />
+        <Route path="/terminal-setup" element={<TerminalSetupPage />} />
       </Routes>
     );
   }
