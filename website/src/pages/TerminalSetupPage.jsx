@@ -50,6 +50,7 @@ export default function TerminalSetupPage() {
   const [dnsChecking, setDnsChecking] = useState(false);
   const [dnsVerified, setDnsVerified] = useState(false);
   const [dnsResult, setDnsResult] = useState(null);
+  const [dnsPartial, setDnsPartial] = useState(null); // { dnsOk, httpOk }
 
   //  Translations 
   const t = {
@@ -57,10 +58,14 @@ export default function TerminalSetupPage() {
     welcomeSub: isRTL ? 'الآن دعنا نكمل إعداد موقعك' : "Now let's complete your site setup",
     domainLabel: isRTL ? 'أدخل رابط الدومين الخاص بك' : 'Enter your domain',
     domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال magicdesign3.com' : 'Enter your domain e.g. magicdesign3.com',
-    domainHint: isRTL ? 'وجّه الدومين إلى IP: 154.56.60.195 (سجل A)' : 'Point your domain to IP: 154.56.60.195 (A record)',
-    checkDns: isRTL ? 'تحقق من DNS' : 'Check DNS',
-    dnsOk: isRTL ? '✓ تم التحقق من DNS بنجاح' : '✓ DNS verified successfully',
-    dnsRequired: isRTL ? 'يجب التحقق من DNS أولاً' : 'DNS verification is required',
+    domainHint: isRTL ? 'وجّه الدومين إلى IP: 154.56.60.195 (سجل A) وتأكد أنه غير مرتبط باستضافة أخرى' : 'Point your domain to IP: 154.56.60.195 (A record) and make sure it is not linked to another hosting',
+    checkDns: isRTL ? 'تحقق من الدومين' : 'Verify Domain',
+    dnsOk: isRTL ? '✓ تم التحقق بنجاح! الدومين يشير لسيرفرنا ويفتح الموقع' : '✓ Verified! Domain points to our server and opens the site',
+    dnsRequired: isRTL ? 'يجب التحقق من الدومين أولاً' : 'Domain verification is required',
+    dnsOnlyOk: isRTL ? '✓ DNS يشير لسيرفرنا' : '✓ DNS points to our server',
+    httpOnlyOk: isRTL ? '✓ الموقع يفتح عبر الدومين' : '✓ Site opens via domain',
+    dnsNotOk: isRTL ? '✗ DNS لا يشير لسيرفرنا' : '✗ DNS not pointing to our server',
+    httpNotOk: isRTL ? '✗ الموقع لا يفتح عبر الدومين بعد' : '✗ Site does not open via domain yet',
     accountTitle: isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account',
     accountSub: isRTL ? 'هذا الحساب سيكون لإدارة موقعك' : 'This account will manage your site',
     nameLabel: isRTL ? 'الاسم الكامل' : 'Full Name',
@@ -109,16 +114,18 @@ export default function TerminalSetupPage() {
     setDnsChecking(true);
     setError('');
     setDnsResult(null);
+    setDnsPartial(null);
     try {
       const res = await api.checkDomainDNS(d);
       setDnsResult(res);
+      setDnsPartial({ dnsOk: res.dnsOk, httpOk: res.httpOk });
       if (res.verified) {
         setDnsVerified(true);
       } else {
         setError(isRTL ? res.message : res.messageEn);
       }
     } catch (err) {
-      setError(err.error || (isRTL ? 'فشل التحقق من DNS' : 'DNS check failed'));
+      setError(err.error || (isRTL ? 'فشل التحقق من الدومين' : 'Domain verification failed'));
     } finally {
       setDnsChecking(false);
     }
@@ -296,8 +303,28 @@ export default function TerminalSetupPage() {
                 </button>
               )}
 
+              {/* Partial status indicators (DNS + HTTP) */}
+              {dnsPartial && !dnsVerified && (
+                <div className="space-y-1 text-xs text-center">
+                  <p className={dnsPartial.dnsOk ? 'text-emerald-400' : 'text-red-400'}>
+                    {dnsPartial.dnsOk ? t.dnsOnlyOk : t.dnsNotOk}
+                  </p>
+                  <p className={dnsPartial.httpOk ? 'text-emerald-400' : 'text-red-400'}>
+                    {dnsPartial.httpOk ? t.httpOnlyOk : t.httpNotOk}
+                  </p>
+                </div>
+              )}
+
               {dnsVerified && (
-                <p className="text-emerald-400 text-sm text-center">{t.dnsOk}</p>
+                <div className="space-y-1 text-center">
+                  <p className="text-emerald-400 text-sm">{t.dnsOk}</p>
+                  {dnsPartial && (
+                    <div className="flex items-center justify-center gap-3 text-xs text-emerald-500/70">
+                      <span>DNS ✓</span>
+                      <span>HTTP ✓</span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {error && (

@@ -501,25 +501,23 @@ async function verifyDomainDNS(req, res) {
     }
 
     const dns = require('dns').promises;
-    const SERVER_IP = '154.56.60.195'; // VPS IP where backend runs
-    let verified = false;
+    const SERVER_IP = '154.56.60.195';
+    let dnsOk = false;
+    let httpOk = false;
     let dnsResult = {};
 
     try {
-      // Check CNAME
       const cnames = await dns.resolveCname(site.custom_domain);
       if (cnames.some(c => c.includes('nexiroflux') || c.includes('nexiro-flux'))) {
-        verified = true;
+        dnsOk = true;
         dnsResult.cname = cnames;
       }
     } catch (e) {
-      // CNAME not found, try A record
       try {
         const addresses = await dns.resolve4(site.custom_domain);
         dnsResult.a_records = addresses;
-        // Verify A record points to our VPS
         if (addresses.includes(SERVER_IP)) {
-          verified = true;
+          dnsOk = true;
         } else {
           dnsResult.expected_ip = SERVER_IP;
           dnsResult.note = `A record يشير إلى ${addresses.join(', ')} بدلاً من ${SERVER_IP}`;
@@ -530,23 +528,38 @@ async function verifyDomainDNS(req, res) {
       }
     }
 
+    // HTTP-level verification
+    httpOk = await httpVerifyDomain(site.custom_domain);
+
+    const verified = (dnsOk && httpOk) || (!dnsOk && httpOk);
+
     // Update verification status
     if (verified) {
       const pool = require('../config/db').getPool();
       await pool.query('UPDATE sites SET dns_verified = 1 WHERE site_key = ?', [site_key]);
     }
 
+    let message, messageEn;
+    if (verified) {
+      message = '✅ تم التحقق بنجاح! الدومين جاهز للاستخدام';
+      messageEn = '✅ Verified! Domain is ready to use';
+    } else if (dnsOk && !httpOk) {
+      message = '⚠️ DNS يشير لسيرفرنا لكن الموقع لا يفتح عبر الدومين. تأكد أن الدومين غير مرتبط باستضافة أخرى';
+      messageEn = '⚠️ DNS points to our server but site does not open via domain. Make sure domain is not linked to another hosting';
+    } else {
+      message = `❌ لم يتم التحقق. تأكد من إضافة سجل A يشير إلى ${SERVER_IP}`;
+      messageEn = `❌ Not verified. Make sure to add an A record pointing to ${SERVER_IP}`;
+    }
+
     res.json({
       domain: site.custom_domain,
       verified,
+      dnsOk,
+      httpOk,
       dns: dnsResult,
       server_ip: SERVER_IP,
-      message: verified 
-        ? '✅ تم التحقق من DNS بنجاح! الدومين جاهز للاستخدام' 
-        : `❌ لم يتم التحقق من DNS. تأكد من إعداد سجل A يشير إلى ${SERVER_IP} أو CNAME يشير إلى nexiroflux.com`,
-      messageEn: verified
-        ? '✅ DNS verified successfully! Domain is ready to use'
-        : `❌ DNS not verified. Make sure A record points to ${SERVER_IP} or CNAME points to nexiroflux.com`
+      message,
+      messageEn,
     });
   } catch (error) {
     console.error('Error in verifyDomainDNS:', error);
@@ -596,6 +609,30 @@ async function getSiteByDomain(req, res) {
 }
 
 // ─── التحقق من DNS لدومين (عام — بدون مصادقة، يُستخدم في معالج الإعداد) ───
+// ─── فحص HTTP: هل الدومين يفتح سيرفرنا فعلاً؟ ───
+function httpVerifyDomain(domain, timeoutMs = 6000) {
+  return new Promise((resolve) => {
+    const http = require('http');
+    const url = `http://${domain}/api/health/nexiro-verify`;
+    const timer = setTimeout(() => { resolve(false); }, timeoutMs);
+    try {
+      const req = http.get(url, { timeout: timeoutMs, headers: { 'Host': domain } }, (res) => {
+        let body = '';
+        res.on('data', c => body += c);
+        res.on('end', () => {
+          clearTimeout(timer);
+          try {
+            const json = JSON.parse(body);
+            resolve(json.platform === 'nexiro-flux' && json.verified === true);
+          } catch { resolve(false); }
+        });
+      });
+      req.on('error', () => { clearTimeout(timer); resolve(false); });
+      req.on('timeout', () => { req.destroy(); clearTimeout(timer); resolve(false); });
+    } catch { clearTimeout(timer); resolve(false); }
+  });
+}
+
 async function checkDomainDNS(req, res) {
   try {
     const { domain } = req.params;
@@ -606,25 +643,25 @@ async function checkDomainDNS(req, res) {
     const cleanDomain = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
     const dns = require('dns').promises;
     const SERVER_IP = '154.56.60.195';
-    let verified = false;
+    let dnsOk = false;
+    let httpOk = false;
     let dnsResult = {};
 
+    // ── Step 1: DNS check (A / CNAME) ──
     try {
-      // Check CNAME first
       const cnames = await dns.resolveCname(cleanDomain);
       if (cnames.some(c => c.includes('nexiroflux') || c.includes('nexiro-flux'))) {
-        verified = true;
+        dnsOk = true;
         dnsResult.type = 'CNAME';
         dnsResult.cname = cnames;
       }
     } catch (e) {
-      // CNAME not found, try A record
       try {
         const addresses = await dns.resolve4(cleanDomain);
         dnsResult.type = 'A';
         dnsResult.a_records = addresses;
         if (addresses.includes(SERVER_IP)) {
-          verified = true;
+          dnsOk = true;
         } else {
           dnsResult.expected_ip = SERVER_IP;
           dnsResult.current_ip = addresses.join(', ');
@@ -636,17 +673,39 @@ async function checkDomainDNS(req, res) {
       }
     }
 
+    // ── Step 2: HTTP verification (does the domain actually reach our backend?) ──
+    if (dnsResult.type !== 'NONE') {
+      httpOk = await httpVerifyDomain(cleanDomain);
+    }
+
+    const verified = dnsOk && httpOk;
+
+    // Build detailed status message
+    let message, messageEn;
+    if (verified) {
+      message = '✅ تم التحقق بنجاح! الدومين يشير إلى سيرفرنا ويفتح الموقع بشكل صحيح';
+      messageEn = '✅ Verified! Domain points to our server and opens the site correctly';
+    } else if (dnsOk && !httpOk) {
+      message = `⚠️ DNS يشير إلى سيرفرنا لكن الموقع لا يفتح عبر الدومين بعد. تأكد أن الدومين غير مرتبط باستضافة أخرى (مثل Cloudflare أو cPanel) وأن إعدادات البروكسي معطّلة`;
+      messageEn = '⚠️ DNS points to our server but the site does not open through the domain yet. Make sure the domain is not linked to another hosting (e.g. Cloudflare proxy or cPanel) and proxy settings are disabled';
+    } else if (!dnsOk && httpOk) {
+      // Rare: Cloudflare proxy etc. — IPs don't match but HTTP reaches us
+      message = '✅ الدومين يفتح الموقع بشكل صحيح (عبر بروكسي)';
+      messageEn = '✅ Domain opens the site correctly (via proxy)';
+    } else {
+      message = `❌ DNS لا يشير إلى سيرفرنا. أضف سجل A يشير إلى ${SERVER_IP}`;
+      messageEn = `❌ DNS is not pointing to our server. Add an A record pointing to ${SERVER_IP}`;
+    }
+
     res.json({
       domain: cleanDomain,
-      verified,
+      verified: verified || (!dnsOk && httpOk), // proxy case is also valid
+      dnsOk,
+      httpOk,
       server_ip: SERVER_IP,
       dns: dnsResult,
-      message: verified
-        ? '✅ DNS يشير بشكل صحيح إلى سيرفرنا!'
-        : `❌ DNS لا يشير إلى سيرفرنا. تأكد من إضافة سجل A يشير إلى ${SERVER_IP}`,
-      messageEn: verified
-        ? '✅ DNS is correctly pointing to our server!'
-        : `❌ DNS is not pointing to our server. Make sure to add an A record pointing to ${SERVER_IP}`,
+      message,
+      messageEn,
     });
   } catch (error) {
     console.error('Error in checkDomainDNS:', error);

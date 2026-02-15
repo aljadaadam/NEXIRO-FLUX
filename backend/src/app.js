@@ -54,6 +54,11 @@ app.use('/api/checkout', checkoutRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/purchase-codes', purchaseCodeRoutes);
 
+// ─── Domain verification endpoint (used by HTTP check) ───
+app.get('/api/health/nexiro-verify', (req, res) => {
+  res.json({ platform: 'nexiro-flux', verified: true, ts: Date.now() });
+});
+
 // Root route - يظهر معلومات الموقع
 app.get('/', async (req, res) => {
   try {
