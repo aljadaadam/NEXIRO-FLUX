@@ -60,15 +60,15 @@ function PayShell({ children }: { children: React.ReactNode }) {
 
       {/* Logo */}
       <div style={S.logoWrap}>
-        <span style={S.logoText}>YCZ</span>
-        <span style={S.logoSub}>Servers</span>
+        <span style={S.logoText}>{process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"}</span>
+        <span style={S.logoSub}>{process.env.NEXT_PUBLIC_STORE_TAGLINE ?? ""}</span>
       </div>
 
       {children}
 
       {/* Copyright */}
       <footer style={S.footer}>
-        <span>© {new Date().getFullYear()} YCZ Servers — جميع الحقوق محفوظة</span>
+        <span>© {new Date().getFullYear()} {process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"} — جميع الحقوق محفوظة</span>
       </footer>
     </div>
   );

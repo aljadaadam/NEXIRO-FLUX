@@ -88,39 +88,16 @@ function getTextDir(text: string): "rtl" | "ltr" {
   return "rtl";
 }
 
-const SERVICE_KEY_TO_AR_NAME: Record<string, string> = {
-  // Sigma Plus
-  "20040": "تفعيل Sigma Plus",
-  "20041": "تفعيل Sigma Plus",
-  "20042": "تفعيل Sigma Plus",
-
-  // UnlockTool
-  "17771": "تفعيل UnlockTool",
-  "17772": "تفعيل UnlockTool",
-  "17773": "تفعيل UnlockTool",
-};
-
 function getDisplayProductName(item: FeaturedApiItem): string {
   const ar = item.service.SERVICENAME_AR?.trim();
   if (ar) return ar;
   const en = item.service.SERVICENAME?.trim();
   if (en) return en;
-  const mapped = SERVICE_KEY_TO_AR_NAME[item.serviceKey];
-  if (mapped) return mapped;
   return "منتج";
 }
 
-function getProductImageSrc(item: FeaturedApiItem): string | null {
-  const serviceKeyToImage: Record<string, string> = {
-    "20040": "/images/products/sigma-plus.png",
-    "20041": "/images/products/sigma-plus.png",
-    "20042": "/images/products/sigma-plus.png",
-    "17771": "/images/products/unlocktool.png",
-    "17772": "/images/products/unlocktool.png",
-    "17773": "/images/products/unlocktool.png",
-  };
-
-  return serviceKeyToImage[item.serviceKey] ?? null;
+function getProductImageSrc(_item: FeaturedApiItem): string | null {
+  return null;
 }
 
 function normalizeFieldKey(key: string): string {

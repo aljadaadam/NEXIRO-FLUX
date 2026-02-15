@@ -86,7 +86,7 @@ export default function SupportTicketForm() {
         return;
       }
 
-      const subjectParts = ["YCZ دعم", topicLabel];
+      const subjectParts = [`${process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"} دعم`, topicLabel];
       if (cleanedOrder) subjectParts.push(`#${cleanedOrder}`);
 
       const summaryLines = [

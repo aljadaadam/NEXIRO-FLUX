@@ -106,7 +106,7 @@ export default function Footer() {
               }}
             >
               <a
-                href="#"
+                href={process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "#"}
                 aria-label="Facebook"
                 title="Facebook"
                 style={{
@@ -129,7 +129,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://api.whatsapp.com/send/?phone=249129316161"
+                href={`https://api.whatsapp.com/send/?phone=${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? ""}`}
                 aria-label="WhatsApp"
                 title="WhatsApp"
                 style={{
@@ -152,7 +152,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="#"
+                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "#"}
                 aria-label="Instagram"
                 title="Instagram"
                 style={{
@@ -187,7 +187,7 @@ export default function Footer() {
         />
 
         <div style={{ fontSize: "0.95rem", color: muted, textAlign: "center" }}>
-          حقوق الملكية © {new Date().getFullYear()} YCZ — جميع الحقوق محفوظة
+          حقوق الملكية © {new Date().getFullYear()} {process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"} — جميع الحقوق محفوظة
         </div>
       </div>
     </footer>

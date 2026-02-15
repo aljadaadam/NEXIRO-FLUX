@@ -477,7 +477,7 @@ export default function ProfileDashboardSection(props: {
             <div style={{ flex: "1 1 auto", minWidth: 200 }}>
               <div className="profileDash-title" style={{ fontSize: "clamp(1.4rem, 3.5vw, 2rem)" }}>مرحباً بك 👋</div>
               <div className="profileDash-subtitle" style={{ marginTop: "0.15rem", fontSize: "0.95rem" }}>
-                {props.email ?? "COMFORT ZONE"}
+                {props.email ?? ""}
               </div>
             </div>
 

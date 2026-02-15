@@ -122,7 +122,7 @@ export default function Header() {
         >
           <img
             src="/images/logoheder.png"
-            alt="YCZ"
+            alt={process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"}
             style={{ height: 34, width: "auto", display: "block" }}
           />
         </Link>
@@ -141,7 +141,7 @@ export default function Header() {
         <aside className="mobileNavPanel">
           <div className="mobileNavTop">
             <Link href="/" className="mobileNavBrand" onClick={() => setMobileOpen(false)}>
-              <img src="/images/logoheder.png" alt="YCZ" style={{ height: 30, width: "auto", display: "block" }} />
+              <img src="/images/logoheder.png" alt={process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"} style={{ height: 30, width: "auto", display: "block" }} />
             </Link>
 
             <button type="button" className="mobileNavClose" aria-label="إغلاق القائمة" onClick={() => setMobileOpen(false)}>

@@ -10,8 +10,8 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "المتجر | قالب متجر إلكتروني",
-  description: "قالب متجر إلكتروني احترافي من NEXIRO-FLUX",
+  title: process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر",
+  description: process.env.NEXT_PUBLIC_STORE_DESCRIPTION ?? "متجر إلكتروني احترافي",
 };
 
 export default function RootLayout({

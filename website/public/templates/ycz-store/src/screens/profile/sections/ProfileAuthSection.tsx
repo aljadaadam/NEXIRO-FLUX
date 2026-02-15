@@ -378,7 +378,7 @@ export default function ProfileAuthSection(props: {
             </div>
           </div>
 
-          <div className="auth-subtitle">سجل دخول الي COMFORT ZONE</div>
+          <div className="auth-subtitle">سجل دخول الي {process.env.NEXT_PUBLIC_STORE_NAME ?? "المتجر"}</div>
 
           <form
             className="auth-form"
