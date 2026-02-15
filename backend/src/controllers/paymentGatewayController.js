@@ -1,9 +1,10 @@
 const PaymentGateway = require('../models/PaymentGateway');
+const { SITE_KEY } = require('../config/env');
 
 // ─── جلب جميع بوابات الدفع ───
 async function getAllGateways(req, res) {
   try {
-    const siteKey = req.siteKey || req.user?.site_key;
+    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
     const gateways = await PaymentGateway.findBySiteKey(siteKey);
     res.json({ gateways });
   } catch (error) {
@@ -16,7 +17,7 @@ async function getAllGateways(req, res) {
 async function getEnabledGateways(req, res) {
   try {
     const { country } = req.query;
-    const siteKey = req.siteKey || req.user?.site_key;
+    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
     const gateways = await PaymentGateway.findEnabled(siteKey, country || null);
 
     // إخفاء البيانات الحساسة للعرض العام

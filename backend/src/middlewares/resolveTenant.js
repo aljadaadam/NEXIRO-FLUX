@@ -89,7 +89,8 @@ async function resolveTenant(req, res, next) {
     }
 
     // ─── 3. Fallback to ENV SITE_KEY ───
-    if (SITE_KEY && SITE_KEY !== 'default-site-key') {
+    // Always use ENV SITE_KEY as last resort (needed for setup checkout & payment gateways)
+    if (SITE_KEY) {
       const site = await Site.findBySiteKey(SITE_KEY);
       req.siteKey = SITE_KEY;
       req.site = site || null;

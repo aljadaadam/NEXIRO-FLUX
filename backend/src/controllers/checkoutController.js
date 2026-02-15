@@ -9,10 +9,11 @@ const PayPalProcessor = require('../services/paypal');
 const BinancePayProcessor = require('../services/binancePay');
 const USDTProcessor = require('../services/usdt');
 const emailService = require('../services/email');
+const { SITE_KEY } = require('../config/env');
 
-// Helper: get siteKey from request
+// Helper: get siteKey from request (fallback to platform SITE_KEY for setup checkout)
 function getSiteKey(req) {
-  return req.siteKey || req.user?.site_key;
+  return req.siteKey || req.user?.site_key || SITE_KEY;
 }
 
 // ─── بدء عملية الدفع ───

@@ -59,7 +59,7 @@ export default function TerminalSetupPage() {
 
   const templateId = searchParams.get('template') || 'digital-services-store';
   const plan = searchParams.get('plan') || 'monthly';
-  const paymentRef = searchParams.get('payment_ref') || '';
+  const paymentRef = searchParams.get('payment_ref') || searchParams.get('payment_id') || '';
 
   const templateData = staticTemplates.find(t => t.id === templateId);
   const templateName = isRTL ? (templateData?.name || templateId) : (templateData?.nameEn || templateId);
@@ -127,6 +127,12 @@ export default function TerminalSetupPage() {
     const paymentStatus = searchParams.get('payment_status');
     const paymentId = searchParams.get('payment_id');
     const returnedGateway = searchParams.get('gateway');
+
+    // Restore gateway type from URL so payment_method is correct in runBuild
+    if (returnedGateway) {
+      setSelectedGateway(prev => prev || { type: returnedGateway, name: returnedGateway });
+    }
+
     if (paymentStatus === 'success' && paymentId) {
       setPaymentConfirmed(true);
       setPaymentMode('gateway');
@@ -150,6 +156,7 @@ export default function TerminalSetupPage() {
           if (res.status === 'completed' || res.status === 'paid') {
             setPaymentConfirmed(true);
             setPaymentMode('gateway');
+            setSelectedGateway(prev => prev || { type: 'binance', name: 'Binance Pay' });
             setPhase(2);
           }
         })

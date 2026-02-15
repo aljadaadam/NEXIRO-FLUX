@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Subscription = require('../models/Subscription');
 const Customization = require('../models/Customization');
 const PurchaseCode = require('../models/PurchaseCode');
+const Payment = require('../models/Payment');
+const ActivityLog = require('../models/ActivityLog');
 const { generateToken } = require('../utils/token');
 const crypto = require('crypto');
 const emailService = require('../services/email');
@@ -45,6 +47,9 @@ async function provisionSite(req, res) {
       logo_url,
       // كود الشراء (اختياري)
       purchase_code,
+      // بيانات الدفع (من الفرونت)
+      payment_method,
+      payment_reference,
     } = req.body;
 
     // ─── التحقق من المدخلات الأساسية ───
@@ -139,6 +144,9 @@ async function provisionSite(req, res) {
           smtp: smtp_host ? { host: smtp_host, port: smtp_port || 587, user: smtp_user, pass: smtp_pass, from: smtp_from || owner_email } : null,
           setup_completed: true,
           setup_date: new Date().toISOString(),
+          payment_method: payment_method || (purchase_code ? 'purchase_code' : 'manual'),
+          payment_reference: payment_reference || null,
+          payment_status: paymentStatus,
         })
       ]
     );
@@ -173,6 +181,49 @@ async function provisionSite(req, res) {
       await PurchaseCode.markUsed(purchase_code, owner_email, site_key);
     }
 
+    // ─── 4.6 تسجيل عملية الدفع في جدول المدفوعات ───
+    const finalPaymentMethod = payment_method || (codeData ? 'purchase_code' : 'manual');
+    const finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
+    try {
+      await Payment.create({
+        site_key,
+        customer_id: null,
+        order_id: null,
+        type: 'subscription',
+        amount: price,
+        currency: 'USD',
+        payment_method: finalPaymentMethod,
+        payment_gateway_id: null,
+        status: (codeData && paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
+        description: `Site provisioning: ${store_name} (${cycle})`,
+      });
+    } catch (payErr) {
+      console.error('Payment record creation failed (non-blocking):', payErr.message);
+    }
+
+    // ─── 4.7 تسجيل النشاط في سجل الأنشطة ───
+    try {
+      await ActivityLog.log({
+        site_key,
+        user_id: admin.id,
+        action: 'site_created',
+        entity_type: 'site',
+        entity_id: site_key,
+        details: {
+          store_name,
+          domain,
+          template_id,
+          billing_cycle: cycle,
+          payment_method: finalPaymentMethod,
+          payment_status: paymentStatus,
+          price,
+        },
+        ip_address: req.ip || req.connection?.remoteAddress,
+      });
+    } catch (logErr) {
+      console.error('Activity log failed (non-blocking):', logErr.message);
+    }
+
     // ─── 5. إنشاء التخصيصات الافتراضية ───
     await Customization.upsert(site_key, {
       store_name,
@@ -197,6 +248,27 @@ async function provisionSite(req, res) {
     emailService.sendTrialStarted({
       to: owner_email, name: owner_name, siteName: store_name, trialDays: 14
     }).catch(e => console.error('Email error:', e.message));
+
+    // ─── 7.5 إشعار الأدمن الرئيسي بإنشاء موقع جديد ───
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@nexiroflux.com';
+    emailService.send({
+      to: ADMIN_EMAIL,
+      subject: `🆕 موقع جديد: ${store_name} (${domain})`,
+      html: `<div style="font-family:Tajawal,sans-serif;direction:rtl;padding:20px">
+        <h2>تم إنشاء موقع جديد على المنصة</h2>
+        <table style="border-collapse:collapse;width:100%">
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">اسم المتجر</td><td style="padding:8px;border:1px solid #ddd">${store_name}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">الدومين</td><td style="padding:8px;border:1px solid #ddd">${domain}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">المالك</td><td style="padding:8px;border:1px solid #ddd">${owner_name} (${owner_email})</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">القالب</td><td style="padding:8px;border:1px solid #ddd">${template_id}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">الخطة</td><td style="padding:8px;border:1px solid #ddd">${cycle}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">السعر</td><td style="padding:8px;border:1px solid #ddd">$${price}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">طريقة الدفع</td><td style="padding:8px;border:1px solid #ddd">${finalPaymentMethod}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">حالة الدفع</td><td style="padding:8px;border:1px solid #ddd">${paymentStatus}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Site Key</td><td style="padding:8px;border:1px solid #ddd">${site_key}</td></tr>
+        </table>
+      </div>`,
+    }).catch(e => console.error('Admin notification email error:', e.message));
 
     // ─── الاستجابة ───
     res.status(201).json({
@@ -225,6 +297,8 @@ async function provisionSite(req, res) {
         status: (codeData && paymentStatus === 'paid_by_code') ? 'active' : subscription.status,
         trial_ends_at: subscription.trial_ends_at,
         payment_status: paymentStatus,
+        payment_method: finalPaymentMethod,
+        payment_reference: finalPaymentRef,
         purchase_code: purchase_code || null,
       },
       dashboard_url: `/my-dashboard`

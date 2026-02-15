@@ -389,6 +389,20 @@ async function createTables() {
         'CREATE UNIQUE INDEX uniq_products_source_servicekey ON products (site_key, source_id, external_service_key)'
       );
     }
+
+    // ─── إنشاء موقع المنصة الافتراضي (مطلوب لبوابات الدفع والـ checkout أثناء الإعداد) ───
+    const { SITE_KEY } = require('./env');
+    if (SITE_KEY) {
+      const [existing] = await pool.query('SELECT id FROM sites WHERE site_key = ?', [SITE_KEY]);
+      if (existing.length === 0) {
+        await pool.query(
+          `INSERT INTO sites (site_key, domain, name, status, owner_email, settings)
+           VALUES (?, ?, ?, 'active', ?, '{}')`,
+          [SITE_KEY, 'nexiroflux.com', 'NEXIRO-FLUX Platform', 'admin@nexiroflux.com']
+        );
+        console.log(`✅ Platform site created with key: ${SITE_KEY}`);
+      }
+    }
     
     console.log('✅ Tables created/verified successfully');
   } catch (error) {
