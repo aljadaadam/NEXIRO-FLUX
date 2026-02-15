@@ -8,6 +8,9 @@ import type { Product } from '@/lib/types';
 
 export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -116,10 +119,29 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     } catch { /* ignore */ }
   }
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    String(p.arabic_name || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const categories = Array.from(new Set(products.map((p) => String(p.category || '').trim()).filter(Boolean)));
+
+  const stats = {
+    total: products.length,
+    active: products.filter((p) => String(p.status || '').toLowerCase() === 'active' || p.status === 'نشط').length,
+    imei: products.filter((p) => String(p.service_type || '').toUpperCase() === 'IMEI').length,
+    server: products.filter((p) => String(p.service_type || '').toUpperCase() === 'SERVER').length,
+  };
+
+  const filtered = products.filter(p => {
+    const searchMatch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      String(p.arabic_name || '').toLowerCase().includes(search.toLowerCase());
+
+    const statusRaw = String(p.status || '').toLowerCase();
+    const statusNormalized = statusRaw === 'نشط' ? 'active' : statusRaw;
+    const statusMatch = filterStatus === 'all' || statusNormalized === filterStatus;
+
+    const typeMatch = filterType === 'all' || String(p.service_type || '').toUpperCase() === filterType;
+    const categoryMatch = filterCategory === 'all' || String(p.category || '') === filterCategory;
+
+    return searchMatch && statusMatch && typeMatch && categoryMatch;
+  });
 
   return (
     <>
@@ -217,6 +239,44 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       )}
 
       {/* Products Table */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 12 }}>
+        {[
+          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020' },
+          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a' },
+          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb' },
+          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed' },
+        ].map((item, i) => (
+          <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12, padding: '0.75rem 0.9rem' }}>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 4 }}>{item.label}</p>
+            <p style={{ fontSize: '1.15rem', fontWeight: 800, color: item.color, background: item.bg, display: 'inline-block', padding: '0.1rem 0.55rem', borderRadius: 8 }}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif' }}>
+          <option value="all">كل الحالات</option>
+          <option value="active">نشط</option>
+          <option value="inactive">غير نشط</option>
+        </select>
+
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif' }}>
+          <option value="all">كل الأنواع</option>
+          <option value="SERVER">SERVER</option>
+          <option value="IMEI">IMEI</option>
+          <option value="REMOTE">REMOTE</option>
+          <option value="FILE">FILE</option>
+          <option value="CODE">CODE</option>
+        </select>
+
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160 }}>
+          <option value="all">كل التصنيفات</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
+
       <div style={{
         background: '#fff', borderRadius: 16,
         border: '1px solid #f1f5f9', overflow: 'hidden',

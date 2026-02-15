@@ -15,8 +15,18 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
     async function load() {
       try {
         const res = await adminApi.getUsers();
-        if (Array.isArray(res)) setUsers(res);
-        else if (res?.users && Array.isArray(res.users)) setUsers(res.users);
+        const rawUsers = Array.isArray(res) ? res : (Array.isArray(res?.users) ? res.users : []);
+        const mapped: User[] = rawUsers.map((u: Record<string, unknown>) => ({
+          id: Number(u.id),
+          name: String(u.name || ''),
+          email: String(u.email || ''),
+          role: String(u.role || 'user'),
+          status: u.status ? String(u.status) : 'نشط',
+          joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+          orders: Number(u.orders || 0),
+          spent: String(u.spent || '$0.00'),
+        }));
+        setUsers(mapped);
       } catch { /* keep fallback */ }
       finally { setLoading(false); }
     }
