@@ -313,14 +313,37 @@ async function provisionSite(req, res) {
 // ─── جلب بيانات الموقع الخاص بالمستخدم ───
 async function getMySite(req, res) {
   try {
-    const { site_key } = req.user;
-    const site = await Site.findBySiteKey(site_key);
-    if (!site) {
-      return res.status(404).json({ error: 'الموقع غير موجود' });
+    const { id: userId, role, site_key } = req.user;
+
+    // جلب بيانات المستخدم (نحتاج البريد الإلكتروني)
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ error: 'المستخدم غير موجود' });
     }
 
-    const subscription = await Subscription.findActiveBySiteKey(site_key);
-    const customization = await Customization.findBySiteKey(site_key);
+    let site = null;
+
+    if (role === 'admin') {
+      // الأدمن → يرى الموقع المرتبط بـ site_key الخاص به (تم إنشاؤه أثناء التزويد)
+      site = await Site.findBySiteKey(site_key);
+    } else {
+      // مستخدم عادي → البحث عن موقع يملكه (عبر owner_email)
+      // لا يجب أن يرى الموقع الرئيسي للمنصة
+      const pool = require('../config/db').getPool();
+      const [rows] = await pool.query(
+        'SELECT * FROM sites WHERE owner_email = ? AND site_key != ? ORDER BY created_at DESC LIMIT 1',
+        [currentUser.email, site_key]
+      );
+      site = rows[0] || null;
+    }
+
+    if (!site) {
+      // لم يشترِ قالب بعد
+      return res.json({ site: null, subscription: null, customization: null });
+    }
+
+    const subscription = await Subscription.findActiveBySiteKey(site.site_key);
+    const customization = await Customization.findBySiteKey(site.site_key);
 
     // parse settings JSON
     let settings = {};
@@ -342,13 +365,29 @@ async function getMySite(req, res) {
   }
 }
 
+// ─── Helper: إيجاد الموقع الذي يملكه المستخدم ───
+async function resolveUserOwnedSite(req) {
+  const { id: userId, role, site_key } = req.user;
+  if (role === 'admin') {
+    return await Site.findBySiteKey(site_key);
+  }
+  // مستخدم عادي → البحث عن موقع يملكه عبر owner_email
+  const currentUser = await User.findById(userId);
+  if (!currentUser) return null;
+  const pool = require('../config/db').getPool();
+  const [rows] = await pool.query(
+    'SELECT * FROM sites WHERE owner_email = ? AND site_key != ? ORDER BY created_at DESC LIMIT 1',
+    [currentUser.email, site_key]
+  );
+  return rows[0] || null;
+}
+
 // ─── تحديث إعدادات الموقع ───
 async function updateSiteSettings(req, res) {
   try {
-    const { site_key } = req.user;
+    const site = await resolveUserOwnedSite(req);
     const { store_name, domain_slug, custom_domain: newCustomDomain, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from } = req.body;
 
-    const site = await Site.findBySiteKey(site_key);
     if (!site) {
       return res.status(404).json({ error: 'الموقع غير موجود' });
     }
@@ -366,7 +405,7 @@ async function updateSiteSettings(req, res) {
     if (newCustomDomain) {
       const cleanDomain = newCustomDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
       const existingDomain = await Site.findByAnyDomain(cleanDomain);
-      if (existingDomain && existingDomain.site_key !== site_key) {
+      if (existingDomain && existingDomain.site_key !== site.site_key) {
         return res.status(400).json({ error: 'هذا الدومين مستخدم بالفعل', errorEn: 'This domain is already in use' });
       }
       updates.push('domain = ?');
@@ -382,7 +421,7 @@ async function updateSiteSettings(req, res) {
       // Fallback: subdomain style (legacy)
       const newDomain = `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com`;
       const existingDomain = await Site.findByDomain(newDomain);
-      if (existingDomain && existingDomain.site_key !== site_key) {
+      if (existingDomain && existingDomain.site_key !== site.site_key) {
         return res.status(400).json({ error: 'هذا النطاق مستخدم بالفعل' });
       }
       updates.push('domain = ?');
@@ -408,14 +447,14 @@ async function updateSiteSettings(req, res) {
     }
 
     if (updates.length > 0) {
-      values.push(site_key);
+      values.push(site.site_key);
       await pool.query(
         `UPDATE sites SET ${updates.join(', ')} WHERE site_key = ?`,
         values
       );
     }
 
-    const updatedSite = await Site.findBySiteKey(site_key);
+    const updatedSite = await Site.findBySiteKey(site.site_key);
     res.json({ message: 'تم تحديث الإعدادات بنجاح', site: updatedSite });
   } catch (error) {
     console.error('Error in updateSiteSettings:', error);
@@ -426,8 +465,12 @@ async function updateSiteSettings(req, res) {
 // ─── تحديث الدومين المخصص ───
 async function updateCustomDomain(req, res) {
   try {
-    const { site_key } = req.user;
+    const site = await resolveUserOwnedSite(req);
     const { custom_domain } = req.body;
+
+    if (!site) {
+      return res.status(404).json({ error: 'الموقع غير موجود' });
+    }
 
     if (!custom_domain) {
       return res.status(400).json({ error: 'الدومين المخصص مطلوب' });
@@ -437,11 +480,11 @@ async function updateCustomDomain(req, res) {
 
     // التحقق من أن الدومين غير مستخدم
     const existing = await Site.findByCustomDomain(domain);
-    if (existing && existing.site_key !== site_key) {
+    if (existing && existing.site_key !== site.site_key) {
       return res.status(400).json({ error: 'هذا الدومين مستخدم بالفعل من موقع آخر' });
     }
 
-    const site = await Site.updateCustomDomain(site_key, domain);
+    const updated = await Site.updateCustomDomain(site.site_key, domain);
     
     // Clear tenant cache for this domain
     const { clearDomainCache } = require('../middlewares/resolveTenant');
@@ -449,7 +492,7 @@ async function updateCustomDomain(req, res) {
 
     res.json({ 
       message: 'تم تحديث الدومين المخصص بنجاح',
-      site,
+      site: updated,
       dns_instructions: {
         type: 'A',
         name: '@',
@@ -473,16 +516,18 @@ async function updateCustomDomain(req, res) {
 // ─── إزالة الدومين المخصص ───
 async function removeCustomDomain(req, res) {
   try {
-    const { site_key } = req.user;
-    const site = await Site.findBySiteKey(site_key);
+    const site = await resolveUserOwnedSite(req);
+    if (!site) {
+      return res.status(404).json({ error: 'الموقع غير موجود' });
+    }
     
-    if (site?.custom_domain) {
+    if (site.custom_domain) {
       const { clearDomainCache } = require('../middlewares/resolveTenant');
       clearDomainCache(site.custom_domain);
     }
 
-    await Site.updateCustomDomain(site_key, null);
-    const updated = await Site.findBySiteKey(site_key);
+    await Site.updateCustomDomain(site.site_key, null);
+    const updated = await Site.findBySiteKey(site.site_key);
     res.json({ message: 'تم إزالة الدومين المخصص', site: updated });
   } catch (error) {
     console.error('Error in removeCustomDomain:', error);
@@ -493,8 +538,7 @@ async function removeCustomDomain(req, res) {
 // ─── التحقق من DNS للدومين المخصص ───
 async function verifyDomainDNS(req, res) {
   try {
-    const { site_key } = req.user;
-    const site = await Site.findBySiteKey(site_key);
+    const site = await resolveUserOwnedSite(req);
     
     if (!site?.custom_domain) {
       return res.status(400).json({ error: 'لا يوجد دومين مخصص لهذا الموقع' });
@@ -536,7 +580,7 @@ async function verifyDomainDNS(req, res) {
     // Update verification status
     if (verified) {
       const pool = require('../config/db').getPool();
-      await pool.query('UPDATE sites SET dns_verified = 1 WHERE site_key = ?', [site_key]);
+      await pool.query('UPDATE sites SET dns_verified = 1 WHERE site_key = ?', [site.site_key]);
     }
 
     let message, messageEn;
