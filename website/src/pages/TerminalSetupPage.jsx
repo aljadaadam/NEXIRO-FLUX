@@ -1,57 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import { templates as staticTemplates } from '../data/templates';
 
-// ─── Terminal typing animation hook ───
-function useTyping(text, speed = 30, startImmediately = true) {
-  const [displayed, setDisplayed] = useState('');
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (!startImmediately || !text) return;
-    setDisplayed('');
-    setDone(false);
-    let i = 0;
-    const interval = setInterval(() => {
-      setDisplayed(text.slice(0, i + 1));
-      i++;
-      if (i >= text.length) {
-        clearInterval(interval);
-        setDone(true);
-      }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed, startImmediately]);
-
-  return { displayed, done };
-}
-
-// ─── Terminal Line Component ───
-function TermLine({ prefix = '>', children, color = 'text-emerald-400', mono = true, delay = 0 }) {
-  const [visible, setVisible] = useState(delay === 0);
-  useEffect(() => {
-    if (delay > 0) {
-      const t = setTimeout(() => setVisible(true), delay);
-      return () => clearTimeout(t);
-    }
-  }, [delay]);
-  if (!visible) return null;
-  return (
-    <div className={`flex gap-2 items-start ${mono ? 'font-mono' : ''} text-sm leading-relaxed`}>
-      <span className={`${color} flex-shrink-0 select-none`}>{prefix}</span>
-      <span className="text-gray-300 flex-1">{children}</span>
-    </div>
-  );
-}
-
-// ─── Blinking Cursor ───
-function Cursor() {
-  return <span className="inline-block w-2.5 h-5 bg-emerald-400 animate-pulse ml-0.5 align-middle" />;
-}
-
-// ─── Main Terminal Setup Page ───
+//  Main Setup Page (Clean Multi-Step Form) 
 export default function TerminalSetupPage() {
   const { isRTL } = useLanguage();
   const navigate = useNavigate();
@@ -60,17 +13,17 @@ export default function TerminalSetupPage() {
   const templateId = searchParams.get('template') || 'digital-services-store';
   const plan = searchParams.get('plan') || 'monthly';
   const paymentRef = searchParams.get('payment_ref') || searchParams.get('payment_id') || '';
+  const urlPurchaseCode = searchParams.get('purchase_code') || '';
+  const paymentStatus = searchParams.get('payment_status') || '';
+  const returnedGateway = searchParams.get('gateway') || '';
 
   const templateData = staticTemplates.find(t => t.id === templateId);
   const templateName = isRTL ? (templateData?.name || templateId) : (templateData?.nameEn || templateId);
 
-  // ─── State ───
-  // 0=intro, 1=payment method, 2=domain, 3=dns, 4=account, 5=email, 6=storeName, 7=building, 8=done
-  const [phase, setPhase] = useState(0);
-  const [purchaseCode, setPurchaseCode] = useState('');
-  const [codeVerified, setCodeVerified] = useState(false);
-  const [codeInfo, setCodeInfo] = useState(null);
-  const [codeLoading, setCodeLoading] = useState(false);
+  //  Steps: 0=domain, 1=account, 2=storeName, 3=email(optional), 4=building, 5=done 
+  const [step, setStep] = useState(0);
+
+  // Form
   const [domain, setDomain] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -84,170 +37,118 @@ export default function TerminalSetupPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [buildProgress, setBuildProgress] = useState([]);
-  const [introComplete, setIntroComplete] = useState(false);
+  const [buildError, setBuildError] = useState('');
+
+  // Payment state (from URL)
+  const [codeVerified] = useState(!!urlPurchaseCode);
+  const [purchaseCode] = useState(urlPurchaseCode);
+  const [codeInfo] = useState(null);
+  const [paymentConfirmed] = useState(paymentStatus === 'success' || paymentStatus === 'pending');
+  const [selectedGateway] = useState(returnedGateway ? { type: returnedGateway, name: returnedGateway } : null);
+
+  // DNS
   const [dnsChecking, setDnsChecking] = useState(false);
   const [dnsVerified, setDnsVerified] = useState(false);
   const [dnsResult, setDnsResult] = useState(null);
 
-  // ─── Payment Gateway State ───
-  const [paymentMode, setPaymentMode] = useState(''); // 'code' | 'gateway'
-  const [enabledGateways, setEnabledGateways] = useState([]);
-  const [gatewaysLoading, setGatewaysLoading] = useState(true);
-  const [selectedGateway, setSelectedGateway] = useState(null);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const [gatewayLoading, setGatewayLoading] = useState(false);
-  const [paymentSelection, setPaymentSelection] = useState(''); // user input for number selection
+  //  Translations 
+  const t = {
+    welcome: isRTL ? 'مرحباً! شكراً على الشراء' : 'Welcome! Thanks for your purchase',
+    welcomeSub: isRTL ? 'الآن دعنا نكمل إعداد موقعك' : "Now let's complete your site setup",
+    domainLabel: isRTL ? 'أدخل رابط الدومين الخاص بك' : 'Enter your domain',
+    domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال magicdesign3.com' : 'Enter your domain e.g. magicdesign3.com',
+    domainHint: isRTL ? 'وجّه الدومين إلى IP: 154.56.60.195 (سجل A)' : 'Point your domain to IP: 154.56.60.195 (A record)',
+    checkDns: isRTL ? 'تحقق من DNS' : 'Check DNS',
+    skipDns: isRTL ? 'تخطي (سأضبطه لاحقاً)' : "Skip (I'll set it up later)",
+    dnsOk: isRTL ? '✓ تم التحقق من DNS بنجاح' : '✓ DNS verified successfully',
+    accountTitle: isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account',
+    accountSub: isRTL ? 'هذا الحساب سيكون لإدارة موقعك' : 'This account will manage your site',
+    nameLabel: isRTL ? 'الاسم الكامل' : 'Full Name',
+    namePlaceholder: isRTL ? 'أدخل اسمك الكامل' : 'Enter your full name',
+    emailLabel: isRTL ? 'البريد الإلكتروني' : 'Email Address',
+    emailPlaceholder: isRTL ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+    passwordLabel: isRTL ? 'كلمة المرور' : 'Password',
+    passwordPlaceholder: isRTL ? 'أدخل كلمة مرور قوية' : 'Enter a strong password',
+    storeTitle: isRTL ? 'اسم المتجر' : 'Store Name',
+    storeSub: isRTL ? 'اختر اسماً لمتجرك' : 'Choose a name for your store',
+    storeNameLabel: isRTL ? 'اسم المتجر' : 'Store Name',
+    storeNamePlaceholder: isRTL ? 'مثال: متجر النجوم' : 'e.g. Star Store',
+    emailSetupTitle: isRTL ? 'إعدادات البريد (اختياري)' : 'Email Settings (Optional)',
+    emailSetupSub: isRTL ? 'لإرسال إشعارات من موقعك' : 'To send notifications from your site',
+    smtpHostPlaceholder: isRTL ? 'خادم SMTP مثل smtp.gmail.com' : 'SMTP host e.g. smtp.gmail.com',
+    smtpPortPlaceholder: isRTL ? 'المنفذ (587)' : 'Port (587)',
+    smtpUserPlaceholder: isRTL ? 'اسم المستخدم / البريد' : 'Username / Email',
+    smtpPassPlaceholder: isRTL ? 'كلمة المرور' : 'Password',
+    smtpFromPlaceholder: isRTL ? 'البريد المرسل' : 'From email',
+    next: isRTL ? 'التالي' : 'Next',
+    back: isRTL ? 'السابق' : 'Back',
+    skip: isRTL ? 'تخطي' : 'Skip',
+    buildSite: isRTL ? 'بناء الموقع' : 'Build Site',
+    building: isRTL ? 'جارٍ بناء موقعك...' : 'Building your site...',
+    buildDone: isRTL ? 'تم بناء موقعك بنجاح!' : 'Your site is built successfully!',
+    goToDashboard: isRTL ? 'الذهاب للوحة التحكم' : 'Go to Dashboard',
+    visitSite: isRTL ? 'زيارة الموقع' : 'Visit Site',
+    required: isRTL ? 'هذا الحقل مطلوب' : 'This field is required',
+    invalidEmail: isRTL ? 'بريد إلكتروني غير صالح' : 'Invalid email address',
+    shortPassword: isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters',
+    template: isRTL ? 'القالب' : 'Template',
+    planLabel: isRTL ? 'الخطة' : 'Plan',
+    checking: isRTL ? 'جارٍ التحقق...' : 'Checking...',
+    processing: isRTL ? 'جارٍ المعالجة...' : 'Processing...',
+    site: isRTL ? 'الموقع' : 'Site',
+    domainWord: isRTL ? 'الدومين' : 'Domain',
+    status: isRTL ? 'الحالة' : 'Status',
+    active: isRTL ? 'نشط ✓' : 'Active ✓',
+  };
 
-  const inputRef = useRef(null);
-  const terminalRef = useRef(null);
-
-  // Auto-scroll terminal
-  useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  });
-
-  // Auto-focus input
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 300);
-  }, [phase]);
-
-  // ─── Load payment gateways ───
-  useEffect(() => {
-    setGatewaysLoading(true);
-    api.getEnabledPaymentGateways()
-      .then(data => setEnabledGateways(data.gateways || []))
-      .catch(() => setEnabledGateways([]))
-      .finally(() => setGatewaysLoading(false));
-  }, []);
-
-  // ─── Detect return from Buy Page (payment already done) ───
-  useEffect(() => {
-    const paymentStatus = searchParams.get('payment_status');
-    const paymentId = searchParams.get('payment_id');
-    const returnedGateway = searchParams.get('gateway');
-    const urlPurchaseCode = searchParams.get('purchase_code');
-
-    // Restore gateway type from URL so payment_method is correct in runBuild
-    if (returnedGateway) {
-      setSelectedGateway(prev => prev || { type: returnedGateway, name: returnedGateway });
-    }
-
-    // Purchase code from buy page
-    if (urlPurchaseCode && paymentStatus === 'success') {
-      setPurchaseCode(urlPurchaseCode);
-      setCodeVerified(true);
-      setPaymentConfirmed(true);
-      setPaymentMode('code');
-      setIntroComplete(true);
-      setPhase(2); // skip to domain
-      return;
-    }
-
-    // Gateway payment success from buy page
-    if (paymentStatus === 'success' && (paymentId || searchParams.get('payment_ref'))) {
-      setPaymentConfirmed(true);
-      setPaymentMode('gateway');
-      setIntroComplete(true);
-      setPhase(2); // skip to domain after successful payment
-    } else if (paymentStatus === 'pending') {
-      // Bank transfer pending
-      setPaymentConfirmed(true);
-      setPaymentMode('gateway');
-      setIntroComplete(true);
-      setPhase(2);
-    } else if (paymentStatus === 'cancelled') {
-      setError(isRTL ? 'تم إلغاء عملية الدفع' : 'Payment was cancelled');
-      setIntroComplete(true);
-      setPhase(1);
-    } else if (paymentStatus === 'failed') {
-      setError(isRTL ? 'فشلت عملية الدفع' : 'Payment failed');
-      setIntroComplete(true);
-      setPhase(1);
-    } else if (returnedGateway === 'binance' && paymentId && !paymentStatus) {
-      // Binance returnUrl doesn't include payment_status
-      setGatewayLoading(true);
-      setIntroComplete(true);
-      setPhase(1);
-      api.checkPaymentStatusPublic(paymentId)
-        .then(res => {
-          if (res.status === 'completed' || res.status === 'paid') {
-            setPaymentConfirmed(true);
-            setPaymentMode('gateway');
-            setSelectedGateway(prev => prev || { type: 'binance', name: 'Binance Pay' });
-            setPhase(2);
-          }
-        })
-        .catch(() => {})
-        .finally(() => setGatewayLoading(false));
-    }
-  }, [searchParams, isRTL]);
-
-  // ─── Intro typing effect ───
-  const introText = isRTL
-    ? `NEXIRO-FLUX — نظام إعداد المواقع v2.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nالقالب: ${templateName}\nالخطة: ${plan}\n\nجاري تهيئة بيئة الإعداد...`
-    : `NEXIRO-FLUX — Site Setup System v2.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTemplate: ${templateName}\nPlan: ${plan}\n\nInitializing setup environment...`;
-
-  useEffect(() => {
-    // Don't run intro if we're returning from payment/buy page
-    const paymentStatus = searchParams.get('payment_status');
-    const returnedGateway = searchParams.get('gateway');
-    const urlPurchaseCode = searchParams.get('purchase_code');
-    if (paymentStatus || returnedGateway || urlPurchaseCode) return;
-    const timer = setTimeout(() => {
-      setIntroComplete(true);
-      setPhase(1);
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [searchParams]);
-
-  // ─── Validate purchase code ───
-  const validatePurchaseCode = useCallback(async () => {
-    if (!purchaseCode.trim()) {
-      setError(isRTL ? 'يرجى إدخال كود الشراء' : 'Please enter a purchase code');
-      return;
-    }
-    setCodeLoading(true);
+  //  Check DNS 
+  const checkDNS = useCallback(async () => {
+    const d = domain.toLowerCase().replace(/\s/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if (!d) return;
+    setDnsChecking(true);
     setError('');
+    setDnsResult(null);
     try {
-      const res = await api.validatePurchaseCode(purchaseCode.trim().toUpperCase(), templateId);
-      setCodeVerified(true);
-      setCodeInfo(res);
-      setTimeout(() => setPhase(2), 600);
+      const res = await api.checkDomainDNS(d);
+      setDnsResult(res);
+      if (res.verified) {
+        setDnsVerified(true);
+      } else {
+        setError(isRTL ? res.message : res.messageEn);
+      }
     } catch (err) {
-      setError(err.error || err.errorEn || (isRTL ? 'كود غير صالح' : 'Invalid code'));
+      setError(err.error || (isRTL ? 'فشل التحقق من DNS' : 'DNS check failed'));
     } finally {
-      setCodeLoading(false);
+      setDnsChecking(false);
     }
-  }, [purchaseCode, templateId, isRTL]);
+  }, [domain, isRTL]);
 
-  // ─── Build progress simulation ───
+  //  Build Site 
   const runBuild = useCallback(async () => {
-    setPhase(7);
+    setStep(4);
+    setBuildError('');
     const steps = isRTL ? [
-      { msg: '🔗 جارٍ الاتصال بالخادم...', delay: 600 },
-      { msg: '📦 إنشاء قاعدة بيانات الموقع...', delay: 800 },
-      { msg: '👤 إنشاء حساب المدير...', delay: 600 },
-      { msg: '🎨 تطبيق إعدادات القالب...', delay: 700 },
-      { msg: '📧 تهيئة خدمة البريد...', delay: 500 },
-      { msg: '🌐 ربط الدومين...', delay: 900 },
-      { msg: '🔐 تفعيل شهادة SSL...', delay: 800 },
+      { msg: ' جارٍ الاتصال بالخادم...', delay: 600 },
+      { msg: ' إنشاء قاعدة بيانات الموقع...', delay: 800 },
+      { msg: ' إنشاء حساب المدير...', delay: 600 },
+      { msg: ' تطبيق إعدادات القالب...', delay: 700 },
+      { msg: ' تهيئة خدمة البريد...', delay: 500 },
+      { msg: ' ربط الدومين...', delay: 900 },
+      { msg: ' تفعيل شهادة SSL...', delay: 800 },
       { msg: '✅ البناء اكتمل بنجاح!', delay: 400 },
     ] : [
-      { msg: '🔗 Connecting to server...', delay: 600 },
-      { msg: '📦 Creating site database...', delay: 800 },
-      { msg: '👤 Creating admin account...', delay: 600 },
-      { msg: '🎨 Applying template settings...', delay: 700 },
-      { msg: '📧 Configuring email service...', delay: 500 },
-      { msg: '🌐 Linking domain...', delay: 900 },
-      { msg: '🔐 Activating SSL certificate...', delay: 800 },
+      { msg: ' Connecting to server...', delay: 600 },
+      { msg: ' Creating site database...', delay: 800 },
+      { msg: ' Creating admin account...', delay: 600 },
+      { msg: ' Applying template settings...', delay: 700 },
+      { msg: ' Configuring email service...', delay: 500 },
+      { msg: ' Linking domain...', delay: 900 },
+      { msg: ' Activating SSL certificate...', delay: 800 },
       { msg: '✅ Build completed successfully!', delay: 400 },
     ];
 
     setBuildProgress([]);
 
-    // Start the actual API call
     const apiPromise = api.provisionSite({
       owner_name: ownerName,
       owner_email: ownerEmail,
@@ -255,9 +156,9 @@ export default function TerminalSetupPage() {
       template_id: templateId,
       billing_cycle: codeInfo?.billing_cycle || plan,
       store_name: storeName,
-      custom_domain: domain.toLowerCase().replace(/\s/g, ''),
+      custom_domain: domain.toLowerCase().replace(/\s/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
       payment_method: codeVerified ? 'purchase_code' : (selectedGateway?.type || 'manual'),
-      payment_reference: paymentRef || (paymentConfirmed ? `GATEWAY-${Date.now()}` : 'SETUP-' + Date.now()),
+      payment_reference: paymentRef || (paymentConfirmed ? 'GATEWAY-' + Date.now() : 'SETUP-' + Date.now()),
       amount: templateData?.price?.[plan] || 0,
       purchase_code: codeVerified ? purchaseCode.trim().toUpperCase() : undefined,
       ...(smtpHost ? {
@@ -269,16 +170,13 @@ export default function TerminalSetupPage() {
       } : {}),
     });
 
-    // Animate progress lines
     for (let i = 0; i < steps.length - 1; i++) {
       await new Promise(r => setTimeout(r, steps[i].delay));
       setBuildProgress(prev => [...prev, steps[i].msg]);
     }
 
-    // Wait for API result
     try {
       const data = await apiPromise;
-      // Save auth
       if (data.token) {
         localStorage.setItem('nf_token', data.token);
         localStorage.setItem('nf_user', JSON.stringify(data.user));
@@ -286,697 +184,341 @@ export default function TerminalSetupPage() {
       }
       setBuildProgress(prev => [...prev, steps[steps.length - 1].msg]);
       setResult(data);
-      await new Promise(r => setTimeout(r, 1000));
-      setPhase(8);
+      await new Promise(r => setTimeout(r, 800));
+      setStep(5);
     } catch (err) {
-      setBuildProgress(prev => [...prev, `❌ ${err.error || 'Build failed'}`]);
-      setError(err.error || (isRTL ? 'فشل بناء الموقع' : 'Site build failed'));
+      setBuildProgress(prev => [...prev, '❌ ' + (err.error || 'Build failed')]);
+      setBuildError(err.error || (isRTL ? 'فشل بناء الموقع' : 'Site build failed'));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo]);
+  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo, selectedGateway, paymentConfirmed]);
 
-  // ─── Check DNS for domain ───
-  const checkDNS = useCallback(async () => {
-    const domainToCheck = domain ? domain.toLowerCase().replace(/\s/g, '') : '';
-    if (!domainToCheck) return;
-    setDnsChecking(true);
+  //  Validation 
+  const validateStep = () => {
     setError('');
-    setDnsResult(null);
-    try {
-      const result = await api.checkDomainDNS(domainToCheck);
-      setDnsResult(result);
-      if (result.verified) {
-        setDnsVerified(true);
-      } else {
-        setError(isRTL ? result.message : result.messageEn);
-      }
-    } catch (err) {
-      setError(err.error || (isRTL ? 'فشل التحقق من DNS' : 'DNS check failed'));
-    } finally {
-      setDnsChecking(false);
-    }
-  }, [domain, isRTL]);
-
-  // ─── Build payment options list ───
-  const paymentOptions = [
-    { key: 'code', label: isRTL ? 'كود الشراء' : 'Purchase Code', icon: '🔑' },
-    ...enabledGateways.map(gw => ({
-      key: `gw-${gw.id}`,
-      label: isRTL ? gw.name : (gw.name_en || gw.name),
-      icon: gw.type === 'paypal' ? '💳' : gw.type === 'binance' ? '🟡' : gw.type === 'usdt' ? '💰' : gw.type === 'bank_transfer' ? '🏦' : '💳',
-      gateway: gw,
-    })),
-  ];
-
-  // ─── Handle payment option selection ───
-  const handlePaymentSelect = async (num) => {
-    const idx = parseInt(num) - 1;
-    if (isNaN(idx) || idx < 0 || idx >= paymentOptions.length) {
-      setError(isRTL ? `أدخل رقم من 1 إلى ${paymentOptions.length}` : `Enter a number from 1 to ${paymentOptions.length}`);
-      return;
-    }
-    setError('');
-    const option = paymentOptions[idx];
-
-    if (option.key === 'code') {
-      setPaymentMode('code');
-      setPaymentSelection('');
-      return;
-    }
-
-    // Gateway selected
-    const gw = option.gateway;
-    setSelectedGateway(gw);
-    setPaymentMode('gateway');
-    setPaymentSelection('');
-
-    // Redirect-based gateways (PayPal, Binance)
-    if (gw.type === 'paypal' || gw.type === 'binance') {
-      setGatewayLoading(true);
-      try {
-        const currentUrl = window.location.origin + window.location.pathname;
-        const gwLabel = gw.type === 'binance' ? 'binance' : 'paypal';
-        const returnUrl = `${currentUrl}?template=${templateId}&plan=${plan}&gateway=${gwLabel}`;
-        const data = await api.initCheckout({
-          gateway_id: gw.id,
-          amount: templateData?.price?.[plan] || 0,
-          currency: gw.type === 'binance' ? 'USDT' : 'USD',
-          description: `${templateName} - ${plan} plan`,
-          return_url: gw.type === 'binance' ? `${returnUrl}&payment_id=__PAYMENT_ID__` : returnUrl,
-          cancel_url: returnUrl,
-        });
-        if (data.redirectUrl) {
-          window.location.href = data.redirectUrl;
-        } else if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-        } else {
-          setError(isRTL ? 'فشل في الحصول على رابط الدفع' : 'Failed to get payment URL');
-          setGatewayLoading(false);
-        }
-      } catch (err) {
-        setError(err.error || (isRTL ? 'فشل بدء الدفع' : 'Payment failed'));
-        setGatewayLoading(false);
-      }
-      return;
-    }
-
-    // Manual gateways (bank_transfer, usdt) — show details
-    // paymentMode = 'gateway' is set, UI will show details
-  };
-
-  // ─── Handle Enter key for each phase ───
-  const handleKeyDown = (e) => {
-    if (e.key !== 'Enter') return;
-    setError('');
-
-    switch (phase) {
-      case 1: // Payment method
-        if (!paymentMode) {
-          // Selecting from numbered list
-          handlePaymentSelect(paymentSelection);
-        } else if (paymentMode === 'code') {
-          validatePurchaseCode();
-        } else if (paymentMode === 'gateway') {
-          // Manual gateway confirmed
-          if (selectedGateway?.type === 'bank_transfer' || selectedGateway?.type === 'usdt') {
-            setPaymentConfirmed(true);
-            setTimeout(() => setPhase(2), 400);
-          }
-        }
-        break;
-      case 2: // Domain
-        if (!domain.trim()) {
-          setError(isRTL ? 'يرجى إدخال الدومين' : 'Please enter a domain');
-          return;
-        }
-        if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z]{2,})+$/i.test(domain.trim())) {
-          setError(isRTL ? 'يرجى إدخال دومين صحيح مثل: example.com' : 'Please enter a valid domain like: example.com');
-          return;
-        }
-        setPhase(3);
-        break;
-      case 3: // DNS verification — requires verified or skip
-        if (!dnsVerified) {
-          checkDNS();
-          return;
-        }
-        setPhase(4);
-        break;
-      case 4: // Account info
-        if (!ownerName.trim() || !ownerEmail.trim() || !ownerPassword.trim()) {
-          setError(isRTL ? 'جميع حقول الحساب مطلوبة' : 'All account fields are required');
-          return;
-        }
-        if (ownerPassword.length < 6) {
-          setError(isRTL ? 'كلمة المرور 6 أحرف على الأقل' : 'Password must be at least 6 characters');
-          return;
-        }
-        if (!/\S+@\S+\.\S+/.test(ownerEmail)) {
-          setError(isRTL ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
-          return;
-        }
-        setPhase(5);
-        break;
-      case 5: // Email / SMTP → optional, Enter to skip or continue
-        setPhase(6);
-        break;
-      case 6: // Store name
-        if (!storeName.trim()) {
-          setError(isRTL ? 'اسم المتجر مطلوب' : 'Store name is required');
-          return;
-        }
-        runBuild();
-        break;
+    switch (step) {
+      case 0:
+        if (!domain.trim()) { setError(t.required); return false; }
+        return true;
+      case 1:
+        if (!ownerName.trim()) { setError(t.required); return false; }
+        if (!ownerEmail.trim() || !ownerEmail.includes('@')) { setError(t.invalidEmail); return false; }
+        if (!ownerPassword || ownerPassword.length < 6) { setError(t.shortPassword); return false; }
+        return true;
+      case 2:
+        if (!storeName.trim()) { setError(t.required); return false; }
+        return true;
       default:
-        break;
+        return true;
     }
   };
 
-  // ─── Computed values ───
-  const fullDomain = domain ? domain.toLowerCase().replace(/\s/g, '') : '';
-  const serverIP = '154.56.60.195'; // Hosting server IP
+  const handleNext = () => {
+    if (!validateStep()) return;
+    setError('');
+    if (step === 3) {
+      runBuild();
+    } else {
+      setStep(s => s + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setError('');
+    setStep(s => Math.max(0, s - 1));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNext();
+    }
+  };
+
+  //  Step indicator data 
+  const totalSteps = 4;
+  const stepNames = isRTL
+    ? ['الدومين', 'الحساب', 'المتجر', 'البريد']
+    : ['Domain', 'Account', 'Store', 'Email'];
+
+  const inputClass = 'w-full px-5 py-3.5 rounded-xl bg-[#13151c] border border-gray-800 text-white text-sm placeholder:text-gray-600 outline-none focus:border-emerald-500/50 transition-colors';
 
   return (
     <div
-      className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-2 sm:p-4"
-      onClick={() => inputRef.current?.focus()}
+      className="min-h-screen bg-[#0a0b0f] flex items-center justify-center p-4"
+      dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <div className="w-full max-w-2xl">
-        {/* ─── Terminal Window ─── */}
-        <div className="rounded-lg overflow-hidden border border-white/[0.06]">
-          {/* Title Bar — minimal */}
-          <div className="bg-[#111] px-3 py-2 flex items-center gap-2 border-b border-white/[0.04]">
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+      <div className="w-full max-w-xl mx-auto">
+
+        {/* Step 0: Domain */}
+        {step === 0 && (
+          <div className="animate-fadeIn">
+            <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2 leading-relaxed">
+              {t.welcome}
+            </h1>
+            <p className="text-gray-400 text-center mb-10 text-lg">
+              {t.welcomeSub}
+            </p>
+
+            <div className="flex items-center justify-center gap-4 mb-8 text-sm text-gray-500">
+              <span>{t.template}: <span className="text-white">{templateName}</span></span>
+              <span className="text-gray-700">|</span>
+              <span>{t.planLabel}: <span className="text-white">{plan}</span></span>
             </div>
-            <span className="text-gray-600 text-[10px] font-mono mx-auto">setup@nexiro-flux ~ </span>
-          </div>
 
-          {/* Terminal Body */}
-          <div
-            ref={terminalRef}
-            className="bg-[#0a0a0a] p-4 sm:p-5 min-h-[70vh] max-h-[85vh] overflow-y-auto font-mono text-[13px] leading-[1.7] space-y-0"
-            dir="ltr"
-          >
-            {/* ═══ Intro ═══ */}
-            <pre className="text-emerald-500/80 whitespace-pre-wrap text-[10px] select-none mb-3">
-{` ███╗   ██╗███████╗██╗  ██╗██╗██████╗  ██████╗ 
- ████╗  ██║██╔════╝╚██╗██╔╝██║██╔══██╗██╔═══██╗
- ██╔██╗ ██║█████╗   ╚███╔╝ ██║██████╔╝██║   ██║
- ██║╚██╗██║██╔══╝   ██╔██╗ ██║██╔══██╗██║   ██║
- ██║ ╚████║███████╗██╔╝ ╚██╗██║██║  ██║╚██████╔╝
- ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝`}
-            </pre>
-            <div className="text-gray-500 text-xs mb-1">
-              {isRTL ? `القالب: ${templateName} | الخطة: ${plan}` : `template: ${templateName} | plan: ${plan}`}
-            </div>
-            <div className="text-gray-600 text-xs mb-4">{'─'.repeat(50)}</div>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={domain}
+                onChange={e => setDomain(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t.domainPlaceholder}
+                className={inputClass}
+                dir="ltr"
+                autoFocus
+              />
 
-            {!introComplete && (
-              <div className="text-yellow-500/70 text-xs">{isRTL ? 'جارٍ التهيئة...' : 'initializing...'} <Cursor /></div>
-            )}
+              <p className="text-gray-600 text-xs text-center">{t.domainHint}</p>
 
-            {/* ═══ Phase 1: Payment Method ═══ */}
-            {phase >= 1 && introComplete && (
-              <>
-                <div className="text-cyan-400 text-xs">{isRTL ? '── طريقة الدفع ──' : '── payment method ──'}</div>
-                {phase === 1 ? (
-                  <>
-                    {/* Step A: Choose payment method from numbered list */}
-                    {!paymentMode && (
-                      <>
-                        <div className="text-gray-400 text-xs mt-1">
-                          {isRTL ? 'اختر طريقة الدفع:' : 'select payment method:'}
-                        </div>
-                        {gatewaysLoading ? (
-                          <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ تحميل بوابات الدفع...' : 'loading payment gateways...'} <Cursor /></div>
-                        ) : (
-                          <>
-                            <div className="mt-1 space-y-0.5">
-                              {paymentOptions.map((opt, i) => (
-                                <div key={opt.key} className="text-gray-300 text-xs">
-                                  <span className="text-emerald-400">[{i + 1}]</span> {opt.icon} {opt.label}
-                                </div>
-                              ))}
-                            </div>
-                            <div className="flex items-center mt-2">
-                              <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                              <input
-                                ref={inputRef}
-                                type="text"
-                                value={paymentSelection}
-                                onChange={e => setPaymentSelection(e.target.value.replace(/[^0-9]/g, ''))}
-                                onKeyDown={handleKeyDown}
-                                placeholder={isRTL ? 'أدخل الرقم...' : 'enter number...'}
-                                className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                                autoFocus
-                              />
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
-
-                    {/* Step B: Purchase code input */}
-                    {paymentMode === 'code' && !codeVerified && (
-                      <>
-                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">🔑 {isRTL ? 'كود الشراء' : 'Purchase Code'}</span></div>
-                        <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل كود التفعيل:' : 'enter activation code:'}</div>
-                        <div className="flex items-center mt-1">
-                          <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                          <input
-                            ref={inputRef}
-                            type="text"
-                            value={purchaseCode}
-                            onChange={e => setPurchaseCode(e.target.value.toUpperCase())}
-                            onKeyDown={handleKeyDown}
-                            placeholder="NX-XXXX-XXXX-XXXX"
-                            disabled={codeLoading}
-                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono tracking-wider"
-                            autoFocus
-                          />
-                        </div>
-                        {codeLoading && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'verifying...'} <Cursor /></div>}
-                        <div className="text-gray-700 text-[10px] mt-1 cursor-pointer hover:text-gray-500" onClick={() => { setPaymentMode(''); setPurchaseCode(''); setError(''); }}>
-                          [{isRTL ? 'رجوع' : 'back'}]
-                        </div>
-                      </>
-                    )}
-
-                    {/* Step C: Gateway — redirect in progress */}
-                    {paymentMode === 'gateway' && gatewayLoading && (
-                      <>
-                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">{selectedGateway?.type}</span></div>
-                        <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التوجيه لبوابة الدفع...' : 'redirecting to payment gateway...'} <Cursor /></div>
-                      </>
-                    )}
-
-                    {/* Step D: Manual gateway (bank/usdt) — show details */}
-                    {paymentMode === 'gateway' && !gatewayLoading && !paymentConfirmed && selectedGateway && (selectedGateway.type === 'bank_transfer' || selectedGateway.type === 'usdt') && (
-                      <>
-                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">{isRTL ? selectedGateway.name : (selectedGateway.name_en || selectedGateway.name)}</span></div>
-                        {selectedGateway.type === 'bank_transfer' && (() => {
-                          const cfg = selectedGateway.config || {};
-                          return (
-                            <>
-                              <div className="text-yellow-500/80 text-xs mt-1">{isRTL ? 'حوّل المبلغ إلى:' : 'transfer amount to:'}</div>
-                              <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800 space-y-0.5">
-                                {cfg.bank_name && <div>{isRTL ? 'البنك' : 'bank'}: <span className="text-white">{cfg.bank_name}</span></div>}
-                                {cfg.iban && <div>IBAN: <span className="text-emerald-400 cursor-pointer hover:underline" onClick={() => navigator.clipboard.writeText(cfg.iban)}>{cfg.iban}</span> <span className="text-gray-600 text-[10px]">(copy)</span></div>}
-                                {cfg.account_holder && <div>{isRTL ? 'المستفيد' : 'holder'}: <span className="text-white">{cfg.account_holder}</span></div>}
-                                {cfg.currency && <div>{isRTL ? 'العملة' : 'currency'}: <span className="text-white">{cfg.currency}</span></div>}
-                              </div>
-                              <div className="text-white text-xs mt-1">{isRTL ? 'المبلغ المطلوب' : 'amount'}: <span className="text-emerald-400">${templateData?.price?.[plan] || 0}</span></div>
-                              <div className="text-gray-500 text-[11px] mt-1">{isRTL ? 'بعد التحويل اضغط Enter للمتابعة' : 'after transfer, press Enter to continue'}</div>
-                              <input ref={inputRef} type="text" onKeyDown={handleKeyDown} className="opacity-0 absolute w-0 h-0" autoFocus />
-                            </>
-                          );
-                        })()}
-                        {selectedGateway.type === 'usdt' && (() => {
-                          const cfg = selectedGateway.config || {};
-                          return (
-                            <>
-                              <div className="text-yellow-500/80 text-xs mt-1">{isRTL ? `أرسل USDT (${cfg.network || 'TRC20'}):` : `send USDT (${cfg.network || 'TRC20'}):`}</div>
-                              {cfg.wallet_address && (
-                                <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800">
-                                  <span className="text-emerald-400 cursor-pointer hover:underline break-all" onClick={() => navigator.clipboard.writeText(cfg.wallet_address)}>{cfg.wallet_address}</span>
-                                  <span className="text-gray-600 text-[10px] ml-1">(click to copy)</span>
-                                </div>
-                              )}
-                              <div className="text-white text-xs mt-1">{isRTL ? 'المبلغ المطلوب' : 'amount'}: <span className="text-emerald-400">${templateData?.price?.[plan] || 0} USDT</span></div>
-                              <div className="text-gray-500 text-[11px] mt-1">{isRTL ? 'بعد الإرسال اضغط Enter للمتابعة' : 'after sending, press Enter to continue'}</div>
-                              <input ref={inputRef} type="text" onKeyDown={handleKeyDown} className="opacity-0 absolute w-0 h-0" autoFocus />
-                            </>
-                          );
-                        })()}
-                        <div className="text-gray-700 text-[10px] mt-1 cursor-pointer hover:text-gray-500" onClick={() => { setPaymentMode(''); setSelectedGateway(null); setError(''); }}>
-                          [{isRTL ? 'رجوع' : 'back'}]
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : phase > 1 && (
-                  <>
-                    {/* Completed summary */}
-                    {codeVerified ? (
-                      <>
-                        <div className="text-gray-400 text-xs">method: <span className="text-emerald-400">🔑 {isRTL ? 'كود الشراء' : 'code'}</span> <span className="text-green-600">✓</span></div>
-                        <div className="text-gray-400 text-xs">code: <span className="text-emerald-400">{purchaseCode}</span> <span className="text-green-600">✓</span></div>
-                        {codeInfo?.discount_type === 'full' && <div className="text-gray-600 text-xs">{isRTL ? 'النوع: مجاني بالكامل' : 'type: full access'}</div>}
-                        {codeInfo?.discount_type === 'percentage' && <div className="text-gray-600 text-xs">{isRTL ? `النوع: خصم ${codeInfo.discount_value}%` : `type: ${codeInfo.discount_value}% discount`}</div>}
-                      </>
-                    ) : paymentConfirmed ? (
-                      <div className="text-gray-400 text-xs">method: <span className="text-emerald-400">{selectedGateway ? (isRTL ? selectedGateway.name : (selectedGateway.name_en || selectedGateway.name)) : (isRTL ? 'بوابة دفع' : 'gateway')}</span> <span className="text-green-600">✓</span></div>
-                    ) : (
-                      <div className="text-gray-400 text-xs">payment: <span className="text-yellow-500/60">{isRTL ? 'تجريبي' : 'trial'}</span></div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 2: Domain ═══ */}
-            {phase >= 2 && (
-              <>
-                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── الدومين ──' : '── domain ──'}</div>
-                {phase === 2 ? (
-                  <>
-                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل دومين موقعك:' : 'enter your domain:'}</div>
-                    <div className="flex items-center mt-1">
-                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={domain}
-                        onChange={e => setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9.\-]/g, ''))}
-                        onKeyDown={handleKeyDown}
-                        placeholder="mystore.com"
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                        autoFocus
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-gray-400 text-xs">domain: <span className="text-emerald-400">{fullDomain}</span> <span className="text-green-600">✓</span></div>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 3: DNS ═══ */}
-            {phase >= 3 && (
-              <>
-                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── إعداد DNS ──' : '── dns setup ──'}</div>
-                <div className="text-yellow-500/80 text-xs mt-1">
-                  {isRTL
-                    ? `أضف السجل التالي في لوحة تحكم دومينك (${fullDomain}):`
-                    : `add this record in your domain panel (${fullDomain}):`}
-                </div>
-                <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800">
-                  <div>Type: <span className="text-white">A</span></div>
-                  <div>Name: <span className="text-white">@</span></div>
-                  <div>Value: <span className="text-emerald-400 cursor-pointer hover:underline" onClick={() => navigator.clipboard.writeText(serverIP)}>{serverIP}</span> <span className="text-gray-600 text-[10px]">(click to copy)</span></div>
-                </div>
-                <div className="text-gray-600 text-[10px] mt-1 pl-2">
-                  {isRTL ? 'أو CNAME → @' : 'or CNAME → @'} → nexiroflux.com
-                </div>
-
-                {phase === 3 ? (
-                  <>
-                    <div className="text-gray-500 text-[11px] mt-2">
-                      {isRTL
-                        ? '⏳ بعد الإضافة، انتظر 5-10 دقائق ثم اضغط Enter للتحقق'
-                        : '⏳ after adding, wait 5-10 min then press Enter to verify'}
-                    </div>
-
-                    {/* DNS result */}
-                    {dnsResult && !dnsResult.verified && (
-                      <div className="mt-1">
-                        <div className="text-red-400 text-xs">
-                          ✗ {isRTL ? 'الدومين لا يشير إلى سيرفرنا بعد' : 'domain not pointing to our server yet'}
-                        </div>
-                        {dnsResult.dns?.current_ip && (
-                          <div className="text-gray-500 text-[10px] pl-2">
-                            {isRTL ? `حالياً: ${dnsResult.dns.current_ip} — المطلوب: ${dnsResult.server_ip}` : `current: ${dnsResult.dns.current_ip} — expected: ${dnsResult.server_ip}`}
-                          </div>
-                        )}
-                        {dnsResult.dns?.type === 'NONE' && (
-                          <div className="text-gray-500 text-[10px] pl-2">{isRTL ? 'لا توجد سجلات DNS' : 'no dns records found'}</div>
-                        )}
-                      </div>
-                    )}
-
-                    {dnsResult?.verified && (
-                      <div className="text-emerald-400 text-xs mt-1">
-                        ✓ {isRTL ? 'DNS يشير بشكل صحيح — اضغط Enter للمتابعة' : 'dns verified — press Enter to continue'}
-                      </div>
-                    )}
-
-                    {dnsChecking && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'checking dns...'} <Cursor /></div>}
-
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex items-center">
-                        <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                        <span className="text-gray-600 text-xs cursor-pointer hover:text-gray-400" onClick={() => { setError(''); checkDNS(); }}>
-                          [{isRTL ? 'Enter = تحقق' : 'Enter = verify'}]
-                        </span>
-                      </div>
-                      <span className="text-gray-700 text-xs cursor-pointer hover:text-gray-500" onClick={() => { setDnsVerified(false); setPhase(4); }}>
-                        [{isRTL ? 'S = تخطي' : 'S = skip'}]
+              {domain.trim() && !dnsVerified && (
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={checkDNS}
+                    disabled={dnsChecking}
+                    className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                  >
+                    {dnsChecking ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4" strokeDashoffset="10" /></svg>
+                        {t.checking}
                       </span>
-                    </div>
-
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') { e.preventDefault(); setError(''); checkDNS(); }
-                        if (e.key === 's' || e.key === 'S') { e.preventDefault(); setDnsVerified(false); setPhase(4); }
-                      }}
-                      className="opacity-0 absolute w-0 h-0"
-                      autoFocus
-                    />
-                  </>
-                ) : (
-                  <div className={`text-xs mt-1 ${dnsVerified ? 'text-emerald-400' : 'text-yellow-500/70'}`}>
-                    {dnsVerified
-                      ? (isRTL ? 'dns: موثق ✓' : 'dns: verified ✓')
-                      : (isRTL ? 'dns: تم التخطي — يمكن الإعداد لاحقاً' : 'dns: skipped — set up later')}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 4: Account ═══ */}
-            {phase >= 4 && (
-              <>
-                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── حساب المدير ──' : '── admin account ──'}</div>
-                {phase === 4 ? (
-                  <div className="space-y-1.5 mt-1" onKeyDown={handleKeyDown}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'الاسم:' : 'name:'}</span>
-                      <span className="text-emerald-500 text-xs">$</span>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={ownerName}
-                        onChange={e => setOwnerName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-email')?.focus(); }}}
-                        placeholder={isRTL ? 'أحمد' : 'Ahmed'}
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'البريد:' : 'email:'}</span>
-                      <span className="text-emerald-500 text-xs">$</span>
-                      <input
-                        id="setup-email"
-                        type="email"
-                        value={ownerEmail}
-                        onChange={e => setOwnerEmail(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('setup-password')?.focus(); }}}
-                        placeholder="admin@example.com"
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'كلمة السر:' : 'password:'}</span>
-                      <span className="text-emerald-500 text-xs">$</span>
-                      <input
-                        id="setup-password"
-                        type="password"
-                        value={ownerPassword}
-                        onChange={e => setOwnerPassword(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="••••••"
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                      />
-                    </div>
-                    <div className="text-gray-700 text-[10px] pl-24">{isRTL ? 'Enter بعد كلمة السر للمتابعة' : 'Enter after password to continue'}</div>
-                  </div>
-                ) : (
-                  <div className="text-xs space-y-0">
-                    <div className="text-gray-400">name: <span className="text-emerald-400">{ownerName}</span> <span className="text-green-600">✓</span></div>
-                    <div className="text-gray-400">email: <span className="text-emerald-400">{ownerEmail}</span> <span className="text-green-600">✓</span></div>
-                    <div className="text-gray-400">password: <span className="text-emerald-400">••••••</span> <span className="text-green-600">✓</span></div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 5: SMTP ═══ */}
-            {phase >= 5 && (
-              <>
-                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── البريد (اختياري) ──' : '── email smtp (optional) ──'}</div>
-                <div className="text-gray-600 text-[10px] mt-0.5">
-                  {isRTL ? 'بيانات SMTP من لوحة الاستضافة — أو اضغط Enter للتخطي' : 'smtp credentials from your hosting panel — or press Enter to skip'}
-                </div>
-                {phase === 5 ? (
-                  <div className="space-y-1.5 mt-1" onKeyDown={handleKeyDown}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 text-xs w-20 text-right">host:</span>
-                      <span className="text-emerald-500 text-xs">$</span>
-                      <input ref={inputRef} type="text" value={smtpHost} onChange={e => setSmtpHost(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (!smtpHost) { setPhase(6); return; } document.getElementById('smtp-port')?.focus(); }}}
-                        placeholder="smtp.hostinger.com"
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
-                    </div>
-                    {smtpHost && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs w-20 text-right">port:</span>
-                          <span className="text-emerald-500 text-xs">$</span>
-                          <input id="smtp-port" type="text" value={smtpPort} onChange={e => setSmtpPort(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-user')?.focus(); }}}
-                            placeholder="465"
-                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'المستخدم:' : 'user:'}</span>
-                          <span className="text-emerald-500 text-xs">$</span>
-                          <input id="smtp-user" type="text" value={smtpUser} onChange={e => setSmtpUser(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-pass')?.focus(); }}}
-                            placeholder="info@domain.com"
-                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'كلمة السر:' : 'pass:'}</span>
-                          <span className="text-emerald-500 text-xs">$</span>
-                          <input id="smtp-pass" type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('smtp-from')?.focus(); }}}
-                            placeholder="••••••"
-                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs w-20 text-right">{isRTL ? 'المرسل:' : 'from:'}</span>
-                          <span className="text-emerald-500 text-xs">$</span>
-                          <input id="smtp-from" type="text" value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="noreply@domain.com"
-                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono" />
-                        </div>
-                      </>
-                    )}
-                    <div className="text-gray-700 text-[10px] pl-24">
-                      {smtpHost
-                        ? (isRTL ? 'Enter بعد آخر حقل للمتابعة' : 'Enter after last field to continue')
-                        : (isRTL ? 'Enter للتخطي' : 'Enter to skip')}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-xs mt-0.5">
-                    {smtpHost ? (
-                      <div className="text-gray-400">smtp: <span className="text-emerald-400">{smtpHost}:{smtpPort}</span> <span className="text-green-600">✓</span></div>
-                    ) : (
-                      <div className="text-yellow-500/60">{isRTL ? 'تم التخطي' : 'skipped'}</div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 6: Store Name ═══ */}
-            {phase >= 6 && (
-              <>
-                <div className="text-cyan-400 text-xs mt-3">{isRTL ? '── اسم المتجر ──' : '── store name ──'}</div>
-                {phase === 6 ? (
-                  <>
-                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل اسم موقعك:' : 'enter your site name:'}</div>
-                    <div className="flex items-center mt-1">
-                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={storeName}
-                        onChange={e => setStoreName(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={isRTL ? 'متجر أحمد' : 'Ahmed Store'}
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="text-gray-700 text-[10px] mt-1">{isRTL ? 'Enter لبدء البناء 🚀' : 'Enter to start build 🚀'}</div>
-                  </>
-                ) : (
-                  <div className="text-gray-400 text-xs">name: <span className="text-emerald-400">{storeName}</span> <span className="text-green-600">✓</span></div>
-                )}
-              </>
-            )}
-
-            {/* ═══ Phase 7: Building ═══ */}
-            {phase === 7 && (
-              <>
-                <div className="text-gray-600 text-xs mt-3">{'─'.repeat(50)}</div>
-                <div className="text-yellow-500 text-xs mt-1">{isRTL ? 'جارٍ بناء الموقع...' : 'building site...'}</div>
-                <div className="w-full bg-white/[0.03] h-0.5 mt-2 mb-2 overflow-hidden rounded-full">
-                  <div
-                    className="h-full bg-emerald-500/60 transition-all duration-700 rounded-full"
-                    style={{ width: `${Math.min(100, (buildProgress.length / 8) * 100)}%` }}
-                  />
-                </div>
-                {buildProgress.map((msg, i) => (
-                  <div key={i} className="text-gray-500 text-xs">  {msg}</div>
-                ))}
-                {!error && buildProgress.length < 8 && <Cursor />}
-              </>
-            )}
-
-            {/* ═══ Phase 8: Done ═══ */}
-            {phase === 8 && result && (
-              <>
-                <div className="text-gray-600 text-xs mt-3">{'─'.repeat(50)}</div>
-                <div className="text-emerald-400 text-xs mt-2">
-                  ✓ {isRTL ? 'تم بناء الموقع بنجاح!' : 'site built successfully!'}
-                </div>
-                <div className="text-xs mt-2 space-y-0.5 pl-2 border-l border-emerald-500/20">
-                  <div className="text-gray-400">{isRTL ? 'الاسم' : 'name'}: <span className="text-white">{result.site?.name}</span></div>
-                  <div className="text-gray-400">{isRTL ? 'الرابط' : 'url'}: <span className="text-emerald-400">{result.site?.domain}</span></div>
-                  <div className="text-gray-400">{isRTL ? 'الخطة' : 'plan'}: <span className="text-cyan-400">{result.site?.plan}</span></div>
-                  <div className="text-gray-400">{isRTL ? 'الحالة' : 'status'}: <span className="text-emerald-400">● {isRTL ? 'نشط' : 'active'}</span></div>
-                  {result.subscription?.trial_ends_at && (
-                    <div className="text-gray-400">{isRTL ? 'تجريبي' : 'trial'}: <span className="text-yellow-400">{isRTL ? '14 يوم' : '14 days'}</span></div>
-                  )}
-                </div>
-
-                <div className="text-gray-600 text-xs mt-4">{'─'.repeat(50)}</div>
-                <div className="flex flex-col gap-1.5 mt-2">
-                  <div
-                    className="text-emerald-400 text-xs cursor-pointer hover:text-emerald-300 transition-colors"
-                    onClick={() => navigate('/admin')}
+                    ) : t.checkDns}
+                  </button>
+                  <span className="text-gray-700">|</span>
+                  <button
+                    onClick={() => { setError(''); setStep(1); }}
+                    className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
                   >
-                    $ <span className="underline underline-offset-2">{isRTL ? 'الدخول للوحة التحكم' : 'open dashboard'}</span> →
-                  </div>
-                  <div
-                    className="text-gray-400 text-xs cursor-pointer hover:text-gray-300 transition-colors"
-                    onClick={() => window.open(`https://${result.site?.domain}`, '_blank')}
-                  >
-                    $ <span className="underline underline-offset-2">{isRTL ? 'زيارة الموقع' : 'visit site'}</span> ↗
-                  </div>
-                  <div
-                    className="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors"
-                    onClick={() => navigate('/my-dashboard')}
-                  >
-                    $ <span className="underline underline-offset-2">{isRTL ? 'إدارة موقعي' : 'my dashboard'}</span>
-                  </div>
+                    {t.skipDns}
+                  </button>
                 </div>
-              </>
-            )}
+              )}
 
-            {/* ═══ Error Display ═══ */}
-            {error && (
-              <div className="mt-2">
-                <div className="text-red-400 text-xs">✗ {error}</div>
-                {phase === 7 && (
-                  <div className="text-yellow-500 text-xs cursor-pointer hover:text-yellow-400 mt-1" onClick={() => { setError(''); runBuild(); }}>
-                    $ {isRTL ? 'إعادة المحاولة' : 'retry'}
-                  </div>
-                )}
+              {dnsVerified && (
+                <p className="text-emerald-400 text-sm text-center">{t.dnsOk}</p>
+              )}
+
+              {error && (
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              )}
+
+              <button
+                onClick={handleNext}
+                className="w-fit mx-auto block px-10 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors"
+              >
+                {t.next}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Account */}
+        {step === 1 && (
+          <div className="animate-fadeIn">
+            <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
+              {t.accountTitle}
+            </h1>
+            <p className="text-gray-400 text-center mb-8 text-base">
+              {t.accountSub}
+            </p>
+
+            <StepIndicator current={1} total={totalSteps} names={stepNames} />
+
+            <div className="space-y-4 mt-8">
+              <div>
+                <label className="text-gray-400 text-xs mb-1.5 block">{t.nameLabel}</label>
+                <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.namePlaceholder} className={inputClass} autoFocus />
+              </div>
+              <div>
+                <label className="text-gray-400 text-xs mb-1.5 block">{t.emailLabel}</label>
+                <input type="email" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.emailPlaceholder} className={inputClass} dir="ltr" />
+              </div>
+              <div>
+                <label className="text-gray-400 text-xs mb-1.5 block">{t.passwordLabel}</label>
+                <input type="password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.passwordPlaceholder} className={inputClass} dir="ltr" />
+              </div>
+
+              {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+              <div className="flex items-center gap-3 pt-2">
+                <button onClick={handleBack} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.back}</button>
+                <button onClick={handleNext} className="flex-1 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.next}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Store Name */}
+        {step === 2 && (
+          <div className="animate-fadeIn">
+            <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
+              {t.storeTitle}
+            </h1>
+            <p className="text-gray-400 text-center mb-8 text-base">
+              {t.storeSub}
+            </p>
+
+            <StepIndicator current={2} total={totalSteps} names={stepNames} />
+
+            <div className="space-y-4 mt-8">
+              <div>
+                <label className="text-gray-400 text-xs mb-1.5 block">{t.storeNameLabel}</label>
+                <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.storeNamePlaceholder} className={inputClass} autoFocus />
+              </div>
+
+              {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+              <div className="flex items-center gap-3 pt-2">
+                <button onClick={handleBack} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.back}</button>
+                <button onClick={handleNext} className="flex-1 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.next}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Email (Optional) */}
+        {step === 3 && (
+          <div className="animate-fadeIn">
+            <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
+              {t.emailSetupTitle}
+            </h1>
+            <p className="text-gray-400 text-center mb-8 text-base">
+              {t.emailSetupSub}
+            </p>
+
+            <StepIndicator current={3} total={totalSteps} names={stepNames} />
+
+            <div className="space-y-4 mt-8">
+              <input type="text" value={smtpHost} onChange={e => setSmtpHost(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.smtpHostPlaceholder} className={inputClass} dir="ltr" autoFocus />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder={t.smtpUserPlaceholder} className={inputClass} dir="ltr" />
+                <input type="text" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder={t.smtpPortPlaceholder} className={inputClass} dir="ltr" />
+              </div>
+              <input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder={t.smtpPassPlaceholder} className={inputClass} dir="ltr" />
+              <input type="email" value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder={t.smtpFromPlaceholder} className={inputClass} dir="ltr" />
+
+              {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+              <div className="flex items-center gap-3 pt-2">
+                <button onClick={handleBack} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.back}</button>
+                <button onClick={() => { setSmtpHost(''); setSmtpUser(''); setSmtpPass(''); setSmtpFrom(''); runBuild(); }} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 font-medium text-sm transition-colors">{t.skip}</button>
+                <button onClick={handleNext} className="flex-1 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.buildSite}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Building */}
+        {step === 4 && (
+          <div className="animate-fadeIn text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-6">
+              {t.building}
+            </h1>
+
+            <div className="w-full max-w-md mx-auto space-y-3 text-start mb-8">
+              {buildProgress.map((msg, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm animate-fadeIn" style={{ animationDelay: i * 100 + 'ms' }}>
+                  <span className="text-gray-300">{msg}</span>
+                </div>
+              ))}
+              {!buildError && buildProgress.length < 8 && (
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4" strokeDashoffset="10" />
+                  </svg>
+                  <span>{t.processing}</span>
+                </div>
+              )}
+            </div>
+
+            {buildError && (
+              <div className="space-y-4">
+                <p className="text-red-400 text-sm">{buildError}</p>
+                <button onClick={() => { setBuildError(''); setStep(3); }} className="px-8 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.back}</button>
               </div>
             )}
           </div>
+        )}
+
+        {/* Step 5: Done */}
+        {step === 5 && result && (
+          <div className="animate-fadeIn text-center">
+            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
+              {t.buildDone}
+            </h1>
+
+            <div className="bg-[#13151c] border border-gray-800 rounded-xl p-5 max-w-sm mx-auto mb-8 text-start space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">{t.site}</span>
+                <span className="text-white font-medium">{result.site?.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">{t.domainWord}</span>
+                <span className="text-emerald-400 font-mono text-xs">{result.site?.domain}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">{t.status}</span>
+                <span className="text-emerald-400">{t.active}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Site Key</span>
+                <span className="text-gray-300 font-mono text-xs">{result.site?.site_key}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button onClick={() => navigate('/my-dashboard')} className="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.goToDashboard}</button>
+              {result.site?.domain && (
+                <a href={'https://' + result.site.domain} target="_blank" rel="noopener noreferrer" className="px-8 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.visitSite}</a>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-12 text-center text-gray-700 text-[11px]">
+          NEXIRO-FLUX
         </div>
       </div>
+
+      <style>{'@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.animate-fadeIn{animation:fadeIn .4s ease-out forwards}'}</style>
+    </div>
+  );
+}
+
+//  Step Indicator Component 
+function StepIndicator({ current, total, names }) {
+  return (
+    <div className="flex items-center justify-center gap-2 mb-2">
+      {Array.from({ length: total }, (_, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div className="flex flex-col items-center">
+            <div className={'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ' + (i < current ? 'bg-emerald-500 text-white' : i === current ? 'bg-emerald-600/20 border-2 border-emerald-500 text-emerald-400' : 'bg-gray-800 text-gray-600')}>
+              {i < current ? '✓' : i + 1}
+            </div>
+            <span className={'text-[10px] mt-1 ' + (i === current ? 'text-emerald-400' : 'text-gray-600')}>
+              {names[i]}
+            </span>
+          </div>
+          {i < total - 1 && (
+            <div className={'w-8 h-px mb-4 ' + (i < current ? 'bg-emerald-500' : 'bg-gray-800')} />
+          )}
+        </div>
+      ))}
     </div>
   );
 }
