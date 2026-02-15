@@ -77,7 +77,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
         type: source.type,
         url: formData['URL'] || '',
         username: formData['Username'] || '',
-        api_key: formData['API Access Key'] || '',
+        apiKey: formData['API Access Key'] || '',
         category: source.category,
       };
       const res = await adminApi.connectSource(payload);
