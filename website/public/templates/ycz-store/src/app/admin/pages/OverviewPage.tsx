@@ -44,6 +44,36 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
 
   return (
     <>
+      {/* Banner Card */}
+      <div style={{
+        marginBottom: 16,
+        borderRadius: 16,
+        padding: '1rem 1.25rem',
+        background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        boxShadow: '0 10px 24px rgba(124,92,255,0.18)',
+      }}>
+        <div>
+          <p style={{ fontSize: '0.78rem', opacity: 0.9, marginBottom: 4 }}>لوحة التحكم</p>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.5 }}>إدارة المتجر ومتابعة الأداء من مكان واحد</h3>
+        </div>
+        <div style={{
+          padding: '0.35rem 0.75rem',
+          borderRadius: 999,
+          background: 'rgba(255,255,255,0.2)',
+          border: '1px solid rgba(255,255,255,0.35)',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}>
+          المتجر نشط ✅
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="dash-stats-grid" style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20,
