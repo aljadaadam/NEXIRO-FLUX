@@ -1,0 +1,132 @@
+'use client';
+
+import {
+  LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
+  Link2, Paintbrush, Megaphone, Settings, ChevronRight, ChevronLeft,
+  Zap, LogOut,
+} from 'lucide-react';
+import type { ColorTheme } from '@/lib/themes';
+
+interface SidebarProps {
+  currentPage: string;
+  setCurrentPage: (page: string) => void;
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+  mobileOpen: boolean;
+  theme: ColorTheme;
+  logoPreview: string | null;
+  storeName: string;
+}
+
+const menuItems = [
+  { id: 'overview', icon: LayoutDashboard, label: 'نظرة عامة' },
+  { id: 'products', icon: Package, label: 'المنتجات' },
+  { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
+  { id: 'users', icon: Users, label: 'المستخدمين' },
+  { id: 'payments', icon: CreditCard, label: 'المدفوعات' },
+  { id: 'sources', icon: Link2, label: 'المصادر' },
+  { id: 'customize', icon: Paintbrush, label: 'التخصيص' },
+  { id: 'announcements', icon: Megaphone, label: 'الإعلانات' },
+  { id: 'settings', icon: Settings, label: 'الإعدادات' },
+];
+
+export default function Sidebar({
+  currentPage, setCurrentPage, collapsed, setCollapsed,
+  mobileOpen, theme, logoPreview, storeName,
+}: SidebarProps) {
+  return (
+    <aside
+      className={`dash-sidebar ${mobileOpen ? 'dash-sidebar-open' : ''}`}
+      style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0,
+        width: collapsed ? 70 : 260,
+        background: '#fff',
+        borderLeft: '1px solid #f1f5f9',
+        transition: 'all 0.3s',
+        zIndex: 50,
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
+      }}
+    >
+      {/* Logo */}
+      <div style={{
+        padding: collapsed ? '1.25rem 0.5rem' : '1.25rem 1.25rem',
+        borderBottom: '1px solid #f1f5f9',
+        display: 'flex', alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {logoPreview ? (
+            <img src={logoPreview} alt="logo" style={{ width: 34, height: 34, borderRadius: 10, objectFit: 'cover' }} />
+          ) : (
+            <div style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: theme.gradient,
+              display: 'grid', placeItems: 'center', flexShrink: 0,
+            }}>
+              <Zap size={16} color="#fff" />
+            </div>
+          )}
+          {!collapsed && (
+            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020' }}>{storeName}</span>
+          )}
+        </div>
+        <button onClick={() => setCollapsed(!collapsed)} style={{
+          width: 28, height: 28, borderRadius: 6,
+          border: '1px solid #f1f5f9', background: '#fff',
+          cursor: 'pointer', display: collapsed ? 'none' : 'grid',
+          placeItems: 'center',
+        }}>
+          <ChevronRight size={14} color="#94a3b8" />
+        </button>
+      </div>
+
+      {/* Menu */}
+      <nav style={{ flex: 1, padding: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {menuItems.map(item => {
+            const Icon = item.icon;
+            const active = currentPage === item.id;
+            return (
+              <button key={item.id} onClick={() => setCurrentPage(item.id)} style={{
+                display: 'flex', alignItems: 'center',
+                gap: 10,
+                padding: collapsed ? '0.65rem' : '0.65rem 1rem',
+                borderRadius: 10, border: 'none',
+                background: active ? `${theme.primary}12` : 'transparent',
+                color: active ? theme.primary : '#64748b',
+                cursor: 'pointer',
+                fontFamily: 'Tajawal, sans-serif',
+                fontSize: '0.85rem', fontWeight: active ? 700 : 500,
+                transition: 'all 0.2s',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                width: '100%',
+                textAlign: 'right',
+              }}>
+                <Icon size={18} />
+                {!collapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Logout */}
+      {!collapsed && (
+        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #f1f5f9' }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            width: '100%', padding: '0.6rem 1rem',
+            borderRadius: 10, border: 'none',
+            background: '#fef2f2', color: '#dc2626',
+            fontSize: '0.82rem', fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+          }}>
+            <LogOut size={16} />
+            تسجيل الخروج
+          </button>
+        </div>
+      )}
+    </aside>
+  );
+}
