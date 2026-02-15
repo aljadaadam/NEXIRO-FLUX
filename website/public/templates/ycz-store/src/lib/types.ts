@@ -20,6 +20,14 @@ export interface Product {
   group_name?: string;
   external_service_key?: string;
   source_id?: number;
+  requires_custom_json?: unknown;
+  custom_json?: unknown;
+  customFields?: Array<{
+    key: string;
+    label: string;
+    placeholder?: string;
+    required?: boolean;
+  }>;
 }
 
 export interface Order {

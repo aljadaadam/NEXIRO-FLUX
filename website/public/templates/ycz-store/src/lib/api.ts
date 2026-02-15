@@ -75,6 +75,33 @@ export const adminApi = {
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
 function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
+  type ProductCustomField = { key: string; label: string; placeholder: string; required: boolean };
+  const parseMaybeJson = (v: unknown): unknown => {
+    if (typeof v !== 'string') return v;
+    try { return JSON.parse(v); } catch { return v; }
+  };
+
+  const normalizeFieldDef = (field: unknown, index: number): ProductCustomField | null => {
+    if (!field) return null;
+    if (typeof field === 'string') {
+      const key = field.trim();
+      if (!key) return null;
+      return { key, label: key, placeholder: `أدخل ${key}`, required: true };
+    }
+    if (typeof field === 'object') {
+      const f = field as Record<string, unknown>;
+      const label = String(f.label || f.title || f.name || f.key || f.field || `حقل ${index + 1}`).trim();
+      const key = String(f.key || f.name || f.field || f.id || `field_${index + 1}`).trim();
+      return {
+        key,
+        label,
+        placeholder: String(f.placeholder || `أدخل ${label}`),
+        required: f.required === undefined ? true : Boolean(f.required),
+      };
+    }
+    return null;
+  };
+
   const serviceTypeIcons: Record<string, string> = { IMEI: '📱', SERVER: '🔧', REMOTE: '🖥️', FILE: '📁', CODE: '🔑' };
   const serviceTypeCategories: Record<string, string> = {
     IMEI: 'خدمات IMEI',
@@ -84,6 +111,17 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     CODE: 'أكواد',
   };
   const sType = String(p.service_type || p.SERVICETYPE || 'SERVER').toUpperCase();
+  const requiresCustom = parseMaybeJson(p.requires_custom_json);
+  const customJson = parseMaybeJson(p.custom_json);
+
+  const rawFieldList = Array.isArray(requiresCustom)
+    ? requiresCustom
+    : (requiresCustom && typeof requiresCustom === 'object' && Array.isArray((requiresCustom as Record<string, unknown>).fields))
+      ? ((requiresCustom as Record<string, unknown>).fields as unknown[])
+      : [];
+  const customFields = rawFieldList
+    .map(normalizeFieldDef)
+    .filter((f): f is ProductCustomField => Boolean(f));
   const mappedCategory = sType === 'IMEI' || sType === 'SERVER'
     ? serviceTypeCategories[sType]
     : String(p.group_name || serviceTypeCategories[sType] || 'خدمات');
@@ -105,6 +143,9 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     group_name: p.group_name,
     external_service_key: p.external_service_key,
     source_id: p.source_id,
+    requires_custom_json: requiresCustom,
+    custom_json: customJson,
+    customFields,
   };
 }
 

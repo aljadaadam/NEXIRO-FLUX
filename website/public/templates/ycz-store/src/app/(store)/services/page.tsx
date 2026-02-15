@@ -10,8 +10,22 @@ import type { Product } from '@/lib/types';
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const { currentTheme, buttonRadius } = useTheme();
   const [step, setStep] = useState(1);
-  const [imei, setImei] = useState('');
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
+
+  const orderFields = (() => {
+    if (Array.isArray(product.customFields) && product.customFields.length > 0) {
+      return product.customFields;
+    }
+    if (String(product.service_type || '').toUpperCase() === 'IMEI') {
+      return [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }];
+    }
+    return [];
+  })();
+
+  const allRequiredFilled = orderFields
+    .filter((f) => f.required !== false)
+    .every((f) => (formValues[f.key] || '').trim().length > 0);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
@@ -38,9 +52,33 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
         {step === 1 && (
           <>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 8 }}>أدخل رقم IMEI</label>
-            <input value={imei} onChange={e => setImei(e.target.value)} placeholder="مثال: 356938035643809" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-            <button onClick={() => setStep(2)} style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+            {orderFields.length === 0 ? (
+              <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.82rem' }}>
+                لا توجد حقول إضافية مطلوبة لهذا المنتج.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {orderFields.map((field) => (
+                  <div key={field.key}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                      {field.label}
+                      {field.required !== false && <span style={{ color: '#ef4444' }}> *</span>}
+                    </label>
+                    <input
+                      value={formValues[field.key] || ''}
+                      onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder || `أدخل ${field.label}`}
+                      style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep(2)}
+              disabled={!allRequiredFilled}
+              style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif', opacity: allRequiredFilled ? 1 : 0.6 }}>
               متابعة
             </button>
           </>
