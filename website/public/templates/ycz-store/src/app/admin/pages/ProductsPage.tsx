@@ -11,6 +11,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterGroup, setFilterGroup] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -120,6 +121,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }
 
   const categories = Array.from(new Set(products.map((p) => String(p.category || '').trim()).filter(Boolean)));
+  const groups = Array.from(new Set(products.map((p) => String(p.group_name || '').trim()).filter(Boolean)));
 
   const stats = {
     total: products.length,
@@ -139,8 +141,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
     const typeMatch = filterType === 'all' || String(p.service_type || '').toUpperCase() === filterType;
     const categoryMatch = filterCategory === 'all' || String(p.category || '') === filterCategory;
+    const groupMatch = filterGroup === 'all' || String(p.group_name || '') === filterGroup;
 
-    return searchMatch && statusMatch && typeMatch && categoryMatch;
+    return searchMatch && statusMatch && typeMatch && categoryMatch && groupMatch;
   });
 
   return (
@@ -273,6 +276,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           <option value="all">كل التصنيفات</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+
+        <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 180 }}>
+          <option value="all">كل القروبات</option>
+          {groups.map((group) => (
+            <option key={group} value={group}>{group}</option>
           ))}
         </select>
       </div>
