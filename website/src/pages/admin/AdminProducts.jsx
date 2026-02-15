@@ -12,6 +12,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterGroup, setFilterGroup] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -103,12 +104,15 @@ export default function AdminProducts() {
 
   const filtered = products.filter(p => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+    if (filterGroup !== 'all' && String(p.group_name || '') !== filterGroup) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (p.name || '').toLowerCase().includes(q) || (p.name_ar || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q);
     }
     return true;
   });
+
+  const groups = Array.from(new Set(products.map(p => String(p.group_name || '').trim()).filter(Boolean)));
 
   const totalProducts = products.length;
   const activeProducts = products.filter(p => p.status === 'active').length;
@@ -177,6 +181,16 @@ export default function AdminProducts() {
             </button>
           ))}
         </div>
+        <select
+          value={filterGroup}
+          onChange={(e) => setFilterGroup(e.target.value)}
+          className="bg-[#111827] border border-white/5 rounded-xl py-2.5 px-3 text-sm text-white outline-none focus:border-primary-500/30 min-w-[170px]"
+        >
+          <option value="all">{isRTL ? 'كل القروبات' : 'All Groups'}</option>
+          {groups.map((group) => (
+            <option key={group} value={group}>{group}</option>
+          ))}
+        </select>
       </div>
 
       {/* Products Table */}
