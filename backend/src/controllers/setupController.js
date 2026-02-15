@@ -301,7 +301,7 @@ async function provisionSite(req, res) {
         payment_reference: finalPaymentRef,
         purchase_code: purchase_code || null,
       },
-      dashboard_url: `/my-dashboard`
+      dashboard_url: `https://${domain}`
     });
 
   } catch (error) {

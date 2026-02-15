@@ -87,6 +87,7 @@ export default function TerminalSetupPage() {
     building: isRTL ? 'جارٍ بناء موقعك...' : 'Building your site...',
     buildDone: isRTL ? 'تم بناء موقعك بنجاح!' : 'Your site is built successfully!',
     goToDashboard: isRTL ? 'الذهاب للوحة التحكم' : 'Go to Dashboard',
+    manageAccount: isRTL ? 'إدارة حسابي' : 'Manage Account',
     visitSite: isRTL ? 'زيارة الموقع' : 'Visit Site',
     required: isRTL ? 'هذا الحقل مطلوب' : 'This field is required',
     invalidEmail: isRTL ? 'بريد إلكتروني غير صالح' : 'Invalid email address',
@@ -474,10 +475,10 @@ export default function TerminalSetupPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button onClick={() => navigate('/my-dashboard')} className="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.goToDashboard}</button>
               {result.site?.domain && (
-                <a href={'https://' + result.site.domain} target="_blank" rel="noopener noreferrer" className="px-8 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.visitSite}</a>
+                <a href={'https://' + result.site.domain + '/login?token=' + (result.token || localStorage.getItem('nf_token') || '')} className="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.goToDashboard}</a>
               )}
+              <button onClick={() => navigate('/my-dashboard')} className="px-8 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.manageAccount}</button>
             </div>
           </div>
         )}
