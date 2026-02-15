@@ -496,7 +496,7 @@ async function updateCustomDomain(req, res) {
       dns_instructions: {
         type: 'A',
         name: '@',
-        value: '154.56.60.195',
+        value: '181.215.69.49',
         note: 'أضف سجل A في إعدادات DNS لدومينك يشير إلى IP سيرفر NEXIRO-FLUX',
         noteEn: 'Add an A record in your domain DNS settings pointing to NEXIRO-FLUX server IP',
         alternative: {
@@ -545,7 +545,7 @@ async function verifyDomainDNS(req, res) {
     }
 
     const dns = require('dns').promises;
-    const SERVER_IP = '154.56.60.195';
+    const SERVER_IP = '181.215.69.49';
     let dnsOk = false;
     let dnsResult = {};
 
@@ -654,7 +654,7 @@ async function checkDomainDNS(req, res) {
 
     const cleanDomain = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
     const dns = require('dns').promises;
-    const SERVER_IP = '154.56.60.195';
+    const SERVER_IP = '181.215.69.49';
     let dnsOk = false;
     let dnsResult = {};
 
