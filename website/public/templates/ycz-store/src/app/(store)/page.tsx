@@ -117,7 +117,7 @@ export default function HomePage() {
       {/* كيف تطلب */}
       <section style={{ marginBottom: '3rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>كيف تطلب؟</h3>
-        <div className="store-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+        <div className="store-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {STEPS_DATA.map((step, i) => (
             <div key={i} style={{ textAlign: 'center', padding: '1.5rem 1rem', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ fontSize: '2rem', marginBottom: 10 }}>{step.icon}</div>
@@ -132,7 +132,7 @@ export default function HomePage() {
       {/* لماذا نحن */}
       <section style={{ marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>لماذا نحن؟</h3>
-        <div className="store-about-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        <div className="store-about-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {[
             { icon: <Zap size={24} />, title: 'تنفيذ سريع', desc: 'طلباتك تُنفَّذ خلال دقائق', color: '#f59e0b' },
             { icon: <Shield size={24} />, title: 'حماية بياناتك', desc: 'تشفير SSL وحماية متقدمة', color: '#3b82f6' },
