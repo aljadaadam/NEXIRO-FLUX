@@ -28,7 +28,7 @@ export default function LoginPage() {
         if (data.user?.role === 'admin') {
           navigate('/admin');
         } else {
-          navigate('/');
+          navigate('/my-dashboard');
         }
       } catch (err) {
         setLocalError(err.error || (isRTL ? 'فشل تسجيل الدخول عبر Google' : 'Google login failed'));
@@ -57,7 +57,7 @@ export default function LoginPage() {
       if (data.user?.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/my-dashboard');
       }
     } catch (err) {
       setLocalError(err.error || (isRTL ? 'فشل تسجيل الدخول' : 'Login failed'));

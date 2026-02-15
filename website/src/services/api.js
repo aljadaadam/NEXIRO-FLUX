@@ -93,7 +93,7 @@ class ApiService {
     }
   }
 
-  // ─── Auth (Admin Users) ───
+  // ─── Auth ───
 
   async login(email, password) {
     const data = await this.request('/auth/login', {
@@ -108,6 +108,21 @@ class ApiService {
     return data;
   }
 
+  // تسجيل مستخدم عادي على المنصة (ليس أدمن)
+  async registerUser(name, email, password) {
+    const data = await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
+    });
+    if (data.token) {
+      this.setToken(data.token);
+      this.setUser(data.user);
+      if (data.site) this.setSite(data.site);
+    }
+    return data;
+  }
+
+  // تسجيل أدمن (يُستخدم من setup wizard فقط)
   async registerAdmin(name, email, password) {
     const data = await this.request('/auth/register-admin', {
       method: 'POST',

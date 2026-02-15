@@ -118,7 +118,7 @@ class User {
     return rows[0] || null;
   }
 
-  static async findOrCreateByGoogle({ site_key, name, email, googleId }) {
+  static async findOrCreateByGoogle({ site_key, name, email, googleId, defaultRole = 'user' }) {
     // First check if user exists for this site
     let user = await this.findByEmailAndSite(email, site_key);
     
@@ -138,7 +138,7 @@ class User {
     const pool = getPool();
     const [result] = await pool.query(
       'INSERT INTO users (site_key, name, email, password, role, google_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [site_key, name, email, 'GOOGLE_OAUTH_NO_PASSWORD', 'admin', googleId]
+      [site_key, name, email, 'GOOGLE_OAUTH_NO_PASSWORD', defaultRole, googleId]
     );
 
     return { user: await this.findById(result.insertId), isNew: true };

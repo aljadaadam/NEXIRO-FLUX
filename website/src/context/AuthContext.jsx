@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     setError(null);
     try {
-      const data = await api.registerAdmin(name, email, password);
+      const data = await api.registerUser(name, email, password);
       setUser(data.user);
       if (data.site) setSite(data.site);
       return data;
@@ -92,6 +92,7 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
+  const hasSite = !!site?.site_key;
 
   return (
     <AuthContext.Provider value={{
@@ -102,6 +103,7 @@ export function AuthProvider({ children }) {
       setError,
       isAuthenticated,
       isAdmin,
+      hasSite,
       login,
       register,
       googleLogin,

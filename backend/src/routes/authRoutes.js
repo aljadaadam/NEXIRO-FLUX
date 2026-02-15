@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  registerAdmin, 
+  registerAdmin,
+  registerUser,
   login, 
   googleLogin,
   createUser, 
@@ -18,7 +19,10 @@ const { validateSite } = require('../middlewares/siteValidationMiddleware');
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);
 
-// تسجيل أدمن جديد للموقع
+// تسجيل مستخدم جديد (حساب عادي - ليس أدمن)
+router.post('/register', registerUser);
+
+// تسجيل أدمن جديد للموقع (يُستخدم من setup wizard فقط)
 router.post('/register-admin', registerAdmin);
 
 // تسجيل الدخول

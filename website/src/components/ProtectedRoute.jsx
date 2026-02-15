@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isAdmin, hasSite, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -20,8 +20,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
+  // Admin routes require both admin role AND an active site
+  if (requireAdmin && (!isAdmin || !hasSite)) {
+    return <Navigate to="/my-dashboard" replace />;
   }
 
   return children;

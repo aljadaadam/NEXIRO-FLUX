@@ -81,6 +81,72 @@ async function registerAdmin(req, res) {
   }
 }
 
+// ─── تسجيل مستخدم جديد على المنصة (ليس أدمن) ───
+async function registerUser(req, res) {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
+    }
+
+    const siteKey = req.siteKey;
+    if (!siteKey || siteKey === 'default-site-key') {
+      return res.status(400).json({ 
+        error: 'لم يتم تحديد الموقع' 
+      });
+    }
+
+    const site = req.site || await Site.findBySiteKey(siteKey);
+    if (!site) {
+      return res.status(404).json({ 
+        error: 'الموقع غير مسجل في النظام' 
+      });
+    }
+
+    // التحقق من أن البريد الإلكتروني غير مستخدم
+    const existingUser = await User.findByEmailAndSite(email, siteKey);
+    if (existingUser) {
+      return res.status(400).json({ 
+        error: 'البريد الإلكتروني مستخدم بالفعل' 
+      });
+    }
+
+    // إنشاء مستخدم عادي (ليس أدمن)
+    const user = await User.create({
+      site_key: siteKey,
+      name,
+      email,
+      password,
+      role: 'user'
+    });
+
+    const token = generateToken(user.id, user.role, siteKey);
+
+    res.status(201).json({
+      message: 'تم إنشاء الحساب بنجاح',
+      token,
+      site_key: siteKey,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        site_key: user.site_key
+      },
+      site: {
+        id: site.id,
+        name: site.name,
+        domain: site.domain,
+        site_key: site.site_key
+      }
+    });
+  } catch (error) {
+    console.error('Error in registerUser:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إنشاء الحساب' });
+  }
+}
+
 // تسجيل الدخول
 async function login(req, res) {
   try {
@@ -449,12 +515,18 @@ async function googleLogin(req, res) {
       });
     }
 
-    // Find or create user
+    // Find or create user — platform users get 'user' role, site-specific get 'admin'
+    // Determine default role: if this is a provisioned site (has template_id), new users are admin
+    // Otherwise on the main platform, new users are regular users
+    const isPlatformSite = !site.template_id;
+    const defaultRole = isPlatformSite ? 'user' : 'admin';
+
     const { user, isNew } = await User.findOrCreateByGoogle({
       site_key: siteKey,
       name: name || email.split('@')[0],
       email,
       googleId,
+      defaultRole,
     });
 
     // Generate JWT token
@@ -495,6 +567,7 @@ async function googleLogin(req, res) {
 
 module.exports = {
   registerAdmin,
+  registerUser,
   login,
   googleLogin,
   createUser,

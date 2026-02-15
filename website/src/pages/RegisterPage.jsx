@@ -25,7 +25,11 @@ export default function RegisterPage() {
       setError(null);
       try {
         const data = await googleLogin({ access_token: tokenResponse.access_token });
-        navigate('/admin');
+        if (data.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/my-dashboard');
+        }
       } catch (err) {
         setLocalError(err.error || (isRTL ? 'فشل التسجيل عبر Google' : 'Google registration failed'));
       } finally {
@@ -60,7 +64,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      navigate('/admin');
+      navigate('/my-dashboard');
     } catch (err) {
       setLocalError(err.error || (isRTL ? 'فشل إنشاء الحساب' : 'Registration failed'));
     } finally {

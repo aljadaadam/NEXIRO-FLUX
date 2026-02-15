@@ -43,7 +43,7 @@ export default function MyDashboardPage() {
       let settings = data.site?.settings || {};
       setForm({
         store_name: data.site?.name || '',
-        domain_slug: data.site?.domain?.replace('.nexiro.com', '') || '',
+        domain_slug: data.site?.domain?.replace('.nexiroflux.com', '') || '',
         smtp_host: settings.smtp?.host || '',
         smtp_port: settings.smtp?.port || '587',
         smtp_user: settings.smtp?.user || '',
@@ -101,6 +101,70 @@ export default function MyDashboardPage() {
   const trialDaysLeft = subscription?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(subscription.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
     : 0;
+
+  // ─── حالة: لا يوجد موقع بعد (مستخدم جديد لم يشترِ قالب) ───
+  if (!site) {
+    return (
+      <div className="min-h-screen bg-[#0a0e1a]" dir={isRTL ? 'rtl' : 'ltr'}>
+        <header className="bg-[#0d1221]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-display font-bold text-sm">
+                <span className="text-white">NEXIRO</span>
+                <span className="text-primary-400">-</span>
+                <span className="text-accent-400">FLUX</span>
+              </span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="text-end">
+                <p className="text-sm text-white font-medium">{user?.name}</p>
+                <p className="text-[11px] text-dark-500">{user?.email}</p>
+              </div>
+              <button onClick={handleLogout} className="p-2 text-dark-400 hover:text-red-400 transition-colors">
+                <LogOut className="w-4.5 h-4.5" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-2xl mx-auto px-4 py-20 text-center">
+          <div className="bg-[#111827] rounded-3xl border border-white/5 p-10 sm:p-14">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center mx-auto mb-6">
+              <Store className="w-10 h-10 text-primary-400" />
+            </div>
+            <h1 className="text-2xl font-display font-bold text-white mb-3">
+              {isRTL ? 'مرحباً بك في NEXIRO-FLUX! 👋' : 'Welcome to NEXIRO-FLUX! 👋'}
+            </h1>
+            <p className="text-dark-400 text-sm leading-relaxed mb-8 max-w-md mx-auto">
+              {isRTL 
+                ? 'لم تقم بشراء قالب بعد. اختر قالبًا لتبدأ في إنشاء متجرك الإلكتروني واحصل على لوحة تحكم خاصة بك.'
+                : "You haven't purchased a template yet. Choose a template to start building your online store and get your own admin dashboard."
+              }
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link 
+                to="/templates" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all text-sm"
+              >
+                <Sparkles className="w-4 h-4" />
+                {isRTL ? 'تصفح القوالب' : 'Browse Templates'}
+              </Link>
+              <Link 
+                to="/pricing" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-medium rounded-xl hover:bg-white/10 border border-white/10 transition-all text-sm"
+              >
+                <CreditCard className="w-4 h-4" />
+                {isRTL ? 'الأسعار والخطط' : 'Pricing & Plans'}
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0e1a]" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -241,7 +305,7 @@ export default function MyDashboardPage() {
                 {editing === 'store' ? (
                   <div className="flex items-center">
                     <input value={form.domain_slug} onChange={e => setForm(f => ({ ...f, domain_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} className="flex-1 bg-white/5 border border-white/10 rounded-s-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30" dir="ltr" />
-                    <span className="bg-white/10 border border-white/10 border-s-0 rounded-e-xl px-3 py-2.5 text-dark-400 text-sm">.nexiro.com</span>
+                    <span className="bg-white/10 border border-white/10 border-s-0 rounded-e-xl px-3 py-2.5 text-dark-400 text-sm">.nexiroflux.com</span>
                   </div>
                 ) : (
                   <p className="text-primary-400 text-sm font-mono py-2.5">{site?.domain || '—'}</p>
