@@ -2,19 +2,24 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
-  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark, Key
+  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark, Key,
+  Package, ShoppingCart, Globe, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview', exact: true },
-  { to: '/admin/templates', icon: Layers, labelAr: 'القوالب', labelEn: 'Templates' },
+  { to: '/admin/products', icon: Package, labelAr: 'المنتجات', labelEn: 'Products' },
+  { to: '/admin/orders', icon: ShoppingCart, labelAr: 'الطلبات', labelEn: 'Orders' },
+  { to: '/admin/sources', icon: Globe, labelAr: 'المصادر', labelEn: 'Sources' },
   { to: '/admin/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
-  { to: '/admin/announcements', icon: Megaphone, labelAr: 'الإعلانات', labelEn: 'Announcements' },
+  { to: '/admin/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
   { to: '/admin/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
+  { to: '/admin/templates', icon: Layers, labelAr: 'القوالب', labelEn: 'Templates' },
   { to: '/admin/purchase-codes', icon: Key, labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes' },
   { to: '/admin/payment-gateways', icon: Landmark, labelAr: 'بوابات الدفع', labelEn: 'Payment Gateways' },
+  { to: '/admin/announcements', icon: Megaphone, labelAr: 'الإشعارات', labelEn: 'Notifications' },
   { to: '/admin/settings', icon: Settings, labelAr: 'الإعدادات', labelEn: 'Settings' },
 ];
 
