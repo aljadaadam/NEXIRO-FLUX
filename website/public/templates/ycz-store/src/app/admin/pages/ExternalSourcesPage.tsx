@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import {
   Plus, RefreshCcw, Settings, Trash2, Wifi, CreditCard,
   Package, Clock, CheckCircle, AlertCircle, PlugZap, Loader2,
-  X, Eye, EyeOff, Link2, Send,
+  X, Eye, EyeOff, Link2, Send, ChevronDown, ChevronUp, Zap,
 } from 'lucide-react';
 
 interface ConnectedSource {
@@ -19,6 +19,7 @@ interface ConnectedSource {
   lastSync: string;
   products: number;
   balance: string;
+  connectionError: string | null;
 }
 
 interface AvailableSource {
@@ -234,7 +235,10 @@ export default function ExternalSourcesPage() {
   const [activeTab, setActiveTab] = useState('available');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<number | null>(null);
+  const [testing, setTesting] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [expandedSource, setExpandedSource] = useState<number | null>(null);
+  const [sourceResults, setSourceResults] = useState<Record<number, { type: 'sync' | 'test'; success: boolean; message: string; logs?: string[]; count?: number; balance?: string; currency?: string }>>({});
   const [connectingSource, setConnectingSource] = useState<AvailableSource | null>(null);
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>(FALLBACK_CONNECTED);
   const [availableSources, setAvailableSources] = useState<AvailableSource[]>(FALLBACK_AVAILABLE);
@@ -273,6 +277,7 @@ export default function ExternalSourcesPage() {
           lastSync: s.lastConnectionCheckedAt ? new Date(String(s.lastConnectionCheckedAt)).toLocaleString('ar-EG') : '--',
           products: Number(s.productsCount || 0),
           balance: s.lastAccountBalance ? `${s.lastAccountBalance} ${s.lastAccountCurrency || ''}`.trim() : '--',
+          connectionError: s.lastConnectionError ? String(s.lastConnectionError) : null,
         };
       });
 
@@ -296,13 +301,65 @@ export default function ExternalSourcesPage() {
   // ─── مزامنة مصدر ───
   const handleSync = async (sourceId: number) => {
     setSyncing(sourceId);
+    setExpandedSource(sourceId);
     try {
-      await adminApi.syncSource(sourceId);
+      const res = await adminApi.syncSource(sourceId);
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'sync',
+          success: !!res?.success,
+          message: res?.success ? `تم مزامنة ${res.count || 0} خدمة بنجاح` : (res?.error || 'فشل المزامنة'),
+          logs: res?.logs || [],
+          count: res?.count,
+          balance: res?.account?.creditraw || res?.account?.credits,
+          currency: res?.account?.currency,
+        }
+      }));
       await fetchSources();
-    } catch {
-      console.warn('[Sources] فشل مزامنة المصدر');
+    } catch (err: unknown) {
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'sync',
+          success: false,
+          message: err instanceof Error ? err.message : 'فشل المزامنة',
+          logs: [],
+        }
+      }));
     } finally {
       setSyncing(null);
+    }
+  };
+
+  // ─── اختبار اتصال مصدر ───
+  const handleTest = async (sourceId: number) => {
+    setTesting(sourceId);
+    setExpandedSource(sourceId);
+    try {
+      const res = await adminApi.testSource(sourceId);
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'test',
+          success: !!res?.connectionOk,
+          message: res?.connectionOk ? 'الاتصال ناجح ✅' : (res?.error || 'فشل الاتصال'),
+          balance: res?.sourceBalance,
+          currency: res?.sourceCurrency,
+        }
+      }));
+      await fetchSources();
+    } catch (err: unknown) {
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'test',
+          success: false,
+          message: err instanceof Error ? err.message : 'فشل اختبار الاتصال',
+        }
+      }));
+    } finally {
+      setTesting(null);
     }
   };
 
@@ -394,10 +451,13 @@ export default function ExternalSourcesPage() {
               }}><Plus size={15} /> ربط مصدر جديد</button>
             </div>
           )}
-          {connectedSources.map(src => (
+          {connectedSources.map(src => {
+            const result = sourceResults[src.id];
+            const isExpanded = expandedSource === src.id;
+            return (
             <div key={src.id} style={{
               background: '#fff', borderRadius: 14, padding: '1.25rem',
-              border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              border: `1px solid ${src.connectionError ? '#fecaca' : '#f1f5f9'}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -407,13 +467,22 @@ export default function ExternalSourcesPage() {
                       <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{src.name}</h4>
                       <span style={{
                         padding: '0.15rem 0.5rem', borderRadius: 6, fontSize: '0.65rem', fontWeight: 700,
-                        background: '#dcfce7', color: src.statusColor,
+                        background: src.statusColor === '#16a34a' ? '#dcfce7' : src.statusColor === '#dc2626' ? '#fee2e2' : '#fef9c3',
+                        color: src.statusColor,
                       }}>{src.status}</span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{src.type} • {src.url}</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button onClick={() => handleTest(src.id)} disabled={testing === src.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '0.4rem 0.8rem', borderRadius: 8, border: '1px solid #e2e8f0',
+                    background: '#fff', cursor: testing === src.id ? 'wait' : 'pointer', fontSize: '0.72rem', fontWeight: 600,
+                    fontFamily: 'Tajawal, sans-serif', color: '#3b82f6', opacity: testing === src.id ? 0.6 : 1,
+                  }}>
+                    {testing === src.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Zap size={13} />} {testing === src.id ? 'جاري...' : 'اختبار'}
+                  </button>
                   <button onClick={() => handleSync(src.id)} disabled={syncing === src.id} style={{
                     display: 'flex', alignItems: 'center', gap: 4,
                     padding: '0.4rem 0.8rem', borderRadius: 8, border: '1px solid #e2e8f0',
@@ -421,14 +490,6 @@ export default function ExternalSourcesPage() {
                     fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: syncing === src.id ? 0.6 : 1,
                   }}>
                     <RefreshCcw size={13} style={syncing === src.id ? { animation: 'spin 1s linear infinite' } : {}} /> {syncing === src.id ? 'جاري...' : 'مزامنة'}
-                  </button>
-                  <button style={{
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    padding: '0.4rem 0.8rem', borderRadius: 8, border: '1px solid #e2e8f0',
-                    background: '#fff', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
-                    fontFamily: 'Tajawal, sans-serif', color: '#64748b',
-                  }}>
-                    <Settings size={13} /> إعدادات
                   </button>
                   <button onClick={() => handleDelete(src.id)} disabled={deleting === src.id} style={{
                     width: 30, height: 30, borderRadius: 8, border: 'none',
@@ -439,7 +500,9 @@ export default function ExternalSourcesPage() {
                   </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+
+              {/* إحصائيات + خطأ الاتصال */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: src.connectionError || result ? 12 : 0 }}>
                 {[
                   { label: 'الخدمات', value: src.products, icon: Package },
                   { label: 'الرصيد', value: src.balance, icon: CreditCard },
@@ -459,8 +522,80 @@ export default function ExternalSourcesPage() {
                   );
                 })}
               </div>
+
+              {/* خطأ اتصال محفوظ */}
+              {src.connectionError && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0.65rem 0.85rem',
+                  background: '#fef2f2', borderRadius: 8, marginBottom: result ? 12 : 0,
+                }}>
+                  <AlertCircle size={15} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', marginBottom: 2 }}>خطأ اتصال</p>
+                    <p style={{ fontSize: '0.7rem', color: '#991b1b', lineHeight: 1.5, wordBreak: 'break-word' }}>{src.connectionError}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* نتيجة الاختبار / المزامنة */}
+              {result && (
+                <div style={{
+                  background: result.success ? '#f0fdf4' : '#fef2f2', borderRadius: 10,
+                  border: `1px solid ${result.success ? '#bbf7d0' : '#fecaca'}`,
+                  overflow: 'hidden',
+                }}>
+                  <button onClick={() => setExpandedSource(isExpanded ? null : src.id)} style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '0.65rem 0.85rem', background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: 'Tajawal, sans-serif',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {result.success ? <CheckCircle size={15} color="#16a34a" /> : <AlertCircle size={15} color="#dc2626" />}
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: result.success ? '#16a34a' : '#dc2626' }}>
+                        {result.type === 'test' ? 'نتيجة الاختبار' : 'نتيجة المزامنة'}: {result.message}
+                      </span>
+                    </div>
+                    {isExpanded ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#94a3b8" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div style={{ padding: '0 0.85rem 0.75rem', fontSize: '0.72rem', color: '#475569' }}>
+                      {result.balance && (
+                        <p style={{ marginBottom: 6 }}>
+                          <CreditCard size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
+                          الرصيد: <strong>{result.balance} {result.currency || ''}</strong>
+                        </p>
+                      )}
+                      {result.count !== undefined && (
+                        <p style={{ marginBottom: 6 }}>
+                          <Package size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
+                          خدمات مستوردة: <strong>{result.count}</strong>
+                        </p>
+                      )}
+                      {result.logs && result.logs.length > 0 && (
+                        <div style={{
+                          marginTop: 8, background: '#0b1020', borderRadius: 8, padding: '0.75rem',
+                          maxHeight: 200, overflow: 'auto', direction: 'ltr',
+                        }}>
+                          <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 6, fontWeight: 700 }}>سجل العمليات:</p>
+                          {result.logs.map((log, li) => (
+                            <p key={li} style={{
+                              fontSize: '0.68rem', fontFamily: 'monospace, Tajawal',
+                              color: log.startsWith('✓') || log.includes('OK') ? '#4ade80' : log.startsWith('✗') || log.includes('FAILED') || log.includes('Error') ? '#f87171' : '#94a3b8',
+                              lineHeight: 1.7,
+                            }}>
+                              {log}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 

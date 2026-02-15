@@ -65,6 +65,7 @@ export const adminApi = {
   updateSettings: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
   getSources: () => adminFetch('/sources'),
   syncSource: (id: number) => adminFetch(`/sources/${id}/sync`, { method: 'POST' }),
+  testSource: (id: number) => adminFetch(`/sources/${id}/test`, { method: 'POST' }),
   connectSource: (data: Record<string, unknown>) => adminFetch('/sources', { method: 'POST', body: JSON.stringify(data) }),
   deleteSource: (id: number) => adminFetch(`/sources/${id}`, { method: 'DELETE' }),
   getPaymentGateways: () => adminFetch('/payment-gateways'),

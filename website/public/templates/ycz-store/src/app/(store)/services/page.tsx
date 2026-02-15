@@ -78,10 +78,18 @@ export default function ServicesPage() {
     load();
   }, []);
 
-  const categories = [
+  const DEFAULT_CATEGORIES = [
     { id: 'all', name: 'الكل', icon: '📦' },
-    ...Array.from(new Set(products.map(p => p.category))).map(cat => ({ id: cat, name: cat, icon: '🔧' })),
+    { id: 'أدوات سوفتوير', name: 'أدوات سوفتوير', icon: '🛠️' },
+    { id: 'IMEI', name: 'خدمات IMEI', icon: '📱' },
+    { id: 'ألعاب', name: 'ألعاب', icon: '🎮' },
   ];
+
+  // دمج التصنيفات الافتراضية مع التصنيفات من المنتجات
+  const extraCats = Array.from(new Set(products.map(p => p.category)))
+    .filter(cat => !DEFAULT_CATEGORIES.some(d => d.id === cat))
+    .map(cat => ({ id: cat, name: cat, icon: '🔧' }));
+  const categories = [...DEFAULT_CATEGORIES, ...extraCats];
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
