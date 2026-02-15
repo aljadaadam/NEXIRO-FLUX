@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { PORT, SITE_KEY } = require('./config/env');
 const { initializeDatabase } = require('./config/db');
+const { resolveTenant } = require('./middlewares/resolveTenant');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -20,18 +21,21 @@ const setupRoutes = require('./routes/setupRoutes');
 
 const app = express();
 
-// Middleware - CORS مع السماح لجميع Origins (Development Mode)
+// Middleware - CORS مع السماح لجميع Origins (يدعم multi-tenant)
 app.use(cors({
-  origin: true, // السماح لجميع Origins
+  origin: true, // السماح لجميع Origins (كل موقع له دومين مختلف)
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Site-Key'],
   exposedHeaders: ['Authorization', 'Content-Type'],
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ─── Tenant Resolution (must be before routes) ───
+app.use(resolveTenant);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -161,8 +165,9 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`✅ السيرفر يعمل على http://localhost:${PORT}`);
       console.log(`📁 قاعدة البيانات المركزية: ${process.env.DB_NAME || 'nexiro_flux_central'}`);
-      console.log(`🔑 Site Key: ${SITE_KEY}`);
-      console.log(`🏢 نظام Multi-Site مفعل (كل Dashboard مستقل)`);
+      console.log(`🔑 Site Key (fallback): ${SITE_KEY}`);
+      console.log(`🏢 نظام Multi-Tenant مفعل — Domain-based tenant resolution`);
+      console.log(`🌐 يدعم: X-Site-Key header | *.nexiroflux.com | Custom Domains`);
     });
   } catch (error) {
     console.error('❌ فشل تشغيل السيرفر:', error);

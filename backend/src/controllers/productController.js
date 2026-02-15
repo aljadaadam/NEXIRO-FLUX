@@ -729,23 +729,22 @@ async function getProductsStats(req, res) {
 // جلب المنتجات العامة (بدون مصادقة - للواجهة الأمامية)
 async function getPublicProducts(req, res) {
   try {
-    const { SITE_KEY } = require('../config/env');
     const { getPool } = require('../config/db');
     const pool = getPool();
+    const siteKey = req.siteKey;
 
-    console.log('🔵 getPublicProducts called, SITE_KEY:', SITE_KEY);
+    console.log('🔵 getPublicProducts called, siteKey:', siteKey);
 
-    // استعلام بسيط - نفس استعلام debug
     const [products] = await pool.query(
       'SELECT * FROM products WHERE site_key = ?',
-      [SITE_KEY]
+      [siteKey]
     );
 
     console.log('🔵 getPublicProducts found:', products.length, 'products');
 
     res.json({ 
       products, 
-      site_key: SITE_KEY, 
+      site_key: siteKey, 
       count: products.length,
       version: 'v3'
     });
@@ -762,15 +761,15 @@ async function getPublicProducts(req, res) {
 // ─── تشخيص المنتجات (debug) ───
 async function debugProducts(req, res) {
   try {
-    const { SITE_KEY } = require('../config/env');
     const { getPool } = require('../config/db');
     const pool = getPool();
+    const siteKey = req.siteKey;
 
     // عدد المنتجات الكلي
     const [allProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products LIMIT 20');
     
     // عدد المنتجات لهذا الموقع
-    const [siteProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products WHERE site_key = ?', [SITE_KEY]);
+    const [siteProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products WHERE site_key = ?', [siteKey]);
     
     // الأعمدة الموجودة
     const [columns] = await pool.query(
@@ -779,7 +778,7 @@ async function debugProducts(req, res) {
     );
 
     res.json({
-      site_key: SITE_KEY,
+      site_key: siteKey,
       totalInDB: allProducts.length,
       forThisSite: siteProducts.length,
       allProducts: allProducts,
@@ -794,9 +793,9 @@ async function debugProducts(req, res) {
 // ─── تعبئة المنتجات الافتراضية (القوالب) ───
 async function seedTemplateProducts(req, res) {
   try {
-    const { SITE_KEY } = require('../config/env');
     const { getPool } = require('../config/db');
     const pool = getPool();
+    const siteKey = req.siteKey || req.user?.site_key;
 
     // التأكد من وجود الأعمدة 
     const addColumnSafe = async (col, def) => {
@@ -875,7 +874,7 @@ async function seedTemplateProducts(req, res) {
 
     // التحقق من وجود منتجات مسبقاً
     const [existing] = await pool.query(
-      'SELECT COUNT(*) as count FROM products WHERE site_key = ?', [SITE_KEY]
+      'SELECT COUNT(*) as count FROM products WHERE site_key = ?', [siteKey]
     );
 
     if (existing[0].count > 0) {
@@ -892,7 +891,7 @@ async function seedTemplateProducts(req, res) {
         await pool.query(
           `INSERT INTO products (site_key, name, description, price, image, status, category, service_type)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [SITE_KEY, t.name, t.description, t.price, t.image, t.status, t.category, t.service_type]
+          [siteKey, t.name, t.description, t.price, t.image, t.status, t.category, t.service_type]
         );
         inserted++;
       } catch (e) {
@@ -904,7 +903,7 @@ async function seedTemplateProducts(req, res) {
       message: `✅ تم تعبئة ${inserted} قالب بنجاح في قاعدة البيانات!`,
       inserted,
       total: templates.length,
-      site_key: SITE_KEY,
+      site_key: siteKey,
     });
   } catch (error) {
     console.error('Error in seedTemplateProducts:', error);

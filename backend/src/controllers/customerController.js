@@ -1,32 +1,32 @@
 const Customer = require('../models/Customer');
 const ActivityLog = require('../models/ActivityLog');
 const { generateToken } = require('../utils/token');
-const { SITE_KEY } = require('../config/env');
 const emailService = require('../services/email');
 
 // تسجيل زبون جديد
 async function registerCustomer(req, res) {
   try {
     const { name, email, phone, password } = req.body;
+    const siteKey = req.siteKey;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'الاسم والبريد وكلمة المرور مطلوبة' });
     }
 
-    const existing = await Customer.findByEmailAndSite(email, SITE_KEY);
+    const existing = await Customer.findByEmailAndSite(email, siteKey);
     if (existing) {
       return res.status(400).json({ error: 'البريد الإلكتروني مستخدم' });
     }
 
-    const customer = await Customer.create({ site_key: SITE_KEY, name, email, phone, password });
+    const customer = await Customer.create({ site_key: siteKey, name, email, phone, password });
 
     await ActivityLog.log({
-      site_key: SITE_KEY, customer_id: customer.id,
+      site_key: siteKey, customer_id: customer.id,
       action: 'customer_register', entity_type: 'customer', entity_id: customer.id,
       ip_address: req.ip
     });
 
-    const token = generateToken(customer.id, 'customer', SITE_KEY);
+    const token = generateToken(customer.id, 'customer', siteKey);
 
     // بريد ترحيبي
     emailService.sendWelcomeCustomer({ to: customer.email, name: customer.name, storeName: 'متجرنا' }).catch(e => console.error('Email error:', e.message));
@@ -46,12 +46,13 @@ async function registerCustomer(req, res) {
 async function loginCustomer(req, res) {
   try {
     const { email, password } = req.body;
+    const siteKey = req.siteKey;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'البريد وكلمة المرور مطلوبان' });
     }
 
-    const customer = await Customer.findByEmailAndSite(email, SITE_KEY);
+    const customer = await Customer.findByEmailAndSite(email, siteKey);
     if (!customer) {
       return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
     }
@@ -66,10 +67,10 @@ async function loginCustomer(req, res) {
     }
 
     await Customer.updateLastLogin(customer.id);
-    const token = generateToken(customer.id, 'customer', SITE_KEY);
+    const token = generateToken(customer.id, 'customer', siteKey);
 
     await ActivityLog.log({
-      site_key: SITE_KEY, customer_id: customer.id,
+      site_key: siteKey, customer_id: customer.id,
       action: 'customer_login', entity_type: 'customer', entity_id: customer.id,
       ip_address: req.ip
     });

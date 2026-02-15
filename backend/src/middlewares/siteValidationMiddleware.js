@@ -3,15 +3,21 @@ const Site = require('../models/Site');
 
 async function validateSite(req, res, next) {
   try {
-    // التحقق من أن SITE_KEY موجود في ملف .env
-    if (!SITE_KEY || SITE_KEY === 'default-site-key') {
+    // If resolveTenant already resolved the site, use it
+    if (req.site && req.siteKey) {
+      return next();
+    }
+
+    // Try resolving from siteKey (set by resolveTenant or auth)
+    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
+
+    if (!siteKey || siteKey === 'default-site-key') {
       return res.status(500).json({ 
-        error: 'لم يتم تهيئة SITE_KEY في ملف .env' 
+        error: 'لم يتم تحديد الموقع. تأكد من إرسال X-Site-Key header أو تهيئة SITE_KEY' 
       });
     }
 
-    // التحقق من وجود الموقع في قاعدة البيانات
-    const site = await Site.findBySiteKey(SITE_KEY);
+    const site = await Site.findBySiteKey(siteKey);
     
     if (!site) {
       return res.status(403).json({ 
@@ -19,8 +25,8 @@ async function validateSite(req, res, next) {
       });
     }
 
-    // إضافة معلومات الموقع إلى الـ request
     req.site = site;
+    req.siteKey = site.site_key;
     next();
     
   } catch (error) {

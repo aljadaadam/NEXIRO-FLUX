@@ -8,8 +8,12 @@ const PaymentGateway = require('../models/PaymentGateway');
 const PayPalProcessor = require('../services/paypal');
 const BinancePayProcessor = require('../services/binancePay');
 const USDTProcessor = require('../services/usdt');
-const { SITE_KEY } = require('../config/env');
 const emailService = require('../services/email');
+
+// Helper: get siteKey from request
+function getSiteKey(req) {
+  return req.siteKey || req.user?.getSiteKey(req);
+}
 
 // ─── بدء عملية الدفع ───
 async function initCheckout(req, res) {
@@ -34,14 +38,14 @@ async function initCheckout(req, res) {
     }
 
     // جلب البوابة
-    const gateway = await PaymentGateway.findById(parseInt(gateway_id), SITE_KEY);
+    const gateway = await PaymentGateway.findById(parseInt(gateway_id), getSiteKey(req));
     if (!gateway || !gateway.is_enabled) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة أو معطلة' });
     }
 
     // إنشاء سجل الدفع بحالة pending
     const payment = await Payment.create({
-      site_key: SITE_KEY,
+      getSiteKey(req): getSiteKey(req),
       customer_id: null,
       order_id: null,
       type: 'purchase',
@@ -54,7 +58,7 @@ async function initCheckout(req, res) {
     });
 
     // حفظ metadata
-    await Payment.updateMeta(payment.id, SITE_KEY, {
+    await Payment.updateMeta(payment.id, getSiteKey(req), {
       product_id,
       customer_name,
       customer_email,
@@ -84,7 +88,7 @@ async function initCheckout(req, res) {
           cancelUrl,
           referenceId,
         });
-        await Payment.updateExternalId(payment.id, SITE_KEY, order.orderId);
+        await Payment.updateExternalId(payment.id, getSiteKey(req), order.orderId);
         result = {
           method: 'redirect',
           redirectUrl: order.approvalUrl,
@@ -111,7 +115,7 @@ async function initCheckout(req, res) {
           cancelUrl: req.body.cancel_url || `${frontendUrl}/checkout/cancelled`,
           webhookUrl: binanceWebhookUrl,
         });
-        await Payment.updateExternalId(payment.id, SITE_KEY, order.merchantTradeNo);
+        await Payment.updateExternalId(payment.id, getSiteKey(req), order.merchantTradeNo);
         result = {
           method: 'qr_or_redirect',
           checkoutUrl: order.checkoutUrl,
@@ -128,7 +132,7 @@ async function initCheckout(req, res) {
           amount,
           referenceId,
         });
-        await Payment.updateExternalId(payment.id, SITE_KEY, referenceId);
+        await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
         result = {
           method: 'manual_crypto',
           walletAddress: paymentInfo.walletAddress,
@@ -144,7 +148,7 @@ async function initCheckout(req, res) {
       // ━━━━━ تحويل بنكي ━━━━━
       case 'bank_transfer': {
         const config = gateway.config;
-        await Payment.updateExternalId(payment.id, SITE_KEY, referenceId);
+        await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
         result = {
           method: 'manual_bank',
           bankDetails: {
@@ -188,11 +192,11 @@ async function paypalCallback(req, res) {
     const { token } = req.query; // PayPal order ID from query
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
       return res.redirect(`/?payment=error&msg=not_found`);
     }
 
-    const gateway = await PaymentGateway.findById(payment.payment_gateway_id, SITE_KEY);
+    const gateway = await PaymentGateway.findById(payment.payment_gateway_id, getSiteKey(req));
     if (!gateway) {
       return res.redirect(`/?payment=error&msg=gateway_not_found`);
     }
@@ -201,8 +205,8 @@ async function paypalCallback(req, res) {
     const capture = await paypal.captureOrder(token || payment.external_id);
 
     if (capture.success) {
-      await Payment.updateStatus(payment.id, SITE_KEY, 'completed');
-      await Payment.updateMeta(payment.id, SITE_KEY, {
+      await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
+      await Payment.updateMeta(payment.id, getSiteKey(req), {
         transaction_id: capture.transactionId,
         payer_email: capture.payerEmail,
         captured_amount: capture.amount,
@@ -211,7 +215,7 @@ async function paypalCallback(req, res) {
 
       // بريد إيصال الدفع
       try {
-        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        const meta = await Payment.getMeta(payment.id, getSiteKey(req));
         if (meta?.customer_email) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
@@ -230,11 +234,11 @@ async function paypalCallback(req, res) {
       const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
       return res.redirect(`${frontendUrl}/checkout/success?payment_id=${payment.id}`);
     } else {
-      await Payment.updateStatus(payment.id, SITE_KEY, 'failed');
+      await Payment.updateStatus(payment.id, getSiteKey(req), 'failed');
 
       // بريد فشل الدفع
       try {
-        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        const meta = await Payment.getMeta(payment.id, getSiteKey(req));
         if (meta?.customer_email) {
           emailService.sendPaymentFailed({
             to: meta.customer_email, name: meta.customer_name,
@@ -268,7 +272,7 @@ async function paypalCallback(req, res) {
 async function cancelCallback(req, res) {
   try {
     const { id } = req.params;
-    await Payment.updateStatus(parseInt(id), SITE_KEY, 'cancelled');
+    await Payment.updateStatus(parseInt(id), getSiteKey(req), 'cancelled');
     const frontendReturn = req.query.frontend_return;
     if (frontendReturn) {
       const sep = frontendReturn.includes('?') ? '&' : '?';
@@ -297,15 +301,15 @@ async function binanceWebhook(req, res) {
     }
 
     // البحث عن الدفعة بالـ external_id
-    const payment = await Payment.findByExternalId(merchantTradeNo, SITE_KEY);
+    const payment = await Payment.findByExternalId(merchantTradeNo, getSiteKey(req));
     if (!payment) {
       console.warn('Binance Webhook: payment not found for', merchantTradeNo);
       return res.json({ returnCode: 'SUCCESS', returnMessage: 'Not found' });
     }
 
     if (webhookData.status === 'PAID') {
-      await Payment.updateStatus(payment.id, SITE_KEY, 'completed');
-      await Payment.updateMeta(payment.id, SITE_KEY, {
+      await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
+      await Payment.updateMeta(payment.id, getSiteKey(req), {
         binance_transaction_id: webhookData.transactionId,
         paid_amount: webhookData.totalFee,
         paid_at: new Date().toISOString(),
@@ -313,7 +317,7 @@ async function binanceWebhook(req, res) {
 
       // بريد إيصال الدفع
       try {
-        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        const meta = await Payment.getMeta(payment.id, getSiteKey(req));
         if (meta?.customer_email) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
@@ -339,7 +343,7 @@ async function checkUsdtPayment(req, res) {
     const { id } = req.params;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
@@ -347,7 +351,7 @@ async function checkUsdtPayment(req, res) {
       return res.json({ confirmed: true, message: 'الدفع مؤكد مسبقاً' });
     }
 
-    const gateway = await PaymentGateway.findById(payment.payment_gateway_id, SITE_KEY);
+    const gateway = await PaymentGateway.findById(payment.payment_gateway_id, getSiteKey(req));
     if (!gateway || gateway.type !== 'usdt') {
       return res.status(400).json({ error: 'هذه الدفعة ليست USDT' });
     }
@@ -359,8 +363,8 @@ async function checkUsdtPayment(req, res) {
     });
 
     if (result.confirmed) {
-      await Payment.updateStatus(payment.id, SITE_KEY, 'completed');
-      await Payment.updateMeta(payment.id, SITE_KEY, {
+      await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
+      await Payment.updateMeta(payment.id, getSiteKey(req), {
         crypto_tx_id: result.transactionId,
         crypto_from: result.from,
         confirmed_amount: result.amount,
@@ -369,7 +373,7 @@ async function checkUsdtPayment(req, res) {
 
       // بريد إيصال USDT
       try {
-        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        const meta = await Payment.getMeta(payment.id, getSiteKey(req));
         if (meta?.customer_email) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
@@ -406,22 +410,22 @@ async function uploadBankReceipt(req, res) {
     const { receipt_url, notes } = req.body;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
-    await Payment.updateMeta(payment.id, SITE_KEY, {
+    await Payment.updateMeta(payment.id, getSiteKey(req), {
       receipt_url,
       receipt_notes: notes,
       receipt_uploaded_at: new Date().toISOString(),
     });
 
     // تغير الحالة إلى "بانتظار المراجعة"
-    await Payment.updateStatus(payment.id, SITE_KEY, 'pending');
+    await Payment.updateStatus(payment.id, getSiteKey(req), 'pending');
 
     // تنبيه بريدي بالإيصال البنكي
     try {
-      const meta = await Payment.getMeta(payment.id, SITE_KEY);
+      const meta = await Payment.getMeta(payment.id, getSiteKey(req));
       emailService.sendBankReceiptReview({
         orderId: payment.id,
         customerName: meta?.customer_name || 'عميل',
@@ -445,19 +449,19 @@ async function checkPaymentStatus(req, res) {
     const { id } = req.params;
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.getSiteKey(req) !== getSiteKey(req)) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
     // إذا كانت binance ولم تأكد بعد، استعلم من API
     if (payment.status === 'pending' && payment.payment_method === 'binance' && payment.external_id) {
-      const gateway = await PaymentGateway.findById(payment.payment_gateway_id, SITE_KEY);
+      const gateway = await PaymentGateway.findById(payment.payment_gateway_id, getSiteKey(req));
       if (gateway) {
         try {
           const binance = new BinancePayProcessor(gateway.config);
           const result = await binance.queryOrder(payment.external_id);
           if (result.success) {
-            await Payment.updateStatus(payment.id, SITE_KEY, 'completed');
+            await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
             return res.json({ status: 'completed', message: '✅ تم تأكيد الدفع' });
           }
         } catch (e) {
@@ -466,7 +470,7 @@ async function checkPaymentStatus(req, res) {
       }
     }
 
-    const meta = await Payment.getMeta(payment.id, SITE_KEY);
+    const meta = await Payment.getMeta(payment.id, getSiteKey(req));
 
     res.json({
       paymentId: payment.id,

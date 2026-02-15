@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { provisionSite, getMySite, updateSiteSettings } = require('../controllers/setupController');
+const { 
+  provisionSite, getMySite, updateSiteSettings,
+  updateCustomDomain, removeCustomDomain, verifyDomainDNS, getSiteByDomain
+} = require('../controllers/setupController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // ─── إنشاء موقع جديد (بدون مصادقة — أول خطوة بعد الشراء) ───
 router.post('/provision', provisionSite);
+
+// ─── جلب بيانات موقع من الدومين (عام — بدون مصادقة) ───
+router.get('/site-by-domain/:domain', getSiteByDomain);
 
 // ─── الطلبات التالية تحتاج مصادقة ───
 router.use(validateSite);
@@ -15,5 +21,10 @@ router.get('/my-site', authenticateToken, getMySite);
 
 // تحديث إعدادات الموقع
 router.put('/my-site', authenticateToken, updateSiteSettings);
+
+// ─── إدارة الدومين المخصص ───
+router.put('/my-site/domain', authenticateToken, updateCustomDomain);
+router.delete('/my-site/domain', authenticateToken, removeCustomDomain);
+router.get('/my-site/verify-dns', authenticateToken, verifyDomainDNS);
 
 module.exports = router;

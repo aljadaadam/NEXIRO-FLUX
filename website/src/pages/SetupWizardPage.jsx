@@ -394,12 +394,12 @@ export default function SetupWizardPage() {
                     dir="ltr"
                   />
                   <div className="bg-white/10 border border-white/10 rounded-e-xl px-4 py-3 text-dark-400 text-sm border-s-0">
-                    .nexiro.com
+                    .nexiroflux.com
                   </div>
                 </div>
                 <p className="text-dark-500 text-xs mt-1.5">
                   {isRTL ? 'سيكون رابط متجرك: ' : 'Your store URL: '}
-                  <span className="text-primary-400 font-mono">{form.domain_slug || 'your-store'}.nexiro.com</span>
+                  <span className="text-primary-400 font-mono">{form.domain_slug || 'your-store'}.nexiroflux.com</span>
                 </p>
               </div>
 

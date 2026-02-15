@@ -56,6 +56,11 @@ class ApiService {
     if (token) {
       h['Authorization'] = `Bearer ${token}`;
     }
+    // Send site_key header for multi-tenant resolution
+    const site = this.getSite();
+    if (site?.site_key) {
+      h['X-Site-Key'] = site.site_key;
+    }
     return h;
   }
 

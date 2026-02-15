@@ -15,8 +15,12 @@ function authenticateToken(req, res, next) {
     return res.status(403).json({ error: 'Token غير صالح أو منتهي' });
   }
 
-  // التحقق من أن site_key في التوكن يطابق SITE_KEY في ملف .env
-  if (decoded.site_key !== SITE_KEY) {
+  // ─── Dynamic tenant check ───
+  // If resolveTenant set req.siteKey, verify token matches it
+  // Otherwise fall back to SITE_KEY from env
+  const expectedSiteKey = req.siteKey || SITE_KEY;
+
+  if (expectedSiteKey && expectedSiteKey !== 'default-site-key' && decoded.site_key !== expectedSiteKey) {
     return res.status(403).json({ 
       error: 'غير مصرح بالوصول: site_key غير مطابق' 
     });
@@ -27,6 +31,11 @@ function authenticateToken(req, res, next) {
     role: decoded.role,
     site_key: decoded.site_key 
   };
+
+  // Ensure siteKey is always set (from token if not from domain)
+  if (!req.siteKey) {
+    req.siteKey = decoded.site_key;
+  }
   
   next();
 }

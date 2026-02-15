@@ -1,11 +1,11 @@
 const Payment = require('../models/Payment');
-const { SITE_KEY } = require('../config/env');
 
 // جلب جميع المدفوعات
 async function getAllPayments(req, res) {
   try {
+    const siteKey = req.siteKey || req.user?.site_key;
     const { page = 1, limit = 50, type, customer_id } = req.query;
-    const payments = await Payment.findBySiteKey(SITE_KEY, {
+    const payments = await Payment.findBySiteKey(siteKey, {
       page: parseInt(page),
       limit: parseInt(limit),
       type,
@@ -21,6 +21,7 @@ async function getAllPayments(req, res) {
 // إنشاء عملية دفع
 async function createPayment(req, res) {
   try {
+    const siteKey = req.siteKey || req.user?.site_key;
     const { customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, description } = req.body;
 
     if (!amount || !payment_method) {
@@ -37,7 +38,7 @@ async function createPayment(req, res) {
     }
 
     const payment = await Payment.create({
-      site_key: SITE_KEY,
+      site_key: siteKey,
       customer_id,
       order_id,
       type: type || 'purchase',
@@ -62,6 +63,7 @@ async function createPayment(req, res) {
 // تحديث حالة الدفع
 async function updatePaymentStatus(req, res) {
   try {
+    const siteKey = req.siteKey || req.user?.site_key;
     const { id } = req.params;
     const { status } = req.body;
 
@@ -71,11 +73,11 @@ async function updatePaymentStatus(req, res) {
     }
 
     const payment = await Payment.findById(parseInt(id));
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.site_key !== siteKey) {
       return res.status(404).json({ error: 'عملية الدفع غير موجودة' });
     }
 
-    const updated = await Payment.updateStatus(parseInt(id), SITE_KEY, status);
+    const updated = await Payment.updateStatus(parseInt(id), siteKey, status);
     if (!updated) {
       return res.status(500).json({ error: 'فشل في تحديث حالة الدفع' });
     }
@@ -94,7 +96,8 @@ async function updatePaymentStatus(req, res) {
 // إحصائيات المدفوعات
 async function getPaymentStats(req, res) {
   try {
-    const stats = await Payment.getStats(SITE_KEY);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const stats = await Payment.getStats(siteKey);
     res.json({ stats });
   } catch (error) {
     console.error('خطأ في جلب إحصائيات المدفوعات:', error);
@@ -105,10 +108,11 @@ async function getPaymentStats(req, res) {
 // جلب دفعة واحدة بالـ ID
 async function getPaymentById(req, res) {
   try {
+    const siteKey = req.siteKey || req.user?.site_key;
     const { id } = req.params;
     const payment = await Payment.findById(parseInt(id));
 
-    if (!payment || payment.site_key !== SITE_KEY) {
+    if (!payment || payment.site_key !== siteKey) {
       return res.status(404).json({ error: 'عملية الدفع غير موجودة' });
     }
 

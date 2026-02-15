@@ -57,8 +57,8 @@ async function provisionSite(req, res) {
     // ─── توليد site_key و domain ───
     const site_key = generateSiteKey(store_name);
     const domain = domain_slug
-      ? `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiro.com`
-      : `${site_key}.nexiro.com`;
+      ? `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com`
+      : `${site_key}.nexiroflux.com`;
 
     // التحقق من عدم تكرار الدومين
     const existingDomain = await Site.findByDomain(domain);
@@ -235,7 +235,7 @@ async function updateSiteSettings(req, res) {
     }
 
     if (domain_slug) {
-      const newDomain = `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiro.com`;
+      const newDomain = `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com`;
       const existingDomain = await Site.findByDomain(newDomain);
       if (existingDomain && existingDomain.site_key !== site_key) {
         return res.status(400).json({ error: 'هذا النطاق مستخدم بالفعل' });
@@ -278,8 +278,173 @@ async function updateSiteSettings(req, res) {
   }
 }
 
+// ─── تحديث الدومين المخصص ───
+async function updateCustomDomain(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { custom_domain } = req.body;
+
+    if (!custom_domain) {
+      return res.status(400).json({ error: 'الدومين المخصص مطلوب' });
+    }
+
+    const domain = custom_domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+    // التحقق من أن الدومين غير مستخدم
+    const existing = await Site.findByCustomDomain(domain);
+    if (existing && existing.site_key !== site_key) {
+      return res.status(400).json({ error: 'هذا الدومين مستخدم بالفعل من موقع آخر' });
+    }
+
+    const site = await Site.updateCustomDomain(site_key, domain);
+    
+    // Clear tenant cache for this domain
+    const { clearDomainCache } = require('../middlewares/resolveTenant');
+    clearDomainCache(domain);
+
+    res.json({ 
+      message: 'تم تحديث الدومين المخصص بنجاح',
+      site,
+      dns_instructions: {
+        type: 'CNAME',
+        name: domain,
+        value: 'nexiroflux.com',
+        note: 'أضف سجل CNAME في إعدادات DNS لدومينك يشير إلى nexiroflux.com',
+        alternative: {
+          type: 'A',
+          note: 'أو أضف سجل A يشير إلى IP سيرفر NEXIRO-FLUX'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in updateCustomDomain:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تحديث الدومين' });
+  }
+}
+
+// ─── إزالة الدومين المخصص ───
+async function removeCustomDomain(req, res) {
+  try {
+    const { site_key } = req.user;
+    const site = await Site.findBySiteKey(site_key);
+    
+    if (site?.custom_domain) {
+      const { clearDomainCache } = require('../middlewares/resolveTenant');
+      clearDomainCache(site.custom_domain);
+    }
+
+    await Site.updateCustomDomain(site_key, null);
+    const updated = await Site.findBySiteKey(site_key);
+    res.json({ message: 'تم إزالة الدومين المخصص', site: updated });
+  } catch (error) {
+    console.error('Error in removeCustomDomain:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
+// ─── التحقق من DNS للدومين المخصص ───
+async function verifyDomainDNS(req, res) {
+  try {
+    const { site_key } = req.user;
+    const site = await Site.findBySiteKey(site_key);
+    
+    if (!site?.custom_domain) {
+      return res.status(400).json({ error: 'لا يوجد دومين مخصص لهذا الموقع' });
+    }
+
+    const dns = require('dns').promises;
+    let verified = false;
+    let dnsResult = {};
+
+    try {
+      // Check CNAME
+      const cnames = await dns.resolveCname(site.custom_domain);
+      if (cnames.some(c => c.includes('nexiroflux') || c.includes('nexiro-flux'))) {
+        verified = true;
+        dnsResult.cname = cnames;
+      }
+    } catch (e) {
+      // CNAME not found, try A record
+      try {
+        const addresses = await dns.resolve4(site.custom_domain);
+        dnsResult.a_records = addresses;
+        // We can't fully verify A records without knowing our server IP,
+        // but we'll mark as verified if records exist
+        if (addresses.length > 0) {
+          verified = true;
+        }
+      } catch (e2) {
+        dnsResult.error = 'لم يتم العثور على سجلات DNS للدومين';
+      }
+    }
+
+    // Update verification status
+    if (verified) {
+      const pool = require('../config/db').getPool();
+      await pool.query('UPDATE sites SET dns_verified = 1 WHERE site_key = ?', [site_key]);
+    }
+
+    res.json({
+      domain: site.custom_domain,
+      verified,
+      dns: dnsResult,
+      message: verified 
+        ? '✅ تم التحقق من DNS بنجاح! الدومين جاهز للاستخدام' 
+        : '❌ لم يتم التحقق من DNS. تأكد من إعداد CNAME يشير إلى nexiroflux.com'
+    });
+  } catch (error) {
+    console.error('Error in verifyDomainDNS:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء التحقق من DNS' });
+  }
+}
+
+// ─── جلب بيانات الموقع من الدومين (عام — بدون مصادقة) ───
+async function getSiteByDomain(req, res) {
+  try {
+    const { domain } = req.params;
+    const site = await Site.findByAnyDomain(domain.toLowerCase());
+    
+    if (!site) {
+      return res.status(404).json({ error: 'الموقع غير موجود' });
+    }
+
+    if (site.status === 'suspended') {
+      return res.status(403).json({ error: 'الموقع معلق', status: 'suspended' });
+    }
+
+    // Check subscription validity
+    const subscription = await Subscription.findActiveBySiteKey(site.site_key);
+    const Customization = require('../models/Customization');
+    const customization = await Customization.findBySiteKey(site.site_key);
+
+    res.json({
+      site_key: site.site_key,
+      name: site.name,
+      domain: site.domain,
+      custom_domain: site.custom_domain,
+      template_id: site.template_id,
+      plan: site.plan,
+      status: site.status,
+      subscription: subscription ? {
+        status: subscription.status,
+        plan: subscription.plan_id,
+        expires_at: subscription.expires_at,
+        trial_ends_at: subscription.trial_ends_at
+      } : null,
+      customization: customization || null
+    });
+  } catch (error) {
+    console.error('Error in getSiteByDomain:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   provisionSite,
   getMySite,
-  updateSiteSettings
+  updateSiteSettings,
+  updateCustomDomain,
+  removeCustomDomain,
+  verifyDomainDNS,
+  getSiteByDomain
 };

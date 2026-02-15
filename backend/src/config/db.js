@@ -341,6 +341,8 @@ async function createTables() {
     await ensureColumn('sites', 'owner_email', 'owner_email VARCHAR(100) NULL');
     await ensureColumn('sites', 'settings', 'settings JSON NULL');
     await ensureColumn('sites', 'updated_at', 'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+    await ensureColumn('sites', 'custom_domain', 'custom_domain VARCHAR(255) NULL UNIQUE');
+    await ensureColumn('sites', 'dns_verified', 'dns_verified TINYINT(1) DEFAULT 0');
 
     // ضمان وجود الأعمدة في الجداول (للتوافق مع قواعد بيانات قديمة)
     await ensureColumn('products', 'service_type', "service_type VARCHAR(50) DEFAULT 'SERVER'");

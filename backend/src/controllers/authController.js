@@ -3,7 +3,7 @@ const User = require('../models/User');
 const Site = require('../models/Site');
 const Permission = require('../models/Permission');
 const { generateToken } = require('../utils/token');
-const { SITE_KEY, GOOGLE_CLIENT_ID } = require('../config/env');
+const { GOOGLE_CLIENT_ID } = require('../config/env');
 const { OAuth2Client } = require('google-auth-library');
 const emailService = require('../services/email');
 
@@ -19,15 +19,15 @@ async function registerAdmin(req, res) {
       return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
     }
 
-    // التحقق من أن SITE_KEY موجود
-    if (!SITE_KEY || SITE_KEY === 'default-site-key') {
+    const siteKey = req.siteKey;
+    if (!siteKey || siteKey === 'default-site-key') {
       return res.status(400).json({ 
-        error: 'لم يتم تهيئة الموقع، تأكد من إعداد SITE_KEY في ملف .env' 
+        error: 'لم يتم تحديد الموقع. أرسل X-Site-Key header أو هيئ SITE_KEY' 
       });
     }
 
     // التحقق من وجود الموقع
-    const site = await Site.findBySiteKey(SITE_KEY);
+    const site = req.site || await Site.findBySiteKey(siteKey);
     if (!site) {
       return res.status(404).json({ 
         error: 'الموقع غير مسجل في النظام. اتصل بالدعم.' 
@@ -35,7 +35,7 @@ async function registerAdmin(req, res) {
     }
 
     // التحقق من أن البريد الإلكتروني غير مستخدم في نفس الموقع
-    const existingUser = await User.findByEmailAndSite(email, SITE_KEY);
+    const existingUser = await User.findByEmailAndSite(email, siteKey);
     if (existingUser) {
       return res.status(400).json({ 
         error: 'البريد الإلكتروني مستخدم بالفعل في هذا الموقع' 
@@ -44,7 +44,7 @@ async function registerAdmin(req, res) {
 
     // إنشاء الأدمن
     const admin = await User.create({
-      site_key: SITE_KEY,
+      site_key: siteKey,
       name,
       email,
       password,
@@ -52,15 +52,15 @@ async function registerAdmin(req, res) {
     });
 
     // إنشاء التوكن
-    const token = generateToken(admin.id, admin.role, SITE_KEY);
+    const token = generateToken(admin.id, admin.role, siteKey);
 
     // إرسال بريد ترحيبي
     emailService.sendWelcomeAdmin({ to: admin.email, name: admin.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
       message: 'تم إنشاء حساب الأدمن بنجاح',
-      token, // التوكن في الجذر
-      site_key: SITE_KEY, // إضافة site_key في الجذر
+      token,
+      site_key: siteKey,
       user: {
         id: admin.id,
         name: admin.name,
@@ -95,15 +95,15 @@ async function login(req, res) {
       });
     }
 
-    // التحقق من أن SITE_KEY موجود
-    if (!SITE_KEY || SITE_KEY === 'default-site-key') {
+    const siteKey = req.siteKey;
+    if (!siteKey || siteKey === 'default-site-key') {
       return res.status(400).json({ 
-        error: 'لم يتم تهيئة الموقع، تأكد من إعداد SITE_KEY في ملف .env' 
+        error: 'لم يتم تحديد الموقع' 
       });
     }
 
     // البحث عن المستخدم في هذا الموقع
-    const user = await User.findByEmailAndSite(email, SITE_KEY);
+    const user = await User.findByEmailAndSite(email, siteKey);
     if (!user) {
       return res.status(401).json({ 
         error: 'بيانات الدخول غير صحيحة' 
@@ -119,7 +119,7 @@ async function login(req, res) {
     }
 
     // التحقق من وجود الموقع
-    const site = await Site.findBySiteKey(SITE_KEY);
+    const site = req.site || await Site.findBySiteKey(siteKey);
     if (!site) {
       return res.status(500).json({ 
         error: 'حدث خطأ في بيانات الموقع' 
@@ -127,7 +127,7 @@ async function login(req, res) {
     }
 
     // إنشاء التوكن
-    const token = generateToken(user.id, user.role, SITE_KEY);
+    const token = generateToken(user.id, user.role, siteKey);
 
     // تنبيه تسجيل الدخول
     emailService.sendLoginAlert({
@@ -138,8 +138,8 @@ async function login(req, res) {
 
     res.json({
       message: 'تم تسجيل الدخول بنجاح',
-      token, // التوكن في الجذر (متوافق مع الواجهة الأمامية)
-      site_key: SITE_KEY, // إضافة site_key في الجذر
+      token,
+      site_key: siteKey,
       user: {
         id: user.id,
         name: user.name,
@@ -434,15 +434,15 @@ async function googleLogin(req, res) {
       return res.status(400).json({ error: 'Could not retrieve email from Google account' });
     }
 
-    // Verify SITE_KEY
-    if (!SITE_KEY || SITE_KEY === 'default-site-key') {
+    const siteKey = req.siteKey;
+    if (!siteKey || siteKey === 'default-site-key') {
       return res.status(400).json({ 
-        error: 'لم يتم تهيئة الموقع، تأكد من إعداد SITE_KEY في ملف .env' 
+        error: 'لم يتم تحديد الموقع' 
       });
     }
 
     // Verify site exists
-    const site = await Site.findBySiteKey(SITE_KEY);
+    const site = req.site || await Site.findBySiteKey(siteKey);
     if (!site) {
       return res.status(404).json({ 
         error: 'الموقع غير مسجل في النظام. اتصل بالدعم.' 
@@ -451,14 +451,14 @@ async function googleLogin(req, res) {
 
     // Find or create user
     const { user, isNew } = await User.findOrCreateByGoogle({
-      site_key: SITE_KEY,
+      site_key: siteKey,
       name: name || email.split('@')[0],
       email,
       googleId,
     });
 
     // Generate JWT token
-    const token = generateToken(user.id, user.role, SITE_KEY);
+    const token = generateToken(user.id, user.role, siteKey);
 
     // بريد ترحيبي للمستخدمين الجدد عبر Google
     if (isNew) {
@@ -468,7 +468,7 @@ async function googleLogin(req, res) {
     res.json({
       message: isNew ? 'تم إنشاء الحساب وتسجيل الدخول بنجاح عبر Google' : 'تم تسجيل الدخول بنجاح عبر Google',
       token,
-      site_key: SITE_KEY,
+      site_key: siteKey,
       user: {
         id: user.id,
         name: user.name,

@@ -1,10 +1,10 @@
 const PaymentGateway = require('../models/PaymentGateway');
-const { SITE_KEY } = require('../config/env');
 
 // ─── جلب جميع بوابات الدفع ───
 async function getAllGateways(req, res) {
   try {
-    const gateways = await PaymentGateway.findBySiteKey(SITE_KEY);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const gateways = await PaymentGateway.findBySiteKey(siteKey);
     res.json({ gateways });
   } catch (error) {
     console.error('Error fetching gateways:', error);
@@ -16,7 +16,8 @@ async function getAllGateways(req, res) {
 async function getEnabledGateways(req, res) {
   try {
     const { country } = req.query;
-    const gateways = await PaymentGateway.findEnabled(SITE_KEY, country || null);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const gateways = await PaymentGateway.findEnabled(siteKey, country || null);
 
     // إخفاء البيانات الحساسة للعرض العام
     const safe = gateways.map(gw => ({
@@ -70,8 +71,9 @@ async function createGateway(req, res) {
       return res.status(400).json({ error: `نوع غير صالح. الأنواع المتاحة: ${validTypes.join(', ')}` });
     }
 
+    const siteKey = req.siteKey || req.user?.site_key;
     const gateway = await PaymentGateway.create({
-      site_key: SITE_KEY,
+      site_key: siteKey,
       type,
       name,
       name_en,
@@ -93,7 +95,8 @@ async function createGateway(req, res) {
 async function updateGateway(req, res) {
   try {
     const { id } = req.params;
-    const gateway = await PaymentGateway.update(parseInt(id), SITE_KEY, req.body);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const gateway = await PaymentGateway.update(parseInt(id), siteKey, req.body);
 
     if (!gateway) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة' });
@@ -110,7 +113,8 @@ async function updateGateway(req, res) {
 async function deleteGateway(req, res) {
   try {
     const { id } = req.params;
-    const deleted = await PaymentGateway.delete(parseInt(id), SITE_KEY);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const deleted = await PaymentGateway.delete(parseInt(id), siteKey);
 
     if (!deleted) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة' });
@@ -127,7 +131,8 @@ async function deleteGateway(req, res) {
 async function toggleGateway(req, res) {
   try {
     const { id } = req.params;
-    const gateway = await PaymentGateway.toggle(parseInt(id), SITE_KEY);
+    const siteKey = req.siteKey || req.user?.site_key;
+    const gateway = await PaymentGateway.toggle(parseInt(id), siteKey);
 
     if (!gateway) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة' });
