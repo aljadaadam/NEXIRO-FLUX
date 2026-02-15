@@ -73,9 +73,9 @@ function Sidebar({ currentPage, setCurrentPage, collapsed, setCollapsed, mobileO
 
   return (
     <aside className={`dash-sidebar${mobileOpen ? ' dash-sidebar-open' : ''}`} style={{
-      width: collapsed ? 70 : 260, minHeight: '100vh',
+      width: collapsed ? 70 : 260, minHeight: 'calc(100vh - 32px)',
       background: '#0f172a', color: '#e2e8f0',
-      transition: 'all 0.3s', position: 'fixed', right: 0, top: 0, zIndex: 50,
+      transition: 'all 0.3s', position: 'fixed', right: 0, top: 32, zIndex: 50,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* Logo */}
