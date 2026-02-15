@@ -581,11 +581,11 @@ async function verifyDomainDNS(req, res) {
 
     let message, messageEn;
     if (verified) {
-      message = '✅ تم التحقق بنجاح! الدومين يشير إلى سيرفرنا. تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى كي يعمل بشكل صحيح';
-      messageEn = '✅ Verified! Domain points to our server. Make sure the domain is not linked to another hosting or other templates for it to work correctly';
+      message = 'تم التحقق بنجاح! الدومين يشير إلى سيرفرنا. تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى كي يعمل بشكل صحيح';
+      messageEn = 'Verified! Domain points to our server. Make sure the domain is not linked to another hosting or other templates for it to work correctly';
     } else {
-      message = `❌ لم يتم التحقق. تأكد من إضافة سجل A يشير إلى ${SERVER_IP}`;
-      messageEn = `❌ Not verified. Make sure to add an A record pointing to ${SERVER_IP}`;
+      message = `لم يتم التحقق. تأكد من إضافة سجل A يشير إلى ${SERVER_IP}`;
+      messageEn = `Not verified. Make sure to add an A record pointing to ${SERVER_IP}`;
     }
 
     res.json({
@@ -687,11 +687,11 @@ async function checkDomainDNS(req, res) {
 
     let message, messageEn;
     if (verified) {
-      message = '✅ تم التحقق بنجاح! الدومين يشير إلى سيرفرنا. تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى كي يعمل بشكل صحيح';
-      messageEn = '✅ Verified! Domain points to our server. Make sure the domain is not linked to another hosting or other templates for it to work correctly';
+      message = 'تم التحقق بنجاح! الدومين يشير إلى سيرفرنا. تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى كي يعمل بشكل صحيح';
+      messageEn = 'Verified! Domain points to our server. Make sure the domain is not linked to another hosting or other templates for it to work correctly';
     } else {
-      message = `❌ DNS لا يشير إلى سيرفرنا. أضف سجل A يشير إلى ${SERVER_IP}`;
-      messageEn = `❌ DNS is not pointing to our server. Add an A record pointing to ${SERVER_IP}`;
+      message = `DNS لا يشير إلى سيرفرنا. أضف سجل A يشير إلى ${SERVER_IP}`;
+      messageEn = `DNS is not pointing to our server. Add an A record pointing to ${SERVER_IP}`;
     }
 
     res.json({

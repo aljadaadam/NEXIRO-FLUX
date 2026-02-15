@@ -61,12 +61,12 @@ export default function TerminalSetupPage() {
     domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال magicdesign3.com' : 'Enter your domain e.g. magicdesign3.com',
     domainHint: isRTL ? 'وجّه الدومين إلى IP: 181.215.69.49 (سجل A) وتأكد أنه غير مرتبط باستضافة أخرى' : 'Point your domain to IP: 181.215.69.49 (A record) and make sure it is not linked to another hosting',
     checkDns: isRTL ? 'تحقق من الدومين' : 'Verify Domain',
-    dnsOk: isRTL ? '✓ تم التحقق بنجاح! الدومين يشير لسيرفرنا' : '✓ Verified! Domain points to our server',
+    dnsOk: isRTL ? 'تم التحقق بنجاح! الدومين يشير لسيرفرنا' : 'Verified! Domain points to our server',
     dnsRequired: isRTL ? 'يجب التحقق من الدومين أولاً' : 'Domain verification is required',
-    dnsOnlyOk: isRTL ? '✓ DNS يشير لسيرفرنا' : '✓ DNS points to our server',
-    dnsNotOk: isRTL ? '✗ DNS لا يشير لسيرفرنا' : '✗ DNS not pointing to our server',
-    dnsOkNote: isRTL ? '⚠ تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى' : '⚠ Make sure the domain is not linked to another hosting or templates',
-    dnsPropagation: isRTL ? '💡 إذا أضفت سجل DNS للتو، قد يستغرق النشر من دقائق إلى 48 ساعة. أعد التحقق بعد قليل' : '💡 If you just added the DNS record, propagation may take a few minutes up to 48 hours. Please try again shortly',
+    dnsOnlyOk: isRTL ? 'DNS يشير لسيرفرنا' : 'DNS points to our server',
+    dnsNotOk: isRTL ? 'DNS لا يشير لسيرفرنا' : 'DNS not pointing to our server',
+    dnsOkNote: isRTL ? 'تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى' : 'Make sure the domain is not linked to another hosting or templates',
+    dnsPropagation: isRTL ? 'إذا أضفت سجل DNS للتو، قد يستغرق انتشاره من دقائق إلى 48 ساعة. يمكنك إعادة المحاولة بعد قليل' : 'If you just updated your DNS records, propagation can take from a few minutes up to 48 hours. You can retry shortly',
     retryCheck: isRTL ? 'إعادة التحقق' : 'Re-check',
     accountTitle: isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account',
     accountSub: isRTL ? 'هذا الحساب سيكون لإدارة موقعك' : 'This account will manage your site',
@@ -308,27 +308,62 @@ export default function TerminalSetupPage() {
 
               {/* DNS status indicator */}
               {dnsPartial && !dnsVerified && (
-                <div className="space-y-2 text-xs text-center">
-                  <p className={dnsPartial.dnsOk ? 'text-emerald-400' : 'text-red-400'}>
-                    {dnsPartial.dnsOk ? t.dnsOnlyOk : t.dnsNotOk}
-                  </p>
+                <div className="space-y-3 text-center">
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+                    dnsPartial.dnsOk 
+                      ? 'bg-emerald-500/10 border border-emerald-500/20' 
+                      : 'bg-red-500/10 border border-red-500/20'
+                  }`}>
+                    {dnsPartial.dnsOk ? (
+                      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                    <span className={`text-sm font-medium ${dnsPartial.dnsOk ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {dnsPartial.dnsOk ? t.dnsOnlyOk : t.dnsNotOk}
+                    </span>
+                  </div>
                   {!dnsPartial.dnsOk && dnsCheckCount >= 1 && (
-                    <p className="text-yellow-400/80 text-xs leading-relaxed max-w-sm mx-auto">
-                      {t.dnsPropagation}
-                    </p>
+                    <div className="flex items-start gap-2.5 bg-amber-500/5 border border-amber-500/15 rounded-lg px-4 py-3 max-w-sm mx-auto">
+                      <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                      </svg>
+                      <p className="text-amber-300/90 text-xs leading-relaxed text-start">
+                        {t.dnsPropagation}
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
 
               {dnsVerified && (
-                <div className="space-y-1 text-center">
-                  <p className="text-emerald-400 text-sm">{t.dnsOk}</p>
-                  <p className="text-yellow-400/70 text-xs mt-1">{t.dnsOkNote}</p>
+                <div className="space-y-2 text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                    </svg>
+                    <span className="text-emerald-400 text-sm font-semibold">{t.dnsOk}</span>
+                  </div>
+                  <div className="flex items-center gap-2 justify-center">
+                    <svg className="w-3.5 h-3.5 text-yellow-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <p className="text-yellow-400/60 text-xs">{t.dnsOkNote}</p>
+                  </div>
                 </div>
               )}
 
               {error && (
-                <p className="text-red-400 text-sm text-center">{error}</p>
+                <div className="flex items-start gap-2.5 bg-red-500/5 border border-red-500/15 rounded-lg px-4 py-3 max-w-md mx-auto">
+                  <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <p className="text-red-400/90 text-sm leading-relaxed text-start">{error}</p>
+                </div>
               )}
 
               <button
