@@ -14,6 +14,11 @@ export interface Product {
   desc?: string;
   stock?: number;
   status?: string;
+  // حقول الباكند
+  service_type?: string;
+  group_name?: string;
+  external_service_key?: string;
+  source_id?: number;
 }
 
 export interface Order {

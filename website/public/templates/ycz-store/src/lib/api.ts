@@ -70,9 +70,45 @@ export const adminApi = {
   updateCustomize: (data: Record<string, unknown>) => adminFetch('/admin/customize', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
+// ─── تحويل منتج الباكند لشكل الفرونت ───
+function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
+  const serviceTypeIcons: Record<string, string> = { IMEI: '📱', SERVER: '🔧', REMOTE: '🖥️', FILE: '📁', CODE: '🔑' };
+  const serviceTypeCategories: Record<string, string> = { IMEI: 'IMEI', SERVER: 'خدمات', REMOTE: 'ريموت', FILE: 'ملفات', CODE: 'أكواد' };
+  const sType = String(p.service_type || 'SERVER');
+  return {
+    id: p.id,
+    name: p.name,
+    price: typeof p.price === 'number' || (typeof p.price === 'string' && !p.price.startsWith('$')) ? `$${Number(p.final_price || p.price || 0).toFixed(2)}` : p.price,
+    originalPrice: p.source_price && Number(p.source_price) > Number(p.final_price || p.price) ? `$${Number(p.source_price).toFixed(2)}` : undefined,
+    icon: serviceTypeIcons[sType] || '🔧',
+    category: String(p.group_name || serviceTypeCategories[sType] || 'خدمات'),
+    desc: String(p.description || p.service_info || p.name || ''),
+    stock: Number(p.qnt || p.stock || 999),
+    status: 'نشط',
+    rating: 4.5 + Math.random() * 0.5,
+    sales: Math.floor(Math.random() * 200 + 20),
+    // حقول الباكند الأصلية
+    service_type: sType,
+    group_name: p.group_name,
+    external_service_key: p.external_service_key,
+    source_id: p.source_id,
+  };
+}
+
 // ─── Customer API ───
 export const storeApi = {
-  getProducts: () => customerFetch('/products'),
+  getProducts: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/products/public`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      const raw = Array.isArray(data) ? data : data?.products || [];
+      return raw.map(mapBackendProduct);
+    } catch {
+      return [];
+    }
+  },
   getProduct: (id: number) => customerFetch(`/products/${id}`),
   getOrders: () => customerFetch('/orders'),
   createOrder: (data: Record<string, unknown>) => customerFetch('/orders', { method: 'POST', body: JSON.stringify(data) }),

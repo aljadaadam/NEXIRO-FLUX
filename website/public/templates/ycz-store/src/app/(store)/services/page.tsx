@@ -72,8 +72,7 @@ export default function ServicesPage() {
     async function load() {
       try {
         const res = await storeApi.getProducts();
-        if (Array.isArray(res)) setProducts(res);
-        else if (res?.products && Array.isArray(res.products)) setProducts(res.products);
+        if (Array.isArray(res) && res.length > 0) setProducts(res as Product[]);
       } catch { /* keep fallback */ }
       finally { setLoading(false); }
     }

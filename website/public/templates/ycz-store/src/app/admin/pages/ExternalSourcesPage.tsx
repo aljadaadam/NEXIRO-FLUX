@@ -5,6 +5,7 @@ import { adminApi } from '@/lib/api';
 import {
   Plus, RefreshCcw, Settings, Trash2, Wifi, CreditCard,
   Package, Clock, CheckCircle, AlertCircle, PlugZap, Loader2,
+  X, Eye, EyeOff, Link2, Send,
 } from 'lucide-react';
 
 interface ConnectedSource {
@@ -39,13 +40,201 @@ interface SyncLog {
 // بيانات احتياطية تُعرض عند عدم توفر الـ API
 const FALLBACK_CONNECTED: ConnectedSource[] = [];
 const FALLBACK_AVAILABLE: AvailableSource[] = [
-  { name: 'DHRU FUSION', icon: '⚡', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
+  { name: 'DHRU FUSION', icon: 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
 ];
 
+// ─── Connection Modal ───
+function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableSource; onClose: () => void; onSuccess: () => void }) {
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [step, setStep] = useState<'form' | 'testing' | 'success' | 'error'>('form');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [sourceName, setSourceName] = useState(source.name);
+
+  const fieldLabels: Record<string, string> = {
+    'URL': 'رابط الـ API',
+    'Username': 'اسم المستخدم',
+    'API Access Key': 'مفتاح الـ API',
+  };
+
+  const fieldPlaceholders: Record<string, string> = {
+    'URL': 'https://example.com/api',
+    'Username': 'اسم المستخدم في النظام',
+    'API Access Key': 'أدخل مفتاح الوصول',
+  };
+
+  const allFilled = source.fields.every(f => formData[f]?.trim());
+
+  async function handleConnect() {
+    if (!allFilled) return;
+    setStep('testing');
+    setErrorMsg('');
+    try {
+      const payload: Record<string, unknown> = {
+        name: sourceName || source.name,
+        type: source.name,
+        url: formData['URL'] || '',
+        username: formData['Username'] || '',
+        api_key: formData['API Access Key'] || '',
+        category: source.category,
+      };
+      const res = await adminApi.connectSource(payload);
+      if (res?.error) {
+        setStep('error');
+        setErrorMsg(res.error || res.message || 'فشل الاتصال');
+      } else {
+        setStep('success');
+        setTimeout(() => { onSuccess(); onClose(); }, 1500);
+      }
+    } catch (err: unknown) {
+      setStep('error');
+      setErrorMsg(err instanceof Error ? err.message : 'فشل الاتصال بالمصدر');
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '92%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {source.icon.startsWith('http') ? <img src={source.icon} alt={source.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: '1.5rem' }}>{source.icon}</span>}
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020' }}>ربط {source.name}</h3>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{source.category}</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <X size={16} color="#64748b" />
+          </button>
+        </div>
+
+        {/* Form */}
+        {step === 'form' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Source Name */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>اسم المصدر</label>
+              <input
+                value={sourceName}
+                onChange={e => setSourceName(e.target.value)}
+                placeholder="مثال: SD-Unlocker"
+                style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Dynamic Fields */}
+            {source.fields.map(field => (
+              <div key={field}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                  {fieldLabels[field] || field} <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    value={formData[field] || ''}
+                    onChange={e => setFormData(d => ({ ...d, [field]: e.target.value }))}
+                    placeholder={fieldPlaceholders[field] || field}
+                    type={field === 'API Access Key' && !showApiKey ? 'password' : 'text'}
+                    dir={field === 'URL' || field === 'API Access Key' ? 'ltr' : 'rtl'}
+                    style={{
+                      width: '100%', padding: '0.7rem 1rem',
+                      paddingLeft: field === 'API Access Key' ? '2.5rem' : '1rem',
+                      borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem',
+                      fontFamily: field === 'URL' || field === 'API Access Key' ? 'monospace, Tajawal' : 'Tajawal, sans-serif',
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                  {field === 'API Access Key' && (
+                    <button onClick={() => setShowApiKey(!showApiKey)} style={{
+                      position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    }}>
+                      {showApiKey ? <EyeOff size={16} color="#94a3b8" /> : <Eye size={16} color="#94a3b8" />}
+                    </button>
+                  )}
+                </div>
+                {field === 'URL' && (
+                  <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 4 }}>
+                    مثال: https://sd-unlocker.com أو https://yourdomain.com
+                  </p>
+                )}
+              </div>
+            ))}
+
+            {/* Info Box */}
+            <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <Link2 size={14} color="#0369a1" style={{ flexShrink: 0, marginTop: 2 }} />
+              <p style={{ fontSize: '0.75rem', color: '#0369a1', lineHeight: 1.6 }}>
+                سيتم اختبار الاتصال تلقائياً ثم جلب جميع الخدمات المتاحة من المصدر.
+              </p>
+            </div>
+
+            {/* Submit */}
+            <button onClick={handleConnect} disabled={!allFilled} style={{
+              width: '100%', padding: '0.75rem', borderRadius: 10, border: 'none',
+              background: allFilled ? 'linear-gradient(135deg, #7c5cff, #6d4de6)' : '#e2e8f0',
+              color: allFilled ? '#fff' : '#94a3b8', fontSize: '0.88rem', fontWeight: 700,
+              cursor: allFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+              <PlugZap size={16} /> اختبار وربط المصدر
+            </button>
+          </div>
+        )}
+
+        {/* Testing */}
+        {step === 'testing' && (
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <Loader2 size={40} color="#7c5cff" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px', display: 'block' }} />
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>جاري اختبار الاتصال...</h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>يتم التحقق من بيانات الدخول وجلب الخدمات</p>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {/* Success */}
+        {step === 'success' && (
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <CheckCircle size={32} color="#16a34a" />
+            </div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم الربط بنجاح! ✅</h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>تم الاتصال بـ {sourceName} وجلب الخدمات المتاحة.</p>
+          </div>
+        )}
+
+        {/* Error */}
+        {step === 'error' && (
+          <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <AlertCircle size={32} color="#dc2626" />
+            </div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>فشل الاتصال</h3>
+            <p style={{ fontSize: '0.82rem', color: '#ef4444', marginBottom: 16, lineHeight: 1.6 }}>{errorMsg}</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <button onClick={() => setStep('form')} style={{
+                padding: '0.6rem 1.5rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b',
+                border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+              }}>تعديل البيانات</button>
+              <button onClick={handleConnect} style={{
+                padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff',
+                border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}><RefreshCcw size={14} /> إعادة المحاولة</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ExternalSourcesPage() {
-  const [activeTab, setActiveTab] = useState('connected');
+  const [activeTab, setActiveTab] = useState('available');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [connectingSource, setConnectingSource] = useState<AvailableSource | null>(null);
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>(FALLBACK_CONNECTED);
   const [availableSources, setAvailableSources] = useState<AvailableSource[]>(FALLBACK_AVAILABLE);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
@@ -74,7 +263,7 @@ export default function ExternalSourcesPage() {
     setSyncing(sourceId);
     try {
       await adminApi.syncSource(sourceId);
-      await fetchSources(); // تحديث البيانات
+      await fetchSources();
     } catch {
       console.warn('[Sources] فشل مزامنة المصدر');
     } finally {
@@ -82,11 +271,25 @@ export default function ExternalSourcesPage() {
     }
   };
 
+  // ─── حذف مصدر ───
+  const handleDelete = async (sourceId: number) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المصدر؟ سيتم حذف جميع الخدمات المرتبطة به.')) return;
+    setDeleting(sourceId);
+    try {
+      await adminApi.deleteSource(sourceId);
+      await fetchSources();
+    } catch {
+      console.warn('[Sources] فشل حذف المصدر');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🔗 المصادر الخارجية</h2>
-        <button style={{
+        <button onClick={() => { setActiveTab('available'); }} style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '0.6rem 1.25rem', borderRadius: 10,
           background: '#7c5cff', color: '#fff',
@@ -126,8 +329,8 @@ export default function ExternalSourcesPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#fff', borderRadius: 10, padding: 4, border: '1px solid #f1f5f9' }}>
         {[
-          { id: 'connected', label: 'المصادر المتصلة' },
           { id: 'available', label: 'المصادر المتاحة' },
+          { id: 'connected', label: 'المصادر المتصلة' },
           { id: 'logs', label: 'سجل المزامنة' },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
@@ -150,7 +353,7 @@ export default function ExternalSourcesPage() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: '1.75rem' }}>{src.icon}</span>
+                  {src.icon.startsWith('http') ? <img src={src.icon} alt={src.name} style={{ width: 36, height: 36, objectFit: 'contain' }} /> : <span style={{ fontSize: '1.75rem' }}>{src.icon}</span>}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                       <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{src.name}</h4>
@@ -163,13 +366,13 @@ export default function ExternalSourcesPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button style={{
+                  <button onClick={() => handleSync(src.id)} disabled={syncing === src.id} style={{
                     display: 'flex', alignItems: 'center', gap: 4,
                     padding: '0.4rem 0.8rem', borderRadius: 8, border: '1px solid #e2e8f0',
-                    background: '#fff', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
-                    fontFamily: 'Tajawal, sans-serif', color: '#64748b',
+                    background: '#fff', cursor: syncing === src.id ? 'wait' : 'pointer', fontSize: '0.72rem', fontWeight: 600,
+                    fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: syncing === src.id ? 0.6 : 1,
                   }}>
-                    <RefreshCcw size={13} /> مزامنة
+                    <RefreshCcw size={13} style={syncing === src.id ? { animation: 'spin 1s linear infinite' } : {}} /> {syncing === src.id ? 'جاري...' : 'مزامنة'}
                   </button>
                   <button style={{
                     display: 'flex', alignItems: 'center', gap: 4,
@@ -179,8 +382,12 @@ export default function ExternalSourcesPage() {
                   }}>
                     <Settings size={13} /> إعدادات
                   </button>
-                  <button style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                    <Trash2 size={13} color="#dc2626" />
+                  <button onClick={() => handleDelete(src.id)} disabled={deleting === src.id} style={{
+                    width: 30, height: 30, borderRadius: 8, border: 'none',
+                    background: '#fee2e2', cursor: deleting === src.id ? 'wait' : 'pointer',
+                    display: 'grid', placeItems: 'center', opacity: deleting === src.id ? 0.5 : 1,
+                  }}>
+                    {deleting === src.id ? <Loader2 size={13} color="#dc2626" style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={13} color="#dc2626" />}
                   </button>
                 </div>
               </div>
@@ -219,7 +426,7 @@ export default function ExternalSourcesPage() {
               display: 'flex', flexDirection: 'column',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <span style={{ fontSize: '1.5rem' }}>{src.icon}</span>
+                {src.icon.startsWith('http') ? <img src={src.icon} alt={src.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: '1.5rem' }}>{src.icon}</span>}
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>{src.name}</h4>
                   <span style={{
@@ -240,7 +447,7 @@ export default function ExternalSourcesPage() {
                   ))}
                 </div>
               </div>
-              <button style={{
+              <button onClick={() => setConnectingSource(src)} style={{
                 width: '100%', padding: '0.6rem', borderRadius: 10, border: 'none',
                 background: 'linear-gradient(135deg, #7c5cff, #6d4de6)', color: '#fff',
                 fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
@@ -290,6 +497,15 @@ export default function ExternalSourcesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Connect Modal */}
+      {connectingSource && (
+        <ConnectSourceModal
+          source={connectingSource}
+          onClose={() => setConnectingSource(null)}
+          onSuccess={() => fetchSources()}
+        />
       )}
     </>
   );
