@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Zap, Shield, DollarSign, Headphones, ChevronDown } from 'lucide-react';
+import { Zap, Shield, DollarSign, Headphones, ChevronDown, X, CheckCircle } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { STEPS_DATA } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
@@ -77,11 +77,63 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
   );
 }
 
+// ─── OrderModal (IMEI input → success) ───
+function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
+  const { currentTheme, buttonRadius } = useTheme();
+  const [step, setStep] = useState(1);
+  const [imei, setImei] = useState('');
+  const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 440, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>طلب المنتج</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Product Info */}
+        <div style={{ display: 'flex', gap: 12, padding: '1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 20 }}>
+          <div style={{ fontSize: '2rem', width: 50, height: 50, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 10 }}>{product.icon}</div>
+          <div>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{product.name}</h4>
+            <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
+          </div>
+        </div>
+
+        {step === 1 && (
+          <>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 8 }}>أدخل رقم IMEI</label>
+            <input value={imei} onChange={e => setImei(e.target.value)} placeholder="مثال: 356938035643809" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            <button onClick={() => setStep(2)} style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+              متابعة
+            </button>
+          </>
+        )}
+
+        {step === 2 && (
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <CheckCircle size={32} color="#16a34a" />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال الطلب بنجاح!</h3>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة &ldquo;طلباتي&rdquo;.</p>
+            <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حسناً</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── الصفحة الرئيسية ───
 export default function HomePage() {
   const { currentTheme } = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -114,7 +166,7 @@ export default function HomePage() {
               <p style={{ fontSize: '0.8rem' }}>سيتم عرض المنتجات هنا بعد إضافتها من لوحة التحكم</p>
             </div>
           ) : (
-            products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
+            products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} onClick={() => setSelectedProduct(p)} />)
           )}
         </div>
       </section>
@@ -154,6 +206,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {selectedProduct && <OrderModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
     </div>
   );
 }

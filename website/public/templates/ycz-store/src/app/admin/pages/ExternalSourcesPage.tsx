@@ -23,6 +23,7 @@ interface ConnectedSource {
 
 interface AvailableSource {
   name: string;
+  type: string;
   icon: string;
   desc: string;
   category: string;
@@ -40,7 +41,7 @@ interface SyncLog {
 // بيانات احتياطية تُعرض عند عدم توفر الـ API
 const FALLBACK_CONNECTED: ConnectedSource[] = [];
 const FALLBACK_AVAILABLE: AvailableSource[] = [
-  { name: 'DHRU FUSION', icon: 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
+  { name: 'DHRU FUSION', type: 'dhru-fusion', icon: 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
 ];
 
 // ─── Connection Modal ───
@@ -72,7 +73,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
     try {
       const payload: Record<string, unknown> = {
         name: sourceName || source.name,
-        type: source.name,
+        type: source.type,
         url: formData['URL'] || '',
         username: formData['Username'] || '',
         api_key: formData['API Access Key'] || '',
