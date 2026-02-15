@@ -51,6 +51,7 @@ export default function TerminalSetupPage() {
   const [dnsVerified, setDnsVerified] = useState(false);
   const [dnsResult, setDnsResult] = useState(null);
   const [dnsPartial, setDnsPartial] = useState(null); // { dnsOk }
+  const [dnsCheckCount, setDnsCheckCount] = useState(0);
 
   //  Translations 
   const t = {
@@ -65,6 +66,8 @@ export default function TerminalSetupPage() {
     dnsOnlyOk: isRTL ? '✓ DNS يشير لسيرفرنا' : '✓ DNS points to our server',
     dnsNotOk: isRTL ? '✗ DNS لا يشير لسيرفرنا' : '✗ DNS not pointing to our server',
     dnsOkNote: isRTL ? '⚠ تأكد أن الدومين غير مربوط باستضافة أخرى أو قوالب أخرى' : '⚠ Make sure the domain is not linked to another hosting or templates',
+    dnsPropagation: isRTL ? '💡 إذا أضفت سجل DNS للتو، قد يستغرق النشر من دقائق إلى 48 ساعة. أعد التحقق بعد قليل' : '💡 If you just added the DNS record, propagation may take a few minutes up to 48 hours. Please try again shortly',
+    retryCheck: isRTL ? 'إعادة التحقق' : 'Re-check',
     accountTitle: isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account',
     accountSub: isRTL ? 'هذا الحساب سيكون لإدارة موقعك' : 'This account will manage your site',
     nameLabel: isRTL ? 'الاسم الكامل' : 'Full Name',
@@ -114,6 +117,7 @@ export default function TerminalSetupPage() {
     setError('');
     setDnsResult(null);
     setDnsPartial(null);
+    setDnsCheckCount(prev => prev + 1);
     try {
       const res = await api.checkDomainDNS(d);
       setDnsResult(res);
@@ -298,16 +302,21 @@ export default function TerminalSetupPage() {
                       <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4" strokeDashoffset="10" /></svg>
                       {t.checking}
                     </span>
-                  ) : t.checkDns}
+                  ) : dnsCheckCount > 0 ? t.retryCheck : t.checkDns}
                 </button>
               )}
 
               {/* DNS status indicator */}
               {dnsPartial && !dnsVerified && (
-                <div className="space-y-1 text-xs text-center">
+                <div className="space-y-2 text-xs text-center">
                   <p className={dnsPartial.dnsOk ? 'text-emerald-400' : 'text-red-400'}>
                     {dnsPartial.dnsOk ? t.dnsOnlyOk : t.dnsNotOk}
                   </p>
+                  {!dnsPartial.dnsOk && dnsCheckCount >= 1 && (
+                    <p className="text-yellow-400/80 text-xs leading-relaxed max-w-sm mx-auto">
+                      {t.dnsPropagation}
+                    </p>
+                  )}
                 </div>
               )}
 
