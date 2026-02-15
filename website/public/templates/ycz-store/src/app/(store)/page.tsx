@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Star, ShoppingBag, ChevronLeft, ChevronRight, Sparkles, Zap, Shield, Clock } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { MOCK_PRODUCTS, STEPS_DATA, FAQ_DATA } from '@/lib/mockData';
+import { storeApi } from '@/lib/api';
+import type { Product } from '@/lib/types';
 
 // ─── HeroBanner ───
 function HeroBanner() {
@@ -163,6 +165,20 @@ function ProductCard({ product }: { product: typeof MOCK_PRODUCTS[0] }) {
 // ─── الصفحة الرئيسية ───
 export default function HomePage() {
   const { currentTheme } = useTheme();
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await storeApi.getProducts();
+        if (Array.isArray(res)) setProducts(res);
+        else if (res?.products && Array.isArray(res.products)) setProducts(res.products);
+      } catch { /* keep fallback */ }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
 
   return (
     <>
@@ -189,7 +205,11 @@ export default function HomePage() {
         <div className="store-products-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16,
         }}>
-          {MOCK_PRODUCTS.map(p => <ProductCard key={p.id} product={p} />)}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>جاري التحميل...</div>
+          ) : (
+            products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
+          )}
         </div>
       </section>
 

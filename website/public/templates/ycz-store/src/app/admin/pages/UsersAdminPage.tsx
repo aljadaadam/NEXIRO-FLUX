@@ -1,14 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Eye, Shield } from 'lucide-react';
 import { MOCK_USERS } from '@/lib/mockData';
+import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
+import type { User } from '@/lib/types';
 
 export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_USERS.filter(u =>
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await adminApi.getUsers();
+        if (Array.isArray(res)) setUsers(res);
+        else if (res?.users && Array.isArray(res.users)) setUsers(res.users);
+      } catch { /* keep fallback */ }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
+
+  const filtered = users.filter(u =>
     u.name.includes(search) || u.email.toLowerCase().includes(search.toLowerCase())
   );
 

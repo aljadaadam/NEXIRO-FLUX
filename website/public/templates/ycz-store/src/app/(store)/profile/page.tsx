@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, CreditCard, Shield, Edit, Eye, Wallet, ArrowLeft, Lock, Mail, Phone, CheckCircle, Copy, X } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { PAYMENT_METHODS } from '@/lib/mockData';
+import { storeApi } from '@/lib/api';
 
 // ─── WalletChargeModal ───
 function WalletChargeModal({ onClose }: { onClose: () => void }) {
@@ -207,12 +208,78 @@ export default function ProfilePage() {
   const [isLogin, setIsLogin] = useState(true);
   const [profileView, setProfileView] = useState('menu');
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [profile, setProfile] = useState<{ name: string; email: string; phone?: string; balance?: string }>({ name: '', email: '' });
+  const [transactions, setTransactions] = useState<{ desc: string; amount: string; color: string; date: string }[]>([]);
   const radius = buttonRadius === 'sharp' ? '8px' : buttonRadius === 'pill' ? '50px' : '12px';
 
   // Auth form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+
+  // Check if already logged in
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (token) {
+      setIsLoggedIn(true);
+      loadProfile();
+    }
+  }, []);
+
+  async function loadProfile() {
+    try {
+      const res = await storeApi.getProfile();
+      if (res && !res.error) {
+        setProfile({
+          name: res.name || res.username || '',
+          email: res.email || '',
+          phone: res.phone || '',
+          balance: res.balance || res.wallet?.balance || '$0.00',
+        });
+        if (res.transactions) setTransactions(res.transactions);
+      }
+    } catch { /* keep defaults */ }
+  }
+
+  async function handleAuth() {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      let res;
+      if (isLogin) {
+        res = await storeApi.login({ email, password });
+      } else {
+        res = await storeApi.register({ name, email, password });
+      }
+      if (res?.token) {
+        localStorage.setItem('auth_token', res.token);
+        setIsLoggedIn(true);
+        setProfile({ name: res.name || name, email: res.email || email });
+        loadProfile();
+      } else if (res?.error) {
+        setAuthError(res.error);
+      } else {
+        // Fallback for demo mode
+        setIsLoggedIn(true);
+        setProfile({ name: name || 'مستخدم', email });
+      }
+    } catch {
+      // Fallback for demo mode
+      setIsLoggedIn(true);
+      setProfile({ name: name || 'مستخدم', email });
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('auth_token');
+    setIsLoggedIn(false);
+    setProfile({ name: '', email: '' });
+    setProfileView('menu');
+  }
 
   if (!isLoggedIn) {
     return (
@@ -265,14 +332,16 @@ export default function ProfilePage() {
                 fontFamily: 'Tajawal, sans-serif', outline: 'none',
               }}
             />
-            <button onClick={() => setIsLoggedIn(true)} style={{
+            <button onClick={handleAuth} disabled={authLoading} style={{
               padding: '0.8rem', borderRadius: radius,
               background: currentTheme.gradient, color: '#fff',
               border: 'none', fontSize: '0.9rem', fontWeight: 800,
-              cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+              cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+              opacity: authLoading ? 0.7 : 1,
             }}>
-              {isLogin ? 'دخول' : 'إنشاء حساب'}
+              {authLoading ? 'جاري...' : isLogin ? 'دخول' : 'إنشاء حساب'}
             </button>
+            {authError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{authError}</p>}
           </div>
 
           <p style={{ textAlign: 'center', marginTop: 16, fontSize: '0.82rem', color: '#64748b' }}>
@@ -311,15 +380,15 @@ export default function ProfilePage() {
           }}>
             <User size={30} color="#fff" />
           </div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 4 }}>أحمد محمد</h2>
-          <p style={{ fontSize: '0.78rem', opacity: 0.85 }}>ahmed@email.com</p>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 4 }}>{profile.name || 'المستخدم'}</h2>
+          <p style={{ fontSize: '0.78rem', opacity: 0.85 }}>{profile.email}</p>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '0.4rem 1rem', borderRadius: 50,
             background: 'rgba(255,255,255,0.15)',
             marginTop: 12, fontSize: '0.8rem', fontWeight: 700,
           }}>
-            💰 الرصيد: $45.00
+            💰 الرصيد: {profile.balance || '$0.00'}
           </div>
         </div>
 
@@ -350,7 +419,7 @@ export default function ProfilePage() {
             );
           })}
 
-          <button onClick={() => setIsLoggedIn(false)} style={{
+          <button onClick={handleLogout} style={{
             display: 'flex', alignItems: 'center', gap: 14,
             background: '#fff', borderRadius: 14, padding: '1rem 1.25rem',
             border: '1px solid #fee2e2', cursor: 'pointer', width: '100%',
@@ -392,9 +461,9 @@ export default function ProfilePage() {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {[
-              { label: 'الاسم', value: 'أحمد محمد', icon: User },
-              { label: 'البريد', value: 'ahmed@email.com', icon: Mail },
-              { label: 'الهاتف', value: '+966 50 123 4567', icon: Phone },
+              { label: 'الاسم', value: profile.name || 'غير محدد', icon: User },
+              { label: 'البريد', value: profile.email || 'غير محدد', icon: Mail },
+              { label: 'الهاتف', value: profile.phone || 'غير محدد', icon: Phone },
             ].map((field, i) => {
               const FieldIcon = field.icon;
               return (
@@ -438,7 +507,7 @@ export default function ProfilePage() {
           }}>
             <div>
               <p style={{ fontSize: '0.78rem', opacity: 0.8, marginBottom: 4 }}>الرصيد الحالي</p>
-              <p style={{ fontSize: '1.8rem', fontWeight: 900 }}>$45.00</p>
+              <p style={{ fontSize: '1.8rem', fontWeight: 900 }}>{profile.balance || '$0.00'}</p>
             </div>
             <button onClick={() => setShowWalletModal(true)} style={{
               padding: '0.6rem 1.25rem', borderRadius: radius,
@@ -456,12 +525,12 @@ export default function ProfilePage() {
             border: '1px solid #f1f5f9',
           }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020', marginBottom: 14 }}>آخر المعاملات</h4>
-            {[
+            {(transactions.length > 0 ? transactions : [
               { desc: 'شحن محفظة', amount: '+$25.00', color: '#22c55e', date: '2025-01-15' },
               { desc: 'شراء Sigma Plus', amount: '-$15.00', color: '#ef4444', date: '2025-01-15' },
               { desc: 'شحن محفظة', amount: '+$50.00', color: '#22c55e', date: '2025-01-14' },
               { desc: 'شراء IMEI Check', amount: '-$2.00', color: '#ef4444', date: '2025-01-14' },
-            ].map((tx, i) => (
+            ]).map((tx, i) => (
               <div key={i} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '0.7rem 0',
@@ -518,7 +587,7 @@ export default function ProfilePage() {
               <CheckCircle size={20} color="#22c55e" />
               <div>
                 <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#16a34a' }}>البريد الإلكتروني مُوثّق</p>
-                <p style={{ fontSize: '0.72rem', color: '#4ade80' }}>ahmed@email.com</p>
+                <p style={{ fontSize: '0.72rem', color: '#4ade80' }}>{profile.email || 'غير محدد'}</p>
               </div>
             </div>
 

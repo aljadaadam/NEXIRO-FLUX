@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Star, ShoppingBag, X, CheckCircle, Copy, ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { MOCK_PRODUCTS } from '@/lib/mockData';
+import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
 
 // ─── OrderModal ───
@@ -117,10 +118,24 @@ export default function ServicesPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [orderProduct, setOrderProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
   const radius = buttonRadius === 'sharp' ? '6px' : buttonRadius === 'pill' ? '50px' : '10px';
 
-  const categories = ['الكل', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)))];
-  const filtered = MOCK_PRODUCTS.filter(p => {
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await storeApi.getProducts();
+        if (Array.isArray(res)) setProducts(res);
+        else if (res?.products && Array.isArray(res.products)) setProducts(res.products);
+      } catch { /* keep fallback */ }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
+
+  const categories = ['الكل', ...Array.from(new Set(products.map(p => p.category)))];
+  const filtered = products.filter(p => {
     const matchCat = activeCategory === 'الكل' || p.category === activeCategory;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.category.includes(search);
     return matchCat && matchSearch;

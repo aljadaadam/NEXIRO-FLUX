@@ -1,11 +1,38 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Eye, Package, Clock } from 'lucide-react';
 import { MOCK_STATS, MOCK_ORDERS, MOCK_CHART_DATA } from '@/lib/mockData';
+import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
+import type { StatsCard, Order } from '@/lib/types';
 
 export default function OverviewPage({ theme }: { theme: ColorTheme }) {
-  const maxValue = Math.max(...MOCK_CHART_DATA.map(d => d.value));
+  const [stats, setStats] = useState<StatsCard[]>(MOCK_STATS);
+  const [chartData, setChartData] = useState(MOCK_CHART_DATA);
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await adminApi.getStats();
+        if (res?.stats && Array.isArray(res.stats)) setStats(res.stats);
+        if (res?.chartData && Array.isArray(res.chartData)) setChartData(res.chartData);
+        if (res?.recentOrders && Array.isArray(res.recentOrders)) setOrders(res.recentOrders);
+      } catch { /* keep fallback */ }
+      // Also try to load orders separately
+      try {
+        const ordersRes = await adminApi.getOrders();
+        if (Array.isArray(ordersRes)) setOrders(ordersRes.slice(0, 5));
+        else if (ordersRes?.orders && Array.isArray(ordersRes.orders)) setOrders(ordersRes.orders.slice(0, 5));
+      } catch { /* keep fallback */ }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const maxValue = Math.max(...chartData.map(d => d.value));
 
   return (
     <>
@@ -13,7 +40,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
       <div className="dash-stats-grid" style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20,
       }}>
-        {MOCK_STATS.map((stat, i) => (
+        {stats.map((stat, i) => (
           <div key={i} style={{
             background: '#fff', borderRadius: 16, padding: '1.25rem',
             border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
@@ -55,7 +82,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             display: 'flex', alignItems: 'flex-end', gap: 8, height: 180,
             padding: '0 0.5rem',
           }}>
-            {MOCK_CHART_DATA.map((d, i) => (
+            {chartData.map((d, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 600 }}>
                   ${(d.value / 1000).toFixed(1)}k
@@ -84,7 +111,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>🕐 آخر الطلبات</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {MOCK_ORDERS.slice(0, 5).map(order => (
+            {orders.slice(0, 5).map(order => (
               <div key={order.id} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '0.6rem 0.75rem', borderRadius: 10,

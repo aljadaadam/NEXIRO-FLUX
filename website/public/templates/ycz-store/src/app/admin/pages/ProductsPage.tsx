@@ -1,15 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, X } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/lib/mockData';
+import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
+import type { Product } from '@/lib/types';
 
 export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_PRODUCTS.filter(p =>
+  // New product form state
+  const [newName, setNewName] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [newStock, setNewStock] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  async function loadProducts() {
+    try {
+      const res = await adminApi.getProducts();
+      if (Array.isArray(res)) setProducts(res);
+      else if (res?.products && Array.isArray(res.products)) setProducts(res.products);
+    } catch { /* keep fallback */ }
+    finally { setLoading(false); }
+  }
+
+  async function handleAddProduct() {
+    if (!newName || !newPrice) return;
+    setSaving(true);
+    try {
+      await adminApi.createProduct({
+        name: newName,
+        price: newPrice.startsWith('$') ? newPrice : `$${newPrice}`,
+        category: newCategory || 'عام',
+        stock: parseInt(newStock) || 0,
+        desc: newDesc,
+        icon: '📦',
+        status: 'نشط',
+      });
+      setShowAdd(false);
+      setNewName(''); setNewPrice(''); setNewCategory(''); setNewStock(''); setNewDesc('');
+      loadProducts(); // refresh
+    } catch { /* show error */ }
+    finally { setSaving(false); }
+  }
+
+  async function handleDelete(id: number) {
+    try {
+      await adminApi.deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch { /* ignore */ }
+  }
+
+  const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -58,40 +110,41 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <input placeholder="اسم المنتج" style={{
+            <input placeholder="اسم المنتج" value={newName} onChange={e => setNewName(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="السعر ($)" style={{
+            <input placeholder="السعر ($)" value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="التصنيف" style={{
+            <input placeholder="التصنيف" value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="المخزون" style={{
+            <input placeholder="المخزون" value={newStock} onChange={e => setNewStock(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
           </div>
-          <textarea rows={2} placeholder="وصف المنتج..." style={{
+          <textarea rows={2} placeholder="وصف المنتج..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{
             width: '100%', padding: '0.65rem 1rem', borderRadius: 10,
             border: '1px solid #e2e8f0', fontSize: '0.85rem',
             fontFamily: 'Tajawal, sans-serif', outline: 'none',
             resize: 'vertical', marginBottom: 14, boxSizing: 'border-box',
           }} />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setShowAdd(false)} style={{
+            <button onClick={handleAddProduct} disabled={saving} style={{
               padding: '0.6rem 1.5rem', borderRadius: 10,
               background: theme.primary, color: '#fff',
               border: 'none', fontSize: '0.82rem', fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-            }}>حفظ</button>
+              cursor: saving ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+              opacity: saving ? 0.7 : 1,
+            }}>{saving ? 'جاري الحفظ...' : 'حفظ'}</button>
             <button onClick={() => setShowAdd(false)} style={{
               padding: '0.6rem 1.5rem', borderRadius: 10,
               background: '#f1f5f9', color: '#64748b',
@@ -149,7 +202,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
+                      <button onClick={() => handleDelete(p.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
                     </div>
                   </td>
                 </tr>

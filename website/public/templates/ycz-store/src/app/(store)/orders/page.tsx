@@ -1,16 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, Clock, CheckCircle, XCircle, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { MOCK_ORDERS } from '@/lib/mockData';
+import { storeApi } from '@/lib/api';
+import type { Order } from '@/lib/types';
 
 export default function OrdersPage() {
   const { currentTheme } = useTheme();
   const [filter, setFilter] = useState('الكل');
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await storeApi.getOrders();
+        if (Array.isArray(res)) setOrders(res);
+        else if (res?.orders && Array.isArray(res.orders)) setOrders(res.orders);
+      } catch { /* keep fallback */ }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
 
   const filters = ['الكل', 'مكتمل', 'قيد التنفيذ', 'ملغي'];
-  const filtered = filter === 'الكل' ? MOCK_ORDERS : MOCK_ORDERS.filter(o => o.status === filter);
+  const filtered = filter === 'الكل' ? orders : orders.filter(o => o.status === filter);
 
   return (
     <section style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' }}>

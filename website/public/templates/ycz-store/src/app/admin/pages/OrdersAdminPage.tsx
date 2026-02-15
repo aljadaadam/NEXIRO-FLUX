@@ -1,15 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { MOCK_ORDERS } from '@/lib/mockData';
+import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
+import type { Order } from '@/lib/types';
 
 export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
   const [filter, setFilter] = useState('الكل');
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await adminApi.getOrders();
+        if (Array.isArray(res)) setOrders(res);
+        else if (res?.orders && Array.isArray(res.orders)) setOrders(res.orders);
+      } catch { /* keep fallback */ }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
+
+  async function handleUpdateStatus(id: string, status: string, statusColor: string) {
+    try {
+      await adminApi.updateOrder(id, { status, statusColor });
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status, statusColor } : o));
+    } catch { /* ignore */ }
+  }
 
   const filters = ['الكل', 'مكتمل', 'قيد التنفيذ', 'ملغي'];
-  const filtered = filter === 'الكل' ? MOCK_ORDERS : MOCK_ORDERS.filter(o => o.status === filter);
+  const filtered = filter === 'الكل' ? orders : orders.filter(o => o.status === filter);
 
   return (
     <>
@@ -87,8 +110,8 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Eye size={13} color="#3b82f6" /></button>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><CheckCircle size={13} color="#16a34a" /></button>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><XCircle size={13} color="#dc2626" /></button>
+                      <button onClick={() => handleUpdateStatus(order.id, 'مكتمل', '#22c55e')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><CheckCircle size={13} color="#16a34a" /></button>
+                      <button onClick={() => handleUpdateStatus(order.id, 'ملغي', '#ef4444')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><XCircle size={13} color="#dc2626" /></button>
                     </div>
                   </td>
                 </tr>
