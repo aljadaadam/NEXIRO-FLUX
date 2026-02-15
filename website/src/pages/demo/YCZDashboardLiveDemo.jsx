@@ -79,7 +79,7 @@ function Sidebar({ currentPage, setCurrentPage, collapsed, setCollapsed, mobileO
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* Logo */}
-      <div style={{ padding: collapsed ? '1.25rem 0.5rem' : '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+      <div style={{ padding: collapsed ? '1.75rem 0.5rem 1.25rem' : '1.75rem 1.5rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', justifyContent: collapsed ? 'center' : 'flex-start' }}>
         {logoPreview ? (
           <img src={logoPreview} alt="logo" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
         ) : (

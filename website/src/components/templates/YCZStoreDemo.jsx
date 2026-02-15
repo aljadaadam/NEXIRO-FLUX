@@ -294,12 +294,12 @@ export default function YCZStoreDemo() {
                 </h3>
                 <ul className="space-y-2.5">
                   {[
-                    isRTL ? 'الكود المصدري كامل' : 'Full Source Code',
-                    isRTL ? 'توثيق شامل للتركيب' : 'Setup Documentation',
-                    isRTL ? 'تحديثات مجانية لمدة سنة' : '1 Year Free Updates',
-                    isRTL ? 'دعم فني 6 أشهر' : '6 Months Support',
+                    isRTL ? 'استضافة سحابية مُدارة' : 'Managed Cloud Hosting',
+                    isRTL ? 'إعداد تلقائي فوري' : 'Instant Auto Setup',
+                    isRTL ? 'تحديثات مجانية مستمرة' : 'Continuous Free Updates',
+                    isRTL ? 'دعم فني على مدار الساعة' : '24/7 Technical Support',
                     isRTL ? 'لوحة تحكم إدارية' : 'Admin Dashboard',
-                    isRTL ? 'ترخيص تجاري كامل' : 'Full Commercial License',
+                    isRTL ? 'شهادة SSL مجانية' : 'Free SSL Certificate',
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-dark-300">
                       <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />

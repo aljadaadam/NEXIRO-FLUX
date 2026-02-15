@@ -28,8 +28,8 @@ export default function PricingSection() {
       startPrice: 14.9,
       suffix: isRTL ? '/شهر' : '/mo',
       features: isRTL
-        ? ['قالب واحد', 'SSL مجاني', 'نطاق فرعي مجاني', 'دعم بالبريد', '5GB تخزين', 'تحديثات مستمرة']
-        : ['1 Template', 'Free SSL', 'Free Subdomain', 'Email Support', '5GB Storage', 'Continuous Updates'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق فرعي مجاني', 'دعم بالبريد', '5GB تخزين', 'تحديثات مستمرة', 'تصميم متجاوب', 'حماية أساسية']
+        : ['1 Template', 'Free SSL', 'Free Subdomain', 'Email Support', '5GB Storage', 'Continuous Updates', 'Responsive Design', 'Basic Protection'],
       popular: false,
       color: 'from-dark-700 to-dark-800',
       buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
@@ -42,8 +42,8 @@ export default function PricingSection() {
       suffix: isRTL ? '/سنة' : '/yr',
       saveBadge: isRTL ? 'وفّر 25%' : 'Save 25%',
       features: isRTL
-        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي 24/7', '50GB تخزين', 'تحديثات مستمرة', 'تحليلات متقدمة', 'بدون إعلانات']
-        : ['1 Template', 'Free SSL', 'Custom Domain', 'Priority 24/7 Support', '50GB Storage', 'Continuous Updates', 'Advanced Analytics', 'No Ads'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي 24/7', '50GB تخزين', 'تحديثات مستمرة', 'تحليلات متقدمة', 'بدون إعلانات', 'نسخ احتياطية يومية', 'تحسين SEO']
+        : ['1 Template', 'Free SSL', 'Custom Domain', 'Priority 24/7 Support', '50GB Storage', 'Continuous Updates', 'Advanced Analytics', 'No Ads', 'Daily Backups', 'SEO Optimization'],
       popular: true,
       color: 'from-primary-600 to-primary-700',
       buttonColor: 'bg-white text-primary-600 hover:bg-dark-100',
@@ -55,8 +55,8 @@ export default function PricingSection() {
       startPrice: 249,
       suffix: '',
       features: isRTL
-        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي مدى الحياة', 'تخزين غير محدود', 'تحديثات مدى الحياة', 'تحليلات متقدمة', 'بدون إعلانات', 'API كامل', 'White Label']
-        : ['1 Template', 'Free SSL', 'Custom Domain', 'Lifetime Priority Support', 'Unlimited Storage', 'Lifetime Updates', 'Advanced Analytics', 'No Ads', 'Full API', 'White Label'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي مدى الحياة', 'تخزين غير محدود', 'تحديثات مدى الحياة', 'تحليلات متقدمة', 'بدون إعلانات', 'API كامل', 'نسخ احتياطية يومية', 'CDN عالمي', 'حماية DDoS']
+        : ['1 Template', 'Free SSL', 'Custom Domain', 'Lifetime Priority Support', 'Unlimited Storage', 'Lifetime Updates', 'Advanced Analytics', 'No Ads', 'Full API', 'Daily Backups', 'Global CDN', 'DDoS Protection'],
       popular: false,
       color: 'from-dark-700 to-dark-800',
       buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
