@@ -670,31 +670,19 @@ function ExternalSourcesPage() {
   const [activeTab, setActiveTab] = useState('connected');
 
   const connectedSources = [
-    { id: 1, name: 'WooCommerce', icon: '🛒', type: 'متجر إلكتروني', url: 'store.example.com', status: 'متصل', statusColor: '#16a34a', lastSync: 'منذ 5 دقائق', products: 234, orders: 1250 },
-    { id: 2, name: 'Shopify', icon: '🟢', type: 'متجر إلكتروني', url: 'my-shopify.myshopify.com', status: 'متصل', statusColor: '#16a34a', lastSync: 'منذ 15 دقيقة', products: 89, orders: 560 },
-    { id: 3, name: 'Google Sheets', icon: '📊', type: 'جداول بيانات', url: 'sheets.google.com/d/...', status: 'متصل', statusColor: '#16a34a', lastSync: 'منذ ساعة', products: 45, orders: 0 },
-    { id: 4, name: 'REST API', icon: '🔌', type: 'واجهة برمجية', url: 'api.supplier.com/v2', status: 'منقطع', statusColor: '#dc2626', lastSync: 'منذ 3 أيام', products: 120, orders: 340 },
+    { id: 1, name: 'SD-UNLOCKER', icon: '🔓', type: 'DHRU FUSION', url: 'sd-unlocker.com', status: 'متصل', statusColor: '#16a34a', lastSync: 'منذ 5 دقائق', products: 1250, balance: '$45.30' },
   ];
 
   const availableSources = [
-    { name: 'WooCommerce', icon: '🛒', desc: 'ربط متجر ووكومرس واستيراد المنتجات والطلبات تلقائياً', category: 'متاجر' },
-    { name: 'Shopify', icon: '🟢', desc: 'مزامنة كاملة مع متجر Shopify', category: 'متاجر' },
-    { name: 'Salla', icon: '🔵', desc: 'ربط مباشر مع منصة سلة العربية', category: 'متاجر' },
-    { name: 'Zid', icon: '🟣', desc: 'استيراد من منصة زد', category: 'متاجر' },
-    { name: 'Google Sheets', icon: '📊', desc: 'استيراد البيانات من جداول جوجل', category: 'بيانات' },
-    { name: 'REST API', icon: '🔌', desc: 'ربط أي نظام عبر API مخصص', category: 'مخصص' },
-    { name: 'CSV Upload', icon: '📄', desc: 'رفع ملفات CSV/Excel لاستيراد المنتجات', category: 'بيانات' },
-    { name: 'Webhook', icon: '🪝', desc: 'استقبال بيانات من أي مصدر عبر Webhook', category: 'مخصص' },
-    { name: 'Facebook Catalog', icon: '📘', desc: 'ربط كتالوج فيسبوك للمنتجات', category: 'تسويق' },
-    { name: 'TikTok Shop', icon: '🎵', desc: 'ربط متجر تيك توك', category: 'متاجر' },
+    { name: 'DHRU FUSION', icon: '⚡', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
   ];
 
   const syncLogs = [
-    { time: '14:32', source: 'WooCommerce', action: 'مزامنة منتجات', count: '12 منتج محدّث', status: 'success' },
-    { time: '14:15', source: 'Shopify', action: 'استيراد طلبات', count: '5 طلبات جديدة', status: 'success' },
-    { time: '13:50', source: 'REST API', action: 'محاولة اتصال', count: 'فشل الاتصال', status: 'error' },
-    { time: '12:00', source: 'Google Sheets', action: 'تحديث أسعار', count: '45 سعر محدّث', status: 'success' },
-    { time: '10:30', source: 'WooCommerce', action: 'مزامنة مخزون', count: '8 منتجات', status: 'success' },
+    { time: '14:32', source: 'SD-UNLOCKER', action: 'مزامنة خدمات', count: '120 خدمة محدّثة', status: 'success' },
+    { time: '13:15', source: 'SD-UNLOCKER', action: 'فحص طلبات', count: '3 طلبات مكتملة', status: 'success' },
+    { time: '12:00', source: 'SD-UNLOCKER', action: 'فحص الرصيد', count: 'الرصيد: $45.30', status: 'success' },
+    { time: '10:30', source: 'SD-UNLOCKER', action: 'إرسال طلب IMEI', count: 'المرجع: REF-78452', status: 'success' },
+    { time: '09:00', source: 'SD-UNLOCKER', action: 'مزامنة أسعار', count: '1250 سعر محدّث', status: 'success' },
   ];
 
   return (
@@ -709,10 +697,10 @@ function ExternalSourcesPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'مصادر متصلة', value: '3', icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
-          { label: 'مصادر منقطعة', value: '1', icon: WifiOff, color: '#dc2626', bg: '#fef2f2' },
-          { label: 'منتجات مستوردة', value: '488', icon: Package, color: '#3b82f6', bg: '#eff6ff' },
-          { label: 'آخر مزامنة', value: '5 د', icon: RefreshCcw, color: '#7c5cff', bg: '#f5f3ff' },
+          { label: 'مصادر متصلة', value: '1', icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
+          { label: 'الرصيد', value: '$45.30', icon: CreditCard, color: '#3b82f6', bg: '#eff6ff' },
+          { label: 'خدمات مستوردة', value: '1,250', icon: Package, color: '#7c5cff', bg: '#f5f3ff' },
+          { label: 'آخر مزامنة', value: '5 د', icon: RefreshCcw, color: '#f59e0b', bg: '#fffbeb' },
         ].map((s, i) => {
           const Icon = s.icon;
           return (
@@ -778,8 +766,8 @@ function ExternalSourcesPage() {
               </div>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 {[
-                  { label: 'المنتجات', value: src.products, icon: Package },
-                  { label: 'الطلبات', value: src.orders, icon: ShoppingCart },
+                  { label: 'الخدمات', value: src.products, icon: Package },
+                  { label: 'الرصيد', value: src.balance, icon: CreditCard },
                   { label: 'آخر مزامنة', value: src.lastSync, icon: Clock },
                 ].map((info, j) => {
                   const InfoIcon = info.icon;
@@ -798,19 +786,27 @@ function ExternalSourcesPage() {
 
       {/* Available Sources */}
       {activeTab === 'available' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
           {availableSources.map((src, i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '1.5rem', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <span style={{ fontSize: '1.5rem' }}>{src.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{src.name}</h4>
-                  <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem', borderRadius: 4, background: '#f1f5f9', color: '#64748b', fontWeight: 600 }}>{src.category}</span>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>{src.name}</h4>
+                  <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem', borderRadius: 4, background: '#f0fdf4', color: '#16a34a', fontWeight: 600, border: '1px solid #bbf7d0' }}>{src.category}</span>
                 </div>
               </div>
-              <p style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.6, marginBottom: 14, flex: 1 }}>{src.desc}</p>
-              <button style={{ width: '100%', padding: '0.55rem', borderRadius: 8, border: '1px solid #7c5cff', background: 'transparent', color: '#7c5cff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}>
-                <PlugZap size={14} /> ربط الآن
+              <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.7, marginBottom: 16, flex: 1 }}>{src.desc}</p>
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>الحقول المطلوبة للاتصال:</p>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {src.fields.map((f, j) => (
+                    <span key={j} style={{ fontSize: '0.68rem', padding: '0.2rem 0.6rem', borderRadius: 6, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 600 }}>{f}</span>
+                  ))}
+                </div>
+              </div>
+              <button style={{ width: '100%', padding: '0.6rem', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #7c5cff, #6d4de6)', color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}>
+                <PlugZap size={15} /> ربط الآن
               </button>
             </div>
           ))}

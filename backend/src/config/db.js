@@ -384,6 +384,10 @@ async function createTables() {
     // Google OAuth support
     await ensureColumn('users', 'google_id', 'google_id VARCHAR(255) NULL');
 
+    // DHRU FUSION external order tracking
+    await ensureColumn('orders', 'external_reference_id', "external_reference_id VARCHAR(100) NULL COMMENT 'رقم المرجع من المصدر الخارجي (DHRU FUSION)'");
+    await ensureColumn('orders', 'source_id', 'source_id INT NULL COMMENT "معرف المصدر الذي أُرسل له الطلب"');
+
     if (!(await indexExists('products', 'uniq_products_source_servicekey'))) {
       await pool.query(
         'CREATE UNIQUE INDEX uniq_products_source_servicekey ON products (site_key, source_id, external_service_key)'

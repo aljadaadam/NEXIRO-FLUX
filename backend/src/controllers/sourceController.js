@@ -2,6 +2,7 @@ const Source = require('../models/Source');
 const Product = require('../models/Product');
 const { decryptApiKey, apiKeyLast4, apiKeyMaskedHyphenated } = require('../utils/apiKeyCrypto');
 const { getPool } = require('../config/db');
+const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
 
 function isPrivateOrLocalHostname(hostname) {
   const host = String(hostname || '').trim().toLowerCase();
@@ -180,7 +181,7 @@ async function createSource(req, res) {
     }
 
     // أنواع المصادر المدعومة
-    const validTypes = ['unlock-world', 'sd-unlocker', 'custom-api', 'fakestore'];
+    const validTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world', 'custom-api'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ 
         error: `النوع يجب أن يكون أحد: ${validTypes.join(', ')}` 

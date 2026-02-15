@@ -1,0 +1,241 @@
+/**
+ * DHRU FUSION API Service
+ * ========================
+ * بوابة الاتصال بأنظمة DHRU FUSION (مثل SD-UNLOCKER وغيرها)
+ * 
+ * البروتوكول: POST (x-www-form-urlencoded)
+ * صيغة الاستجابة: JSON
+ * 
+ * العمليات المدعومة:
+ * - accountinfo: معلومات الحساب والرصيد
+ * - imeiservicelist: قائمة الخدمات المتاحة
+ * - placeimeiorder: إرسال طلب جديد
+ * - getimeiorder: متابعة حالة طلب
+ */
+
+class DhruFusionClient {
+  /**
+   * @param {Object} config
+   * @param {string} config.baseUrl - رابط API (مثل https://sd-unlocker.com/api/index.php)
+   * @param {string} config.username - اسم المستخدم
+   * @param {string} config.apiAccessKey - مفتاح API
+   */
+  constructor({ baseUrl, username, apiAccessKey }) {
+    if (!baseUrl) throw new Error('baseUrl مطلوب');
+    if (!apiAccessKey) throw new Error('apiAccessKey مطلوب');
+    
+    this.baseUrl = baseUrl;
+    this.username = username || '';
+    this.apiAccessKey = apiAccessKey;
+    this.timeout = 30000; // 30 ثانية
+  }
+
+  /**
+   * إرسال طلب POST إلى DHRU FUSION API
+   */
+  async _post(action, extraParams = {}) {
+    const body = new URLSearchParams({
+      username: this.username,
+      apiaccesskey: this.apiAccessKey,
+      requestformat: 'JSON',
+      action,
+      ...extraParams
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`استجابة غير JSON: ${text.slice(0, 200)}`);
+      }
+
+      // التحقق من وجود خطأ
+      if (data.ERROR) {
+        const err = Array.isArray(data.ERROR) ? data.ERROR[0] : data.ERROR;
+        const msg = err?.MESSAGE || err?.message || JSON.stringify(err);
+        const fullDesc = err?.FULL_DESCRIPTION || err?.full_description || '';
+        throw new DhruFusionError(msg, fullDesc, data);
+      }
+
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('انتهت مهلة الاتصال بالمصدر');
+      }
+      throw error;
+    }
+  }
+
+  // ─── معلومات الحساب ───────────────────────────────────────
+  async getAccountInfo() {
+    const data = await this._post('accountinfo');
+    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const info = success?.AccountInfo || success?.accountinfo || success || {};
+
+    return {
+      email: info.mail || info.email || info.EMAIL || null,
+      credits: parseFloat(info.creditraw || info.credit || info.CREDITS || 0),
+      creditFormatted: info.credit || null,
+      currency: info.currency || info.CURRENCY || 'USD',
+      apiVersion: data.apiversion || data.APIVERSION || null,
+      raw: data
+    };
+  }
+
+  // ─── قائمة الخدمات ────────────────────────────────────────
+  async getServiceList() {
+    const data = await this._post('imeiservicelist');
+    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const list = success?.LIST;
+
+    if (!list || typeof list !== 'object') {
+      throw new Error('تنسيق قائمة الخدمات غير متوقع');
+    }
+
+    // تحويل إلى صيغة موحدة
+    const groups = [];
+    for (const [groupKey, group] of Object.entries(list)) {
+      const services = [];
+      const rawServices = group?.SERVICES || {};
+
+      for (const [serviceKey, service] of Object.entries(rawServices)) {
+        services.push({
+          id: serviceKey,
+          serviceId: service.SERVICEID || parseInt(serviceKey),
+          name: service.SERVICENAME || service.name || `Service ${serviceKey}`,
+          credit: parseFloat(service.CREDIT || 0),
+          time: service.TIME || null,
+          serviceType: (service.SERVICETYPE || group?.GROUPTYPE || 'IMEI').toUpperCase(),
+          quantity: service.QNT,
+          minQuantity: service.MINQNT,
+          maxQuantity: service.MAXQNT,
+          info: service.INFO || null,
+          requiresCustom: service['Requires.Custom'] || null,
+          raw: service
+        });
+      }
+
+      groups.push({
+        key: groupKey,
+        name: group?.GROUPNAME || groupKey,
+        type: (group?.GROUPTYPE || 'IMEI').toUpperCase(),
+        services,
+        serviceCount: services.length
+      });
+    }
+
+    return {
+      groups,
+      totalServices: groups.reduce((sum, g) => sum + g.serviceCount, 0),
+      raw: data
+    };
+  }
+
+  // ─── إرسال طلب IMEI ──────────────────────────────────────
+  /**
+   * @param {Object} params
+   * @param {string|number} params.serviceId - رقم الخدمة
+   * @param {string} params.imei - رقم IMEI
+   * @param {number} [params.quantity] - الكمية (اختياري)
+   * @param {Object} [params.customFields] - حقول مخصصة (اختياري)
+   */
+  async placeOrder({ serviceId, imei, quantity, customFields }) {
+    if (!serviceId) throw new Error('serviceId مطلوب');
+    if (!imei) throw new Error('IMEI مطلوب');
+
+    // بناء XML Parameters
+    let xml = `<PARAMETERS><ID>${serviceId}</ID><IMEI>${imei}</IMEI>`;
+    
+    if (quantity && quantity > 1) {
+      xml += `<QNT>${quantity}</QNT>`;
+    }
+
+    if (customFields && Object.keys(customFields).length > 0) {
+      const customJson = JSON.stringify(customFields);
+      const customBase64 = Buffer.from(customJson).toString('base64');
+      xml += `<CUSTOMFIELD>${customBase64}</CUSTOMFIELD>`;
+    }
+
+    xml += '</PARAMETERS>';
+
+    const data = await this._post('placeimeiorder', { parameters: xml });
+    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+
+    return {
+      referenceId: success?.REFERENCEID || success?.referenceid || null,
+      raw: data
+    };
+  }
+
+  // ─── متابعة حالة طلب ──────────────────────────────────────
+  /**
+   * @param {string} referenceId - رقم المرجع من placeOrder
+   */
+  async getOrderStatus(referenceId) {
+    if (!referenceId) throw new Error('referenceId مطلوب');
+
+    const xml = `<PARAMETERS><ID>${referenceId}</ID></PARAMETERS>`;
+    const data = await this._post('getimeiorder', { parameters: xml });
+    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+
+    const statusCode = String(success?.STATUS || '0');
+    const statusMap = {
+      '0': 'waiting',     // في الطابور
+      '1': 'pending',     // قيد المعالجة
+      '4': 'completed',   // تم بنجاح ✅
+      '2': 'rejected',    // مرفوض ❌
+      '3': 'rejected',    // فشل ❌
+      '5': 'cancelled'    // ملغي ❌
+    };
+
+    const statusLabels = {
+      '0': 'في الطابور',
+      '1': 'قيد المعالجة',
+      '4': 'تم بنجاح',
+      '2': 'مرفوض',
+      '3': 'فشل',
+      '5': 'ملغي'
+    };
+
+    return {
+      referenceId,
+      statusCode,
+      status: statusMap[statusCode] || 'unknown',
+      statusLabel: statusLabels[statusCode] || 'غير معروف',
+      comments: success?.COMMENTS || success?.comments || null,
+      message: success?.MESSAGE || success?.message || null,
+      raw: data
+    };
+  }
+}
+
+// ─── خطأ DHRU FUSION خاص ────────────────────────────────────
+class DhruFusionError extends Error {
+  constructor(message, fullDescription, rawResponse) {
+    super(message);
+    this.name = 'DhruFusionError';
+    this.fullDescription = fullDescription || '';
+    this.rawResponse = rawResponse || null;
+  }
+}
+
+module.exports = { DhruFusionClient, DhruFusionError };
