@@ -65,7 +65,7 @@ export default function TerminalSetupPage() {
   const templateName = isRTL ? (templateData?.name || templateId) : (templateData?.nameEn || templateId);
 
   // ─── State ───
-  // 0=intro, 1=purchaseCode, 2=domain, 3=dns, 4=account, 5=email, 6=storeName, 7=building, 8=done
+  // 0=intro, 1=payment method, 2=domain, 3=dns, 4=account, 5=email, 6=storeName, 7=building, 8=done
   const [phase, setPhase] = useState(0);
   const [purchaseCode, setPurchaseCode] = useState('');
   const [codeVerified, setCodeVerified] = useState(false);
@@ -89,6 +89,15 @@ export default function TerminalSetupPage() {
   const [dnsVerified, setDnsVerified] = useState(false);
   const [dnsResult, setDnsResult] = useState(null);
 
+  // ─── Payment Gateway State ───
+  const [paymentMode, setPaymentMode] = useState(''); // 'code' | 'gateway'
+  const [enabledGateways, setEnabledGateways] = useState([]);
+  const [gatewaysLoading, setGatewaysLoading] = useState(true);
+  const [selectedGateway, setSelectedGateway] = useState(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [gatewayLoading, setGatewayLoading] = useState(false);
+  const [paymentSelection, setPaymentSelection] = useState(''); // user input for number selection
+
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
 
@@ -104,18 +113,67 @@ export default function TerminalSetupPage() {
     setTimeout(() => inputRef.current?.focus(), 300);
   }, [phase]);
 
+  // ─── Load payment gateways ───
+  useEffect(() => {
+    setGatewaysLoading(true);
+    api.getEnabledPaymentGateways()
+      .then(data => setEnabledGateways(data.gateways || []))
+      .catch(() => setEnabledGateways([]))
+      .finally(() => setGatewaysLoading(false));
+  }, []);
+
+  // ─── Detect return from PayPal / Binance redirect ───
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment_status');
+    const paymentId = searchParams.get('payment_id');
+    const returnedGateway = searchParams.get('gateway');
+    if (paymentStatus === 'success' && paymentId) {
+      setPaymentConfirmed(true);
+      setPaymentMode('gateway');
+      setIntroComplete(true);
+      setPhase(2); // skip to domain after successful payment
+    } else if (paymentStatus === 'cancelled') {
+      setError(isRTL ? 'تم إلغاء عملية الدفع' : 'Payment was cancelled');
+      setIntroComplete(true);
+      setPhase(1);
+    } else if (paymentStatus === 'failed') {
+      setError(isRTL ? 'فشلت عملية الدفع' : 'Payment failed');
+      setIntroComplete(true);
+      setPhase(1);
+    } else if (returnedGateway === 'binance' && paymentId && !paymentStatus) {
+      // Binance returnUrl doesn't include payment_status
+      setGatewayLoading(true);
+      setIntroComplete(true);
+      setPhase(1);
+      api.checkPaymentStatusPublic(paymentId)
+        .then(res => {
+          if (res.status === 'completed' || res.status === 'paid') {
+            setPaymentConfirmed(true);
+            setPaymentMode('gateway');
+            setPhase(2);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setGatewayLoading(false));
+    }
+  }, [searchParams, isRTL]);
+
   // ─── Intro typing effect ───
   const introText = isRTL
     ? `NEXIRO-FLUX — نظام إعداد المواقع v2.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nالقالب: ${templateName}\nالخطة: ${plan}\n\nجاري تهيئة بيئة الإعداد...`
     : `NEXIRO-FLUX — Site Setup System v2.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTemplate: ${templateName}\nPlan: ${plan}\n\nInitializing setup environment...`;
 
   useEffect(() => {
+    // Don't run intro if we're returning from payment redirect
+    const paymentStatus = searchParams.get('payment_status');
+    const returnedGateway = searchParams.get('gateway');
+    if (paymentStatus || returnedGateway) return;
     const timer = setTimeout(() => {
       setIntroComplete(true);
       setPhase(1);
     }, 2500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [searchParams]);
 
   // ─── Validate purchase code ───
   const validatePurchaseCode = useCallback(async () => {
@@ -171,8 +229,8 @@ export default function TerminalSetupPage() {
       billing_cycle: codeInfo?.billing_cycle || plan,
       store_name: storeName,
       custom_domain: domain.toLowerCase().replace(/\s/g, ''),
-      payment_method: codeVerified ? 'purchase_code' : 'manual',
-      payment_reference: paymentRef || 'SETUP-' + Date.now(),
+      payment_method: codeVerified ? 'purchase_code' : (selectedGateway?.type || 'manual'),
+      payment_reference: paymentRef || (paymentConfirmed ? `GATEWAY-${Date.now()}` : 'SETUP-' + Date.now()),
       amount: templateData?.price?.[plan] || 0,
       purchase_code: codeVerified ? purchaseCode.trim().toUpperCase() : undefined,
       ...(smtpHost ? {
@@ -232,14 +290,92 @@ export default function TerminalSetupPage() {
     }
   }, [domain, isRTL]);
 
+  // ─── Build payment options list ───
+  const paymentOptions = [
+    { key: 'code', label: isRTL ? 'كود الشراء' : 'Purchase Code', icon: '🔑' },
+    ...enabledGateways.map(gw => ({
+      key: `gw-${gw.id}`,
+      label: isRTL ? gw.name : (gw.name_en || gw.name),
+      icon: gw.type === 'paypal' ? '💳' : gw.type === 'binance' ? '🟡' : gw.type === 'usdt' ? '💰' : gw.type === 'bank_transfer' ? '🏦' : '💳',
+      gateway: gw,
+    })),
+  ];
+
+  // ─── Handle payment option selection ───
+  const handlePaymentSelect = async (num) => {
+    const idx = parseInt(num) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= paymentOptions.length) {
+      setError(isRTL ? `أدخل رقم من 1 إلى ${paymentOptions.length}` : `Enter a number from 1 to ${paymentOptions.length}`);
+      return;
+    }
+    setError('');
+    const option = paymentOptions[idx];
+
+    if (option.key === 'code') {
+      setPaymentMode('code');
+      setPaymentSelection('');
+      return;
+    }
+
+    // Gateway selected
+    const gw = option.gateway;
+    setSelectedGateway(gw);
+    setPaymentMode('gateway');
+    setPaymentSelection('');
+
+    // Redirect-based gateways (PayPal, Binance)
+    if (gw.type === 'paypal' || gw.type === 'binance') {
+      setGatewayLoading(true);
+      try {
+        const currentUrl = window.location.origin + window.location.pathname;
+        const gwLabel = gw.type === 'binance' ? 'binance' : 'paypal';
+        const returnUrl = `${currentUrl}?template=${templateId}&plan=${plan}&gateway=${gwLabel}`;
+        const data = await api.initCheckout({
+          gateway_id: gw.id,
+          amount: templateData?.price?.[plan] || 0,
+          currency: gw.type === 'binance' ? 'USDT' : 'USD',
+          description: `${templateName} - ${plan} plan`,
+          return_url: gw.type === 'binance' ? `${returnUrl}&payment_id=__PAYMENT_ID__` : returnUrl,
+          cancel_url: returnUrl,
+        });
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        } else if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          setError(isRTL ? 'فشل في الحصول على رابط الدفع' : 'Failed to get payment URL');
+          setGatewayLoading(false);
+        }
+      } catch (err) {
+        setError(err.error || (isRTL ? 'فشل بدء الدفع' : 'Payment failed'));
+        setGatewayLoading(false);
+      }
+      return;
+    }
+
+    // Manual gateways (bank_transfer, usdt) — show details
+    // paymentMode = 'gateway' is set, UI will show details
+  };
+
   // ─── Handle Enter key for each phase ───
   const handleKeyDown = (e) => {
     if (e.key !== 'Enter') return;
     setError('');
 
     switch (phase) {
-      case 1: // Purchase code
-        validatePurchaseCode();
+      case 1: // Payment method
+        if (!paymentMode) {
+          // Selecting from numbered list
+          handlePaymentSelect(paymentSelection);
+        } else if (paymentMode === 'code') {
+          validatePurchaseCode();
+        } else if (paymentMode === 'gateway') {
+          // Manual gateway confirmed
+          if (selectedGateway?.type === 'bank_transfer' || selectedGateway?.type === 'usdt') {
+            setPaymentConfirmed(true);
+            setTimeout(() => setPhase(2), 400);
+          }
+        }
         break;
       case 2: // Domain
         if (!domain.trim()) {
@@ -335,34 +471,140 @@ export default function TerminalSetupPage() {
               <div className="text-yellow-500/70 text-xs">{isRTL ? 'جارٍ التهيئة...' : 'initializing...'} <Cursor /></div>
             )}
 
-            {/* ═══ Phase 1: Purchase Code ═══ */}
+            {/* ═══ Phase 1: Payment Method ═══ */}
             {phase >= 1 && introComplete && (
               <>
-                <div className="text-cyan-400 text-xs">{isRTL ? '── كود الشراء ──' : '── purchase code ──'}</div>
+                <div className="text-cyan-400 text-xs">{isRTL ? '── طريقة الدفع ──' : '── payment method ──'}</div>
                 {phase === 1 ? (
                   <>
-                    <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل كود التفعيل:' : 'enter activation code:'}</div>
-                    <div className="flex items-center mt-1">
-                      <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={purchaseCode}
-                        onChange={e => setPurchaseCode(e.target.value.toUpperCase())}
-                        onKeyDown={handleKeyDown}
-                        placeholder="NX-XXXX-XXXX-XXXX"
-                        disabled={codeLoading}
-                        className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono tracking-wider"
-                        autoFocus
-                      />
-                    </div>
-                    {codeLoading && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'verifying...'} <Cursor /></div>}
+                    {/* Step A: Choose payment method from numbered list */}
+                    {!paymentMode && (
+                      <>
+                        <div className="text-gray-400 text-xs mt-1">
+                          {isRTL ? 'اختر طريقة الدفع:' : 'select payment method:'}
+                        </div>
+                        {gatewaysLoading ? (
+                          <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ تحميل بوابات الدفع...' : 'loading payment gateways...'} <Cursor /></div>
+                        ) : (
+                          <>
+                            <div className="mt-1 space-y-0.5">
+                              {paymentOptions.map((opt, i) => (
+                                <div key={opt.key} className="text-gray-300 text-xs">
+                                  <span className="text-emerald-400">[{i + 1}]</span> {opt.icon} {opt.label}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex items-center mt-2">
+                              <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
+                              <input
+                                ref={inputRef}
+                                type="text"
+                                value={paymentSelection}
+                                onChange={e => setPaymentSelection(e.target.value.replace(/[^0-9]/g, ''))}
+                                onKeyDown={handleKeyDown}
+                                placeholder={isRTL ? 'أدخل الرقم...' : 'enter number...'}
+                                className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono"
+                                autoFocus
+                              />
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+
+                    {/* Step B: Purchase code input */}
+                    {paymentMode === 'code' && !codeVerified && (
+                      <>
+                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">🔑 {isRTL ? 'كود الشراء' : 'Purchase Code'}</span></div>
+                        <div className="text-gray-400 text-xs mt-1">{isRTL ? 'أدخل كود التفعيل:' : 'enter activation code:'}</div>
+                        <div className="flex items-center mt-1">
+                          <span className="text-emerald-500 mr-1.5 select-none text-xs">$</span>
+                          <input
+                            ref={inputRef}
+                            type="text"
+                            value={purchaseCode}
+                            onChange={e => setPurchaseCode(e.target.value.toUpperCase())}
+                            onKeyDown={handleKeyDown}
+                            placeholder="NX-XXXX-XXXX-XXXX"
+                            disabled={codeLoading}
+                            className="flex-1 bg-transparent text-white text-sm outline-none caret-emerald-400 placeholder:text-gray-800 font-mono tracking-wider"
+                            autoFocus
+                          />
+                        </div>
+                        {codeLoading && <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التحقق...' : 'verifying...'} <Cursor /></div>}
+                        <div className="text-gray-700 text-[10px] mt-1 cursor-pointer hover:text-gray-500" onClick={() => { setPaymentMode(''); setPurchaseCode(''); setError(''); }}>
+                          [{isRTL ? 'رجوع' : 'back'}]
+                        </div>
+                      </>
+                    )}
+
+                    {/* Step C: Gateway — redirect in progress */}
+                    {paymentMode === 'gateway' && gatewayLoading && (
+                      <>
+                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">{selectedGateway?.type}</span></div>
+                        <div className="text-yellow-500/70 text-xs mt-1">{isRTL ? 'جارٍ التوجيه لبوابة الدفع...' : 'redirecting to payment gateway...'} <Cursor /></div>
+                      </>
+                    )}
+
+                    {/* Step D: Manual gateway (bank/usdt) — show details */}
+                    {paymentMode === 'gateway' && !gatewayLoading && !paymentConfirmed && selectedGateway && (selectedGateway.type === 'bank_transfer' || selectedGateway.type === 'usdt') && (
+                      <>
+                        <div className="text-gray-500 text-xs mt-1">method: <span className="text-emerald-400">{isRTL ? selectedGateway.name : (selectedGateway.name_en || selectedGateway.name)}</span></div>
+                        {selectedGateway.type === 'bank_transfer' && (() => {
+                          const cfg = selectedGateway.config || {};
+                          return (
+                            <>
+                              <div className="text-yellow-500/80 text-xs mt-1">{isRTL ? 'حوّل المبلغ إلى:' : 'transfer amount to:'}</div>
+                              <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800 space-y-0.5">
+                                {cfg.bank_name && <div>{isRTL ? 'البنك' : 'bank'}: <span className="text-white">{cfg.bank_name}</span></div>}
+                                {cfg.iban && <div>IBAN: <span className="text-emerald-400 cursor-pointer hover:underline" onClick={() => navigator.clipboard.writeText(cfg.iban)}>{cfg.iban}</span> <span className="text-gray-600 text-[10px]">(copy)</span></div>}
+                                {cfg.account_holder && <div>{isRTL ? 'المستفيد' : 'holder'}: <span className="text-white">{cfg.account_holder}</span></div>}
+                                {cfg.currency && <div>{isRTL ? 'العملة' : 'currency'}: <span className="text-white">{cfg.currency}</span></div>}
+                              </div>
+                              <div className="text-white text-xs mt-1">{isRTL ? 'المبلغ المطلوب' : 'amount'}: <span className="text-emerald-400">${templateData?.price?.[plan] || 0}</span></div>
+                              <div className="text-gray-500 text-[11px] mt-1">{isRTL ? 'بعد التحويل اضغط Enter للمتابعة' : 'after transfer, press Enter to continue'}</div>
+                              <input ref={inputRef} type="text" onKeyDown={handleKeyDown} className="opacity-0 absolute w-0 h-0" autoFocus />
+                            </>
+                          );
+                        })()}
+                        {selectedGateway.type === 'usdt' && (() => {
+                          const cfg = selectedGateway.config || {};
+                          return (
+                            <>
+                              <div className="text-yellow-500/80 text-xs mt-1">{isRTL ? `أرسل USDT (${cfg.network || 'TRC20'}):` : `send USDT (${cfg.network || 'TRC20'}):`}</div>
+                              {cfg.wallet_address && (
+                                <div className="text-gray-300 text-xs mt-1 pl-2 border-l border-gray-800">
+                                  <span className="text-emerald-400 cursor-pointer hover:underline break-all" onClick={() => navigator.clipboard.writeText(cfg.wallet_address)}>{cfg.wallet_address}</span>
+                                  <span className="text-gray-600 text-[10px] ml-1">(click to copy)</span>
+                                </div>
+                              )}
+                              <div className="text-white text-xs mt-1">{isRTL ? 'المبلغ المطلوب' : 'amount'}: <span className="text-emerald-400">${templateData?.price?.[plan] || 0} USDT</span></div>
+                              <div className="text-gray-500 text-[11px] mt-1">{isRTL ? 'بعد الإرسال اضغط Enter للمتابعة' : 'after sending, press Enter to continue'}</div>
+                              <input ref={inputRef} type="text" onKeyDown={handleKeyDown} className="opacity-0 absolute w-0 h-0" autoFocus />
+                            </>
+                          );
+                        })()}
+                        <div className="text-gray-700 text-[10px] mt-1 cursor-pointer hover:text-gray-500" onClick={() => { setPaymentMode(''); setSelectedGateway(null); setError(''); }}>
+                          [{isRTL ? 'رجوع' : 'back'}]
+                        </div>
+                      </>
+                    )}
                   </>
-                ) : (
+                ) : phase > 1 && (
                   <>
-                    <div className="text-gray-400 text-xs">code: <span className="text-emerald-400">{purchaseCode}</span> <span className="text-green-600">✓</span></div>
-                    {codeInfo?.discount_type === 'full' && <div className="text-gray-600 text-xs">{isRTL ? 'النوع: مجاني بالكامل' : 'type: full access'}</div>}
-                    {codeInfo?.discount_type === 'percentage' && <div className="text-gray-600 text-xs">{isRTL ? `النوع: خصم ${codeInfo.discount_value}%` : `type: ${codeInfo.discount_value}% discount`}</div>}
+                    {/* Completed summary */}
+                    {codeVerified ? (
+                      <>
+                        <div className="text-gray-400 text-xs">method: <span className="text-emerald-400">🔑 {isRTL ? 'كود الشراء' : 'code'}</span> <span className="text-green-600">✓</span></div>
+                        <div className="text-gray-400 text-xs">code: <span className="text-emerald-400">{purchaseCode}</span> <span className="text-green-600">✓</span></div>
+                        {codeInfo?.discount_type === 'full' && <div className="text-gray-600 text-xs">{isRTL ? 'النوع: مجاني بالكامل' : 'type: full access'}</div>}
+                        {codeInfo?.discount_type === 'percentage' && <div className="text-gray-600 text-xs">{isRTL ? `النوع: خصم ${codeInfo.discount_value}%` : `type: ${codeInfo.discount_value}% discount`}</div>}
+                      </>
+                    ) : paymentConfirmed ? (
+                      <div className="text-gray-400 text-xs">method: <span className="text-emerald-400">{selectedGateway ? (isRTL ? selectedGateway.name : (selectedGateway.name_en || selectedGateway.name)) : (isRTL ? 'بوابة دفع' : 'gateway')}</span> <span className="text-green-600">✓</span></div>
+                    ) : (
+                      <div className="text-gray-400 text-xs">payment: <span className="text-yellow-500/60">{isRTL ? 'تجريبي' : 'trial'}</span></div>
+                    )}
                   </>
                 )}
               </>
