@@ -73,6 +73,41 @@ async function provisionSite(req, res) {
       codeData = codeResult;
     }
 
+    // ─── التحقق من حالة الدفع (إن كان عبر بوابة دفع) ───
+    let verifiedPayment = null;
+    if (!codeData && payment_reference && payment_reference !== 'manual') {
+      // استخراج payment_id من المرجع
+      const paymentId = parseInt(payment_reference) || parseInt(payment_reference.replace(/\D/g, ''));
+      if (paymentId) {
+        const paymentRecord = await Payment.findById(paymentId);
+        if (!paymentRecord) {
+          return res.status(400).json({
+            error: 'مرجع الدفع غير صالح. لم يتم العثور على عملية دفع مطابقة',
+            errorEn: 'Invalid payment reference. No matching payment found',
+          });
+        }
+        if (paymentRecord.status === 'completed') {
+          verifiedPayment = paymentRecord;
+        } else if (paymentRecord.status === 'pending' && paymentRecord.payment_method === 'bank_transfer') {
+          // التحويل البنكي: نسمح بالمتابعة بحالة "بانتظار المراجعة"
+          verifiedPayment = paymentRecord;
+        } else if (paymentRecord.status === 'pending') {
+          return res.status(402).json({
+            error: 'لم يتم تأكيد الدفع بعد. أكمل عملية الدفع أولاً ثم أعد المحاولة',
+            errorEn: 'Payment not confirmed yet. Complete the payment first, then try again',
+            payment_status: paymentRecord.status,
+            payment_id: paymentRecord.id,
+          });
+        } else {
+          return res.status(402).json({
+            error: `عملية الدفع ${paymentRecord.status === 'failed' ? 'فشلت' : paymentRecord.status === 'cancelled' ? 'ملغاة' : 'غير مكتملة'}. يرجى إعادة الدفع`,
+            errorEn: `Payment ${paymentRecord.status}. Please try payment again`,
+            payment_status: paymentRecord.status,
+          });
+        }
+      }
+    }
+
     // ─── توليد site_key و domain ───
     const site_key = generateSiteKey(store_name);
     // الدومين الأساسي (داخلي) — دائماً subdomain
@@ -112,7 +147,11 @@ async function provisionSite(req, res) {
 
     // ─── تطبيق خصم الكود ───
     let paymentStatus = 'trial'; // الحالة الافتراضية تجريبية
-    if (codeData) {
+    if (verifiedPayment && verifiedPayment.status === 'completed') {
+      paymentStatus = 'paid_by_gateway';
+    } else if (verifiedPayment && verifiedPayment.payment_method === 'bank_transfer') {
+      paymentStatus = 'pending_bank_review';
+    } else if (codeData) {
       if (codeData.discount_type === 'full') {
         price = 0;
         paymentStatus = 'paid_by_code';
@@ -171,8 +210,8 @@ async function provisionSite(req, res) {
 
     // ─── 4. تفعيل الاشتراك (مع فترة تجريبية 14 يوم) ───
     // الاشتراك يبدأ بحالة trial تلقائياً
-    // إذا تم الدفع بكود → تفعيل مباشر
-    if (codeData && paymentStatus === 'paid_by_code') {
+    // إذا تم الدفع بكود أو بوابة دفع → تفعيل مباشر
+    if (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') {
       await Subscription.activate(subscription.id, site_key);
     }
 
@@ -182,21 +221,30 @@ async function provisionSite(req, res) {
     }
 
     // ─── 4.6 تسجيل عملية الدفع في جدول المدفوعات ───
-    const finalPaymentMethod = payment_method || (codeData ? 'purchase_code' : 'manual');
+    const finalPaymentMethod = verifiedPayment?.payment_method || payment_method || (codeData ? 'purchase_code' : 'manual');
     const finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
     try {
-      await Payment.create({
-        site_key,
-        customer_id: null,
-        order_id: null,
-        type: 'subscription',
-        amount: price,
-        currency: 'USD',
-        payment_method: finalPaymentMethod,
-        payment_gateway_id: null,
-        status: (codeData && paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
-        description: `Site provisioning: ${store_name} (${cycle})`,
-      });
+      if (verifiedPayment) {
+        // ربط الدفعة المؤكدة بالموقع الجديد
+        await Payment.updateMeta(verifiedPayment.id, verifiedPayment.site_key, {
+          provisioned_site_key: site_key,
+          provisioned_store: store_name,
+          provisioned_at: new Date().toISOString(),
+        });
+      } else {
+        await Payment.create({
+          site_key,
+          customer_id: null,
+          order_id: null,
+          type: 'subscription',
+          amount: price,
+          currency: 'USD',
+          payment_method: finalPaymentMethod,
+          payment_gateway_id: null,
+          status: (paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
+          description: `Site provisioning: ${store_name} (${cycle})`,
+        });
+      }
     } catch (payErr) {
       console.error('Payment record creation failed (non-blocking):', payErr.message);
     }
@@ -294,7 +342,7 @@ async function provisionSite(req, res) {
         id: subscription.id,
         billing_cycle: cycle,
         price,
-        status: (codeData && paymentStatus === 'paid_by_code') ? 'active' : subscription.status,
+        status: (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') ? 'active' : subscription.status,
         trial_ends_at: subscription.trial_ends_at,
         payment_status: paymentStatus,
         payment_method: finalPaymentMethod,

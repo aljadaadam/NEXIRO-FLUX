@@ -169,7 +169,7 @@ export default function TerminalSetupPage() {
       store_name: storeName,
       custom_domain: domain.toLowerCase().replace(/\s/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
       payment_method: codeVerified ? 'purchase_code' : (selectedGateway?.type || 'manual'),
-      payment_reference: paymentRef || (paymentConfirmed ? 'GATEWAY-' + Date.now() : 'SETUP-' + Date.now()),
+      payment_reference: paymentRef || undefined,
       amount: templateData?.price?.[plan] || 0,
       purchase_code: codeVerified ? purchaseCode.trim().toUpperCase() : undefined,
       ...(smtpHost ? {
@@ -198,8 +198,15 @@ export default function TerminalSetupPage() {
       await new Promise(r => setTimeout(r, 800));
       setStep(5);
     } catch (err) {
-      setBuildProgress(prev => [...prev, '❌ ' + (err.error || 'Build failed')]);
-      setBuildError(err.error || (isRTL ? 'فشل بناء الموقع' : 'Site build failed'));
+      const errorMsg = err.error || err.errorEn || (isRTL ? 'فشل بناء الموقع' : 'Site build failed');
+      setBuildProgress(prev => [...prev, '❌ ' + errorMsg]);
+      setBuildError(errorMsg);
+      // إذا كان خطأ دفع (402) — إرجاع المستخدم لصفحة الشراء
+      if (err.payment_status === 'pending' || err.payment_status === 'failed' || err.payment_status === 'cancelled') {
+        setTimeout(() => {
+          navigate(`/buy?template=${templateId}&plan=${plan}`);
+        }, 4000);
+      }
     }
   }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo, selectedGateway, paymentConfirmed]);
 
