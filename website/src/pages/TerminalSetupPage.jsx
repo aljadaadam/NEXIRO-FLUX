@@ -65,7 +65,12 @@ export default function TerminalSetupPage() {
   const templateName = isRTL ? (templateData?.name || templateId) : (templateData?.nameEn || templateId);
 
   // ─── State ───
-  const [phase, setPhase] = useState(0); // 0=intro, 1=domain, 2=dns, 3=account, 4=email, 5=storeName, 6=building, 7=done
+  // 0=intro, 1=purchaseCode, 2=domain, 3=dns, 4=account, 5=email, 6=storeName, 7=building, 8=done
+  const [phase, setPhase] = useState(0);
+  const [purchaseCode, setPurchaseCode] = useState('');
+  const [codeVerified, setCodeVerified] = useState(false);
+  const [codeInfo, setCodeInfo] = useState(null);
+  const [codeLoading, setCodeLoading] = useState(false);
   const [domain, setDomain] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -109,9 +114,29 @@ export default function TerminalSetupPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ─── Validate purchase code ───
+  const validatePurchaseCode = useCallback(async () => {
+    if (!purchaseCode.trim()) {
+      setError(isRTL ? 'يرجى إدخال كود الشراء' : 'Please enter a purchase code');
+      return;
+    }
+    setCodeLoading(true);
+    setError('');
+    try {
+      const res = await api.validatePurchaseCode(purchaseCode.trim().toUpperCase(), templateId);
+      setCodeVerified(true);
+      setCodeInfo(res);
+      setTimeout(() => setPhase(2), 600);
+    } catch (err) {
+      setError(err.error || err.errorEn || (isRTL ? 'كود غير صالح' : 'Invalid code'));
+    } finally {
+      setCodeLoading(false);
+    }
+  }, [purchaseCode, templateId, isRTL]);
+
   // ─── Build progress simulation ───
   const runBuild = useCallback(async () => {
-    setPhase(6);
+    setPhase(7);
     const steps = isRTL ? [
       { msg: '🔗 جارٍ الاتصال بالخادم...', delay: 600 },
       { msg: '📦 إنشاء قاعدة بيانات الموقع...', delay: 800 },
@@ -140,12 +165,13 @@ export default function TerminalSetupPage() {
       owner_email: ownerEmail,
       owner_password: ownerPassword,
       template_id: templateId,
-      billing_cycle: plan,
+      billing_cycle: codeInfo?.billing_cycle || plan,
       store_name: storeName,
       domain_slug: domain.toLowerCase().replace(/[^a-z0-9-]/g, ''),
-      payment_method: 'manual',
+      payment_method: codeVerified ? 'purchase_code' : 'manual',
       payment_reference: paymentRef || 'SETUP-' + Date.now(),
       amount: templateData?.price?.[plan] || 0,
+      purchase_code: codeVerified ? purchaseCode.trim().toUpperCase() : undefined,
       ...(smtpHost ? {
         smtp_host: smtpHost,
         smtp_port: smtpPort,
@@ -173,12 +199,12 @@ export default function TerminalSetupPage() {
       setBuildProgress(prev => [...prev, steps[steps.length - 1].msg]);
       setResult(data);
       await new Promise(r => setTimeout(r, 1000));
-      setPhase(7);
+      setPhase(8);
     } catch (err) {
       setBuildProgress(prev => [...prev, `❌ ${err.error || 'Build failed'}`]);
       setError(err.error || (isRTL ? 'فشل بناء الموقع' : 'Site build failed'));
     }
-  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL]);
+  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo]);
 
   // ─── Handle Enter key for each phase ───
   const handleKeyDown = (e) => {
@@ -186,7 +212,10 @@ export default function TerminalSetupPage() {
     setError('');
 
     switch (phase) {
-      case 1: // Domain
+      case 1: // Purchase code
+        validatePurchaseCode();
+        break;
+      case 2: // Domain
         if (!domain.trim()) {
           setError(isRTL ? 'يرجى إدخال اسم الدومين' : 'Please enter a domain name');
           return;
@@ -195,12 +224,12 @@ export default function TerminalSetupPage() {
           setError(isRTL ? 'اسم الدومين يجب أن يكون 3 أحرف على الأقل' : 'Domain must be at least 3 characters');
           return;
         }
-        setPhase(2);
-        break;
-      case 2: // DNS confirmation → just press Enter to continue
         setPhase(3);
         break;
-      case 3: // Account info
+      case 3: // DNS confirmation → just press Enter to continue
+        setPhase(4);
+        break;
+      case 4: // Account info
         if (!ownerName.trim() || !ownerEmail.trim() || !ownerPassword.trim()) {
           setError(isRTL ? 'جميع حقول الحساب مطلوبة' : 'All account fields are required');
           return;
@@ -213,12 +242,12 @@ export default function TerminalSetupPage() {
           setError(isRTL ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
           return;
         }
-        setPhase(4);
-        break;
-      case 4: // Email / SMTP → optional, Enter to skip or continue
         setPhase(5);
         break;
-      case 5: // Store name
+      case 5: // Email / SMTP → optional, Enter to skip or continue
+        setPhase(6);
+        break;
+      case 6: // Store name
         if (!storeName.trim()) {
           setError(isRTL ? 'اسم المتجر مطلوب' : 'Store name is required');
           return;
@@ -292,10 +321,70 @@ export default function TerminalSetupPage() {
 
             {introComplete && <div className="border-t border-white/5 my-4" />}
 
-            {/* ═══ Phase 1: Domain Input ═══ */}
+            {/* ═══ Phase 1: Purchase Code ═══ */}
             {phase >= 1 && introComplete && (
               <div className="space-y-2">
-                <TermLine prefix="[1/5]" color="text-cyan-400">
+                <TermLine prefix="[1/6]" color="text-cyan-400">
+                  {isRTL ? '🔑 أدخل كود الشراء:' : '🔑 Enter Purchase Code:'}
+                </TermLine>
+                <TermLine prefix="" color="text-gray-600">
+                  {isRTL
+                    ? 'أدخل الكود الذي حصلت عليه لتفعيل موقعك'
+                    : 'Enter the code you received to activate your site'}
+                </TermLine>
+
+                {phase === 1 ? (
+                  <div className="mt-3 mb-2">
+                    <div className="flex items-center gap-0">
+                      <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={purchaseCode}
+                        onChange={e => setPurchaseCode(e.target.value.toUpperCase())}
+                        onKeyDown={handleKeyDown}
+                        placeholder="NX-XXXX-XXXX-XXXX"
+                        disabled={codeLoading}
+                        className="flex-1 bg-transparent text-white text-lg outline-none caret-emerald-400 placeholder:text-gray-700 font-mono tracking-widest"
+                        autoFocus
+                      />
+                    </div>
+                    {codeLoading && (
+                      <div className="mt-2 ml-5">
+                        <span className="text-yellow-400 text-xs animate-pulse">
+                          {isRTL ? 'جارٍ التحقق...' : 'Verifying...'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mt-2 ml-5">
+                      <span className="text-gray-600 text-[11px]">
+                        {isRTL ? 'اضغط Enter للتحقق من الكود' : 'Press Enter to verify the code'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <TermLine prefix="✓" color="text-emerald-400">
+                      {purchaseCode} {codeInfo?.discount_type === 'full'
+                        ? (isRTL ? '(مجاني بالكامل)' : '(Full access)')
+                        : codeInfo?.discount_type === 'percentage'
+                          ? `(${codeInfo.discount_value}% ${isRTL ? 'خصم' : 'discount'})`
+                          : ''}
+                    </TermLine>
+                    {codeInfo?.billing_cycle && (
+                      <TermLine prefix="→" color="text-gray-500">
+                        {isRTL ? 'الخطة: ' : 'Plan: '}{codeInfo.billing_cycle}
+                      </TermLine>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ═══ Phase 2: Domain Input ═══ */}
+            {phase >= 2 && introComplete && (
+              <div className="space-y-2">
+                <TermLine prefix="[2/6]" color="text-cyan-400">
                   {isRTL ? '🌐 أدخل اسم الدومين (الرابط) لموقعك:' : '🌐 Enter your site domain name:'}
                 </TermLine>
                 <TermLine prefix="" color="text-gray-600">
@@ -304,7 +393,7 @@ export default function TerminalSetupPage() {
                     : 'Your site URL will be: [name].nexiroflux.com'}
                 </TermLine>
 
-                {phase === 1 ? (
+                {phase === 2 ? (
                   <div className="mt-3 mb-2">
                     <div className="flex items-center gap-0">
                       <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
@@ -337,11 +426,11 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 2: DNS Instructions ═══ */}
-            {phase >= 2 && (
+            {/* ═══ Phase 3: DNS Instructions ═══ */}
+            {phase >= 3 && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[2/5]" color="text-cyan-400">
+                <TermLine prefix="[3/6]" color="text-cyan-400">
                   {isRTL ? '🔧 إعداد DNS — توجيه الدومين' : '🔧 DNS Setup — Domain Pointing'}
                 </TermLine>
 
@@ -401,7 +490,7 @@ export default function TerminalSetupPage() {
                   </div>
                 </div>
 
-                {phase === 2 ? (
+                {phase === 3 ? (
                   <div className="mt-3">
                     <span className="text-gray-500 text-xs">
                       {isRTL ? 'اضغط Enter للمتابعة ←' : 'Press Enter to continue →'}
@@ -423,15 +512,15 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 3: Account Info ═══ */}
-            {phase >= 3 && (
+            {/* ═══ Phase 4: Account Info ═══ */}
+            {phase >= 4 && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[3/5]" color="text-cyan-400">
+                <TermLine prefix="[4/6]" color="text-cyan-400">
                   {isRTL ? '👤 إنشاء حساب المدير (الأدمن):' : '👤 Create Admin Account:'}
                 </TermLine>
 
-                {phase === 3 ? (
+                {phase === 4 ? (
                   <div className="space-y-4 mt-3" onKeyDown={handleKeyDown}>
                     {/* Name */}
                     <div className="flex items-center gap-3">
@@ -503,11 +592,11 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 4: Email / SMTP ═══ */}
-            {phase >= 4 && (
+            {/* ═══ Phase 5: Email / SMTP ═══ */}
+            {phase >= 5 && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[4/5]" color="text-cyan-400">
+                <TermLine prefix="[5/6]" color="text-cyan-400">
                   {isRTL ? '📧 إعداد البريد (SMTP) — اختياري:' : '📧 Email Setup (SMTP) — Optional:'}
                 </TermLine>
 
@@ -524,7 +613,7 @@ export default function TerminalSetupPage() {
                   </div>
                 </div>
 
-                {phase === 4 ? (
+                {phase === 5 ? (
                   <div className="space-y-3 mt-3" onKeyDown={handleKeyDown}>
                     <div className="flex items-center gap-3">
                       <span className="text-gray-500 text-xs w-28 text-right flex-shrink-0">SMTP Host:</span>
@@ -632,15 +721,15 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 5: Store Name ═══ */}
-            {phase >= 5 && (
+            {/* ═══ Phase 6: Store Name ═══ */}
+            {phase >= 6 && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
-                <TermLine prefix="[5/5]" color="text-cyan-400">
+                <TermLine prefix="[6/6]" color="text-cyan-400">
                   {isRTL ? '🏪 اسم الموقع / المتجر:' : '🏪 Site / Store Name:'}
                 </TermLine>
 
-                {phase === 5 ? (
+                {phase === 6 ? (
                   <div className="mt-3">
                     <div className="flex items-center gap-0">
                       <span className="text-emerald-400 mr-2 select-none">{'>'}</span>
@@ -667,8 +756,8 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 6: Building ═══ */}
-            {phase === 6 && (
+            {/* ═══ Phase 7: Building ═══ */}
+            {phase === 7 && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
                 <TermLine prefix="$" color="text-yellow-400">
@@ -690,8 +779,8 @@ export default function TerminalSetupPage() {
               </div>
             )}
 
-            {/* ═══ Phase 7: Done ═══ */}
-            {phase === 7 && result && (
+            {/* ═══ Phase 8: Done ═══ */}
+            {phase === 8 && result && (
               <div className="space-y-2 mt-4">
                 <div className="border-t border-white/5 my-3" />
                 <pre className="text-emerald-400 whitespace-pre-wrap text-xs select-none mt-2">
@@ -765,7 +854,7 @@ export default function TerminalSetupPage() {
             {error && (
               <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <TermLine prefix="✗" color="text-red-400">{error}</TermLine>
-                {phase === 6 && (
+                {phase === 7 && (
                   <button
                     onClick={() => { setError(''); runBuild(); }}
                     className="mt-2 text-yellow-400 text-xs hover:text-yellow-300 font-mono"
@@ -779,7 +868,7 @@ export default function TerminalSetupPage() {
         </div>
 
         {/* Bottom hint */}
-        {phase < 6 && (
+        {phase < 7 && (
           <p className="text-center text-gray-700 text-[11px] mt-3 font-mono">
             {isRTL ? 'اضغط Enter للمتابعة بين الخطوات' : 'Press Enter to navigate between steps'}
           </p>

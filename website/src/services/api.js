@@ -496,6 +496,47 @@ class ApiService {
   async verifyDNS() {
     return this.request('/setup/my-site/verify-dns');
   }
+
+  // ─── Purchase Codes ───
+
+  async validatePurchaseCode(code, template_id) {
+    return this.request('/purchase-codes/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, template_id }),
+    });
+  }
+
+  async getPurchaseCodes(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/purchase-codes${query ? '?' + query : ''}`);
+  }
+
+  async createPurchaseCode(data) {
+    return this.request('/purchase-codes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createPurchaseCodesBatch(data) {
+    return this.request('/purchase-codes/batch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePurchaseCode(id, data) {
+    return this.request(`/purchase-codes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePurchaseCode(id) {
+    return this.request(`/purchase-codes/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Singleton

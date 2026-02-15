@@ -2,6 +2,7 @@ const Site = require('../models/Site');
 const User = require('../models/User');
 const Subscription = require('../models/Subscription');
 const Customization = require('../models/Customization');
+const PurchaseCode = require('../models/PurchaseCode');
 const { generateToken } = require('../utils/token');
 const crypto = require('crypto');
 const emailService = require('../services/email');
@@ -41,6 +42,8 @@ async function provisionSite(req, res) {
       // إعدادات التخصيص (اختيارية)
       primary_color,
       logo_url,
+      // كود الشراء (اختياري)
+      purchase_code,
     } = req.body;
 
     // ─── التحقق من المدخلات الأساسية ───
@@ -52,6 +55,16 @@ async function provisionSite(req, res) {
     }
     if (!store_name) {
       return res.status(400).json({ error: 'اسم المتجر مطلوب' });
+    }
+
+    // ─── التحقق من كود الشراء (إن وُجد) ───
+    let codeData = null;
+    if (purchase_code) {
+      const codeResult = await PurchaseCode.validate(purchase_code, template_id);
+      if (!codeResult.valid) {
+        return res.status(400).json({ error: codeResult.error, errorEn: codeResult.errorEn });
+      }
+      codeData = codeResult;
     }
 
     // ─── توليد site_key و domain ───
@@ -75,8 +88,23 @@ async function provisionSite(req, res) {
     };
 
     const templatePrices = prices[template_id] || { monthly: 29, yearly: 249, lifetime: 599 };
-    const cycle = billing_cycle || 'monthly';
-    const price = templatePrices[cycle] || templatePrices.monthly;
+    const cycle = (codeData?.billing_cycle) || billing_cycle || 'monthly';
+    let price = templatePrices[cycle] || templatePrices.monthly;
+
+    // ─── تطبيق خصم الكود ───
+    let paymentStatus = 'trial'; // الحالة الافتراضية تجريبية
+    if (codeData) {
+      if (codeData.discount_type === 'full') {
+        price = 0;
+        paymentStatus = 'paid_by_code';
+      } else if (codeData.discount_type === 'percentage') {
+        price = price * (1 - codeData.discount_value / 100);
+        paymentStatus = price <= 0 ? 'paid_by_code' : 'partial_code';
+      } else if (codeData.discount_type === 'fixed') {
+        price = Math.max(0, price - codeData.discount_value);
+        paymentStatus = price <= 0 ? 'paid_by_code' : 'partial_code';
+      }
+    }
 
     // ─── 1. إنشاء الموقع ───
     const { getPool } = require('../config/db');
@@ -120,6 +148,15 @@ async function provisionSite(req, res) {
 
     // ─── 4. تفعيل الاشتراك (مع فترة تجريبية 14 يوم) ───
     // الاشتراك يبدأ بحالة trial تلقائياً
+    // إذا تم الدفع بكود → تفعيل مباشر
+    if (codeData && paymentStatus === 'paid_by_code') {
+      await Subscription.activate(subscription.id, site_key);
+    }
+
+    // ─── 4.5 تسجيل استخدام كود الشراء ───
+    if (codeData && purchase_code) {
+      await PurchaseCode.markUsed(purchase_code, owner_email, site_key);
+    }
 
     // ─── 5. إنشاء التخصيصات الافتراضية ───
     await Customization.upsert(site_key, {
@@ -170,8 +207,10 @@ async function provisionSite(req, res) {
         id: subscription.id,
         billing_cycle: cycle,
         price,
-        status: subscription.status,
-        trial_ends_at: subscription.trial_ends_at
+        status: (codeData && paymentStatus === 'paid_by_code') ? 'active' : subscription.status,
+        trial_ends_at: subscription.trial_ends_at,
+        payment_status: paymentStatus,
+        purchase_code: purchase_code || null,
       },
       dashboard_url: `/my-dashboard`
     });

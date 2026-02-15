@@ -31,6 +31,7 @@ import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayments from './pages/admin/AdminPayments';
 import AdminPaymentGateways from './pages/admin/AdminPaymentGateways';
+import AdminPurchaseCodes from './pages/admin/AdminPurchaseCodes';
 
 function AppContent() {
   const location = useLocation();
@@ -95,6 +96,7 @@ function AppContent() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="payments" element={<AdminPayments />} />
+          <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
           <Route path="payment-gateways" element={<AdminPaymentGateways />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>

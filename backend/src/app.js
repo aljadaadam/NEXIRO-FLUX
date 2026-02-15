@@ -18,6 +18,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const paymentGatewayRoutes = require('./routes/paymentGatewayRoutes');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const setupRoutes = require('./routes/setupRoutes');
+const purchaseCodeRoutes = require('./routes/purchaseCodeRoutes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/payment-gateways', paymentGatewayRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/setup', setupRoutes);
+app.use('/api/purchase-codes', purchaseCodeRoutes);
 
 // Root route - يظهر معلومات الموقع
 app.get('/', async (req, res) => {

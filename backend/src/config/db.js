@@ -334,6 +334,10 @@ async function createTables() {
     await pool.query(notificationsTable);
     await pool.query(activityLogTable);
 
+    // جدول أكواد الشراء
+    const PurchaseCode = require('../models/PurchaseCode');
+    await pool.query(PurchaseCode.getCreateTableSQL());
+
     // ===== إضافة أعمدة جديدة لجدول sites =====
     await ensureColumn('sites', 'template_id', "template_id VARCHAR(100) NULL COMMENT 'القالب المختار'");
     await ensureColumn('sites', 'plan', "plan VARCHAR(50) DEFAULT 'trial' COMMENT 'الخطة الحالية'");
