@@ -70,7 +70,7 @@ class USDTProcessor {
         only_confirmed: true,
         limit: 50,
         contract_address: contractAddr,
-        min_timestamp: sinceTimestamp || (Date.now() - 3600000), // آخر ساعة
+        min_timestamp: sinceTimestamp || (Date.now() - 1800000), // آخر 30 دقيقة
       },
     });
 
@@ -122,7 +122,7 @@ class USDTProcessor {
     }
 
     const targetAmount = parseFloat(expectedAmount);
-    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 3600000) / 1000);
+    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 1800000) / 1000);
 
     const matching = data.result.filter(tx => {
       const txAmount = parseFloat(tx.value) / 1e6; // USDT = 6 decimals
@@ -167,7 +167,7 @@ class USDTProcessor {
     }
 
     const targetAmount = parseFloat(expectedAmount);
-    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 3600000) / 1000);
+    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 1800000) / 1000);
 
     const matching = data.result.filter(tx => {
       const txAmount = parseFloat(tx.value) / 1e18; // BSC USDT = 18 decimals

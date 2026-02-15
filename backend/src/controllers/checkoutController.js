@@ -134,6 +134,7 @@ async function initCheckout(req, res) {
           referenceId,
         });
         await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
+        const USDT_EXPIRY_MS = 30 * 60 * 1000;
         result = {
           method: 'manual_crypto',
           walletAddress: paymentInfo.walletAddress,
@@ -142,6 +143,8 @@ async function initCheckout(req, res) {
           currency: 'USDT',
           contractAddress: paymentInfo.contractAddress,
           instructions: paymentInfo.instructions,
+          expires_in: USDT_EXPIRY_MS / 1000, // 1800 seconds
+          expires_at: new Date(Date.now() + USDT_EXPIRY_MS).toISOString(),
         };
         break;
       }
@@ -352,6 +355,31 @@ async function checkUsdtPayment(req, res) {
       return res.json({ confirmed: true, message: 'الدفع مؤكد مسبقاً' });
     }
 
+    // ─── التحقق من انتهاء المهلة (30 دقيقة) ───
+    const USDT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+    const createdAt = new Date(payment.created_at).getTime();
+    const now = Date.now();
+    const elapsed = now - createdAt;
+    const remaining = Math.max(0, USDT_EXPIRY_MS - elapsed);
+
+    if (elapsed > USDT_EXPIRY_MS) {
+      // انتهت المهلة — أغلق الدفعة
+      if (payment.status === 'pending') {
+        await Payment.updateStatus(payment.id, getSiteKey(req), 'failed');
+        await Payment.updateMeta(payment.id, getSiteKey(req), {
+          expired_at: new Date().toISOString(),
+          expiry_reason: 'USDT payment timeout (30 minutes)',
+        });
+      }
+      return res.status(410).json({
+        expired: true,
+        confirmed: false,
+        message: 'انتهت مهلة الدفع (30 دقيقة). يرجى إنشاء عملية دفع جديدة',
+        messageEn: 'Payment expired (30 minutes). Please create a new payment',
+        remaining: 0,
+      });
+    }
+
     const gateway = await PaymentGateway.findById(payment.payment_gateway_id, getSiteKey(req));
     if (!gateway || gateway.type !== 'usdt') {
       return res.status(400).json({ error: 'هذه الدفعة ليست USDT' });
@@ -360,7 +388,7 @@ async function checkUsdtPayment(req, res) {
     const usdt = new USDTProcessor(gateway.config);
     const result = await usdt.checkPayment({
       amount: payment.amount,
-      sinceTimestamp: new Date(payment.created_at).getTime(),
+      sinceTimestamp: createdAt,
     });
 
     if (result.confirmed) {
@@ -388,14 +416,19 @@ async function checkUsdtPayment(req, res) {
         confirmed: true,
         transactionId: result.transactionId,
         amount: result.amount,
-        message: '✅ تم تأكيد الدفع بنجاح',
+        message: 'تم تأكيد الدفع بنجاح',
+        messageEn: 'Payment confirmed successfully',
+        remaining: 0,
       });
     }
 
     return res.json({
       confirmed: false,
       message: 'لم يتم العثور على تحويل مطابق بعد. حاول مرة أخرى.',
+      messageEn: 'No matching transfer found yet. Try again.',
       checkedTransactions: result.transactions,
+      remaining: Math.floor(remaining / 1000), // seconds remaining
+      expires_at: new Date(createdAt + USDT_EXPIRY_MS).toISOString(),
     });
 
   } catch (error) {

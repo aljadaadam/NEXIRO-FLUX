@@ -65,6 +65,8 @@ export default function TemplateBuyPage() {
   const [receiptUrl, setReceiptUrl] = useState('');
   const [receiptNotes, setReceiptNotes] = useState('');
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [usdtExpired, setUsdtExpired] = useState(false);
+  const [usdtTimeLeft, setUsdtTimeLeft] = useState(null); // seconds remaining
 
   // Country detection
   const [country, setCountry] = useState(null);
@@ -120,6 +122,22 @@ export default function TemplateBuyPage() {
         .finally(() => setProcessing(false));
     }
   }, [params, navigate, templateId, plan, isRTL]);
+
+  // ─── USDT Countdown Timer ───
+  useEffect(() => {
+    if (usdtTimeLeft === null || usdtTimeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setUsdtTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setUsdtExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [usdtTimeLeft !== null && usdtTimeLeft > 0]); // eslint-disable-line
 
   // Copy to clipboard
   const copyText = (text, label) => {
@@ -185,8 +203,11 @@ export default function TemplateBuyPage() {
         setStep('paying');
       }
 
-      // USDT → show wallet
+      // USDT → show wallet + start countdown
       if (result.method === 'manual_crypto') {
+        const expiresIn = result.expires_in || 1800; // 30 min default
+        setUsdtTimeLeft(expiresIn);
+        setUsdtExpired(false);
         setStep('paying');
       }
 
@@ -203,7 +224,7 @@ export default function TemplateBuyPage() {
 
   // ─── Check USDT ───
   const handleCheckUsdt = async () => {
-    if (!paymentId) return;
+    if (!paymentId || usdtExpired) return;
     setChecking(true);
     setError(null);
     try {
@@ -211,10 +232,19 @@ export default function TemplateBuyPage() {
       if (result.confirmed) {
         navigate(`/setup?template=${templateId}&plan=${plan}&payment_ref=${paymentId}&payment_status=success&gateway=usdt`);
       } else {
+        if (result.remaining !== undefined) {
+          setUsdtTimeLeft(result.remaining);
+        }
         setError(isRTL ? 'لم يتم العثور على تحويل مطابق بعد. حاول خلال دقائق.' : 'No matching transfer found yet. Try again in a few minutes.');
       }
     } catch (err) {
-      setError(err.message);
+      if (err.expired) {
+        setUsdtExpired(true);
+        setUsdtTimeLeft(0);
+        setError(isRTL ? 'انتهت مهلة الدفع (30 دقيقة). أنشئ عملية دفع جديدة' : 'Payment expired (30 minutes). Please create a new payment');
+      } else {
+        setError(err.error || err.message);
+      }
     } finally {
       setChecking(false);
     }
@@ -512,45 +542,92 @@ export default function TemplateBuyPage() {
               {/* USDT */}
               {paymentResult.method === 'manual_crypto' && (
                 <>
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
-                      <Bitcoin className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-1">{isRTL ? 'الدفع بـ USDT' : 'Pay with USDT'}</h3>
-                    <p className="text-dark-400 text-sm mb-4">
-                      {isRTL ? `حوّل ${paymentResult.amount} USDT إلى العنوان التالي` : `Send ${paymentResult.amount} USDT to the address below`}
-                    </p>
-                  </div>
-
-                  {/* Wallet details */}
-                  <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-500 text-xs">{isRTL ? 'عنوان المحفظة' : 'Wallet Address'}</span>
-                      <button onClick={() => copyText(paymentResult.walletAddress, 'wallet')} className="text-dark-500 hover:text-white transition-colors">
-                        {copied === 'wallet' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {usdtExpired ? (
+                    /* ═══ Expired State ═══ */
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
+                        <XCircle className="w-8 h-8 text-red-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-2">
+                          {isRTL ? 'انتهت مهلة الدفع' : 'Payment Expired'}
+                        </h3>
+                        <p className="text-dark-400 text-sm">
+                          {isRTL ? 'انتهت صلاحية عملية الدفع (30 دقيقة). يرجى إنشاء عملية جديدة' : 'Payment session expired (30 minutes). Please start a new payment'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setStep('select');
+                          setPaymentResult(null);
+                          setPaymentId(null);
+                          setUsdtExpired(false);
+                          setUsdtTimeLeft(null);
+                          setError(null);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        {isRTL ? 'إنشاء دفعة جديدة' : 'Create New Payment'}
                       </button>
                     </div>
-                    <p className="text-white text-sm font-mono break-all bg-white/5 rounded-lg p-3">{paymentResult.walletAddress}</p>
-                    <p className="flex items-center gap-1 text-dark-400 text-xs">
-                      <Globe className="w-3 h-3" />
-                      {isRTL ? `الشبكة: ${paymentResult.network}` : `Network: ${paymentResult.network}`}
-                    </p>
-                  </div>
+                  ) : (
+                    /* ═══ Active Payment ═══ */
+                    <>
+                      <div className="text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
+                          <Bitcoin className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-1">{isRTL ? 'الدفع بـ USDT' : 'Pay with USDT'}</h3>
+                        <p className="text-dark-400 text-sm mb-2">
+                          {isRTL ? `حوّل ${paymentResult.amount} USDT إلى العنوان التالي` : `Send ${paymentResult.amount} USDT to the address below`}
+                        </p>
+                        {/* Countdown Timer */}
+                        {usdtTimeLeft !== null && (
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono ${
+                            usdtTimeLeft <= 300
+                              ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                              : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                          }`}>
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>
+                              {Math.floor(usdtTimeLeft / 60).toString().padStart(2, '0')}:{(usdtTimeLeft % 60).toString().padStart(2, '0')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                  {/* Warning */}
-                  <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-yellow-400 text-xs">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{isRTL ? paymentResult.instructions?.ar : paymentResult.instructions?.en}</span>
-                  </div>
+                      {/* Wallet details */}
+                      <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-500 text-xs">{isRTL ? 'عنوان المحفظة' : 'Wallet Address'}</span>
+                          <button onClick={() => copyText(paymentResult.walletAddress, 'wallet')} className="text-dark-500 hover:text-white transition-colors">
+                            {copied === 'wallet' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                        <p className="text-white text-sm font-mono break-all bg-white/5 rounded-lg p-3">{paymentResult.walletAddress}</p>
+                        <p className="flex items-center gap-1 text-dark-400 text-xs">
+                          <Globe className="w-3 h-3" />
+                          {isRTL ? `الشبكة: ${paymentResult.network}` : `Network: ${paymentResult.network}`}
+                        </p>
+                      </div>
 
-                  <button
-                    onClick={handleCheckUsdt}
-                    disabled={checking}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all disabled:opacity-50"
-                  >
-                    {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    {isRTL ? 'تحقق من الدفع' : 'Verify Payment'}
-                  </button>
+                      {/* Warning */}
+                      <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-yellow-400 text-xs">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>{isRTL ? paymentResult.instructions?.ar : paymentResult.instructions?.en}</span>
+                      </div>
+
+                      <button
+                        onClick={handleCheckUsdt}
+                        disabled={checking || usdtExpired}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all disabled:opacity-50"
+                      >
+                        {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        {isRTL ? 'تحقق من الدفع' : 'Verify Payment'}
+                      </button>
+                    </>
+                  )}
                 </>
               )}
 
