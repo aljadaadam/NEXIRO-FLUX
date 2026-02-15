@@ -123,6 +123,9 @@ async function registerUser(req, res) {
 
     const token = generateToken(user.id, user.role, siteKey);
 
+    // إرسال بريد ترحيبي للمستخدم العادي (ليس أدمن)
+    emailService.sendWelcomeUser({ to: user.email, name: user.name }).catch(e => console.error('Email error:', e.message));
+
     res.status(201).json({
       message: 'تم إنشاء الحساب بنجاح',
       token,
@@ -534,7 +537,11 @@ async function googleLogin(req, res) {
 
     // بريد ترحيبي للمستخدمين الجدد عبر Google
     if (isNew) {
-      emailService.sendWelcomeAdmin({ to: user.email, name: user.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
+      if (user.role === 'admin') {
+        emailService.sendWelcomeAdmin({ to: user.email, name: user.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
+      } else {
+        emailService.sendWelcomeUser({ to: user.email, name: user.name }).catch(e => console.error('Email error:', e.message));
+      }
     }
 
     res.json({

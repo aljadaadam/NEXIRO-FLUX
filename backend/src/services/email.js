@@ -72,6 +72,14 @@ class EmailService {
     });
   }
 
+  async sendWelcomeUser({ to, name }) {
+    return this.send({
+      to,
+      subject: 'مرحباً بك في NEXIRO-FLUX 🎉',
+      html: templates.welcomeUser({ name }),
+    });
+  }
+
   async sendWelcomeCustomer({ to, name, storeName, siteSettings }) {
     return this.send({
       to,

@@ -87,6 +87,25 @@ function welcomeAdmin({ name, siteName }) {
   });
 }
 
+function welcomeUser({ name }) {
+  return baseLayout({
+    title: 'مرحباً بك في NEXIRO-FLUX',
+    content: `
+      ${ui.icon('👋')}
+      ${ui.heading(`مرحباً ${name || ''}!`)}
+      ${ui.text(`شكراً لتسجيلك في ${ui.highlight('NEXIRO-FLUX')}. نحن سعداء بانضمامك!`)}
+      ${ui.text('حسابك جاهز الآن على المنصة. يمكنك:')}
+      ${ui.text('• تصفح القوالب الاحترافية المتاحة')}
+      ${ui.text('• اختيار القالب المناسب لمشروعك')}
+      ${ui.text('• شراء قالب والحصول على متجرك الخاص وموقعك الإلكتروني')}
+      ${ui.text('• لوحة تحكم كاملة لإدارة متجرك بعد الشراء')}
+      ${ui.divider()}
+      ${ui.text('🚀 ابدأ الآن باختيار القالب المناسب وأطلق مشروعك الرقمي!')}
+      ${ui.button('تصفح القوالب', 'https://nexiroflux.com/templates')}
+    `,
+  });
+}
+
 function welcomeCustomer({ name, storeName }) {
   return baseLayout({
     title: 'مرحباً بك',
@@ -538,6 +557,7 @@ function walletUpdated({ name, oldBalance, newBalance, currency }) {
 module.exports = {
   // Auth
   welcomeAdmin,
+  welcomeUser,
   welcomeCustomer,
   passwordReset,
   emailVerification,
