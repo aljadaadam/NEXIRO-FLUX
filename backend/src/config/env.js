@@ -14,9 +14,9 @@ module.exports = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '667145293472-3pnntetd5l1edj8nf9965e6h2u8lgrk7.apps.googleusercontent.com',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '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',
   // ─── SMTP ───
-  SMTP_HOST: process.env.SMTP_HOST || '',
-  SMTP_PORT: process.env.SMTP_PORT || 587,
-  SMTP_USER: process.env.SMTP_USER || '',
-  SMTP_PASS: process.env.SMTP_PASS || '',
-  SMTP_FROM: process.env.SMTP_FROM || 'NEXIRO-FLUX <noreply@nexiro-flux.com>',
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.hostinger.com',
+  SMTP_PORT: process.env.SMTP_PORT || 465,
+  SMTP_USER: process.env.SMTP_USER || 'info@nexiroflux.com',
+  SMTP_PASS: process.env.SMTP_PASS || 'Hisseinadammohammed@1',
+  SMTP_FROM: process.env.SMTP_FROM || 'NEXIRO-FLUX <info@nexiroflux.com>',
 };
