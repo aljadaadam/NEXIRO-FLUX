@@ -84,17 +84,23 @@ async function getAllProducts(req, res) {
 async function createProduct(req, res) {
   try {
     const { site_key } = req.user;
-    const { name, description, price, service_type } = req.body;
+    const { name, arabic_name, description, service_type, category, status, image } = req.body;
+    const rawPrice = req.body.price;
+    const normalizedPrice = Number.parseFloat(String(rawPrice ?? '').replace(/[$,\s]/g, ''));
+    const stockValue = req.body.stock ?? req.body.qnt;
+    const normalizedStock = stockValue === undefined || stockValue === null || stockValue === ''
+      ? null
+      : String(stockValue);
 
     // التحقق من المدخلات
-    if (!name || !price) {
+    if (!name || rawPrice === undefined || rawPrice === null || rawPrice === '') {
       return res.status(400).json({ 
         error: 'الاسم والسعر مطلوبان' 
       });
     }
 
     // التحقق من أن السعر رقم موجب
-    if (isNaN(price) || parseFloat(price) <= 0) {
+    if (Number.isNaN(normalizedPrice) || normalizedPrice <= 0) {
       return res.status(400).json({ 
         error: 'السعر يجب أن يكون رقم موجب' 
       });
@@ -103,9 +109,14 @@ async function createProduct(req, res) {
     const product = await Product.create({
       site_key,
       name,
+      arabic_name: arabic_name || null,
       description: description || '',
-      price: parseFloat(price),
-      service_type: service_type || 'SERVER'
+      price: normalizedPrice,
+      service_type: service_type || 'SERVER',
+      category: category || null,
+      status: status || 'active',
+      image: image || null,
+      qnt: normalizedStock,
     });
 
     res.status(201).json({
@@ -129,28 +140,33 @@ async function updateProduct(req, res) {
     // دعم تنسيقات مختلفة من Dashboard
     const name = req.body.name || req.body.SERVICENAME || req.body.servicename;
     const price = req.body.price || req.body.CREDIT || req.body.credit;
+    const arabic_name = req.body.arabic_name !== undefined ? req.body.arabic_name : undefined;
     const description = req.body.description !== undefined ? req.body.description : undefined;
     const service_type = req.body.service_type || req.body.SERVICETYPE;
     const source_id = req.body.source_id !== undefined ? req.body.source_id : undefined;
     const image = req.body.image !== undefined ? req.body.image : undefined;
     const status = req.body.status !== undefined ? req.body.status : undefined;
     const category = req.body.category !== undefined ? req.body.category : undefined;
+    const stock = req.body.stock !== undefined ? req.body.stock : req.body.qnt;
 
     // بناء بيانات التحديث ديناميكياً
     const updateData = {};
     
     if (name !== undefined) updateData.name = name;
+    if (arabic_name !== undefined) updateData.arabic_name = arabic_name;
     if (description !== undefined) updateData.description = description;
     if (price !== undefined) {
-      if (isNaN(price) || parseFloat(price) <= 0) {
+      const normalizedPrice = Number.parseFloat(String(price).replace(/[$,\s]/g, ''));
+      if (Number.isNaN(normalizedPrice) || normalizedPrice <= 0) {
         return res.status(400).json({ error: 'السعر يجب أن يكون رقم موجب' });
       }
-      updateData.price = parseFloat(price);
+      updateData.price = normalizedPrice;
     }
     if (service_type !== undefined) updateData.service_type = service_type;
     if (image !== undefined) updateData.image = image;
     if (status !== undefined) updateData.status = status;
     if (category !== undefined) updateData.category = category;
+    if (stock !== undefined) updateData.qnt = stock === null || stock === '' ? null : String(stock);
     
     // Add source_id if provided (can be null to unlink from source)
     if (source_id !== undefined) {

@@ -350,6 +350,10 @@ async function createTables() {
 
     // ضمان وجود الأعمدة في الجداول (للتوافق مع قواعد بيانات قديمة)
     await ensureColumn('products', 'service_type', "service_type VARCHAR(50) DEFAULT 'SERVER'");
+    await ensureColumn('products', 'arabic_name', 'arabic_name VARCHAR(200) NULL');
+    await ensureColumn('products', 'category', 'category VARCHAR(100) NULL');
+    await ensureColumn('products', 'status', "status VARCHAR(30) DEFAULT 'active'");
+    await ensureColumn('products', 'image', 'image TEXT NULL');
     await ensureColumn('products', 'source_id', 'source_id INT NULL');
     await ensureColumn('products', 'user_id', 'user_id INT NULL');
     await ensureColumn('products', 'external_service_key', 'external_service_key VARCHAR(64) NULL');

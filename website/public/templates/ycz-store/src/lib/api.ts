@@ -89,7 +89,8 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     : String(p.group_name || serviceTypeCategories[sType] || 'خدمات');
   return {
     id: p.id,
-    name: p.name,
+    name: String(p.arabic_name || p.name || ''),
+    arabic_name: p.arabic_name,
     price: typeof p.price === 'number' || (typeof p.price === 'string' && !p.price.startsWith('$')) ? `$${Number(p.final_price || p.price || 0).toFixed(2)}` : p.price,
     originalPrice: p.source_price && Number(p.source_price) > Number(p.final_price || p.price) ? `$${Number(p.source_price).toFixed(2)}` : undefined,
     icon: serviceTypeIcons[sType] || '🔧',

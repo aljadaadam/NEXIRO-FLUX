@@ -3,6 +3,7 @@
 export interface Product {
   id: number;
   name: string;
+  arabic_name?: string;
   price: string;
   originalPrice?: string;
   icon: string;

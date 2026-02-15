@@ -1,12 +1,14 @@
 const { getPool } = require('../config/db');
 
 class Product {
-  static async create({ site_key, name, description, price, service_type = 'SERVER' }) {
+  static async create({ site_key, name, arabic_name, description, price, service_type = 'SERVER', category = null, status = 'active', image = null, qnt = null }) {
     const pool = getPool();
     
     const [result] = await pool.query(
-      'INSERT INTO products (site_key, name, description, price, service_type) VALUES (?, ?, ?, ?, ?)',
-      [site_key, name, description, price, service_type]
+      `INSERT INTO products
+       (site_key, name, arabic_name, description, price, service_type, category, status, image, qnt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [site_key, name, arabic_name || null, description, price, service_type, category, status, image, qnt]
     );
     
     return this.findById(result.insertId);
@@ -180,7 +182,7 @@ class Product {
     return rows;
   }
 
-  static async update(id, site_key, { name, description, price, service_type, source_id, image, status, category }) {
+  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -188,6 +190,7 @@ class Product {
     const values = [];
     
     if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+    if (arabic_name !== undefined) { updates.push('arabic_name = ?'); values.push(arabic_name || null); }
     if (description !== undefined) { updates.push('description = ?'); values.push(description); }
     if (price !== undefined) { 
       updates.push('price = ?'); 
@@ -200,6 +203,7 @@ class Product {
     if (image !== undefined) { updates.push('image = ?'); values.push(image); }
     if (status !== undefined) { updates.push('status = ?'); values.push(status); }
     if (category !== undefined) { updates.push('category = ?'); values.push(category); }
+    if (qnt !== undefined) { updates.push('qnt = ?'); values.push(qnt); }
     
     if (updates.length === 0) return this.findById(id);
     

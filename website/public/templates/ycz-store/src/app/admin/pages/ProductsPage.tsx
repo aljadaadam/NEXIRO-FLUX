@@ -9,16 +9,31 @@ import type { Product } from '@/lib/types';
 export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New product form state
   const [newName, setNewName] = useState('');
+  const [newArabicName, setNewArabicName] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [newCategory, setNewCategory] = useState('');
   const [newStock, setNewStock] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Edit product form state
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editArabicName, setEditArabicName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editStock, setEditStock] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editStatus, setEditStatus] = useState('active');
+  const [editServiceType, setEditServiceType] = useState('SERVER');
+  const [editIcon, setEditIcon] = useState('📦');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -39,18 +54,59 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     try {
       await adminApi.createProduct({
         name: newName,
-        price: newPrice.startsWith('$') ? newPrice : `$${newPrice}`,
+        arabic_name: newArabicName || null,
+        price: Number.parseFloat(String(newPrice).replace(/[$,\s]/g, '')),
         category: newCategory || 'عام',
         stock: parseInt(newStock) || 0,
-        desc: newDesc,
+        description: newDesc,
         icon: '📦',
-        status: 'نشط',
+        status: 'active',
       });
       setShowAdd(false);
-      setNewName(''); setNewPrice(''); setNewCategory(''); setNewStock(''); setNewDesc('');
+      setNewName(''); setNewArabicName(''); setNewPrice(''); setNewCategory(''); setNewStock(''); setNewDesc('');
       loadProducts(); // refresh
     } catch { /* show error */ }
     finally { setSaving(false); }
+  }
+
+  function openEdit(product: Product) {
+    setEditId(product.id);
+    setEditName(product.name || '');
+    setEditArabicName(product.arabic_name || '');
+    setEditPrice(String(product.price || '').replace('$', '').trim());
+    setEditCategory(product.category || 'عام');
+    setEditStock(String(product.stock || ''));
+    setEditDesc(product.desc || '');
+    setEditStatus((product.status || 'active') === 'نشط' ? 'active' : String(product.status || 'active'));
+    setEditServiceType(product.service_type || 'SERVER');
+    setEditIcon(product.icon || '📦');
+    setShowEdit(true);
+  }
+
+  function closeEdit() {
+    setShowEdit(false);
+    setEditId(null);
+  }
+
+  async function handleUpdateProduct() {
+    if (!editId || !editName || !editPrice) return;
+    setUpdating(true);
+    try {
+      await adminApi.updateProduct(editId, {
+        name: editName,
+        arabic_name: editArabicName || null,
+        price: Number.parseFloat(String(editPrice).replace(/[$,\s]/g, '')),
+        category: editCategory || 'عام',
+        stock: parseInt(editStock) || 0,
+        description: editDesc,
+        status: editStatus,
+        service_type: editServiceType,
+        icon: editIcon,
+      });
+      closeEdit();
+      loadProducts();
+    } catch { /* ignore */ }
+    finally { setUpdating(false); }
   }
 
   async function handleDelete(id: number) {
@@ -61,7 +117,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }
 
   const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    String(p.arabic_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -110,6 +167,11 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
             <input placeholder="اسم المنتج" value={newName} onChange={e => setNewName(e.target.value)} style={{
+              padding: '0.65rem 1rem', borderRadius: 10,
+              border: '1px solid #e2e8f0', fontSize: '0.85rem',
+              fontFamily: 'Tajawal, sans-serif', outline: 'none',
+            }} />
+            <input placeholder="اسم المنتج بالعربي" value={newArabicName} onChange={e => setNewArabicName(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
@@ -179,7 +241,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: '1.25rem' }}>{p.icon}</span>
                       <div>
-                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{p.name}</p>
+                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{p.arabic_name || p.name}</p>
+                        {p.arabic_name && <p style={{ fontSize: '0.68rem', color: '#64748b' }}>{p.name}</p>}
                         <p style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{p.desc}</p>
                       </div>
                     </div>
@@ -200,7 +263,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   </td>
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
+                      <button onClick={() => openEdit(p)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
                       <button onClick={() => handleDelete(p.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
                     </div>
                   </td>
@@ -210,6 +273,53 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </table>
         </div>
       </div>
+
+      {/* Edit Product Modal */}
+      {showEdit && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={closeEdit}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '92%', maxWidth: 720, maxHeight: '90vh', overflow: 'auto', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>تعديل المنتج</h3>
+              <button onClick={closeEdit} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                <X size={14} color="#64748b" />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <input placeholder="اسم المنتج" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input placeholder="اسم المنتج بالعربي" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input placeholder="السعر" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input placeholder="المخزون" value={editStock} onChange={(e) => setEditStock(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input placeholder="التصنيف" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input placeholder="أيقونة" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+
+              <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
+                <option value="SERVER">SERVER</option>
+                <option value="IMEI">IMEI</option>
+                <option value="REMOTE">REMOTE</option>
+                <option value="FILE">FILE</option>
+                <option value="CODE">CODE</option>
+              </select>
+
+              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
+            </div>
+
+            <textarea rows={3} placeholder="وصف المنتج" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ marginTop: 12, width: '100%', boxSizing: 'border-box', padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical' }} />
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={handleUpdateProduct} disabled={updating} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1 }}>
+                {updating ? 'جاري الحفظ...' : 'حفظ التعديل'}
+              </button>
+              <button onClick={closeEdit} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

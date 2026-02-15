@@ -63,7 +63,11 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
         {product.icon}
       </div>
       <p style={{ fontSize: '0.7rem', color: currentTheme.primary, fontWeight: 600, marginBottom: 4 }}>{product.category}</p>
-      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4 }}>{product.name}</h4>
+      <h4 style={{
+        fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4,
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        minHeight: '2.52rem',
+      }}>{product.name}</h4>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <span style={{ fontSize: '1.1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</span>
@@ -98,7 +102,11 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         <div style={{ display: 'flex', gap: 12, padding: '1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 20 }}>
           <div style={{ fontSize: '2rem', width: 50, height: 50, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 10 }}>{product.icon}</div>
           <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{product.name}</h4>
+            <h4 style={{
+              fontSize: '0.9rem', fontWeight: 700, color: '#0b1020',
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              lineHeight: 1.4,
+            }}>{product.name}</h4>
             <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
           </div>
         </div>
