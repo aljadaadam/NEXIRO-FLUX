@@ -85,6 +85,9 @@ export default function TerminalSetupPage() {
   const [result, setResult] = useState(null);
   const [buildProgress, setBuildProgress] = useState([]);
   const [introComplete, setIntroComplete] = useState(false);
+  const [dnsChecking, setDnsChecking] = useState(false);
+  const [dnsVerified, setDnsVerified] = useState(false);
+  const [dnsResult, setDnsResult] = useState(null);
 
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
@@ -207,6 +210,28 @@ export default function TerminalSetupPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo]);
 
+  // ─── Check DNS for domain ───
+  const checkDNS = useCallback(async () => {
+    const domainToCheck = domain ? domain.toLowerCase().replace(/\s/g, '') : '';
+    if (!domainToCheck) return;
+    setDnsChecking(true);
+    setError('');
+    setDnsResult(null);
+    try {
+      const result = await api.checkDomainDNS(domainToCheck);
+      setDnsResult(result);
+      if (result.verified) {
+        setDnsVerified(true);
+      } else {
+        setError(isRTL ? result.message : result.messageEn);
+      }
+    } catch (err) {
+      setError(err.error || (isRTL ? 'فشل التحقق من DNS' : 'DNS check failed'));
+    } finally {
+      setDnsChecking(false);
+    }
+  }, [domain, isRTL]);
+
   // ─── Handle Enter key for each phase ───
   const handleKeyDown = (e) => {
     if (e.key !== 'Enter') return;
@@ -227,7 +252,11 @@ export default function TerminalSetupPage() {
         }
         setPhase(3);
         break;
-      case 3: // DNS confirmation → just press Enter to continue
+      case 3: // DNS verification — requires verified or skip
+        if (!dnsVerified) {
+          checkDNS();
+          return;
+        }
         setPhase(4);
         break;
       case 4: // Account info
@@ -486,17 +515,82 @@ export default function TerminalSetupPage() {
                   <div className="border-t border-white/5 pt-2">
                     <p className="text-gray-400 text-[11px] leading-relaxed">
                       {isRTL
-                        ? '💡 يجب توجيه دومينك إلى سيرفرنا حتى يعمل الموقع. يمكنك إعداد DNS الآن أو لاحقًا.'
-                        : '💡 You must point your domain to our server for the site to work. You can set up DNS now or later.'}
+                        ? '💡 بعد إضافة السجل، انتظر 5 إلى 10 دقائق ثم اضغط "تحقق من DNS". قد يستغرق انتشار DNS حتى 24 ساعة.'
+                        : '💡 After adding the record, wait 5-10 minutes then click "Verify DNS". DNS propagation may take up to 24 hours.'}
                     </p>
                   </div>
                 </div>
 
                 {phase === 3 ? (
-                  <div className="mt-3">
-                    <span className="text-gray-500 text-xs">
-                      {isRTL ? 'اضغط Enter للمتابعة ←' : 'Press Enter to continue →'}
-                    </span>
+                  <div className="mt-3 space-y-3">
+                    {/* DNS check result */}
+                    {dnsResult && !dnsResult.verified && (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                        <p className="text-red-400 text-xs font-bold mb-1">
+                          {isRTL ? '❌ الدومين لا يشير إلى سيرفرنا بعد' : '❌ Domain is not pointing to our server yet'}
+                        </p>
+                        {dnsResult.dns?.current_ip && (
+                          <p className="text-gray-400 text-[11px]">
+                            {isRTL 
+                              ? `يشير حالياً إلى: ${dnsResult.dns.current_ip} — المطلوب: ${dnsResult.server_ip}`
+                              : `Currently points to: ${dnsResult.dns.current_ip} — Required: ${dnsResult.server_ip}`}
+                          </p>
+                        )}
+                        {dnsResult.dns?.type === 'NONE' && (
+                          <p className="text-gray-400 text-[11px]">
+                            {isRTL ? 'لم يتم العثور على أي سجلات DNS لهذا الدومين' : 'No DNS records found for this domain'}
+                          </p>
+                        )}
+                        <p className="text-yellow-400 text-[11px] mt-1">
+                          {isRTL ? '⏳ انتظر 5-10 دقائق وأعد المحاولة' : '⏳ Wait 5-10 minutes and try again'}
+                        </p>
+                      </div>
+                    )}
+
+                    {dnsResult?.verified && (
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+                        <p className="text-emerald-400 text-xs font-bold">
+                          {isRTL ? '✅ تم التحقق! الدومين يشير بشكل صحيح إلى سيرفرنا' : '✅ Verified! Domain is correctly pointing to our server'}
+                        </p>
+                        <p className="text-gray-400 text-[11px] mt-1">
+                          {isRTL ? 'اضغط Enter أو "التالي" للمتابعة' : 'Press Enter or "Next" to continue'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Buttons */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={checkDNS}
+                        disabled={dnsChecking}
+                        className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50 flex items-center gap-2 font-mono"
+                      >
+                        {dnsChecking ? (
+                          <><span className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /> {isRTL ? 'جاري التحقق...' : 'Checking...'}</>
+                        ) : (
+                          <>{isRTL ? '🔍 تحقق من DNS' : '🔍 Verify DNS'}</>
+                        )}
+                      </button>
+
+                      {dnsVerified && (
+                        <button
+                          onClick={() => setPhase(4)}
+                          className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-500/30 transition-colors font-mono"
+                        >
+                          {isRTL ? 'التالي ←' : 'Next →'}
+                        </button>
+                      )}
+
+                      {!dnsVerified && (
+                        <button
+                          onClick={() => { setDnsVerified(false); setPhase(4); }}
+                          className="px-4 py-2 bg-white/5 text-gray-500 rounded-lg text-xs hover:bg-white/10 hover:text-gray-400 transition-colors font-mono"
+                        >
+                          {isRTL ? 'تخطي الآن ←' : 'Skip for now →'}
+                        </button>
+                      )}
+                    </div>
+
                     <input
                       ref={inputRef}
                       type="text"
@@ -504,11 +598,12 @@ export default function TerminalSetupPage() {
                       className="opacity-0 absolute w-0 h-0"
                       autoFocus
                     />
-                    <Cursor />
                   </div>
                 ) : (
-                  <TermLine prefix="✓" color="text-emerald-400">
-                    {isRTL ? 'DNS — تم التأكيد' : 'DNS — Confirmed'}
+                  <TermLine prefix={dnsVerified ? "✓" : "⊘"} color={dnsVerified ? "text-emerald-400" : "text-yellow-500"}>
+                    {dnsVerified 
+                      ? (isRTL ? 'DNS — تم التحقق ✅' : 'DNS — Verified ✅')
+                      : (isRTL ? 'DNS — تم التخطي (يمكن الإعداد لاحقاً)' : 'DNS — Skipped (can be set up later)')}
                   </TermLine>
                 )}
               </div>
@@ -698,11 +793,19 @@ export default function TerminalSetupPage() {
                         />
                       </div>
                     </div>
-                    <div className="ml-32">
+                    <div className="ml-32 flex items-center gap-3 mt-2">
+                      <button
+                        onClick={() => setPhase(6)}
+                        className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-500/30 transition-colors font-mono"
+                      >
+                        {smtpHost 
+                          ? (isRTL ? 'التالي ←' : 'Next →') 
+                          : (isRTL ? '⏭ تخطي — إعداد لاحقاً' : '⏭ Skip — Set up later')}
+                      </button>
                       <span className="text-gray-600 text-[11px]">
                         {isRTL 
-                          ? 'اضغط Enter للمتابعة (اتركها فارغة لتخطي الإعداد)' 
-                          : 'Press Enter to continue (leave empty to skip)'}
+                          ? 'أو اضغط Enter للمتابعة' 
+                          : 'or press Enter to continue'}
                       </span>
                     </div>
                   </div>

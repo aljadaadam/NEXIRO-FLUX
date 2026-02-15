@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { 
   provisionSite, getMySite, updateSiteSettings,
-  updateCustomDomain, removeCustomDomain, verifyDomainDNS, getSiteByDomain
+  updateCustomDomain, removeCustomDomain, verifyDomainDNS, checkDomainDNS, getSiteByDomain
 } = require('../controllers/setupController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -12,6 +12,9 @@ router.post('/provision', provisionSite);
 
 // ─── جلب بيانات موقع من الدومين (عام — بدون مصادقة) ───
 router.get('/site-by-domain/:domain', getSiteByDomain);
+
+// ─── التحقق من DNS لدومين (عام — يُستخدم في معالج الإعداد) ───
+router.get('/check-dns/:domain', checkDomainDNS);
 
 // ─── الطلبات التالية تحتاج مصادقة ───
 router.use(validateSite);

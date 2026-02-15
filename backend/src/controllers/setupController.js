@@ -521,6 +521,65 @@ async function getSiteByDomain(req, res) {
   }
 }
 
+// ─── التحقق من DNS لدومين (عام — بدون مصادقة، يُستخدم في معالج الإعداد) ───
+async function checkDomainDNS(req, res) {
+  try {
+    const { domain } = req.params;
+    if (!domain) {
+      return res.status(400).json({ error: 'الدومين مطلوب', errorEn: 'Domain is required' });
+    }
+
+    const cleanDomain = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+    const dns = require('dns').promises;
+    const SERVER_IP = '154.56.60.195';
+    let verified = false;
+    let dnsResult = {};
+
+    try {
+      // Check CNAME first
+      const cnames = await dns.resolveCname(cleanDomain);
+      if (cnames.some(c => c.includes('nexiroflux') || c.includes('nexiro-flux'))) {
+        verified = true;
+        dnsResult.type = 'CNAME';
+        dnsResult.cname = cnames;
+      }
+    } catch (e) {
+      // CNAME not found, try A record
+      try {
+        const addresses = await dns.resolve4(cleanDomain);
+        dnsResult.type = 'A';
+        dnsResult.a_records = addresses;
+        if (addresses.includes(SERVER_IP)) {
+          verified = true;
+        } else {
+          dnsResult.expected_ip = SERVER_IP;
+          dnsResult.current_ip = addresses.join(', ');
+        }
+      } catch (e2) {
+        dnsResult.type = 'NONE';
+        dnsResult.error = 'لم يتم العثور على سجلات DNS';
+        dnsResult.errorEn = 'No DNS records found for this domain';
+      }
+    }
+
+    res.json({
+      domain: cleanDomain,
+      verified,
+      server_ip: SERVER_IP,
+      dns: dnsResult,
+      message: verified
+        ? '✅ DNS يشير بشكل صحيح إلى سيرفرنا!'
+        : `❌ DNS لا يشير إلى سيرفرنا. تأكد من إضافة سجل A يشير إلى ${SERVER_IP}`,
+      messageEn: verified
+        ? '✅ DNS is correctly pointing to our server!'
+        : `❌ DNS is not pointing to our server. Make sure to add an A record pointing to ${SERVER_IP}`,
+    });
+  } catch (error) {
+    console.error('Error in checkDomainDNS:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء التحقق من DNS' });
+  }
+}
+
 module.exports = {
   provisionSite,
   getMySite,
@@ -528,5 +587,6 @@ module.exports = {
   updateCustomDomain,
   removeCustomDomain,
   verifyDomainDNS,
+  checkDomainDNS,
   getSiteByDomain
 };

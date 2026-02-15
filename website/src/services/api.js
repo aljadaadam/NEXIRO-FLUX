@@ -497,6 +497,10 @@ class ApiService {
     return this.request('/setup/my-site/verify-dns');
   }
 
+  async checkDomainDNS(domain) {
+    return this.request(`/setup/check-dns/${encodeURIComponent(domain)}`);
+  }
+
   // ─── Purchase Codes ───
 
   async validatePurchaseCode(code, template_id) {
