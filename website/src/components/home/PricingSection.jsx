@@ -14,59 +14,55 @@ function useInView(ref) {
 }
 
 export default function PricingSection() {
-  const [billingCycle, setBillingCycle] = useState('monthly');
   const { t, isRTL } = useLanguage();
   const ref = useRef();
   const visible = useInView(ref);
   const navigate = useNavigate();
 
-  const planSlugs = ['starter', 'professional', 'enterprise'];
+  const planSlugs = ['monthly', 'yearly', 'lifetime'];
 
   const plans = [
     {
-      name: isRTL ? 'المبتدئ' : 'Starter',
-      description: isRTL ? 'مثالي للمشاريع الصغيرة' : 'Perfect for small projects',
-      price: { monthly: 9, yearly: 79, lifetime: 199 },
+      name: isRTL ? 'شهري' : 'Monthly',
+      description: isRTL ? 'مرونة كاملة بدون التزام طويل' : 'Full flexibility with no long commitment',
+      startPrice: 14.9,
+      suffix: isRTL ? '/شهر' : '/mo',
       features: isRTL
-        ? ['قالب واحد', 'دعم بالبريد', 'SSL مجاني', 'نطاق فرعي مجاني', '5GB تخزين']
-        : ['1 Template', 'Email Support', 'Free SSL', 'Free Subdomain', '5GB Storage'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق فرعي مجاني', 'دعم بالبريد', '5GB تخزين', 'تحديثات مستمرة']
+        : ['1 Template', 'Free SSL', 'Free Subdomain', 'Email Support', '5GB Storage', 'Continuous Updates'],
       popular: false,
       color: 'from-dark-700 to-dark-800',
       buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
+      billingCycle: 'monthly',
     },
     {
-      name: isRTL ? 'الاحترافي' : 'Professional',
-      description: isRTL ? 'الأكثر شعبية للأعمال المتنامية' : 'Most popular for growing businesses',
-      price: { monthly: 29, yearly: 249, lifetime: 599 },
+      name: isRTL ? 'سنوي' : 'Yearly',
+      description: isRTL ? 'وفّر حتى 25% مع الاشتراك السنوي' : 'Save up to 25% with yearly subscription',
+      startPrice: 129,
+      suffix: isRTL ? '/سنة' : '/yr',
+      saveBadge: isRTL ? 'وفّر 25%' : 'Save 25%',
       features: isRTL
-        ? ['3 قوالب', 'دعم أولوي 24/7', 'SSL مجاني', 'نطاق مخصص', '50GB تخزين', 'تحليلات متقدمة', 'بدون إعلانات']
-        : ['3 Templates', 'Priority 24/7 Support', 'Free SSL', 'Custom Domain', '50GB Storage', 'Advanced Analytics', 'No Ads'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي 24/7', '50GB تخزين', 'تحديثات مستمرة', 'تحليلات متقدمة', 'بدون إعلانات']
+        : ['1 Template', 'Free SSL', 'Custom Domain', 'Priority 24/7 Support', '50GB Storage', 'Continuous Updates', 'Advanced Analytics', 'No Ads'],
       popular: true,
       color: 'from-primary-600 to-primary-700',
       buttonColor: 'bg-white text-primary-600 hover:bg-dark-100',
+      billingCycle: 'yearly',
     },
     {
-      name: isRTL ? 'المؤسسي' : 'Enterprise',
-      description: isRTL ? 'للشركات والمؤسسات الكبيرة' : 'For large companies and enterprises',
-      price: { monthly: 79, yearly: 699, lifetime: 1599 },
+      name: isRTL ? 'مدى الحياة' : 'Lifetime',
+      description: isRTL ? 'ادفع مرة واحدة واستمتع للأبد' : 'Pay once and enjoy forever',
+      startPrice: 249,
+      suffix: '',
       features: isRTL
-        ? ['قوالب غير محدودة', 'مدير حساب مخصص', 'SSL مجاني', 'نطاقات متعددة', 'تخزين غير محدود', 'API كامل', 'White Label', 'SLA مضمون']
-        : ['Unlimited Templates', 'Dedicated Account Manager', 'Free SSL', 'Multiple Domains', 'Unlimited Storage', 'Full API', 'White Label', 'Guaranteed SLA'],
+        ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي مدى الحياة', 'تخزين غير محدود', 'تحديثات مدى الحياة', 'تحليلات متقدمة', 'بدون إعلانات', 'API كامل', 'White Label']
+        : ['1 Template', 'Free SSL', 'Custom Domain', 'Lifetime Priority Support', 'Unlimited Storage', 'Lifetime Updates', 'Advanced Analytics', 'No Ads', 'Full API', 'White Label'],
       popular: false,
       color: 'from-dark-700 to-dark-800',
       buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
+      billingCycle: 'lifetime',
     },
   ];
-
-  const getPrice = (plan) => {
-    return plan.price[billingCycle];
-  };
-
-  const getPriceLabel = () => {
-    if (billingCycle === 'monthly') return t('pricing.perMonth');
-    if (billingCycle === 'yearly') return t('pricing.perYear');
-    return t('pricing.oneTime');
-  };
 
   return (
     <section id="pricing" className="section-padding relative" ref={ref}>
@@ -78,31 +74,9 @@ export default function PricingSection() {
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black mb-6">
             <span className="gradient-text">{t('pricing.title')}</span>
           </h2>
-          <p className="text-dark-300 text-lg md:text-xl max-w-2xl mx-auto mb-10">
+          <p className="text-dark-300 text-lg md:text-xl max-w-2xl mx-auto">
             {t('pricing.subtitle')}
           </p>
-
-          {/* Billing Toggle */}
-          <div className="inline-flex items-center gap-1 p-1.5 rounded-2xl glass">
-            {['monthly', 'yearly', 'lifetime'].map(cycle => (
-              <button
-                key={cycle}
-                onClick={() => setBillingCycle(cycle)}
-                className={`relative px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
-                  billingCycle === cycle
-                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                    : 'text-dark-400 hover:text-white'
-                }`}
-              >
-                {t(`pricing.${cycle}`)}
-                {cycle === 'yearly' && billingCycle !== 'yearly' && (
-                  <span className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-green-500 text-[10px] font-bold text-white">
-                    {t('pricing.save')} 30%
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -123,20 +97,31 @@ export default function PricingSection() {
                 </div>
               )}
 
-              <div className={`h-full p-8 ${plan.popular ? 'pt-14' : ''} bg-gradient-to-b ${plan.color} border ${plan.popular ? 'border-primary-500/30' : 'border-white/5'} rounded-3xl`}>
+              {/* Save badge */}
+              {plan.saveBadge && !plan.popular && (
+                <div className="absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-center text-sm font-bold text-white">
+                  {plan.saveBadge}
+                </div>
+              )}
+
+              <div className={`h-full p-8 ${plan.popular || plan.saveBadge ? 'pt-14' : ''} bg-gradient-to-b ${plan.color} border ${plan.popular ? 'border-primary-500/30' : 'border-white/5'} rounded-3xl`}>
                 <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
                 <p className="text-dark-400 text-sm mb-6">{plan.description}</p>
 
+                <div className="mb-2">
+                  <span className="text-dark-400 text-xs font-medium">{isRTL ? 'يبدأ من' : 'Starts from'}</span>
+                </div>
                 <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-5xl font-display font-black text-white">${getPrice(plan)}</span>
-                  <span className="text-dark-400 text-sm">{getPriceLabel()}</span>
+                  <span className="text-5xl font-display font-black text-white">${plan.startPrice}</span>
+                  {plan.suffix && <span className="text-dark-400 text-sm">{plan.suffix}</span>}
+                  {!plan.suffix && <span className="text-dark-400 text-sm">{isRTL ? 'دفعة واحدة' : 'one-time'}</span>}
                 </div>
 
                 <button
-                  onClick={() => navigate(`/templates?plan=${planSlugs[i]}&billing=${billingCycle}`)}
+                  onClick={() => navigate(`/templates?billing=${plan.billingCycle}`)}
                   className={`w-full py-3.5 rounded-xl font-bold text-sm ${plan.buttonColor} transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] mb-8`}
                 >
-                  {t('pricing.choosePlan')}
+                  {isRTL ? 'اختر قالبك' : 'Choose Your Template'}
                 </button>
 
                 <div>
