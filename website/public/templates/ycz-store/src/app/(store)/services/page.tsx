@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Search, X, CheckCircle } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
-import { MOCK_PRODUCTS } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
 
@@ -64,7 +63,7 @@ export default function ServicesPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [orderProduct, setOrderProduct] = useState<Product | null>(null);
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 

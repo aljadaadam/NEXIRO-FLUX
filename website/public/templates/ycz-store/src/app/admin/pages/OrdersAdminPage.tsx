@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Download, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { MOCK_ORDERS } from '@/lib/mockData';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Order } from '@/lib/types';
 
 export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
   const [filter, setFilter] = useState('الكل');
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

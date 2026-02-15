@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, X } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/lib/mockData';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -10,7 +9,7 @@ import type { Product } from '@/lib/types';
 export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New product form state

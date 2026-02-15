@@ -14,16 +14,17 @@ function getAuthToken(): string | null {
 }
 
 async function adminFetch(endpoint: string, options: RequestInit = {}) {
-  const key = getAdminKey();
+  // Admin dashboard stores JWT as 'admin_key', customer profile stores as 'auth_token'
+  const token = getAdminKey() || getAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(key ? { 'x-admin-key': key } : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin_key');
       window.location.href = '/login';
@@ -47,27 +48,28 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 // ─── Admin API ───
+// المسارات تطابق الباك اند: /api/sources, /api/products, /api/orders, إلخ
 export const adminApi = {
-  getStats: () => adminFetch('/admin/stats'),
-  getProducts: () => adminFetch('/admin/products'),
-  createProduct: (data: Record<string, unknown>) => adminFetch('/admin/products', { method: 'POST', body: JSON.stringify(data) }),
-  updateProduct: (id: number, data: Record<string, unknown>) => adminFetch(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteProduct: (id: number) => adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
-  getOrders: () => adminFetch('/admin/orders'),
-  updateOrder: (id: string, data: Record<string, unknown>) => adminFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  getUsers: () => adminFetch('/admin/users'),
-  getAnnouncements: () => adminFetch('/admin/announcements'),
-  createAnnouncement: (data: Record<string, unknown>) => adminFetch('/admin/announcements', { method: 'POST', body: JSON.stringify(data) }),
-  deleteAnnouncement: (id: number) => adminFetch(`/admin/announcements/${id}`, { method: 'DELETE' }),
-  getSettings: () => adminFetch('/admin/settings'),
-  updateSettings: (data: Record<string, unknown>) => adminFetch('/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
-  getSources: () => adminFetch('/admin/sources'),
-  syncSource: (id: number) => adminFetch(`/admin/sources/${id}/sync`, { method: 'POST' }),
-  connectSource: (data: Record<string, unknown>) => adminFetch('/admin/sources', { method: 'POST', body: JSON.stringify(data) }),
-  deleteSource: (id: number) => adminFetch(`/admin/sources/${id}`, { method: 'DELETE' }),
-  getPaymentGateways: () => adminFetch('/admin/payment-gateways'),
-  getCustomize: () => adminFetch('/admin/customize'),
-  updateCustomize: (data: Record<string, unknown>) => adminFetch('/admin/customize', { method: 'PUT', body: JSON.stringify(data) }),
+  getStats: () => adminFetch('/dashboard/stats'),
+  getProducts: () => adminFetch('/products'),
+  createProduct: (data: Record<string, unknown>) => adminFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
+  updateProduct: (id: number, data: Record<string, unknown>) => adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteProduct: (id: number) => adminFetch(`/products/${id}`, { method: 'DELETE' }),
+  getOrders: () => adminFetch('/orders'),
+  updateOrder: (id: string, data: Record<string, unknown>) => adminFetch(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getUsers: () => adminFetch('/customers'),
+  getAnnouncements: () => adminFetch('/notifications'),
+  createAnnouncement: (data: Record<string, unknown>) => adminFetch('/notifications', { method: 'POST', body: JSON.stringify(data) }),
+  deleteAnnouncement: (id: number) => adminFetch(`/notifications/${id}`, { method: 'DELETE' }),
+  getSettings: () => adminFetch('/customization'),
+  updateSettings: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
+  getSources: () => adminFetch('/sources'),
+  syncSource: (id: number) => adminFetch(`/sources/${id}/sync`, { method: 'POST' }),
+  connectSource: (data: Record<string, unknown>) => adminFetch('/sources', { method: 'POST', body: JSON.stringify(data) }),
+  deleteSource: (id: number) => adminFetch(`/sources/${id}`, { method: 'DELETE' }),
+  getPaymentGateways: () => adminFetch('/payment-gateways'),
+  getCustomize: () => adminFetch('/customization'),
+  updateCustomize: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───

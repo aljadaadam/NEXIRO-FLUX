@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { MOCK_ANNOUNCEMENTS } from '@/lib/mockData';
 import { adminApi } from '@/lib/api';
 import type { Announcement } from '@/lib/types';
 
 export default function AnnouncementsPage() {
   const [showAdd, setShowAdd] = useState(false);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(MOCK_ANNOUNCEMENTS);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');

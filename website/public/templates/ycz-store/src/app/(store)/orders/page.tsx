@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Package } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
-import { MOCK_ORDERS } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
 import type { Order } from '@/lib/types';
 
 export default function OrdersPage() {
   const { currentTheme } = useTheme();
   const [filter, setFilter] = useState('all');
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

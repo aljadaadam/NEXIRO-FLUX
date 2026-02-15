@@ -2,15 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Eye, Package, Clock } from 'lucide-react';
-import { MOCK_STATS, MOCK_ORDERS, MOCK_CHART_DATA } from '@/lib/mockData';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { StatsCard, Order } from '@/lib/types';
 
+const EMPTY_STATS: StatsCard[] = [
+  { label: 'إجمالي المبيعات', value: '$0', change: '0%', positive: true, icon: '💰', color: '#7c5cff', bg: '#f5f3ff' },
+  { label: 'الطلبات', value: '0', change: '0%', positive: true, icon: '📦', color: '#0ea5e9', bg: '#eff6ff' },
+  { label: 'المستخدمين', value: '0', change: '0%', positive: true, icon: '👥', color: '#22c55e', bg: '#f0fdf4' },
+  { label: 'معدل الإكمال', value: '0%', change: '0%', positive: true, icon: '📊', color: '#f59e0b', bg: '#fffbeb' },
+];
+
+const EMPTY_CHART: { month: string; value: number }[] = [];
+
 export default function OverviewPage({ theme }: { theme: ColorTheme }) {
-  const [stats, setStats] = useState<StatsCard[]>(MOCK_STATS);
-  const [chartData, setChartData] = useState(MOCK_CHART_DATA);
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [stats, setStats] = useState<StatsCard[]>(EMPTY_STATS);
+  const [chartData, setChartData] = useState(EMPTY_CHART);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

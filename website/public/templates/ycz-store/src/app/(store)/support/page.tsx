@@ -22,8 +22,8 @@ export default function SupportPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: '2rem' }}>
         {[
           { icon: <MessageSquare size={20} />, title: 'واتساب', desc: 'تواصل مباشر', color: '#25d366' },
-          { icon: <Mail size={20} />, title: 'البريد', desc: 'support@store.com', color: '#3b82f6' },
-          { icon: <Phone size={20} />, title: 'اتصل بنا', desc: '+966 xxx xxx xxxx', color: '#8b5cf6' },
+          { icon: <Mail size={20} />, title: 'البريد', desc: '—', color: '#3b82f6' },
+          { icon: <Phone size={20} />, title: 'اتصل بنا', desc: '—', color: '#8b5cf6' },
         ].map((m, i) => (
           <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', textAlign: 'center', border: '1px solid #f1f5f9', cursor: 'pointer' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}15`, color: m.color, display: 'grid', placeItems: 'center', margin: '0 auto 10px' }}>{m.icon}</div>

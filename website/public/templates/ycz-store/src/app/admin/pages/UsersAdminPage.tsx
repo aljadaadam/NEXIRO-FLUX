@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Eye, Shield } from 'lucide-react';
-import { MOCK_USERS } from '@/lib/mockData';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
 
 export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

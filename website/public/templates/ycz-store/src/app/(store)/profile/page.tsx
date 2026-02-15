@@ -7,7 +7,6 @@ import {
   ShoppingCart, Bell, Settings, LogOut, DollarSign, Clock
 } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
-import { PAYMENT_METHODS } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
 
 // ─── WalletChargeModal (Demo-style: 4-step with payment details) ───
@@ -30,22 +29,22 @@ function WalletChargeModal({ onClose }: { onClose: () => void }) {
 
   const paymentInfo: Record<string, { label: string; value: string }[]> = {
     binance: [
-      { label: 'العنوان', value: 'TXrk8a...dK7VzH8' },
+      { label: 'العنوان', value: '—' },
       { label: 'الشبكة', value: 'TRC20 (Tron)' },
       { label: 'العملة', value: 'USDT' },
     ],
     paypal: [
-      { label: 'إيميل PayPal', value: 'pay@store-demo.com' },
+      { label: 'إيميل PayPal', value: '—' },
       { label: 'ملاحظة', value: 'أرسل كـ Friends & Family' },
     ],
     bank: [
-      { label: 'البنك', value: 'بنك الراجحي' },
-      { label: 'اسم الحساب', value: 'مؤسسة المتجر التقني' },
-      { label: 'IBAN', value: 'SA03 8000 0000 6080 1016 7519' },
+      { label: 'البنك', value: '—' },
+      { label: 'اسم الحساب', value: '—' },
+      { label: 'IBAN', value: '—' },
     ],
     vodafone: [
-      { label: 'رقم المحفظة', value: '01XX XXX XXXX' },
-      { label: 'الاسم', value: 'محمد أحمد' },
+      { label: 'رقم المحفظة', value: '—' },
+      { label: 'الاسم', value: '—' },
     ],
   };
 
@@ -201,7 +200,7 @@ export default function ProfilePage() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [personalData, setPersonalData] = useState({ name: 'أحمد محمد', email: 'ahmed@example.com', phone: '+966 5XX XXX XXX', country: 'السعودية' });
+  const [personalData, setPersonalData] = useState({ name: '', email: '', phone: '', country: '' });
   const [personalSaved, setPersonalSaved] = useState(false);
   const [profile, setProfile] = useState<{ name: string; email: string; phone?: string; balance?: string }>({ name: '', email: '' });
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
@@ -211,14 +210,7 @@ export default function ProfilePage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const transactions = [
-    { id: '#WC-4821', type: 'شحن', amount: '+$50.00', method: 'Binance', date: '2026-02-13', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#WC-4820', type: 'شراء', amount: '-$12.00', method: 'Sigma Plus', date: '2026-02-12', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#WC-4819', type: 'شحن', amount: '+$25.00', method: 'PayPal', date: '2026-02-10', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#WC-4818', type: 'شراء', amount: '-$8.99', method: 'PUBG UC', date: '2026-02-09', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#WC-4817', type: 'شحن', amount: '+$100.00', method: 'تحويل بنكي', date: '2026-02-07', status: 'قيد المراجعة', statusColor: '#f59e0b', statusBg: '#fef3c7' },
-    { id: '#WC-4816', type: 'استرجاع', amount: '+$2.50', method: 'فحص IMEI', date: '2026-02-05', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-  ];
+  const transactions: { id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[] = [];
 
   // Check if already logged in
   useEffect(() => {
@@ -370,7 +362,7 @@ export default function ProfilePage() {
 
   // ─── Wallet Sub-View ───
   if (view === 'wallet') {
-    const displayBalance = profile.balance || '$125.50';
+    const displayBalance = profile.balance || '$0.00';
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem 1rem' }}>
         <button onClick={() => setView('menu')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: currentTheme.primary, fontSize: '0.88rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif', marginBottom: 20, padding: 0 }}>
@@ -391,9 +383,9 @@ export default function ProfilePage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
           {[
-            { label: 'إجمالي الشحن', value: '$175.00', color: '#22c55e' },
-            { label: 'إجمالي الشراء', value: '$49.49', color: '#f59e0b' },
-            { label: 'المسترجع', value: '$2.50', color: '#3b82f6' },
+            { label: 'إجمالي الشحن', value: '$0.00', color: '#22c55e' },
+            { label: 'إجمالي الشراء', value: '$0.00', color: '#f59e0b' },
+            { label: 'المسترجع', value: '$0.00', color: '#3b82f6' },
           ].map((s, i) => (
             <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '1rem 0.75rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
               <p style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color }}>{s.value}</p>
@@ -487,9 +479,9 @@ export default function ProfilePage() {
   }
 
   // ─── Main Menu (Demo-style: 8 items) ───
-  const displayName = profile.name || personalData.name;
-  const displayEmail = profile.email || personalData.email;
-  const displayBalance = profile.balance || '$125.50';
+  const displayName = profile.name || personalData.name || 'مستخدم';
+  const displayEmail = profile.email || personalData.email || '';
+  const displayBalance = profile.balance || '$0.00';
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
@@ -533,16 +525,13 @@ export default function ProfilePage() {
           { icon: <CreditCard size={18} />, label: 'شحن الرصيد', color: '#f59e0b', action: () => setShowWalletModal(true) },
           { icon: <ShoppingCart size={18} />, label: 'طلباتي', color: '#8b5cf6', action: () => {} },
           { icon: <Shield size={18} />, label: 'التحقق من الهوية', color: '#06b6d4', action: () => setView('security') },
-          { icon: <Bell size={18} />, label: 'الإشعارات', color: '#8b5cf6', action: () => {}, badge: 3 },
+          { icon: <Bell size={18} />, label: 'الإشعارات', color: '#8b5cf6', action: () => {} },
           { icon: <Settings size={18} />, label: 'الإعدادات', color: '#64748b', action: () => {} },
           { icon: <LogOut size={18} />, label: 'تسجيل الخروج', color: '#ef4444', action: handleLogout },
         ].map((item, i) => (
           <button key={i} onClick={item.action} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem', background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9', cursor: 'pointer', width: '100%', fontFamily: 'Tajawal, sans-serif', textAlign: 'right' }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center' }}>{item.icon}</div>
             <span style={{ fontSize: '0.88rem', fontWeight: 600, color: item.color === '#ef4444' ? '#ef4444' : '#0b1020', flex: 1 }}>{item.label}</span>
-            {'badge' in item && item.badge && (
-              <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>{item.badge}</span>
-            )}
             <ChevronLeft size={16} color="#cbd5e1" />
           </button>
         ))}

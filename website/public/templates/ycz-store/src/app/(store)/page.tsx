@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Zap, Shield, DollarSign, Headphones, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
-import { MOCK_PRODUCTS, STEPS_DATA, FAQ_DATA } from '@/lib/mockData';
+import { STEPS_DATA } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
 
@@ -15,9 +15,9 @@ function HeroBanner() {
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const banners = [
-    { title: 'عروض حصرية 🔥', subtitle: 'خصم 30% على جميع الخدمات', desc: 'لفترة محدودة — لا تفوّت الفرصة!', gradient: `linear-gradient(135deg, ${currentTheme.primary} 0%, ${currentTheme.accent} 100%)` },
-    { title: 'أدوات احترافية ⚡', subtitle: 'Sigma Plus متوفر الآن', desc: 'أسرع أداة لفتح قفل الهواتف', gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' },
-    { title: 'شحن فوري 🎮', subtitle: 'PUBG Mobile UC', desc: 'شحن فوري لجميع الألعاب بأسعار منافسة', gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)' },
+    { title: 'مرحباً بك 👋', subtitle: 'متجرك الإلكتروني جاهز', desc: 'أضف منتجاتك وابدأ البيع الآن', gradient: `linear-gradient(135deg, ${currentTheme.primary} 0%, ${currentTheme.accent} 100%)` },
+    { title: 'خدمات متنوعة ⚡', subtitle: 'كل ما تحتاجه في مكان واحد', desc: 'تصفح الخدمات واطلب بسهولة', gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' },
+    { title: 'دعم فني 🛡️', subtitle: 'نحن هنا لمساعدتك', desc: 'فريق دعم متاح على مدار الساعة', gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)' },
   ];
 
   useEffect(() => {
@@ -80,7 +80,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
 // ─── الصفحة الرئيسية ───
 export default function HomePage() {
   const { currentTheme } = useTheme();
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,6 +107,12 @@ export default function HomePage() {
         <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>جاري التحميل...</div>
+          ) : products.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+              <p style={{ fontSize: '2rem', marginBottom: 8 }}>📦</p>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 4 }}>لا توجد منتجات بعد</p>
+              <p style={{ fontSize: '0.8rem' }}>سيتم عرض المنتجات هنا بعد إضافتها من لوحة التحكم</p>
+            </div>
           ) : (
             products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
           )}
@@ -116,7 +122,7 @@ export default function HomePage() {
       {/* كيف تطلب */}
       <section style={{ marginBottom: '3rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>كيف تطلب؟</h3>
-        <div className="store-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        <div className="store-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {STEPS_DATA.map((step, i) => (
             <div key={i} style={{ textAlign: 'center', padding: '1.5rem 1rem', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ fontSize: '2rem', marginBottom: 10 }}>{step.icon}</div>
@@ -131,7 +137,7 @@ export default function HomePage() {
       {/* لماذا نحن */}
       <section style={{ marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>لماذا نحن؟</h3>
-        <div className="store-about-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        <div className="store-about-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {[
             { icon: <Zap size={24} />, title: 'تنفيذ سريع', desc: 'طلباتك تُنفَّذ خلال دقائق', color: '#f59e0b' },
             { icon: <Shield size={24} />, title: 'حماية بياناتك', desc: 'تشفير SSL وحماية متقدمة', color: '#3b82f6' },
