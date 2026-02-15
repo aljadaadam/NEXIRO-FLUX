@@ -104,6 +104,17 @@ class Payment {
     return rows[0] || null;
   }
 
+  // ─── بحث بالـ external_id بدون site_key (للـ webhooks) ───
+  static async findByExternalIdGlobal(externalId) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const [rows] = await pool.query(
+      'SELECT * FROM payments WHERE external_id = ? LIMIT 1',
+      [externalId]
+    );
+    return rows[0] || null;
+  }
+
   // ─── تحديث metadata ───
   static async updateMeta(id, site_key, newMeta) {
     const pool = getPool();

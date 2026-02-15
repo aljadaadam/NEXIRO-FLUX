@@ -39,6 +39,22 @@ class PaymentGateway {
     }));
   }
 
+  // ─── جلب بوابة بالنوع و site_key ───
+  static async findByType(type, site_key) {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      'SELECT * FROM payment_gateways WHERE type = ? AND site_key = ? AND is_enabled = 1 LIMIT 1',
+      [type, site_key]
+    );
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      ...r,
+      config: typeof r.config === 'string' ? JSON.parse(r.config) : r.config,
+      countries: typeof r.countries === 'string' ? JSON.parse(r.countries) : r.countries,
+    };
+  }
+
   // ─── جلب بوابة بالـ ID ───
   static async findById(id, site_key) {
     const pool = getPool();

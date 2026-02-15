@@ -106,7 +106,8 @@ async function initCheckout(req, res) {
         let binanceReturnUrl = req.body.return_url || `${frontendUrl}/checkout/success`;
         // Replace placeholder with actual payment ID
         binanceReturnUrl = binanceReturnUrl.replace('__PAYMENT_ID__', payment.id);
-        const binanceWebhookUrl = `${req.protocol}://${req.get('host')}/api/checkout/webhooks/binance`;
+        const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+        const binanceWebhookUrl = `${backendUrl}/api/checkout/webhooks/binance`;
         const order = await binance.createOrder({
           amount,
           currency: 'USDT',
@@ -304,16 +305,40 @@ async function binanceWebhook(req, res) {
       return res.json({ returnCode: 'SUCCESS', returnMessage: 'No trade number' });
     }
 
-    // البحث عن الدفعة بالـ external_id
-    const payment = await Payment.findByExternalId(merchantTradeNo, getSiteKey(req));
+    // البحث عن الدفعة بالـ external_id (بدون site_key لأن الطلب من Binance)
+    const payment = await Payment.findByExternalIdGlobal(merchantTradeNo);
     if (!payment) {
       console.warn('Binance Webhook: payment not found for', merchantTradeNo);
       return res.json({ returnCode: 'SUCCESS', returnMessage: 'Not found' });
     }
 
+    const siteKey = payment.site_key;
+
+    // ─── التحقق من توقيع Binance Webhook ───
+    const signature = req.headers['binancepay-signature'];
+    const timestamp = req.headers['binancepay-timestamp'];
+    const nonce = req.headers['binancepay-nonce'];
+
+    if (!signature || !timestamp || !nonce) {
+      console.warn('Binance Webhook: missing signature headers');
+      return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Missing signature' });
+    }
+
+    const binanceGateway = await PaymentGateway.findByType('binance', siteKey);
+    if (binanceGateway?.config) {
+      const binance = new BinancePayProcessor(binanceGateway.config);
+      const isValid = binance.verifyWebhook(timestamp, nonce, req.body, signature);
+      if (!isValid) {
+        console.warn('Binance Webhook: invalid signature for payment', payment.id);
+        return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Invalid signature' });
+      }
+    } else {
+      console.warn('Binance Webhook: no gateway config found for site', siteKey);
+    }
+
     if (webhookData.status === 'PAID') {
-      await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
-      await Payment.updateMeta(payment.id, getSiteKey(req), {
+      await Payment.updateStatus(payment.id, siteKey, 'completed');
+      await Payment.updateMeta(payment.id, siteKey, {
         binance_transaction_id: webhookData.transactionId,
         paid_amount: webhookData.totalFee,
         paid_at: new Date().toISOString(),
@@ -321,7 +346,7 @@ async function binanceWebhook(req, res) {
 
       // بريد إيصال الدفع
       try {
-        const meta = await Payment.getMeta(payment.id, getSiteKey(req));
+        const meta = await Payment.getMeta(payment.id, siteKey);
         if (meta?.customer_email) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
@@ -331,12 +356,12 @@ async function binanceWebhook(req, res) {
         }
       } catch (e) { /* ignore */ }
 
-      console.log(`✅ Binance payment confirmed: #${payment.id}`);
+      console.log(`Binance payment confirmed: #${payment.id}`);
     }
 
     return res.json({ returnCode: 'SUCCESS', returnMessage: 'OK' });
   } catch (error) {
-    console.error('❌ Binance webhook error:', error);
+    console.error('Binance webhook error:', error);
     return res.json({ returnCode: 'FAIL', returnMessage: error.message });
   }
 }
