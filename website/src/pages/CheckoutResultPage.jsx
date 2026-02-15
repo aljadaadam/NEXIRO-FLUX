@@ -58,7 +58,7 @@ export default function CheckoutResultPage({ type = 'success' }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           {type === 'success' ? (
             <Link
-              to={`/setup?payment_ref=${paymentId || ''}&template=${params.get('template') || ''}&plan=${params.get('plan') || ''}`}
+              to={`/setup?payment_ref=${paymentId || ''}&template=${params.get('template') || ''}&plan=${params.get('plan') || ''}&payment_status=success`}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg transition-all"
             >
               {isRTL ? 'متابعة إعداد الموقع →' : 'Continue to Site Setup →'}

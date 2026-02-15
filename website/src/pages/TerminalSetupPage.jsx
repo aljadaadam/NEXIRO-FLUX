@@ -122,22 +122,41 @@ export default function TerminalSetupPage() {
       .finally(() => setGatewaysLoading(false));
   }, []);
 
-  // ─── Detect return from PayPal / Binance redirect ───
+  // ─── Detect return from Buy Page (payment already done) ───
   useEffect(() => {
     const paymentStatus = searchParams.get('payment_status');
     const paymentId = searchParams.get('payment_id');
     const returnedGateway = searchParams.get('gateway');
+    const urlPurchaseCode = searchParams.get('purchase_code');
 
     // Restore gateway type from URL so payment_method is correct in runBuild
     if (returnedGateway) {
       setSelectedGateway(prev => prev || { type: returnedGateway, name: returnedGateway });
     }
 
-    if (paymentStatus === 'success' && paymentId) {
+    // Purchase code from buy page
+    if (urlPurchaseCode && paymentStatus === 'success') {
+      setPurchaseCode(urlPurchaseCode);
+      setCodeVerified(true);
+      setPaymentConfirmed(true);
+      setPaymentMode('code');
+      setIntroComplete(true);
+      setPhase(2); // skip to domain
+      return;
+    }
+
+    // Gateway payment success from buy page
+    if (paymentStatus === 'success' && (paymentId || searchParams.get('payment_ref'))) {
       setPaymentConfirmed(true);
       setPaymentMode('gateway');
       setIntroComplete(true);
       setPhase(2); // skip to domain after successful payment
+    } else if (paymentStatus === 'pending') {
+      // Bank transfer pending
+      setPaymentConfirmed(true);
+      setPaymentMode('gateway');
+      setIntroComplete(true);
+      setPhase(2);
     } else if (paymentStatus === 'cancelled') {
       setError(isRTL ? 'تم إلغاء عملية الدفع' : 'Payment was cancelled');
       setIntroComplete(true);
@@ -171,10 +190,11 @@ export default function TerminalSetupPage() {
     : `NEXIRO-FLUX — Site Setup System v2.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTemplate: ${templateName}\nPlan: ${plan}\n\nInitializing setup environment...`;
 
   useEffect(() => {
-    // Don't run intro if we're returning from payment redirect
+    // Don't run intro if we're returning from payment/buy page
     const paymentStatus = searchParams.get('payment_status');
     const returnedGateway = searchParams.get('gateway');
-    if (paymentStatus || returnedGateway) return;
+    const urlPurchaseCode = searchParams.get('purchase_code');
+    if (paymentStatus || returnedGateway || urlPurchaseCode) return;
     const timer = setTimeout(() => {
       setIntroComplete(true);
       setPhase(1);

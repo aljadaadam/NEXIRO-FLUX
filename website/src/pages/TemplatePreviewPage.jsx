@@ -191,7 +191,7 @@ export default function TemplatePreviewPage() {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/setup?template=${template.id}&plan=${billingCycle}`)}
+                  onClick={() => navigate(`/buy?template=${template.id}&plan=${billingCycle}`)}
                   className="btn-primary w-full text-base"
                 >
                   {t('preview.buyNow')} — ${prices[billingCycle].price}

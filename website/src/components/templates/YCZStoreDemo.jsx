@@ -260,7 +260,7 @@ export default function YCZStoreDemo() {
 
                 {/* Buy Button */}
                 <button
-                  onClick={() => navigate(`/setup?template=digital-services-store&plan=${billingCycle}`)}
+                  onClick={() => navigate(`/buy?template=digital-services-store&plan=${billingCycle}`)}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-bold text-base transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <div className="flex items-center justify-center gap-2">
