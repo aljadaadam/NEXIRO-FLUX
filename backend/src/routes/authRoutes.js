@@ -11,7 +11,9 @@ const {
   getUserPermissions,
   grantPermission,
   revokePermission,
-  getAllPermissions
+  getAllPermissions,
+  forgotPassword,
+  resetPassword
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -30,6 +32,12 @@ router.post('/login', login);
 
 // تسجيل الدخول عبر Google OAuth
 router.post('/google', googleLogin);
+
+// نسيت كلمة المرور
+router.post('/forgot-password', forgotPassword);
+
+// إعادة تعيين كلمة المرور
+router.post('/reset-password', resetPassword);
 
 // إنشاء مستخدم جديد (تتطلب توكن أدمن)
 router.post('/users', authenticateToken, createUser);

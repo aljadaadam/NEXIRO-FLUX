@@ -6,6 +6,18 @@ const { generateToken } = require('../utils/token');
 const { GOOGLE_CLIENT_ID } = require('../config/env');
 const { OAuth2Client } = require('google-auth-library');
 const emailService = require('../services/email');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+
+// In-memory reset tokens store (key: token, value: { email, site_key, expires })
+const resetTokens = new Map();
+// Cleanup expired tokens every 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, data] of resetTokens) {
+    if (data.expires < now) resetTokens.delete(token);
+  }
+}, 15 * 60 * 1000);
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -572,6 +584,113 @@ async function googleLogin(req, res) {
   }
 }
 
+// ─── نسيت كلمة المرور ───
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'البريد الإلكتروني مطلوب', errorEn: 'Email is required' });
+    }
+
+    const site_key = req.siteKey || req.site?.site_key;
+    if (!site_key) {
+      return res.status(400).json({ error: 'لم يتم تحديد الموقع', errorEn: 'Site not identified' });
+    }
+
+    const user = await User.findByEmailAndSite(email.toLowerCase().trim(), site_key);
+
+    // Always respond with success (don't reveal if email exists)
+    if (!user) {
+      return res.json({
+        message: 'إذا كان البريد مسجلاً لدينا، سيتم إرسال رابط إعادة تعيين كلمة المرور',
+        messageEn: 'If this email is registered, a password reset link will be sent'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    resetTokens.set(resetToken, {
+      email: user.email,
+      site_key,
+      userId: user.id,
+      expires: Date.now() + 30 * 60 * 1000 // 30 minutes
+    });
+
+    // Build reset link (platform website)
+    const baseUrl = req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || 'https://nexiroflux.com';
+    const resetLink = `${baseUrl}/login?reset_token=${resetToken}`;
+
+    // Send email
+    const site = await Site.findBySiteKey(site_key);
+    const siteSettings = site?.settings ? (typeof site.settings === 'string' ? JSON.parse(site.settings) : site.settings) : null;
+
+    await emailService.sendPasswordReset({
+      to: user.email,
+      name: user.name,
+      resetLink,
+      siteSettings,
+    });
+
+    res.json({
+      message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+      messageEn: 'Password reset link has been sent to your email'
+    });
+
+  } catch (error) {
+    console.error('Error in forgotPassword:', error);
+    res.status(500).json({ error: 'حدث خطأ، حاول لاحقاً', errorEn: 'An error occurred, try again later' });
+  }
+}
+
+// ─── إعادة تعيين كلمة المرور ───
+async function resetPassword(req, res) {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'الرمز وكلمة المرور مطلوبان', errorEn: 'Token and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل', errorEn: 'Password must be at least 6 characters' });
+    }
+
+    const tokenData = resetTokens.get(token);
+    if (!tokenData) {
+      return res.status(400).json({ error: 'رابط إعادة التعيين غير صالح أو منتهي', errorEn: 'Reset link is invalid or expired' });
+    }
+
+    if (tokenData.expires < Date.now()) {
+      resetTokens.delete(token);
+      return res.status(400).json({ error: 'انتهت صلاحية رابط إعادة التعيين', errorEn: 'Reset link has expired' });
+    }
+
+    // Hash new password and update
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const pool = require('../config/db').getPool();
+    const [result] = await pool.query(
+      'UPDATE users SET password = ? WHERE id = ? AND site_key = ?',
+      [hashedPassword, tokenData.userId, tokenData.site_key]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ error: 'فشل تحديث كلمة المرور', errorEn: 'Failed to update password' });
+    }
+
+    // Remove used token
+    resetTokens.delete(token);
+
+    res.json({
+      message: 'تم إعادة تعيين كلمة المرور بنجاح',
+      messageEn: 'Password has been reset successfully'
+    });
+
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    res.status(500).json({ error: 'حدث خطأ، حاول لاحقاً', errorEn: 'An error occurred, try again later' });
+  }
+}
+
 module.exports = {
   registerAdmin,
   registerUser,
@@ -583,5 +702,7 @@ module.exports = {
   getUserPermissions,
   grantPermission,
   revokePermission,
-  getAllPermissions
+  getAllPermissions,
+  forgotPassword,
+  resetPassword
 };
