@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ShoppingBag, Package, MessageCircle, User } from 'lucide-react';
+import { Home, Package, ShoppingCart, HelpCircle, User } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 
 export default function MobileBottomNav() {
@@ -11,9 +11,9 @@ export default function MobileBottomNav() {
 
   const items = [
     { id: '/', icon: Home, label: 'الرئيسية' },
-    { id: '/services', icon: ShoppingBag, label: 'الخدمات' },
-    { id: '/orders', icon: Package, label: 'طلباتي' },
-    { id: '/support', icon: MessageCircle, label: 'الدعم' },
+    { id: '/services', icon: Package, label: 'الخدمات' },
+    { id: '/orders', icon: ShoppingCart, label: 'طلباتي' },
+    { id: '/support', icon: HelpCircle, label: 'الدعم' },
     { id: '/profile', icon: User, label: 'حسابي' },
   ];
 
