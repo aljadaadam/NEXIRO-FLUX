@@ -166,8 +166,18 @@ export default function TemplateBuyPage() {
       setCodeVerified(true);
       setCodeInfo(res);
       // After code verified, go directly to setup
+      const code = purchaseCode.trim().toUpperCase();
+      try {
+        localStorage.setItem('nexiro_pending_setup', JSON.stringify({
+          payment_id: `CODE-${code}`,
+          template_id: templateId,
+          plan: res.billing_cycle || plan,
+          paid_at: new Date().toISOString(),
+          method: 'purchase_code',
+        }));
+      } catch(e) {}
       setTimeout(() => {
-        navigate(`/setup?template=${templateId}&plan=${res.billing_cycle || plan}&purchase_code=${purchaseCode.trim().toUpperCase()}&payment_status=success`);
+        navigate(`/setup?template=${templateId}&plan=${res.billing_cycle || plan}&purchase_code=${code}&payment_status=success`);
       }, 1200);
     } catch (err) {
       setError(err.error || err.errorEn || (isRTL ? 'كود غير صالح' : 'Invalid code'));

@@ -49,20 +49,34 @@ export default function MyDashboardPage() {
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed.payment_id) {
-              // تحقق من حالة الدفعة من السيرفر
-              const paymentStatus = await api.checkPaymentStatusPublic(parsed.payment_id);
-              if (paymentStatus.status === 'completed') {
+              const isCodePayment = String(parsed.payment_id).startsWith('CODE-');
+              if (isCodePayment) {
+                // كود شراء — لا حاجة للتحقق من السيرفر
                 pending = {
                   payment_id: parsed.payment_id,
                   template_id: parsed.template_id || null,
                   plan: parsed.plan || null,
-                  amount: paymentStatus.amount || null,
-                  currency: paymentStatus.currency || 'USD',
+                  amount: null,
+                  currency: 'USD',
                   paid_at: parsed.paid_at,
+                  method: 'purchase_code',
                 };
               } else {
-                // الدفعة ليست مكتملة — حذف من localStorage
-                localStorage.removeItem('nexiro_pending_setup');
+                // دفع عبر بوابة — تحقق من حالة الدفعة
+                const paymentStatus = await api.checkPaymentStatusPublic(parsed.payment_id);
+                if (paymentStatus.status === 'completed') {
+                  pending = {
+                    payment_id: parsed.payment_id,
+                    template_id: parsed.template_id || null,
+                    plan: parsed.plan || null,
+                    amount: paymentStatus.amount || null,
+                    currency: paymentStatus.currency || 'USD',
+                    paid_at: parsed.paid_at,
+                  };
+                } else {
+                  // الدفعة ليست مكتملة — حذف من localStorage
+                  localStorage.removeItem('nexiro_pending_setup');
+                }
               }
             }
           }
@@ -138,8 +152,12 @@ export default function MyDashboardPage() {
 
   // ─── حالة: لا يوجد موقع بعد (مستخدم جديد لم يشترِ قالب) ───
   if (!site) {
+    const isCodePayment = pendingSetup?.method === 'purchase_code';
+    const codeValue = isCodePayment ? String(pendingSetup.payment_id).replace('CODE-', '') : '';
     const setupUrl = pendingSetup
-      ? `/setup?payment_ref=${pendingSetup.payment_id}&template=${pendingSetup.template_id || ''}&plan=${pendingSetup.plan || ''}&payment_status=success`
+      ? isCodePayment
+        ? `/setup?template=${pendingSetup.template_id || ''}&plan=${pendingSetup.plan || ''}&purchase_code=${codeValue}&payment_status=success`
+        : `/setup?payment_ref=${pendingSetup.payment_id}&template=${pendingSetup.template_id || ''}&plan=${pendingSetup.plan || ''}&payment_status=success`
       : null;
 
     return (
