@@ -318,6 +318,24 @@ async function provisionSite(req, res) {
       </div>`,
     }).catch(e => console.error('Admin notification email error:', e.message));
 
+    // ─── 8. إعداد Nginx + SSL تلقائياً (دومين مخصص) ───
+    let infrastructureResult = null;
+    if (domain && !domain.endsWith('.nexiroflux.com')) {
+      try {
+        const { execSync } = require('child_process');
+        const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
+        const output = execSync(`python3 ${scriptPath} ${domain}`, {
+          timeout: 150000, // 2.5 min (certbot may take time)
+          encoding: 'utf-8'
+        });
+        infrastructureResult = JSON.parse(output.trim());
+        console.log(`✅ Infrastructure provisioned for ${domain}:`, infrastructureResult);
+      } catch (infraErr) {
+        console.error(`⚠️ Infrastructure provisioning failed for ${domain} (non-blocking):`, infraErr.message);
+        infrastructureResult = { success: false, error: infraErr.message };
+      }
+    }
+
     // ─── الاستجابة ───
     res.status(201).json({
       message: 'تم إنشاء الموقع وتفعيله بنجاح!',
@@ -349,7 +367,8 @@ async function provisionSite(req, res) {
         payment_reference: finalPaymentRef,
         purchase_code: purchase_code || null,
       },
-      dashboard_url: `https://${domain}`
+      dashboard_url: `https://${domain}`,
+      infrastructure: infrastructureResult
     });
 
   } catch (error) {

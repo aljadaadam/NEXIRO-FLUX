@@ -3,16 +3,17 @@ const { encryptApiKey, decryptApiKey, apiKeyLast4 } = require('../utils/apiKeyCr
 
 class Source {
   // إنشاء مصدر جديد
-  static async create({ site_key, name, type, url, username, apiKey, profitPercentage, description }) {
+  static async create({ site_key, name, type, url, username, apiKey, profitPercentage, profitAmount, description }) {
     const pool = getPool();
 
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
     const last4 = apiKey ? apiKeyLast4(apiKey) : null;
     const profit = profitPercentage == null || profitPercentage === '' ? 0 : Number(profitPercentage);
+    const profitAmt = profitAmount == null || profitAmount === '' ? null : Number(profitAmount);
     
     const [result] = await pool.query(
-      'INSERT INTO sources (site_key, name, type, url, username, api_key, api_key_last4, profit_percentage, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [site_key, name, type, url, username || null, encryptedKey, last4, profit, description]
+      'INSERT INTO sources (site_key, name, type, url, username, api_key, api_key_last4, profit_percentage, profit_amount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [site_key, name, type, url, username || null, encryptedKey, last4, profit, profitAmt, description]
     );
     
     return this.findById(result.insertId);
@@ -40,7 +41,7 @@ class Source {
   }
 
   // تحديث مصدر
-  static async update(id, site_key, { name, type, url, username, apiKey, profitPercentage, description }) {
+  static async update(id, site_key, { name, type, url, username, apiKey, profitPercentage, profitAmount, description }) {
     const pool = getPool();
 
     // If apiKey not provided, keep existing one
@@ -60,6 +61,7 @@ class Source {
     if (url !== undefined) { updates.push('url = ?'); values.push(url); }
     if (username !== undefined) { updates.push('username = ?'); values.push(username || null); }
     if (profitPercentage !== undefined) { updates.push('profit_percentage = ?'); values.push(profit); }
+    if (profitAmount !== undefined) { updates.push('profit_amount = ?'); values.push(profitAmount == null || profitAmount === '' ? null : Number(profitAmount)); }
     if (description !== undefined) { updates.push('description = ?'); values.push(description); }
     if (apiKey !== undefined) {
       updates.push('api_key = ?'); values.push(encryptedKey);

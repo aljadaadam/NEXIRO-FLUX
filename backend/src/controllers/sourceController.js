@@ -41,8 +41,8 @@ function parseAccountInfo(raw) {
   const success = raw?.SUCCESS;
   const first = Array.isArray(success) ? success[0] : (success && typeof success === 'object' ? success : null);
 
-  // SD-Unlocker style: SUCCESS[0].AccountInfo.{mail,creditraw,credit,currency}
-  const accountInfo = first?.AccountInfo || first?.accountinfo || null;
+  // DHRU FUSION: AccoutInfo (typo in API) / AccountInfo / accountinfo
+  const accountInfo = first?.AccountInfo || first?.AccoutInfo || first?.accountinfo || null;
 
   const email =
     accountInfo?.mail ||
@@ -135,6 +135,7 @@ async function getAllSources(req, res) {
         apiKeyLast4: last4 || null,
         apiKeyMasked,
         profitPercentage: s.profit_percentage == null ? 0 : Number(s.profit_percentage),
+        profitAmount: s.profit_amount == null ? null : Number(s.profit_amount),
         productsCount: counts[String(s.id)] || 0,
         connectionStatus,
         lastConnectionOk: lastOk === null || lastOk === undefined ? null : Boolean(Number(lastOk)),
@@ -168,6 +169,7 @@ async function createSource(req, res) {
       username,
       apiKey,
       profitPercentage,
+      profitAmount,
       description
     } = req.body;
 
@@ -196,6 +198,7 @@ async function createSource(req, res) {
       username: username || null,
       apiKey: apiKey ?? null,
       profitPercentage: profitPercentage ?? 0,
+      profitAmount: profitAmount ?? null,
       description: description || ''
     });
 
@@ -242,6 +245,7 @@ async function updateSource(req, res) {
       username,
       apiKey,
       profitPercentage,
+      profitAmount,
       description
     } = req.body;
 
@@ -261,6 +265,7 @@ async function updateSource(req, res) {
       username,
       apiKey,
       profitPercentage,
+      profitAmount,
       description
     });
 
@@ -516,37 +521,53 @@ async function applyProfitToSourceProducts(req, res) {
   try {
     const { site_key } = req.user;
     const { id } = req.params;
-    const { profitPercentage } = req.body;
+    const { profitPercentage, profitAmount } = req.body;
 
     const source = await Source.findById(id);
     if (!source || source.site_key !== site_key) {
       return res.status(404).json({ error: 'المصدر غير موجود' });
     }
 
-    const newProfit = profitPercentage == null || profitPercentage === '' ? 0 : Number(profitPercentage);
-    if (Number.isNaN(newProfit) || newProfit < 0) {
+    // دعم الربح الثابت (مبلغ) أو النسبة المئوية
+    const newProfitPct = profitPercentage == null || profitPercentage === '' ? 0 : Number(profitPercentage);
+    const newProfitAmt = profitAmount == null || profitAmount === '' ? null : Number(profitAmount);
+
+    if (Number.isNaN(newProfitPct) || newProfitPct < 0) {
       return res.status(400).json({ error: 'profitPercentage غير صالح' });
     }
 
-    // Update source profit
-    await Source.update(id, site_key, { profitPercentage: newProfit });
+    // Update source profit settings
+    await Source.update(id, site_key, { profitPercentage: newProfitPct, profitAmount: newProfitAmt });
 
-    // Recompute product prices from source_price only (no compounding)
-    // BUT respect custom prices (is_custom_price = 1)
     const { getPool } = require('../config/db');
     const pool = getPool();
-    await pool.query(
-      `UPDATE products
-       SET
-         final_price = ROUND(source_price * (1 + (? / 100)), 3),
-         price = IF(is_custom_price = 1, price, ROUND(source_price * (1 + (? / 100)), 3)),
-         profit_percentage_applied = ?
-       WHERE site_key = ? AND source_id = ? AND source_price IS NOT NULL`,
-      [newProfit, newProfit, newProfit, site_key, id]
-    );
+
+    if (newProfitAmt !== null && newProfitAmt > 0) {
+      // ربح ثابت: final_price = source_price + profitAmount
+      await pool.query(
+        `UPDATE products
+         SET
+           final_price = ROUND(source_price + ?, 3),
+           price = IF(is_custom_price = 1, price, ROUND(source_price + ?, 3)),
+           profit_percentage_applied = ?
+         WHERE site_key = ? AND source_id = ? AND source_price IS NOT NULL`,
+        [newProfitAmt, newProfitAmt, newProfitPct, site_key, id]
+      );
+    } else {
+      // ربح بالنسبة المئوية: final_price = source_price * (1 + pct/100)
+      await pool.query(
+        `UPDATE products
+         SET
+           final_price = ROUND(source_price * (1 + (? / 100)), 3),
+           price = IF(is_custom_price = 1, price, ROUND(source_price * (1 + (? / 100)), 3)),
+           profit_percentage_applied = ?
+         WHERE site_key = ? AND source_id = ? AND source_price IS NOT NULL`,
+        [newProfitPct, newProfitPct, newProfitPct, site_key, id]
+      );
+    }
 
     const productsCount = await Product.countBySource(site_key, id);
-    return res.json({ success: true, productsCount, profitPercentage: newProfit });
+    return res.json({ success: true, productsCount, profitPercentage: newProfitPct, profitAmount: newProfitAmt });
   } catch (error) {
     console.error('Error in applyProfitToSourceProducts:', error);
     return res.status(500).json({ error: 'حدث خطأ أثناء تطبيق الربح' });
@@ -709,7 +730,17 @@ async function syncSourceProducts(req, res) {
 
         const sourcePrice = creditNum;
         const appliedProfit = profitPercentage;
-        const finalPrice = sourcePrice == null ? null : Number((sourcePrice * (1 + (appliedProfit / 100))).toFixed(3));
+        const profitAmt = source.profit_amount != null ? Number(source.profit_amount) : null;
+        let finalPrice;
+        if (sourcePrice == null) {
+          finalPrice = null;
+        } else if (profitAmt && profitAmt > 0) {
+          // ربح ثابت: source_price + profit_amount
+          finalPrice = Number((sourcePrice + profitAmt).toFixed(3));
+        } else {
+          // ربح بالنسبة المئوية
+          finalPrice = Number((sourcePrice * (1 + (appliedProfit / 100))).toFixed(3));
+        }
 
         await Product.upsertExternalService({
           site_key,
@@ -752,7 +783,9 @@ async function syncSourceProducts(req, res) {
     await Source.updateConnectionStatus(source.id, site_key, {
       ok: true,
       checkedAt: new Date(),
-      error: null
+      error: null,
+      balance: account.creditraw || account.credits || null,
+      currency: account.currency || null
     });
 
     return res.json({

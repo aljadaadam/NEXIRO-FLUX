@@ -375,6 +375,7 @@ async function createTables() {
     await ensureColumn('sources', 'username', 'username VARCHAR(255) NULL');
     await ensureColumn('sources', 'api_key_last4', 'api_key_last4 VARCHAR(8) NULL');
     await ensureColumn('sources', 'profit_percentage', 'profit_percentage DECIMAL(7, 3) NOT NULL DEFAULT 0');
+    await ensureColumn('sources', 'profit_amount', "profit_amount DECIMAL(12, 3) NULL COMMENT 'ربح ثابت بالدولار يُضاف على سعر المصدر'");
     await ensureColumn('sources', 'last_connection_ok', 'last_connection_ok TINYINT(1) NULL');
     await ensureColumn('sources', 'last_connection_checked_at', 'last_connection_checked_at DATETIME NULL');
     await ensureColumn('sources', 'last_connection_error', 'last_connection_error TEXT NULL');
