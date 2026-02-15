@@ -5,6 +5,7 @@ const Permission = require('../models/Permission');
 const { generateToken } = require('../utils/token');
 const { SITE_KEY, GOOGLE_CLIENT_ID } = require('../config/env');
 const { OAuth2Client } = require('google-auth-library');
+const emailService = require('../services/email');
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -52,6 +53,9 @@ async function registerAdmin(req, res) {
 
     // إنشاء التوكن
     const token = generateToken(admin.id, admin.role, SITE_KEY);
+
+    // إرسال بريد ترحيبي
+    emailService.sendWelcomeAdmin({ to: admin.email, name: admin.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
       message: 'تم إنشاء حساب الأدمن بنجاح',
@@ -124,6 +128,13 @@ async function login(req, res) {
 
     // إنشاء التوكن
     const token = generateToken(user.id, user.role, SITE_KEY);
+
+    // تنبيه تسجيل الدخول
+    emailService.sendLoginAlert({
+      to: user.email, name: user.name,
+      ip: req.ip, device: req.headers['user-agent'],
+      time: new Date().toLocaleString('ar-SA')
+    }).catch(e => console.error('Email error:', e.message));
 
     res.json({
       message: 'تم تسجيل الدخول بنجاح',
@@ -448,6 +459,11 @@ async function googleLogin(req, res) {
 
     // Generate JWT token
     const token = generateToken(user.id, user.role, SITE_KEY);
+
+    // بريد ترحيبي للمستخدمين الجدد عبر Google
+    if (isNew) {
+      emailService.sendWelcomeAdmin({ to: user.email, name: user.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
+    }
 
     res.json({
       message: isNew ? 'تم إنشاء الحساب وتسجيل الدخول بنجاح عبر Google' : 'تم تسجيل الدخول بنجاح عبر Google',

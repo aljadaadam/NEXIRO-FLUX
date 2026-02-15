@@ -4,6 +4,7 @@ const Subscription = require('../models/Subscription');
 const Customization = require('../models/Customization');
 const { generateToken } = require('../utils/token');
 const crypto = require('crypto');
+const emailService = require('../services/email');
 
 // ─── توليد site_key فريد ───
 function generateSiteKey(storeName) {
@@ -135,6 +136,15 @@ async function provisionSite(req, res) {
 
     // ─── 6. إنشاء توكن ───
     const token = generateToken(admin.id, admin.role, site_key);
+
+    // ─── 7. إرسال بريد ترحيبي + بدء تجريبية ───
+    emailService.sendSiteCreated({
+      to: owner_email, name: owner_name, siteName: store_name,
+      siteKey: site_key, domain, plan: cycle
+    }).catch(e => console.error('Email error:', e.message));
+    emailService.sendTrialStarted({
+      to: owner_email, name: owner_name, siteName: store_name, trialDays: 14
+    }).catch(e => console.error('Email error:', e.message));
 
     // ─── الاستجابة ───
     res.status(201).json({

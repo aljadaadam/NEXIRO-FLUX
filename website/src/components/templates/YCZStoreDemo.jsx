@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ShoppingCart, 
@@ -7,16 +7,35 @@ import {
   ShoppingBag, BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { templates as staticTemplates } from '../../data/templates';
+import api from '../../services/api';
 
 export default function YCZStoreDemo() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('yearly');
 
+  // Fetch real price from database
+  const staticT = staticTemplates.find(tp => tp.id === 'digital-services-store');
+  const [basePrice, setBasePrice] = useState(staticT?.price?.monthly || 39);
+
+  useEffect(() => {
+    api.getPublicProducts()
+      .then(res => {
+        const apiByName = new Map((res.products || []).map(p => [p.name?.trim(), p]));
+        const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
+        if (live) {
+          const p = parseFloat(live.price);
+          if (p > 0) setBasePrice(p);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const prices = {
-    monthly: { price: 39, suffix: isRTL ? '/شهر' : '/mo', label: isRTL ? 'شهري' : 'Monthly', save: null },
-    yearly: { price: 349, suffix: isRTL ? '/سنة' : '/yr', label: isRTL ? 'سنوي' : 'Yearly', save: isRTL ? 'وفّر 25%' : 'Save 25%' },
-    lifetime: { price: 899, suffix: '', label: isRTL ? 'مدى الحياة' : 'Lifetime', save: isRTL ? 'أفضل قيمة' : 'Best Value' },
+    monthly: { price: basePrice, suffix: isRTL ? '/شهر' : '/mo', label: isRTL ? 'شهري' : 'Monthly', save: null },
+    yearly: { price: Math.round(basePrice * 10), suffix: isRTL ? '/سنة' : '/yr', label: isRTL ? 'سنوي' : 'Yearly', save: isRTL ? 'وفّر 25%' : 'Save 25%' },
+    lifetime: { price: Math.round(basePrice * 25), suffix: '', label: isRTL ? 'مدى الحياة' : 'Lifetime', save: isRTL ? 'أفضل قيمة' : 'Best Value' },
   };
 
   const features = [

@@ -75,6 +75,15 @@ export default function SetupWizardPage() {
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
   const [paypalLoading, setPaypalLoading] = useState(false);
 
+  // Detect user's country via IP geolocation
+  const [detectedCountry, setDetectedCountry] = useState(null);
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(d => setDetectedCountry(d.country_code || null))
+      .catch(() => setDetectedCountry(null));
+  }, []);
+
   // Detect return from PayPal / Binance redirect
   useEffect(() => {
     const paymentStatus = searchParams.get('payment_status');
@@ -102,13 +111,14 @@ export default function SetupWizardPage() {
     }
   }, [searchParams]);
 
+  // Load gateways after country is detected (or failed)
   useEffect(() => {
     setGatewaysLoading(true);
-    api.getEnabledPaymentGateways()
+    api.getEnabledPaymentGateways(detectedCountry)
       .then(data => setEnabledGateways(data.gateways || []))
       .catch(() => setEnabledGateways([]))
       .finally(() => setGatewaysLoading(false));
-  }, []);
+  }, [detectedCountry]);
 
   const [form, setForm] = useState({
     // Step 0: Payment

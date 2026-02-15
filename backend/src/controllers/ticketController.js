@@ -1,6 +1,8 @@
 const Ticket = require('../models/Ticket');
+const Customer = require('../models/Customer');
 const Notification = require('../models/Notification');
 const ActivityLog = require('../models/ActivityLog');
+const emailService = require('../services/email');
 
 // جلب جميع التذاكر
 async function getAllTickets(req, res) {
@@ -51,6 +53,17 @@ async function createTicket(req, res) {
     });
 
     res.status(201).json({ message: 'تم إنشاء التذكرة', ticket });
+
+    // بريد تنبيه بالتذكرة الجديدة
+    if (customer_id) {
+      try {
+        const cust = await Customer.findById(customer_id);
+        emailService.sendNewTicketAlert({
+          to: cust?.email, ticketId: ticket.ticket_number,
+          subject, customerName: cust?.name
+        }).catch(() => {});
+      } catch (e) { /* ignore */ }
+    }
   } catch (error) {
     console.error('Error in createTicket:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء التذكرة' });
@@ -111,6 +124,18 @@ async function replyToTicket(req, res) {
         message: `تم الرد على تذكرة #${ticket.ticket_number}`,
         type: 'info'
       });
+
+      // بريد بالرد
+      try {
+        const cust = await Customer.findById(ticket.customer_id);
+        if (cust?.email) {
+          emailService.sendTicketReply({
+            to: cust.email, name: cust.name,
+            ticketId: ticket.ticket_number, message,
+            replierName: 'فريق الدعم'
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
     }
 
     res.json({ message: 'تم إضافة الرد', reply });
@@ -130,6 +155,22 @@ async function updateTicketStatus(req, res) {
     const success = await Ticket.updateStatus(id, site_key, status);
     if (!success) {
       return res.status(404).json({ error: 'التذكرة غير موجودة' });
+    }
+
+    // بريد إغلاق التذكرة
+    if (status === 'closed') {
+      try {
+        const ticket = await Ticket.findById(id);
+        if (ticket?.customer_id) {
+          const cust = await Customer.findById(ticket.customer_id);
+          if (cust?.email) {
+            emailService.sendTicketClosed({
+              to: cust.email, name: cust.name,
+              ticketId: ticket.ticket_number
+            }).catch(() => {});
+          }
+        }
+      } catch (e) { /* ignore */ }
     }
 
     res.json({ message: 'تم تحديث حالة التذكرة' });

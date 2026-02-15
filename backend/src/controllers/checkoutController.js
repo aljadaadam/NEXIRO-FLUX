@@ -9,6 +9,7 @@ const PayPalProcessor = require('../services/paypal');
 const BinancePayProcessor = require('../services/binancePay');
 const USDTProcessor = require('../services/usdt');
 const { SITE_KEY } = require('../config/env');
+const emailService = require('../services/email');
 
 // ─── بدء عملية الدفع ───
 async function initCheckout(req, res) {
@@ -208,6 +209,18 @@ async function paypalCallback(req, res) {
         captured_at: new Date().toISOString(),
       });
 
+      // بريد إيصال الدفع
+      try {
+        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        if (meta?.customer_email) {
+          emailService.sendPaymentReceipt({
+            to: meta.customer_email, name: meta.customer_name,
+            amount: capture.amount || payment.amount, currency: 'USD',
+            method: 'PayPal', transactionId: capture.transactionId
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+
       // ✅ إعادة توجيه لصفحة نجاح
       const frontendReturn = req.query.frontend_return;
       if (frontendReturn) {
@@ -218,6 +231,19 @@ async function paypalCallback(req, res) {
       return res.redirect(`${frontendUrl}/checkout/success?payment_id=${payment.id}`);
     } else {
       await Payment.updateStatus(payment.id, SITE_KEY, 'failed');
+
+      // بريد فشل الدفع
+      try {
+        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        if (meta?.customer_email) {
+          emailService.sendPaymentFailed({
+            to: meta.customer_email, name: meta.customer_name,
+            amount: payment.amount, currency: payment.currency,
+            reason: 'PayPal capture failed'
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+
       const frontendReturn = req.query.frontend_return;
       if (frontendReturn) {
         const sep = frontendReturn.includes('?') ? '&' : '?';
@@ -284,6 +310,19 @@ async function binanceWebhook(req, res) {
         paid_amount: webhookData.totalFee,
         paid_at: new Date().toISOString(),
       });
+
+      // بريد إيصال الدفع
+      try {
+        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        if (meta?.customer_email) {
+          emailService.sendPaymentReceipt({
+            to: meta.customer_email, name: meta.customer_name,
+            amount: webhookData.totalFee || payment.amount, currency: 'USDT',
+            method: 'Binance Pay', transactionId: webhookData.transactionId
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+
       console.log(`✅ Binance payment confirmed: #${payment.id}`);
     }
 
@@ -327,6 +366,19 @@ async function checkUsdtPayment(req, res) {
         confirmed_amount: result.amount,
         confirmed_at: new Date().toISOString(),
       });
+
+      // بريد إيصال USDT
+      try {
+        const meta = await Payment.getMeta(payment.id, SITE_KEY);
+        if (meta?.customer_email) {
+          emailService.sendPaymentReceipt({
+            to: meta.customer_email, name: meta.customer_name,
+            amount: result.amount || payment.amount, currency: 'USDT',
+            method: 'USDT', transactionId: result.transactionId
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+
       return res.json({
         confirmed: true,
         transactionId: result.transactionId,
@@ -366,6 +418,16 @@ async function uploadBankReceipt(req, res) {
 
     // تغير الحالة إلى "بانتظار المراجعة"
     await Payment.updateStatus(payment.id, SITE_KEY, 'pending');
+
+    // تنبيه بريدي بالإيصال البنكي
+    try {
+      const meta = await Payment.getMeta(payment.id, SITE_KEY);
+      emailService.sendBankReceiptReview({
+        orderId: payment.id,
+        customerName: meta?.customer_name || 'عميل',
+        amount: payment.amount
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
 
     res.json({
       success: true,

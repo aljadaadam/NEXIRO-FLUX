@@ -2,6 +2,7 @@ const Customer = require('../models/Customer');
 const ActivityLog = require('../models/ActivityLog');
 const { generateToken } = require('../utils/token');
 const { SITE_KEY } = require('../config/env');
+const emailService = require('../services/email');
 
 // تسجيل زبون جديد
 async function registerCustomer(req, res) {
@@ -26,6 +27,9 @@ async function registerCustomer(req, res) {
     });
 
     const token = generateToken(customer.id, 'customer', SITE_KEY);
+
+    // بريد ترحيبي
+    emailService.sendWelcomeCustomer({ to: customer.email, name: customer.name, storeName: 'متجرنا' }).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
       message: 'تم إنشاء الحساب بنجاح',
@@ -113,6 +117,18 @@ async function toggleBlockCustomer(req, res) {
       return res.status(404).json({ error: 'الزبون غير موجود' });
     }
 
+    // إشعار بريدي بالحظر/إلغاء الحظر
+    try {
+      const cust = await Customer.findById(id);
+      if (cust?.email) {
+        if (blocked) {
+          emailService.sendAccountBlocked({ to: cust.email, name: cust.name }).catch(() => {});
+        } else {
+          emailService.sendAccountUnblocked({ to: cust.email, name: cust.name }).catch(() => {});
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     res.json({ message: blocked ? 'تم حظر الزبون' : 'تم إلغاء حظر الزبون' });
   } catch (error) {
     console.error('Error in toggleBlockCustomer:', error);
@@ -137,6 +153,16 @@ async function updateCustomerWallet(req, res) {
     }
 
     const customer = await Customer.findById(id);
+
+    // بريد تحديث المحفظة
+    if (customer?.email) {
+      const oldBalance = parseFloat(customer.wallet_balance) - parseFloat(amount);
+      emailService.sendWalletUpdated({
+        to: customer.email, name: customer.name,
+        oldBalance, newBalance: parseFloat(customer.wallet_balance), currency: '$'
+      }).catch(e => console.error('Email error:', e.message));
+    }
+
     res.json({ message: 'تم تحديث المحفظة', wallet_balance: customer.wallet_balance });
   } catch (error) {
     console.error('Error in updateCustomerWallet:', error);

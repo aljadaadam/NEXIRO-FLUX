@@ -3,6 +3,7 @@ const Customer = require('../models/Customer');
 const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
 const ActivityLog = require('../models/ActivityLog');
+const emailService = require('../services/email');
 
 // جلب جميع الطلبات (أدمن)
 async function getAllOrders(req, res) {
@@ -82,6 +83,18 @@ async function createOrder(req, res) {
       details: { product_name, total_price, payment_method }
     });
 
+    // بريد تأكيد الطلب للزبون + تنبيه للأدمن
+    try {
+      const cust = await Customer.findById(customer_id);
+      if (cust?.email) {
+        emailService.sendOrderConfirmation({
+          to: cust.email, name: cust.name, orderId: order.order_number,
+          items: [{ name: product_name, quantity: qty, price: parseFloat(unit_price) }],
+          total: total_price, currency: 'USD'
+        }).catch(() => {});
+      }
+    } catch (e) { /* ignore */ }
+
     res.status(201).json({ message: 'تم إنشاء الطلب بنجاح', order });
   } catch (error) {
     console.error('Error in createOrder:', error);
@@ -113,6 +126,17 @@ async function updateOrderStatus(req, res) {
         message: `تم تحديث حالة طلبك #${order.order_number} إلى: ${status}`,
         type: 'order'
       });
+
+      // بريد تحديث الطلب
+      try {
+        const cust = await Customer.findById(order.customer_id);
+        if (cust?.email) {
+          emailService.sendOrderStatusUpdate({
+            to: cust.email, name: cust.name,
+            orderId: order.order_number, status
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
     }
 
     // استرجاع المبلغ في حالة الإلغاء
