@@ -78,7 +78,7 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
   const serviceTypeIcons: Record<string, string> = { IMEI: '📱', SERVER: '🔧', REMOTE: '🖥️', FILE: '📁', CODE: '🔑' };
   const serviceTypeCategories: Record<string, string> = {
     IMEI: 'خدمات IMEI',
-    SERVER: 'منتجات سوفت وير',
+    SERVER: 'أدوات سوفتوير',
     REMOTE: 'ريموت',
     FILE: 'ملفات',
     CODE: 'أكواد',

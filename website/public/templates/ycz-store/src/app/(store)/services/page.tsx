@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, X, CheckCircle } from 'lucide-react';
+import { Search, X, CheckCircle, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
@@ -62,6 +62,8 @@ export default function ServicesPage() {
   const { currentTheme, buttonRadius } = useTheme();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [activeGroup, setActiveGroup] = useState('all');
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [orderProduct, setOrderProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,21 +82,59 @@ export default function ServicesPage() {
 
   const DEFAULT_CATEGORIES = [
     { id: 'all', name: 'الكل', icon: '📦' },
-    { id: 'منتجات سوفت وير', name: 'منتجات سوفت وير', icon: '🛠️' },
-    { id: 'IMEI', name: 'خدمات IMEI', icon: '📱' },
+    { id: 'أدوات سوفتوير', name: 'أدوات سوفتوير', icon: '🛠️' },
+    { id: 'خدمات IMEI', name: 'خدمات IMEI', icon: '📱' },
     { id: 'ألعاب', name: 'ألعاب', icon: '🎮' },
   ];
 
-  // دمج التصنيفات الافتراضية مع التصنيفات من المنتجات
-  const extraCats = Array.from(new Set(products.map(p => p.category)))
-    .filter(cat => !DEFAULT_CATEGORIES.some(d => d.id === cat))
-    .map(cat => ({ id: cat, name: cat, icon: '🔧' }));
-  const categories = [...DEFAULT_CATEGORIES, ...extraCats];
+  // تثبيت التصنيفات على القيم المعتمدة فقط
+  const categories = DEFAULT_CATEGORIES;
 
-  const filtered = products.filter(p => {
+  // حتى تبويب "الكل" يعرض فقط المنتجات ضمن التصنيفات المعتمدة
+  const normalizedProducts = products
+    .map((p) => {
+      const serviceType = String((p as { service_type?: string }).service_type || '').toUpperCase();
+      const rawCategory = String(p.category || '');
+
+      if (serviceType === 'IMEI' || rawCategory === 'IMEI' || rawCategory === 'خدمات IMEI') {
+        return { ...p, category: 'خدمات IMEI' };
+      }
+
+      if (serviceType === 'SERVER' || rawCategory === 'منتجات سوفت وير' || rawCategory === 'أدوات سوفتوير') {
+        return { ...p, category: 'أدوات سوفتوير' };
+      }
+
+      if (rawCategory === 'ألعاب') {
+        return { ...p, category: 'ألعاب' };
+      }
+
+      return null;
+    })
+    .filter((p): p is Product => p !== null);
+
+  const groupSourceCategory = activeCategory === 'أدوات سوفتوير' || activeCategory === 'خدمات IMEI'
+    ? activeCategory
+    : '';
+
+  const availableGroups = groupSourceCategory
+    ? Array.from(new Set(
+      normalizedProducts
+        .filter((p) => p.category === groupSourceCategory)
+        .map((p) => String(p.group_name || '').trim())
+        .filter((g) => g.length > 0)
+    ))
+    : [];
+
+  useEffect(() => {
+    setActiveGroup('all');
+    setGroupsOpen(false);
+  }, [activeCategory]);
+
+  const filtered = normalizedProducts.filter(p => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
+    const matchGroup = activeGroup === 'all' || String(p.group_name || '').trim() === activeGroup;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.category.includes(search);
-    return matchCat && matchSearch;
+    return matchCat && matchGroup && matchSearch;
   });
 
   return (
@@ -121,9 +161,68 @@ export default function ServicesPage() {
       </div>
 
       {/* Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.65rem 1rem', borderRadius: 12, background: '#fff', border: '1px solid #e2e8f0', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.65rem 1rem', borderRadius: 12, background: '#fff', border: '1px solid #e2e8f0', marginBottom: 20, position: 'relative' }}>
         <Search size={16} color="#94a3b8" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث في الخدمات..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', color: '#0b1020', background: 'transparent' }} />
+
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setGroupsOpen((v) => !v)}
+            disabled={!groupSourceCategory}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '0.45rem 0.7rem', borderRadius: 8,
+              border: '1px solid #e2e8f0', background: '#fff',
+              color: groupSourceCategory ? '#334155' : '#94a3b8',
+              cursor: groupSourceCategory ? 'pointer' : 'not-allowed',
+              fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+              minWidth: 140, justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {activeGroup === 'all' ? 'اختر الجروب' : activeGroup}
+            </span>
+            <ChevronDown size={14} />
+          </button>
+
+          {groupsOpen && groupSourceCategory && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', left: 0,
+              width: '100%', minWidth: 220, background: '#fff', border: '1px solid #e2e8f0',
+              borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', zIndex: 20,
+              maxHeight: 260, overflowY: 'auto',
+            }}>
+              <button
+                onClick={() => { setActiveGroup('all'); setGroupsOpen(false); }}
+                style={{
+                  width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === 'all' ? '#f8fafc' : '#fff',
+                  fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                }}
+              >
+                كل الجروبات
+              </button>
+
+              {availableGroups.length === 0 ? (
+                <div style={{ padding: '0.7rem 0.8rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  لا توجد جروبات ضمن هذا التصنيف
+                </div>
+              ) : (
+                availableGroups.map((group) => (
+                  <button
+                    key={group}
+                    onClick={() => { setActiveGroup(group); setGroupsOpen(false); }}
+                    style={{
+                      width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === group ? '#f8fafc' : '#fff',
+                      fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                    }}
+                  >
+                    {group}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Products */}
