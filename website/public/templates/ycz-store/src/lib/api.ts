@@ -90,13 +90,29 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     }
     if (typeof field === 'object') {
       const f = field as Record<string, unknown>;
-      const label = String(f.label || f.title || f.name || f.key || f.field || `حقل ${index + 1}`).trim();
-      const key = String(f.key || f.name || f.field || f.id || `field_${index + 1}`).trim();
+      const label = String(
+        f.label ||
+        f.fieldname ||
+        f.title ||
+        f.name ||
+        f.key ||
+        f.field ||
+        f.description ||
+        `حقل ${index + 1}`
+      ).trim();
+      const rawKey = String(f.key || f.fieldname || f.name || f.field || f.id || `field_${index + 1}`).trim();
+      const key = rawKey.replace(/\s+/g, '_');
+      const requiredValue = f.required;
+      const required =
+        requiredValue === undefined
+          ? true
+          : ['1', 'true', 'on', 'yes'].includes(String(requiredValue).toLowerCase());
+
       return {
         key,
         label,
-        placeholder: String(f.placeholder || `أدخل ${label}`),
-        required: f.required === undefined ? true : Boolean(f.required),
+        placeholder: String(f.placeholder || f.description || `أدخل ${label}`),
+        required,
       };
     }
     return null;
@@ -118,7 +134,9 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     ? requiresCustom
     : (requiresCustom && typeof requiresCustom === 'object' && Array.isArray((requiresCustom as Record<string, unknown>).fields))
       ? ((requiresCustom as Record<string, unknown>).fields as unknown[])
-      : [];
+      : (requiresCustom && typeof requiresCustom === 'object')
+        ? Object.values(requiresCustom as Record<string, unknown>)
+        : [];
   const customFields = rawFieldList
     .map(normalizeFieldDef)
     .filter((f): f is ProductCustomField => Boolean(f));
