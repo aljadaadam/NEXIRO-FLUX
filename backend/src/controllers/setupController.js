@@ -272,7 +272,7 @@ async function getMySite(req, res) {
 async function updateSiteSettings(req, res) {
   try {
     const { site_key } = req.user;
-    const { store_name, domain_slug, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from } = req.body;
+    const { store_name, domain_slug, custom_domain: newCustomDomain, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from } = req.body;
 
     const site = await Site.findBySiteKey(site_key);
     if (!site) {
@@ -288,7 +288,24 @@ async function updateSiteSettings(req, res) {
       values.push(store_name);
     }
 
-    if (domain_slug) {
+    // تحديث الدومين المخصص (الحقيقي)
+    if (newCustomDomain) {
+      const cleanDomain = newCustomDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+      const existingDomain = await Site.findByAnyDomain(cleanDomain);
+      if (existingDomain && existingDomain.site_key !== site_key) {
+        return res.status(400).json({ error: 'هذا الدومين مستخدم بالفعل', errorEn: 'This domain is already in use' });
+      }
+      updates.push('domain = ?');
+      values.push(cleanDomain);
+      updates.push('custom_domain = ?');
+      values.push(cleanDomain);
+      updates.push('dns_verified = 0');
+      // Clear tenant cache
+      const { clearDomainCache } = require('../middlewares/resolveTenant');
+      if (site.domain) clearDomainCache(site.domain);
+      if (site.custom_domain) clearDomainCache(site.custom_domain);
+    } else if (domain_slug) {
+      // Fallback: subdomain style (legacy)
       const newDomain = `${domain_slug.toLowerCase().replace(/[^a-z0-9-]/g, '')}.nexiroflux.com`;
       const existingDomain = await Site.findByDomain(newDomain);
       if (existingDomain && existingDomain.site_key !== site_key) {
@@ -360,13 +377,16 @@ async function updateCustomDomain(req, res) {
       message: 'تم تحديث الدومين المخصص بنجاح',
       site,
       dns_instructions: {
-        type: 'CNAME',
-        name: domain,
-        value: 'nexiroflux.com',
-        note: 'أضف سجل CNAME في إعدادات DNS لدومينك يشير إلى nexiroflux.com',
+        type: 'A',
+        name: '@',
+        value: '154.56.60.195',
+        note: 'أضف سجل A في إعدادات DNS لدومينك يشير إلى IP سيرفر NEXIRO-FLUX',
+        noteEn: 'Add an A record in your domain DNS settings pointing to NEXIRO-FLUX server IP',
         alternative: {
-          type: 'A',
-          note: 'أو أضف سجل A يشير إلى IP سيرفر NEXIRO-FLUX'
+          type: 'CNAME',
+          name: '@',
+          value: 'nexiroflux.com',
+          note: 'أو أضف سجل CNAME يشير إلى nexiroflux.com'
         }
       }
     });
@@ -407,6 +427,7 @@ async function verifyDomainDNS(req, res) {
     }
 
     const dns = require('dns').promises;
+    const SERVER_IP = '154.56.60.195'; // VPS IP where backend runs
     let verified = false;
     let dnsResult = {};
 
@@ -422,13 +443,16 @@ async function verifyDomainDNS(req, res) {
       try {
         const addresses = await dns.resolve4(site.custom_domain);
         dnsResult.a_records = addresses;
-        // We can't fully verify A records without knowing our server IP,
-        // but we'll mark as verified if records exist
-        if (addresses.length > 0) {
+        // Verify A record points to our VPS
+        if (addresses.includes(SERVER_IP)) {
           verified = true;
+        } else {
+          dnsResult.expected_ip = SERVER_IP;
+          dnsResult.note = `A record يشير إلى ${addresses.join(', ')} بدلاً من ${SERVER_IP}`;
         }
       } catch (e2) {
         dnsResult.error = 'لم يتم العثور على سجلات DNS للدومين';
+        dnsResult.errorEn = 'No DNS records found for this domain';
       }
     }
 
@@ -442,9 +466,13 @@ async function verifyDomainDNS(req, res) {
       domain: site.custom_domain,
       verified,
       dns: dnsResult,
+      server_ip: SERVER_IP,
       message: verified 
         ? '✅ تم التحقق من DNS بنجاح! الدومين جاهز للاستخدام' 
-        : '❌ لم يتم التحقق من DNS. تأكد من إعداد CNAME يشير إلى nexiroflux.com'
+        : `❌ لم يتم التحقق من DNS. تأكد من إعداد سجل A يشير إلى ${SERVER_IP} أو CNAME يشير إلى nexiroflux.com`,
+      messageEn: verified
+        ? '✅ DNS verified successfully! Domain is ready to use'
+        : `❌ DNS not verified. Make sure A record points to ${SERVER_IP} or CNAME points to nexiroflux.com`
     });
   } catch (error) {
     console.error('Error in verifyDomainDNS:', error);

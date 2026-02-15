@@ -436,7 +436,9 @@ export default function TerminalSetupPage() {
 
                 <div className="bg-[#161b22] rounded-xl p-4 border border-white/5 mt-2 space-y-3">
                   <p className="text-yellow-400 text-xs font-bold mb-2">
-                    {isRTL ? '⚠️ مطلوب: أضف سجل DNS التالي في مزود الدومين:' : '⚠️ Required: Add this DNS record at your domain provider:'}
+                    {isRTL 
+                      ? `⚠️ مطلوب: أضف سجل DNS التالي في لوحة تحكم الدومين (${fullDomain}):` 
+                      : `⚠️ Required: Add this DNS record in your domain panel (${fullDomain}):`}
                   </p>
                   
                   <div className="grid grid-cols-3 gap-2 text-xs">
