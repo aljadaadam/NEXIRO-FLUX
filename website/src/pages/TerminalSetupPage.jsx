@@ -59,8 +59,8 @@ export default function TerminalSetupPage() {
     domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال magicdesign3.com' : 'Enter your domain e.g. magicdesign3.com',
     domainHint: isRTL ? 'وجّه الدومين إلى IP: 154.56.60.195 (سجل A)' : 'Point your domain to IP: 154.56.60.195 (A record)',
     checkDns: isRTL ? 'تحقق من DNS' : 'Check DNS',
-    skipDns: isRTL ? 'تخطي (سأضبطه لاحقاً)' : "Skip (I'll set it up later)",
     dnsOk: isRTL ? '✓ تم التحقق من DNS بنجاح' : '✓ DNS verified successfully',
+    dnsRequired: isRTL ? 'يجب التحقق من DNS أولاً' : 'DNS verification is required',
     accountTitle: isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account',
     accountSub: isRTL ? 'هذا الحساب سيكون لإدارة موقعك' : 'This account will manage your site',
     nameLabel: isRTL ? 'الاسم الكامل' : 'Full Name',
@@ -198,6 +198,7 @@ export default function TerminalSetupPage() {
     switch (step) {
       case 0:
         if (!domain.trim()) { setError(t.required); return false; }
+        if (!dnsVerified) { setError(t.dnsRequired); return false; }
         return true;
       case 1:
         if (!ownerName.trim()) { setError(t.required); return false; }
@@ -280,27 +281,18 @@ export default function TerminalSetupPage() {
               <p className="text-gray-600 text-xs text-center">{t.domainHint}</p>
 
               {domain.trim() && !dnsVerified && (
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    onClick={checkDNS}
-                    disabled={dnsChecking}
-                    className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
-                  >
-                    {dnsChecking ? (
-                      <span className="flex items-center gap-2">
-                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4" strokeDashoffset="10" /></svg>
-                        {t.checking}
-                      </span>
-                    ) : t.checkDns}
-                  </button>
-                  <span className="text-gray-700">|</span>
-                  <button
-                    onClick={() => { setError(''); setStep(1); }}
-                    className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                  >
-                    {t.skipDns}
-                  </button>
-                </div>
+                <button
+                  onClick={checkDNS}
+                  disabled={dnsChecking}
+                  className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50 mx-auto block"
+                >
+                  {dnsChecking ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4" strokeDashoffset="10" /></svg>
+                      {t.checking}
+                    </span>
+                  ) : t.checkDns}
+                </button>
               )}
 
               {dnsVerified && (
