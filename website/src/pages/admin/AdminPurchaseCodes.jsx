@@ -30,6 +30,7 @@ export default function AdminPurchaseCodes() {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [createdResult, setCreatedResult] = useState(null); // {type:'single'|'batch', codes:[...]}
 
   // Create form
   const [form, setForm] = useState({
@@ -74,7 +75,7 @@ export default function AdminPurchaseCodes() {
   const handleCreate = async () => {
     setCreating(true);
     try {
-      await api.createPurchaseCode({
+      const result = await api.createPurchaseCode({
         ...form,
         code: form.code || undefined,
         template_id: form.template_id || null,
@@ -83,6 +84,7 @@ export default function AdminPurchaseCodes() {
       });
       setShowCreate(false);
       setForm({ code: '', template_id: '', billing_cycle: 'monthly', discount_type: 'full', discount_value: 0, max_uses: 1, expires_at: '', note: '' });
+      setCreatedResult({ type: 'single', codes: [result.code] });
       fetchCodes();
     } catch (err) {
       alert(err.error || 'Failed to create code');
@@ -102,8 +104,8 @@ export default function AdminPurchaseCodes() {
       });
       setShowBatch(false);
       setBatchForm({ count: 5, prefix: 'NX', template_id: '', billing_cycle: 'monthly', discount_type: 'full', discount_value: 0, max_uses: 1, expires_at: '', note: '' });
+      setCreatedResult({ type: 'batch', codes: result.codes || [] });
       fetchCodes();
-      alert(isRTL ? result.message : result.messageEn);
     } catch (err) {
       alert(err.error || 'Failed to create batch');
     } finally {
@@ -566,6 +568,86 @@ export default function AdminPurchaseCodes() {
                 {isRTL ? `إنشاء ${batchForm.count} كود` : `Create ${batchForm.count} Codes`}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Success Modal — show generated codes ─── */}
+      {createdResult && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">
+                {isRTL ? 'تم الإنشاء بنجاح!' : 'Created Successfully!'}
+              </h3>
+              <p className="text-dark-400 text-sm mt-1">
+                {createdResult.type === 'batch'
+                  ? (isRTL ? `تم إنشاء ${createdResult.codes.length} كود` : `${createdResult.codes.length} codes generated`)
+                  : (isRTL ? 'الكود جاهز للاستخدام' : 'Code is ready to use')}
+              </p>
+            </div>
+
+            {/* Codes List */}
+            <div className="space-y-3 mb-6">
+              {createdResult.codes.map((c, i) => (
+                <div key={c.id || i} className="bg-dark-900 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <code className="text-lg font-mono font-bold text-primary-400 tracking-wider select-all">
+                      {c.code}
+                    </code>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-dark-400">
+                      <span className={`${discountLabels[c.discount_type]?.color || 'text-white'}`}>
+                        {discountLabels[c.discount_type]?.[isRTL ? 'ar' : 'en'] || c.discount_type}
+                      </span>
+                      <span>•</span>
+                      <span>{cycleLabels[c.billing_cycle]?.[isRTL ? 'ar' : 'en'] || c.billing_cycle}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(c.code);
+                      setCopiedId(`result-${c.id || i}`);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors shrink-0"
+                    title={isRTL ? 'نسخ' : 'Copy'}
+                  >
+                    {copiedId === `result-${c.id || i}`
+                      ? <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      : <Copy className="w-5 h-5 text-dark-400" />}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Copy All — for batch */}
+            {createdResult.codes.length > 1 && (
+              <button
+                onClick={() => {
+                  const allCodes = createdResult.codes.map(c => c.code).join('\n');
+                  navigator.clipboard.writeText(allCodes);
+                  setCopiedId('result-all');
+                  setTimeout(() => setCopiedId(null), 2000);
+                }}
+                className="w-full py-2.5 mb-3 bg-white/5 text-white rounded-xl text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+              >
+                {copiedId === 'result-all'
+                  ? <><CheckCircle2 className="w-4 h-4 text-emerald-400" /> {isRTL ? 'تم النسخ!' : 'Copied!'}</>
+                  : <><Copy className="w-4 h-4" /> {isRTL ? 'نسخ الكل' : 'Copy All'}</>}
+              </button>
+            )}
+
+            {/* Done */}
+            <button
+              onClick={() => setCreatedResult(null)}
+              className="w-full py-2.5 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all"
+            >
+              {isRTL ? 'تم' : 'Done'}
+            </button>
           </div>
         </div>
       )}
