@@ -51,6 +51,18 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/payment-gateways', paymentGatewayRoutes);
 app.use('/api/checkout', checkoutRoutes);
+
+// ─── Compatibility: Binance webhook legacy path ───
+// Some merchants configure webhook as /payments/binance-webhook in Binance dashboard
+// Forward it to the same handler used by /api/checkout/webhooks/binance
+try {
+  const { binanceWebhook } = require('./controllers/checkoutController');
+  app.post('/payments/binance-webhook', binanceWebhook);
+  app.post('/api/payments/binance-webhook', binanceWebhook);
+} catch (e) {
+  // ignore
+}
+
 app.use('/api/setup', setupRoutes);
 app.use('/api/purchase-codes', purchaseCodeRoutes);
 

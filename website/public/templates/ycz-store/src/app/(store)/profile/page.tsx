@@ -120,6 +120,11 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
       setPaymentId(result.paymentId);
       setCheckoutData(result);
 
+      // Store pending payment id to confirm later even if provider returns without query params
+      if (typeof window !== 'undefined' && result?.paymentId) {
+        sessionStorage.setItem('pending_payment_id', String(result.paymentId));
+      }
+
       // Handle based on payment method
       if (result.method === 'redirect' && result.redirectUrl && !result.redirectUrl.startsWith('#')) {
         // PayPal: redirect to payment page
@@ -551,8 +556,8 @@ export default function ProfilePage() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const paymentIdParam = params.get('payment_id');
-    if (!paymentIdParam) return;
-    const id = Number(paymentIdParam);
+    const fallbackId = sessionStorage.getItem('pending_payment_id');
+    const id = Number(paymentIdParam || fallbackId || '');
     if (!Number.isFinite(id) || id <= 0) return;
 
     storeApi.checkPaymentStatus(id)
@@ -560,6 +565,7 @@ export default function ProfilePage() {
         if (res?.status === 'completed') {
           loadProfile();
           if (view === 'wallet') loadPayments();
+          sessionStorage.removeItem('pending_payment_id');
         }
       })
       .catch(() => {});
