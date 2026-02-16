@@ -10,7 +10,6 @@ const ActivityLog = require('../models/ActivityLog');
 const Site = require('../models/Site');
 const PurchaseCode = require('../models/PurchaseCode');
 const { getPool } = require('../config/db');
-const { SITE_KEY: PLATFORM_SITE_KEY } = require('../config/env');
 
 // ─── مساعد: التحقق من أن المستخدم أدمن منصة ───
 function requirePlatformAdmin(req, res) {
@@ -124,8 +123,8 @@ async function getPlatformStats(req, res) {
     }
 
     const pool = getPool();
-    // استثناء موقع المنصة نفسه — فقط مواقع العملاء
-    const PK = PLATFORM_SITE_KEY;
+    // استثناء موقع المنصة نفسه — فقط مواقع العملاء (نستخدم site_key من JWT)
+    const PK = req.user.site_key;
 
     // جلب مواقع العملاء فقط (استثناء المنصة)
     const [clientSites] = await pool.query(
@@ -258,7 +257,7 @@ async function getPlatformPayments(req, res) {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let where = 'WHERE p.site_key != ?';
-    const params = [PLATFORM_SITE_KEY];
+    const params = [req.user.site_key];
     if (status && status !== 'all') {
       where += ' AND p.status = ?';
       params.push(status);
@@ -289,7 +288,7 @@ async function getPlatformPayments(req, res) {
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
       FROM payments
       WHERE site_key != ?
-    `, [PLATFORM_SITE_KEY]);
+    `, [req.user.site_key]);
 
     res.json({
       payments: payments.map(p => ({
@@ -354,7 +353,7 @@ async function getPlatformTickets(req, res) {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let where = 'WHERE t.site_key != ?';
-    const params = [PLATFORM_SITE_KEY];
+    const params = [req.user.site_key];
     if (status && status !== 'all') {
       where += ' AND t.status = ?';
       params.push(status);
@@ -383,7 +382,7 @@ async function getPlatformTickets(req, res) {
         SUM(CASE WHEN status = 'resolved' OR status = 'closed' THEN 1 ELSE 0 END) as resolved
       FROM tickets
       WHERE site_key != ?
-    `, [PLATFORM_SITE_KEY]);
+    `, [req.user.site_key]);
 
     res.json({
       tickets: tickets.map(t => ({
@@ -502,7 +501,7 @@ async function getPlatformUsers(req, res) {
 
     // مستخدمو المنصة فقط (المسجلون في موقع المنصة نفسه)
     let where = 'WHERE u.site_key = ?';
-    const params = [PLATFORM_SITE_KEY];
+    const params = [req.user.site_key];
     if (search) {
       where += ' AND (u.name LIKE ? OR u.email LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
@@ -521,7 +520,7 @@ async function getPlatformUsers(req, res) {
         SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as newToday
       FROM users
       WHERE site_key = ?
-    `, [PLATFORM_SITE_KEY]);
+    `, [req.user.site_key]);
 
     const [users] = await pool.query(
       `SELECT u.id, u.name, u.email, u.role, u.site_key, u.created_at
@@ -576,7 +575,7 @@ async function getPlatformSites(req, res) {
       LEFT JOIN subscriptions sub ON s.site_key = sub.site_key
       WHERE s.site_key != ?
       ORDER BY s.created_at DESC
-    `, [PLATFORM_SITE_KEY]);
+    `, [req.user.site_key]);
 
     res.json({ sites });
   } catch (error) {
