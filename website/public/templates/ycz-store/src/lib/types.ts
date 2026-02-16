@@ -92,11 +92,18 @@ export interface Announcement {
 }
 
 export interface PaymentGateway {
+  id: number;
+  site_key: string;
+  type: 'paypal' | 'bank_transfer' | 'usdt' | 'binance';
   name: string;
-  icon: string;
-  status: boolean;
-  fees: string;
-  desc: string;
+  name_en?: string;
+  is_enabled: boolean;
+  is_default: boolean;
+  config: Record<string, unknown>;
+  countries?: string[] | null;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ExternalSource {
