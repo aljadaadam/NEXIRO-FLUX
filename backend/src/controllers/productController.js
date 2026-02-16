@@ -84,7 +84,7 @@ async function getAllProducts(req, res) {
 async function createProduct(req, res) {
   try {
     const { site_key } = req.user;
-    const { name, arabic_name, description, service_type, category, status, image } = req.body;
+    const { name, arabic_name, description, service_type, category, status, image, group_name } = req.body;
     const rawPrice = req.body.price;
     const normalizedPrice = Number.parseFloat(String(rawPrice ?? '').replace(/[$,\s]/g, ''));
     const stockValue = req.body.stock ?? req.body.qnt;
@@ -117,6 +117,7 @@ async function createProduct(req, res) {
       status: status || 'active',
       image: image || null,
       qnt: normalizedStock,
+      group_name: group_name || null,
     });
 
     res.status(201).json({
@@ -177,6 +178,12 @@ async function updateProduct(req, res) {
     // تحويل الاتصال لمنتج آخر (يمكن null لإلغاء التحويل)
     if (linked_product_id !== undefined) {
       updateData.linked_product_id = linked_product_id === null || linked_product_id === 'null' || linked_product_id === '' ? null : parseInt(linked_product_id);
+    }
+
+    // تحديث اسم القروب
+    const group_name_val = req.body.group_name;
+    if (group_name_val !== undefined) {
+      updateData.group_name = group_name_val || null;
     }
 
     if (Object.keys(updateData).length === 0) {
