@@ -20,7 +20,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [newName, setNewName] = useState('');
   const [newArabicName, setNewArabicName] = useState('');
   const [newPrice, setNewPrice] = useState('');
-  const [newCategory, setNewCategory] = useState('');
+  const [newServiceType, setNewServiceType] = useState<'SERVER' | 'IMEI' | 'REMOTE'>('SERVER');
   const [newStock, setNewStock] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [saving, setSaving] = useState(false);
@@ -30,7 +30,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editName, setEditName] = useState('');
   const [editArabicName, setEditArabicName] = useState('');
   const [editPrice, setEditPrice] = useState('');
-  const [editCategory, setEditCategory] = useState('');
   const [editStock, setEditStock] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editStatus, setEditStatus] = useState('active');
@@ -59,14 +58,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         name: newName,
         arabic_name: newArabicName || null,
         price: Number.parseFloat(String(newPrice).replace(/[$,\s]/g, '')),
-        category: newCategory || 'عام',
         stock: parseInt(newStock) || 0,
         description: newDesc,
+        service_type: newServiceType,
         icon: '📦',
         status: 'active',
       });
       setShowAdd(false);
-      setNewName(''); setNewArabicName(''); setNewPrice(''); setNewCategory(''); setNewStock(''); setNewDesc('');
+      setNewName(''); setNewArabicName(''); setNewPrice(''); setNewStock(''); setNewDesc('');
+      setNewServiceType('SERVER');
       loadProducts(); // refresh
     } catch { /* show error */ }
     finally { setSaving(false); }
@@ -77,7 +77,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setEditName(product.name || '');
     setEditArabicName(product.arabic_name || '');
     setEditPrice(String(product.price || '').replace('$', '').trim());
-    setEditCategory(product.category || 'عام');
     setEditStock(String(product.stock || ''));
     setEditDesc(product.desc || '');
     setEditStatus((product.status || 'active') === 'نشط' ? 'active' : String(product.status || 'active'));
@@ -99,7 +98,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         name: editName,
         arabic_name: editArabicName || null,
         price: Number.parseFloat(String(editPrice).replace(/[$,\s]/g, '')),
-        category: editCategory || 'عام',
         stock: parseInt(editStock) || 0,
         description: editDesc,
         status: editStatus,
@@ -218,11 +216,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="التصنيف" value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{
+            <select value={newServiceType} onChange={e => setNewServiceType(e.target.value as 'SERVER' | 'IMEI' | 'REMOTE')} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
-              fontFamily: 'Tajawal, sans-serif', outline: 'none',
-            }} />
+              fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff',
+            }}>
+              <option value="SERVER">SERVER</option>
+              <option value="IMEI">IMEI</option>
+              <option value="REMOTE">REMOTE</option>
+            </select>
             <input placeholder="المخزون" value={newStock} onChange={e => setNewStock(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
@@ -298,7 +300,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['المنتج', 'السعر', 'التصنيف', 'المخزون', 'الحالة', 'إجراءات'].map(h => (
+                {['المنتج', 'السعر', 'النوع', 'المخزون', 'الحالة', 'إجراءات'].map(h => (
                   <th key={h} style={{
                     padding: '0.85rem 1rem', textAlign: 'right',
                     fontSize: '0.75rem', fontWeight: 700, color: '#64748b',
@@ -325,7 +327,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     <span style={{
                       padding: '0.2rem 0.6rem', borderRadius: 6,
                       background: '#f1f5f9', fontSize: '0.72rem', fontWeight: 600, color: '#64748b',
-                    }}>{p.category}</span>
+                    }}>{String(p.service_type || 'SERVER').toUpperCase()}</span>
                   </td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#334155' }}>{p.stock}</td>
                   <td style={{ padding: '0.85rem 1rem' }}>
@@ -363,15 +365,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               <input placeholder="اسم المنتج بالعربي" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
               <input placeholder="السعر" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
               <input placeholder="المخزون" value={editStock} onChange={(e) => setEditStock(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-              <input placeholder="التصنيف" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
               <input placeholder="أيقونة" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
 
               <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
                 <option value="SERVER">SERVER</option>
                 <option value="IMEI">IMEI</option>
                 <option value="REMOTE">REMOTE</option>
-                <option value="FILE">FILE</option>
-                <option value="CODE">CODE</option>
               </select>
 
               <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
