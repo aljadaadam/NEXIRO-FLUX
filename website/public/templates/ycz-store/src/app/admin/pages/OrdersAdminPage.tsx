@@ -10,7 +10,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:    { label: 'معلق', color: '#f59e0b' },
   processing: { label: 'جارٍ التنفيذ', color: '#3b82f6' },
   completed:  { label: 'مكتمل', color: '#22c55e' },
-  failed:     { label: 'مرفوض من المصدر', color: '#ef4444' },
+  failed:     { label: 'مرفوض', color: '#ef4444' },
   cancelled:  { label: 'ملغي', color: '#94a3b8' },
   refunded:   { label: 'مسترجع', color: '#8b5cf6' },
 };

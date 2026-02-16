@@ -45,6 +45,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const res = await storeApi.getOrders();
         const rawOrders = Array.isArray(res) ? res : (res?.orders && Array.isArray(res.orders) ? res.orders : []);
@@ -54,7 +55,7 @@ export default function OrdersPage() {
     }
     load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [filter]);
 
   const filters = ['all', 'completed', 'pending', 'failed', 'cancelled'];
   const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة', cancelled: 'ملغية' };
