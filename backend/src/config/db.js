@@ -386,6 +386,9 @@ async function createTables() {
     await ensureColumn('products', 'custom_json', 'custom_json JSON NULL');
     await ensureColumn('products', 'requires_custom_json', 'requires_custom_json JSON NULL');
     await ensureColumn('products', 'raw_json', 'raw_json JSON NULL');
+    await ensureColumn('products', 'is_featured', 'is_featured TINYINT(1) DEFAULT 0');
+    await ensureColumn('products', 'name_priority', "name_priority VARCHAR(5) DEFAULT 'ar'");
+    await ensureColumn('products', 'linked_product_id', 'linked_product_id INT NULL');
 
     await ensureColumn('sources', 'username', 'username VARCHAR(255) NULL');
     await ensureColumn('sources', 'api_key_last4', 'api_key_last4 VARCHAR(8) NULL');

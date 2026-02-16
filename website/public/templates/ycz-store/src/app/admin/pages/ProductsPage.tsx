@@ -163,6 +163,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       await loadProducts();
     } catch (err) {
       console.error('toggleFeatured error:', err);
+      alert('فشل تبديل حالة المنتج المميز — تأكد من أن الخادم يعمل');
     }
   }
 
