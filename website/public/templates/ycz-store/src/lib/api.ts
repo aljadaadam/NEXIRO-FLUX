@@ -1,7 +1,20 @@
 // ─── خدمة API ───
 // استدعاءات الـ API تتصل بالخادم الخلفي المحلي
 
+import { getDemoResponse } from './demoData';
+
 const API_BASE = '/api';
+
+// ─── كشف وضع العرض التجريبي ───
+// يتحقق من ?demo=1 في URL أو من sessionStorage (يُحفظ عند أول زيارة ليبقى عبر التنقل)
+function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (new URLSearchParams(window.location.search).get('demo') === '1') {
+    sessionStorage.setItem('demo_mode', '1');
+    return true;
+  }
+  return sessionStorage.getItem('demo_mode') === '1';
+}
 
 function getAdminKey(): string | null {
   if (typeof window === 'undefined') return null;
@@ -14,6 +27,12 @@ function getAuthToken(): string | null {
 }
 
 async function adminFetch(endpoint: string, options: RequestInit = {}) {
+  // ─── وضع العرض التجريبي: إرجاع بيانات وهمية ───
+  if (isDemoMode()) {
+    const method = (options.method || 'GET').toUpperCase();
+    const demoResult = getDemoResponse(endpoint, method);
+    if (demoResult !== null) return demoResult;
+  }
   // Admin dashboard stores JWT as 'admin_key' — NEVER fall back to customer token
   const token = getAdminKey();
   const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -42,6 +61,12 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 async function customerFetch(endpoint: string, options: RequestInit = {}) {
+  // ─── وضع العرض التجريبي: إرجاع بيانات وهمية ───
+  if (isDemoMode()) {
+    const method = (options.method || 'GET').toUpperCase();
+    const demoResult = getDemoResponse(endpoint, method);
+    if (demoResult !== null) return demoResult;
+  }
   const token = getAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
@@ -238,6 +263,14 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
 // ─── Customer API ───
 export const storeApi = {
   getProducts: async () => {
+    // وضع العرض التجريبي
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/products/public', 'GET');
+      if (demo) {
+        const raw = Array.isArray(demo) ? demo : (demo as Record<string, unknown>)?.products || [];
+        return (raw as Record<string, unknown>[]).map(mapBackendProduct);
+      }
+    }
     try {
       const res = await fetch(`${API_BASE}/products/public`, {
         cache: 'no-store',
@@ -260,6 +293,18 @@ export const storeApi = {
   login: (data: { email: string; password: string }) => customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data: { name: string; email: string; password: string; phone?: string }) => customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
   chargeWallet: (data: { amount: number; payment_method: string; description?: string }) => customerFetch('/customers/payments', { method: 'POST', body: JSON.stringify({ type: 'deposit', ...data }) }),
-  getEnabledGateways: () => fetch(`${API_BASE}/payment-gateways/enabled`).then(r => r.json()),
-  getStoreInfo: () => fetch(`${API_BASE}/store/info`).then(r => r.json()),
+  getEnabledGateways: () => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/payment-gateways/enabled', 'GET');
+      if (demo) return Promise.resolve(demo);
+    }
+    return fetch(`${API_BASE}/payment-gateways/enabled`).then(r => r.json());
+  },
+  getStoreInfo: () => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/store/info', 'GET');
+      if (demo) return Promise.resolve(demo);
+    }
+    return fetch(`${API_BASE}/store/info`).then(r => r.json());
+  },
 };

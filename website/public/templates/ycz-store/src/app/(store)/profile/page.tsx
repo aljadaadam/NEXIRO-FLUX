@@ -285,8 +285,18 @@ export default function ProfilePage() {
 
   const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
 
-  // Check if already logged in
+  // Check if already logged in (or demo mode)
   useEffect(() => {
+    const isDemo = typeof window !== 'undefined' && (
+      new URLSearchParams(window.location.search).get('demo') === '1' ||
+      sessionStorage.getItem('demo_mode') === '1'
+    );
+    if (isDemo) {
+      sessionStorage.setItem('demo_mode', '1');
+      setIsLoggedIn(true);
+      loadProfile();
+      return;
+    }
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (token) {
       setIsLoggedIn(true);

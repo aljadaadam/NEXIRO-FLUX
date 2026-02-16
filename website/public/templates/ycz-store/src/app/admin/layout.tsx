@@ -104,7 +104,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   // Check admin auth (skip in demo mode)
-  const isDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
+  const isDemo = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('demo') === '1' ||
+    sessionStorage.getItem('demo_mode') === '1'
+  );
+  if (isDemo && typeof window !== 'undefined') {
+    sessionStorage.setItem('demo_mode', '1');
+  }
   useEffect(() => {
     if (isDemo) return;
     const key = localStorage.getItem('admin_key');
