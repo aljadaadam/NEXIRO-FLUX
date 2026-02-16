@@ -15,6 +15,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [qty, setQty] = useState(product.minQuantity || 1);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const parsePriceToNumber = (price: string): number => {
@@ -24,7 +25,6 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   };
 
   const unitPrice = parsePriceToNumber(product.price);
-  const qty = 1;
   const totalPrice = unitPrice * qty;
 
   const orderFields = (() => {
@@ -144,6 +144,19 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
           </div>
         </div>
+
+        {/* Quantity Input */}
+        {product.allowsQuantity && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 12, border: '1px solid #e2e8f0' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>الكمية</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto' }}>
+              <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>−</button>
+              <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>+</button>
+            </div>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: currentTheme.primary, whiteSpace: 'nowrap' }}>${totalPrice.toFixed(2)}</span>
+          </div>
+        )}
 
         {/* Wallet Info */}
         <div style={{

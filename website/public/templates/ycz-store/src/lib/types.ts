@@ -16,6 +16,9 @@ export interface Product {
   stock?: number;
   status?: string;
   is_featured?: number;
+  allowsQuantity?: boolean;
+  minQuantity?: number;
+  maxQuantity?: number;
   // حقول الباكند
   service_type?: string;
   group_name?: string;

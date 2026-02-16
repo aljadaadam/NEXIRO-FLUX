@@ -210,8 +210,11 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     icon: serviceTypeIcons[sType] || '🔧',
     category: mappedCategory,
     desc: String(p.description || p.service_info || p.name || ''),
-    stock: Number(p.qnt || p.stock || 999),
+    stock: Number(p.stock || 999),
     status: 'نشط',
+    allowsQuantity: String(p.qnt || '0') === '1',
+    minQuantity: Math.max(1, Number(p.minqnt) || 1),
+    maxQuantity: Number(p.maxqnt) || 100,
     rating: 4.5 + Math.random() * 0.5,
     sales: Math.floor(Math.random() * 200 + 20),
     // حقول الباكند الأصلية
