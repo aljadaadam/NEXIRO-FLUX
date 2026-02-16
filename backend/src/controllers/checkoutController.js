@@ -5,20 +5,76 @@
  */
 const Payment = require('../models/Payment');
 const PaymentGateway = require('../models/PaymentGateway');
+const Customer = require('../models/Customer');
 const PayPalProcessor = require('../services/paypal');
 const BinancePayProcessor = require('../services/binancePay');
 const USDTProcessor = require('../services/usdt');
 const emailService = require('../services/email');
 const { SITE_KEY } = require('../config/env');
+const { verifyToken } = require('../utils/token');
 
 // Helper: get siteKey from request (fallback to platform SITE_KEY for setup checkout)
 function getSiteKey(req) {
   return req.siteKey || req.user?.site_key || SITE_KEY;
 }
 
+function tryAttachUserFromAuthHeader(req) {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return;
+    const decoded = verifyToken(token);
+    if (!decoded) return;
+    req.user = { id: decoded.id, role: decoded.role, site_key: decoded.site_key };
+    if (!req.siteKey) req.siteKey = decoded.site_key;
+  } catch {
+    // ignore
+  }
+}
+
+async function creditWalletOnce({ paymentId, siteKey }) {
+  const payment = await Payment.findById(parseInt(paymentId));
+  if (!payment || payment.site_key !== siteKey) return { credited: false, reason: 'not_found' };
+  if (payment.status !== 'completed') return { credited: false, reason: 'not_completed' };
+  if (payment.type !== 'deposit') return { credited: false, reason: 'not_deposit' };
+  if (!payment.customer_id) return { credited: false, reason: 'no_customer' };
+
+  const meta = (await Payment.getMeta(payment.id, siteKey)) || {};
+  if (meta.wallet_credited_at) return { credited: false, reason: 'already_credited' };
+
+  const before = await Customer.findById(payment.customer_id);
+  await Customer.updateWallet(payment.customer_id, siteKey, parseFloat(payment.amount));
+  const after = await Customer.findById(payment.customer_id);
+
+  await Payment.updateMeta(payment.id, siteKey, {
+    wallet_credited_at: new Date().toISOString(),
+    wallet_old_balance: before?.wallet_balance,
+    wallet_new_balance: after?.wallet_balance,
+  });
+
+  try {
+    if (meta?.customer_email) {
+      await emailService.sendWalletUpdated({
+        to: meta.customer_email,
+        name: meta.customer_name || 'عميل',
+        oldBalance: Number(before?.wallet_balance || 0),
+        newBalance: Number(after?.wallet_balance || 0),
+        currency: meta.currency || payment.currency || 'USD',
+      });
+    }
+  } catch (e) {
+    // ignore email failures
+  }
+
+  return { credited: true };
+}
+
 // ─── بدء عملية الدفع ───
 async function initCheckout(req, res) {
   try {
+    // Allow passing customer JWT optionally (wallet top-up needs it)
+    tryAttachUserFromAuthHeader(req);
+
     const {
       gateway_id,
       amount,
@@ -30,6 +86,7 @@ async function initCheckout(req, res) {
       country,
       template_id,
       plan,
+      type,
     } = req.body;
 
     // تحقق
@@ -46,12 +103,20 @@ async function initCheckout(req, res) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة أو معطلة' });
     }
 
+    const checkoutType = type === 'deposit' ? 'deposit' : 'purchase';
+    const customerId = checkoutType === 'deposit'
+      ? (req.user?.role === 'customer' ? req.user.id : null)
+      : null;
+    if (checkoutType === 'deposit' && !customerId) {
+      return res.status(401).json({ error: 'يلزم تسجيل دخول الزبون لشحن المحفظة' });
+    }
+
     // إنشاء سجل الدفع بحالة pending
     const payment = await Payment.create({
       site_key: getSiteKey(req),
-      customer_id: null,
+      customer_id: customerId,
       order_id: null,
-      type: 'purchase',
+      type: checkoutType,
       amount: parseFloat(amount),
       currency: currency || 'USD',
       payment_method: gateway.type,
@@ -69,6 +134,9 @@ async function initCheckout(req, res) {
       gateway_type: gateway.type,
       template_id: template_id || product_id || null,
       plan: plan || null,
+      checkout_type: checkoutType,
+      customer_id: customerId,
+      currency: currency || 'USD',
     });
 
     const referenceId = `NF${payment.id}T${Date.now()}`;
@@ -222,6 +290,9 @@ async function paypalCallback(req, res) {
         captured_at: new Date().toISOString(),
       });
 
+      // Credit wallet if this was a deposit
+      await creditWalletOnce({ paymentId: payment.id, siteKey: getSiteKey(req) });
+
       // بريد إيصال الدفع
       try {
         const meta = await Payment.getMeta(payment.id, getSiteKey(req));
@@ -348,6 +419,9 @@ async function binanceWebhook(req, res) {
         paid_at: new Date().toISOString(),
       });
 
+      // Credit wallet if this was a deposit
+      await creditWalletOnce({ paymentId: payment.id, siteKey });
+
       // بريد إيصال الدفع
       try {
         const meta = await Payment.getMeta(payment.id, siteKey);
@@ -428,6 +502,9 @@ async function checkUsdtPayment(req, res) {
         confirmed_amount: result.amount,
         confirmed_at: new Date().toISOString(),
       });
+
+      // Credit wallet if this was a deposit
+      await creditWalletOnce({ paymentId: payment.id, siteKey: getSiteKey(req) });
 
       // بريد إيصال USDT
       try {
@@ -525,6 +602,7 @@ async function checkPaymentStatus(req, res) {
           const result = await binance.queryOrder(payment.external_id);
           if (result.success) {
             await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
+            await creditWalletOnce({ paymentId: payment.id, siteKey: getSiteKey(req) });
             return res.json({ status: 'completed', message: '✅ تم تأكيد الدفع' });
           }
         } catch (e) {

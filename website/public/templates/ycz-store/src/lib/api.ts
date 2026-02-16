@@ -316,6 +316,7 @@ export const storeApi = {
     description?: string;
     customer_name?: string;
     customer_email?: string;
+    type?: 'deposit' | 'purchase';
     return_url?: string;
     cancel_url?: string;
   }) => {
@@ -323,9 +324,13 @@ export const storeApi = {
       const demo = getDemoResponse('/checkout/init', 'POST', data);
       if (demo) return demo;
     }
+    const token = getAuthToken();
     const res = await fetch(`${API_BASE}/checkout/init`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(data),
     });
     if (!res.ok) {

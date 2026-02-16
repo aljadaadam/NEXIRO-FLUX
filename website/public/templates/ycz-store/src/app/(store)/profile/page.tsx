@@ -105,11 +105,14 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
     setSubmitting(true);
     setSubmitError('');
     try {
-      const currentUrl = typeof window !== 'undefined' ? window.location.href : '/profile';
+      const currentUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/profile?payment_id=__PAYMENT_ID__`
+        : '/profile?payment_id=__PAYMENT_ID__';
       const result = await storeApi.initCheckout({
         gateway_id: selectedGw.id,
         amount: Number(amount),
         currency: 'USD',
+        type: 'deposit',
         description: `شحن محفظة — $${amount}`,
         return_url: currentUrl,
         cancel_url: currentUrl,
@@ -541,6 +544,26 @@ export default function ProfilePage() {
       setIsLoggedIn(true);
       loadProfile();
     }
+  }, []);
+
+  // If user comes back from checkout with payment_id, confirm status and refresh wallet
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentIdParam = params.get('payment_id');
+    if (!paymentIdParam) return;
+    const id = Number(paymentIdParam);
+    if (!Number.isFinite(id) || id <= 0) return;
+
+    storeApi.checkPaymentStatus(id)
+      .then((res: { status?: string }) => {
+        if (res?.status === 'completed') {
+          loadProfile();
+          if (view === 'wallet') loadPayments();
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
