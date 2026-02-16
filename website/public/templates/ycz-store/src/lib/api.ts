@@ -18,6 +18,7 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
   const token = getAdminKey() || getAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -38,6 +39,7 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
   const token = getAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -173,6 +175,7 @@ export const storeApi = {
   getProducts: async () => {
     try {
       const res = await fetch(`${API_BASE}/products/public`, {
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
