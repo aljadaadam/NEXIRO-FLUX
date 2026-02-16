@@ -10,7 +10,7 @@ import {
 import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
 
-// ─── WalletChargeModal (Demo-style: 4-step with payment details) ───
+// ─── WalletChargeModal (Real checkout flow: PayPal/Binance/USDT/Bank) ───
 // ─── Gateway type → display info ───
 const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string }> = {
   binance: { icon: '₿', color: '#f0b90b', desc: 'USDT — Binance Pay' },
@@ -19,40 +19,53 @@ const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string 
   usdt:    { icon: '💚', color: '#26a17b', desc: 'USDT — تيثر' },
 };
 
-function buildPaymentInfo(gw: { type: string; config?: Record<string, string> | null }): { label: string; value: string }[] {
-  const c = gw.config || {};
-  switch (gw.type) {
-    case 'binance': return [
-      ...(c.binance_id ? [{ label: 'Binance ID', value: c.binance_id }] : []),
-      ...(c.binance_email ? [{ label: 'البريد', value: c.binance_email }] : []),
-    ];
-    case 'paypal': return [
-      ...(c.email ? [{ label: 'إيميل PayPal', value: c.email }] : []),
-      { label: 'ملاحظة', value: 'أرسل كـ Friends & Family' },
-    ];
-    case 'bank_transfer': return [
-      ...(c.bank_name ? [{ label: 'البنك', value: c.bank_name }] : []),
-      ...(c.account_holder ? [{ label: 'اسم الحساب', value: c.account_holder }] : []),
-      ...(c.iban ? [{ label: 'IBAN', value: c.iban }] : []),
-      ...(c.currency ? [{ label: 'العملة', value: c.currency }] : []),
-    ];
-    case 'usdt': return [
-      ...(c.wallet_address ? [{ label: 'عنوان المحفظة', value: c.wallet_address }] : []),
-      ...(c.network ? [{ label: 'الشبكة', value: c.network }] : []),
-    ];
-    default: return [];
-  }
-}
+// ─── Types for checkout response ───
+type CheckoutResult = {
+  success: boolean;
+  paymentId: number;
+  gatewayType: string;
+  method: string;
+  // PayPal
+  redirectUrl?: string;
+  orderId?: string;
+  // Binance
+  checkoutUrl?: string;
+  qrContent?: string;
+  // USDT
+  walletAddress?: string;
+  network?: string;
+  amount?: number;
+  currency?: string;
+  contractAddress?: string;
+  instructions?: string | { ar: string; en: string };
+  expires_in?: number;
+  expires_at?: string;
+  // Bank Transfer
+  bankDetails?: {
+    bank_name?: string;
+    account_holder?: string;
+    iban?: string;
+    swift?: string;
+    account_number?: string;
+    currency?: string;
+  };
+  referenceId?: string;
+};
 
 function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
   const { currentTheme, buttonRadius } = useTheme();
+  // Steps: 1=amount+method, 2=processing/payment-details, 3=receipt(bank), 4=success
   const [step, setStep] = useState(1);
   const [method, setMethod] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [receipt, setReceipt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<number | null>(null);
+  const [checkoutData, setCheckoutData] = useState<CheckoutResult | null>(null);
+  const [usdtChecking, setUsdtChecking] = useState(false);
+  const [usdtCountdown, setUsdtCountdown] = useState(0);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   // Fetch enabled gateways from backend
@@ -64,7 +77,6 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
       .then(res => {
         const list = res?.gateways || [];
         setGateways(list);
-        // Auto-select default gateway
         const def = list.find((g: { is_default: boolean }) => g.is_default);
         if (def) setMethod(def.type);
       })
@@ -72,15 +84,131 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
       .finally(() => setGatewaysLoading(false));
   }, []);
 
+  // USDT countdown timer
+  useEffect(() => {
+    if (step !== 2 || checkoutData?.method !== 'manual_crypto' || !checkoutData.expires_at) return;
+    const expiresAt = new Date(checkoutData.expires_at).getTime();
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      setUsdtCountdown(remaining);
+      if (remaining <= 0) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [step, checkoutData]);
+
   const presetAmounts = [5, 10, 25, 50, 100];
   const selectedGw = gateways.find(g => g.type === method);
+
+  // ─── Start Checkout ───
+  const handleStartCheckout = async () => {
+    if (!amount || !method || !selectedGw) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : '/profile';
+      const result = await storeApi.initCheckout({
+        gateway_id: selectedGw.id,
+        amount: Number(amount),
+        currency: 'USD',
+        description: `شحن محفظة — $${amount}`,
+        return_url: currentUrl,
+        cancel_url: currentUrl,
+      });
+      setPaymentId(result.paymentId);
+      setCheckoutData(result);
+
+      // Handle based on payment method
+      if (result.method === 'redirect' && result.redirectUrl && !result.redirectUrl.startsWith('#')) {
+        // PayPal: redirect to payment page
+        window.location.href = result.redirectUrl;
+        return;
+      }
+      if (result.method === 'qr_or_redirect' && result.checkoutUrl && !result.checkoutUrl.startsWith('#')) {
+        // Binance: open checkout in new tab, show waiting screen
+        window.open(result.checkoutUrl, '_blank');
+      }
+      // For all methods: show step 2 with payment details
+      setStep(2);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'فشل في بدء عملية الدفع');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ─── Check USDT Payment ───
+  const handleCheckUsdt = async () => {
+    if (!paymentId) return;
+    setUsdtChecking(true);
+    try {
+      const result = await storeApi.checkUsdtPayment(paymentId);
+      if (result.confirmed) {
+        setPaymentConfirmed(true);
+        setStep(4);
+        onSubmitted?.();
+      } else {
+        setSubmitError(result.message || 'لم يتم العثور على تحويل مطابق بعد');
+        setTimeout(() => setSubmitError(''), 4000);
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'فشل في التحقق');
+    } finally {
+      setUsdtChecking(false);
+    }
+  };
+
+  // ─── Check Payment Status (Binance/PayPal polling) ───
+  const handleCheckStatus = async () => {
+    if (!paymentId) return;
+    setUsdtChecking(true);
+    try {
+      const result = await storeApi.checkPaymentStatus(paymentId);
+      if (result.status === 'completed') {
+        setPaymentConfirmed(true);
+        setStep(4);
+        onSubmitted?.();
+      } else {
+        setSubmitError('الدفع لا يزال قيد الانتظار...');
+        setTimeout(() => setSubmitError(''), 3000);
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'فشل في التحقق');
+    } finally {
+      setUsdtChecking(false);
+    }
+  };
+
+  // ─── Submit Bank Receipt ───
+  const handleSubmitReceipt = async () => {
+    if (!receipt || !paymentId) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await storeApi.uploadReceipt(paymentId, {
+        receipt_url: 'receipt_uploaded',
+        notes: `شحن محفظة — $${amount}`,
+      });
+      setStep(4);
+      onSubmitted?.();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'فشل في رفع الإيصال');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 480, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020' }}>
-            {step === 1 ? '💰 شحن المحفظة' : step === 2 ? '📋 تفاصيل الدفع' : step === 3 ? '📎 رفع الإيصال' : '✅ تم الإرسال'}
+            {step === 1 ? '💰 شحن المحفظة' : step === 2 ? '📋 إتمام الدفع' : step === 3 ? '📎 رفع الإيصال' : '✅ تم الإرسال'}
           </h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} />
@@ -139,51 +267,179 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
-            <button onClick={() => amount && method && setStep(2)} disabled={!amount || !method} style={{
+            {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
+
+            <button onClick={handleStartCheckout} disabled={!amount || !method || submitting} style={{
               width: '100%', marginTop: 20, padding: '0.75rem', borderRadius: btnR,
-              background: amount && method ? currentTheme.primary : '#e2e8f0', color: amount && method ? '#fff' : '#94a3b8',
-              border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: amount && method ? 'pointer' : 'not-allowed',
-              fontFamily: 'Tajawal, sans-serif',
-            }}>متابعة — ${amount || '0'}</button>
+              background: amount && method && !submitting ? currentTheme.primary : '#e2e8f0', color: amount && method && !submitting ? '#fff' : '#94a3b8',
+              border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: amount && method && !submitting ? 'pointer' : 'not-allowed',
+              fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              {submitting ? (
+                <><div style={{ width: 16, height: 16, border: '2px solid #fff4', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> جاري المعالجة...</>
+              ) : (
+                <>متابعة — ${amount || '0'}</>
+              )}
+            </button>
           </div>
         )}
 
-        {/* Step 2: Payment Details */}
-        {step === 2 && method && (
+        {/* Step 2: Payment Details (from real checkout API) */}
+        {step === 2 && checkoutData && (
           <div>
+            {/* Amount banner */}
             <div style={{ background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, borderRadius: 14, padding: '1.25rem', marginBottom: 20, color: '#fff', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: 4 }}>المبلغ المطلوب</p>
               <p style={{ fontSize: '2rem', fontWeight: 800 }}>${amount}</p>
               <p style={{ fontSize: '0.78rem', opacity: 0.7, marginTop: 4 }}>عبر {selectedGw?.name || method}</p>
             </div>
 
-            <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
-              <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Lock size={14} color={currentTheme.primary} /> بيانات التحويل
-              </h4>
-              {(selectedGw ? buildPaymentInfo(selectedGw) : []).map((item, i, arr) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+            {/* ── PayPal: redirect happened, show waiting ── */}
+            {checkoutData.method === 'redirect' && (
+              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#003087', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+                  <span style={{ fontSize: '1.8rem' }}>💳</span>
                 </div>
-              ))}
-            </div>
+                <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم توجيهك إلى PayPal</p>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: 16 }}>أكمل الدفع في صفحة PayPal ثم عد هنا</p>
+                <button onClick={handleCheckStatus} disabled={usdtChecking} style={{
+                  padding: '0.7rem 2rem', borderRadius: btnR, background: '#003087', color: '#fff',
+                  border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                  display: 'inline-flex', alignItems: 'center', gap: 6, opacity: usdtChecking ? 0.7 : 1,
+                }}>
+                  {usdtChecking ? 'جاري التحقق...' : '🔄 تحقق من حالة الدفع'}
+                </button>
+              </div>
+            )}
 
-            <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
-              <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>تأكد من إرسال المبلغ الصحيح. بعد التحويل أرفق إيصال الدفع للتأكيد.</p>
-            </div>
+            {/* ── Binance: QR code or redirect ── */}
+            {checkoutData.method === 'qr_or_redirect' && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ background: '#fef9c3', borderRadius: 12, padding: '1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '1.2rem' }}>₿</span>
+                  <p style={{ fontSize: '0.82rem', color: '#854d0e', fontWeight: 600 }}>ادفع عبر Binance Pay</p>
+                </div>
+                {checkoutData.qrContent && (
+                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 12, wordBreak: 'break-all' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 6 }}>رابط الدفع:</p>
+                    <p style={{ fontSize: '0.78rem', color: '#0b1020', fontWeight: 600, fontFamily: 'monospace' }}>{checkoutData.qrContent}</p>
+                  </div>
+                )}
+                {checkoutData.checkoutUrl && (
+                  <a href={checkoutData.checkoutUrl} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.7rem 1.5rem', borderRadius: btnR,
+                    background: '#f0b90b', color: '#000', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', marginBottom: 16, fontFamily: 'Tajawal, sans-serif',
+                  }}>🔗 فتح صفحة الدفع</a>
+                )}
+                <div style={{ marginTop: 12 }}>
+                  <button onClick={handleCheckStatus} disabled={usdtChecking} style={{
+                    width: '100%', padding: '0.7rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff',
+                    border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                    opacity: usdtChecking ? 0.7 : 1,
+                  }}>
+                    {usdtChecking ? 'جاري التحقق...' : '🔄 تحقق من حالة الدفع'}
+                  </button>
+                </div>
+              </div>
+            )}
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>رجوع</button>
-              <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Upload size={14} /> رفع الإيصال
-              </button>
-            </div>
+            {/* ── USDT: manual crypto with countdown ── */}
+            {checkoutData.method === 'manual_crypto' && (
+              <div>
+                {/* Countdown */}
+                {usdtCountdown > 0 && (
+                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', borderRadius: 10, background: usdtCountdown < 300 ? '#fef2f2' : '#f0fdf4' }}>
+                      <Clock size={14} color={usdtCountdown < 300 ? '#ef4444' : '#16a34a'} />
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: usdtCountdown < 300 ? '#ef4444' : '#16a34a', fontFamily: 'monospace' }}>{formatTime(usdtCountdown)}</span>
+                    </div>
+                  </div>
+                )}
+                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Lock size={14} color={currentTheme.primary} /> بيانات التحويل
+                  </h4>
+                  {[
+                    { label: 'عنوان المحفظة', value: checkoutData.walletAddress || '—' },
+                    { label: 'الشبكة', value: checkoutData.network || '—' },
+                    { label: 'المبلغ', value: `${checkoutData.amount || amount} USDT` },
+                  ].map((item, i, arr) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+                {checkoutData.instructions && (
+                  <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                    <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>{typeof checkoutData.instructions === 'string' ? checkoutData.instructions : checkoutData.instructions?.ar || ''}</p>
+                  </div>
+                )}
+                <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
+                  width: '100%', padding: '0.75rem', borderRadius: btnR,
+                  background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : '#26a17b', color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                  border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtChecking ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  {usdtChecking ? (
+                    <><div style={{ width: 14, height: 14, border: '2px solid #fff4', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> جاري التحقق من البلوكتشين...</>
+                  ) : usdtCountdown <= 0 ? 'انتهت المهلة' : '🔍 تحقق من الدفع'}
+                </button>
+              </div>
+            )}
+
+            {/* ── Bank Transfer: show details + go to receipt ── */}
+            {checkoutData.method === 'manual_bank' && (
+              <div>
+                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Lock size={14} color={currentTheme.primary} /> بيانات التحويل
+                  </h4>
+                  {[
+                    ...(checkoutData.bankDetails?.bank_name ? [{ label: 'البنك', value: checkoutData.bankDetails.bank_name }] : []),
+                    ...(checkoutData.bankDetails?.account_holder ? [{ label: 'اسم الحساب', value: checkoutData.bankDetails.account_holder }] : []),
+                    ...(checkoutData.bankDetails?.iban ? [{ label: 'IBAN', value: checkoutData.bankDetails.iban }] : []),
+                    ...(checkoutData.bankDetails?.swift ? [{ label: 'SWIFT', value: checkoutData.bankDetails.swift }] : []),
+                    ...(checkoutData.bankDetails?.currency ? [{ label: 'العملة', value: checkoutData.bankDetails.currency }] : []),
+                    ...(checkoutData.referenceId ? [{ label: 'رقم المرجع', value: checkoutData.referenceId }] : []),
+                  ].map((item, i, arr) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                  <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
+                    {typeof checkoutData.instructions === 'object' && checkoutData.instructions !== null
+                      ? checkoutData.instructions.ar
+                      : 'تأكد من إرسال المبلغ الصحيح. بعد التحويل أرفق إيصال الدفع للتأكيد.'}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>رجوع</button>
+                  <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Upload size={14} /> رفع الإيصال
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
+
+            {/* Back button for non-bank methods */}
+            {checkoutData.method !== 'manual_bank' && (
+              <button onClick={() => { setStep(1); setCheckoutData(null); setSubmitError(''); }} style={{
+                width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: '#f1f5f9',
+                color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+              }}>← رجوع</button>
+            )}
           </div>
         )}
 
-        {/* Step 3: Upload Receipt */}
+        {/* Step 3: Upload Receipt (bank_transfer only) */}
         {step === 3 && (
           <div>
             <div style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receipt ? '#f0fdf4' : '#fafafa' }} onClick={() => setReceipt(true)}>
@@ -208,32 +464,9 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setStep(2)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>رجوع</button>
-              <button
-                onClick={async () => {
-                  if (!receipt || !method) return;
-                  setSubmitting(true);
-                  setSubmitError('');
-                  try {
-                    const payment_method = method || '';
-                    const res = await storeApi.chargeWallet({
-                      amount: Number(amount || 0),
-                      payment_method,
-                      description: `Wallet top-up via ${payment_method}`,
-                    });
-                    const id = String(res?.payment?.id || res?.id || '');
-                    if (id) setPaymentId(id);
-                    setStep(4);
-                    onSubmitted?.();
-                  } catch {
-                    setSubmitError('فشل إرسال طلب الشحن. حاول مرة أخرى.');
-                  } finally {
-                    setSubmitting(false);
-                  }
-                }}
-                disabled={!receipt || !amount || !method || submitting}
-                style={{
+              <button onClick={handleSubmitReceipt} disabled={!receipt || submitting} style={{
                 flex: 2, padding: '0.7rem', borderRadius: btnR,
-                background: receipt && amount && method && !submitting ? currentTheme.primary : '#e2e8f0', color: receipt && amount && method && !submitting ? '#fff' : '#94a3b8',
+                background: receipt && !submitting ? currentTheme.primary : '#e2e8f0', color: receipt && !submitting ? '#fff' : '#94a3b8',
                 border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: receipt ? 'pointer' : 'not-allowed',
                 fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}><Send size={14} /> {submitting ? 'جاري الإرسال...' : 'إرسال للمراجعة'}</button>
@@ -247,8 +480,14 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={36} color="#16a34a" />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال طلب الشحن!</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 6 }}>سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك خلال دقائق.</p>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>
+              {paymentConfirmed ? 'تم تأكيد الدفع!' : 'تم إرسال طلب الشحن!'}
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 6 }}>
+              {paymentConfirmed
+                ? 'تم تأكيد الدفع وإضافة الرصيد لمحفظتك.'
+                : 'سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك خلال دقائق.'}
+            </p>
             <div style={{ display: 'inline-block', padding: '0.5rem 1rem', borderRadius: 10, background: '#f0f9ff', marginBottom: 20 }}>
               <span style={{ fontSize: '0.82rem', color: '#0369a1', fontWeight: 600 }}>رقم العملية: {paymentId ? `#PAY-${paymentId}` : '—'}</span>
             </div>

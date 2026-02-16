@@ -307,4 +307,73 @@ export const storeApi = {
     }
     return fetch(`${API_BASE}/store/info`).then(r => r.json());
   },
+
+  // ─── Checkout API (بوابات الدفع الحقيقية) ───
+  initCheckout: async (data: {
+    gateway_id: number;
+    amount: number;
+    currency?: string;
+    description?: string;
+    customer_name?: string;
+    customer_email?: string;
+    return_url?: string;
+    cancel_url?: string;
+  }) => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/checkout/init', 'POST', data);
+      if (demo) return demo;
+    }
+    const res = await fetch(`${API_BASE}/checkout/init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+
+  checkPaymentStatus: async (id: number) => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse(`/checkout/status/${id}`, 'GET');
+      if (demo) return demo;
+    }
+    const res = await fetch(`${API_BASE}/checkout/status/${id}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+
+  checkUsdtPayment: async (id: number) => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse(`/checkout/check-usdt/${id}`, 'POST');
+      if (demo) return demo;
+    }
+    const res = await fetch(`${API_BASE}/checkout/check-usdt/${id}`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+
+  uploadReceipt: async (id: number, data: { receipt_url: string; notes?: string }) => {
+    if (isDemoMode()) {
+      return { success: true, message: 'تم رفع الإيصال بنجاح (عرض تجريبي)' };
+    }
+    const res = await fetch(`${API_BASE}/checkout/receipt/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
 };

@@ -396,9 +396,9 @@ export const demoCustomerPayments = {
 // ─── خريطة الردود الوهمية لمسارات API ───
 // تُستخدم في اعتراض الطلبات عند وضع العرض
 
-type DemoRouteHandler = (endpoint: string, method: string) => unknown | null;
+type DemoRouteHandler = (endpoint: string, method: string, data?: Record<string, unknown>) => unknown | null;
 
-export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: string) => {
+export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: string, data?: Record<string, unknown>) => {
   const ep = endpoint.replace(/^\//, '');
 
   // ─── Admin API ───
@@ -510,6 +510,34 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
 
   if (ep === 'store/info' && method === 'GET') {
     return { store_name: 'متجر YCZ', theme_id: 'purple', logo_url: '' };
+  }
+
+  // ─── Checkout API (demo) ───
+  if (ep === 'checkout/init' && method === 'POST') {
+    const gwType = (() => {
+      const gwId = data?.gateway_id;
+      const gw = demoGateways.find(g => g.id === gwId);
+      return gw?.type || 'bank_transfer';
+    })();
+    const amt = Number(data?.amount || 10);
+    const demoPaymentId = 9000 + Math.floor(Math.random() * 999);
+    switch (gwType) {
+      case 'paypal':
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'paypal', method: 'redirect', redirectUrl: '#demo-paypal-redirect', orderId: 'DEMO-PP-ORDER' };
+      case 'binance':
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'binance', method: 'qr_or_redirect', checkoutUrl: '#demo-binance-checkout', qrContent: `binance://pay?amount=${amt}&currency=USDT&merchant=DEMO`, orderId: 'DEMO-BN-ORDER' };
+      case 'usdt':
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'usdt', method: 'manual_crypto', walletAddress: 'TXqL98dKjQr7pMxVJyBdRaCne5i7L4Vucd', network: 'TRC20', amount: amt, currency: 'USDT', contractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', instructions: `أرسل ${amt} USDT بالضبط إلى العنوان أعلاه عبر شبكة TRC20`, expires_in: 1800, expires_at: new Date(Date.now() + 1800000).toISOString() };
+      case 'bank_transfer':
+      default:
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'bank_transfer', method: 'manual_bank', bankDetails: { bank_name: 'البنك الأهلي', account_holder: 'متجر YCZ للخدمات', iban: 'SA02 8000 0000 6080 1016 7519', swift: 'NCBKSAJE', currency: 'USD' }, referenceId: `NF${demoPaymentId}T${Date.now()}`, instructions: { ar: `حوّل المبلغ ${amt} USD إلى الحساب أعلاه. بعد التحويل ارفع إيصال الدفع.`, en: `Transfer ${amt} USD to the account above, then upload your receipt.` } };
+    }
+  }
+  if (ep.match(/^checkout\/status\/\d+$/) && method === 'GET') {
+    return { paymentId: 9000, status: 'pending', amount: 10, currency: 'USD', method: 'bank_transfer', meta: {} };
+  }
+  if (ep.match(/^checkout\/check-usdt\/\d+$/) && method === 'POST') {
+    return { confirmed: false, message: 'عرض تجريبي — لم يتم العثور على تحويل مطابق', remaining: 1500 };
   }
 
   // Mutations that shouldn't actually do anything
