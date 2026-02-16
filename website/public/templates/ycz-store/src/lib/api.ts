@@ -76,6 +76,7 @@ export const adminApi = {
   getOrders: () => adminFetch('/orders'),
   updateOrder: (id: string, data: Record<string, unknown>) => adminFetch(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   getUsers: () => adminFetch('/auth/users'),
+  getCustomers: (page = 1, limit = 50, search = '') => adminFetch(`/customers?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   getAnnouncements: () => adminFetch('/notifications'),
   createAnnouncement: (data: Record<string, unknown>) => adminFetch('/notifications', { method: 'POST', body: JSON.stringify(data) }),
   deleteAnnouncement: (id: number) => adminFetch(`/notifications/${id}`, { method: 'DELETE' }),

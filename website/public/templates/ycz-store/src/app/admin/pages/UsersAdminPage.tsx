@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Eye, Shield } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Search, Eye, Shield, Ban, Loader2 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
@@ -10,37 +10,77 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await adminApi.getUsers();
-        const rawUsers = Array.isArray(res) ? res : (Array.isArray(res?.users) ? res.users : []);
-        const mapped: User[] = rawUsers.map((u: Record<string, unknown>) => ({
-          id: Number(u.id),
-          name: String(u.name || ''),
-          email: String(u.email || ''),
-          role: String(u.role || 'user'),
-          status: u.status ? String(u.status) : 'نشط',
-          joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
-          orders: Number(u.orders || 0),
-          spent: String(u.spent || '$0.00'),
-        }));
-        setUsers(mapped);
-      } catch { /* keep fallback */ }
-      finally { setLoading(false); }
-    }
-    load();
+  const fetchUsers = useCallback(async (searchQuery = '') => {
+    setLoading(true);
+    try {
+      // جلب الزبائن (مستخدمي المتجر) + مستخدمي الإدارة
+      const [customersRes, staffRes] = await Promise.allSettled([
+        adminApi.getCustomers(1, 200, searchQuery),
+        adminApi.getUsers(),
+      ]);
+
+      const allUsers: User[] = [];
+
+      // الزبائن (من جدول customers)
+      if (customersRes.status === 'fulfilled') {
+        const raw = customersRes.value;
+        const customers = Array.isArray(raw) ? raw : (Array.isArray(raw?.customers) ? raw.customers : []);
+        setTotal(raw?.total || customers.length);
+        customers.forEach((u: Record<string, unknown>) => {
+          allUsers.push({
+            id: Number(u.id),
+            name: String(u.name || ''),
+            email: String(u.email || ''),
+            role: u.is_blocked ? 'محظور' : 'زبون',
+            status: u.is_blocked ? 'محظور' : (u.is_verified ? 'نشط' : 'نشط'),
+            joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+            orders: Number(u.orders || 0),
+            spent: String(u.spent || '$0.00'),
+          });
+        });
+      }
+
+      // مستخدمي الإدارة (admin/user)
+      if (staffRes.status === 'fulfilled') {
+        const raw = staffRes.value;
+        const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
+        staff.forEach((u: Record<string, unknown>) => {
+          allUsers.push({
+            id: Number(u.id),
+            name: String(u.name || ''),
+            email: String(u.email || ''),
+            role: String(u.role) === 'admin' ? 'مدير' : 'مشرف',
+            status: 'نشط',
+            joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+            orders: 0,
+            spent: '$0.00',
+          });
+        });
+      }
+
+      setUsers(allUsers);
+    } catch { /* keep empty */ }
+    finally { setLoading(false); }
   }, []);
 
-  const filtered = users.filter(u =>
-    u.name.includes(search) || u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // بحث مع تأخير
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search, fetchUsers]);
 
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 المستخدمين</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 المستخدمين <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>({total})</span></h2>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '0.5rem 0.85rem', borderRadius: 10,
@@ -72,7 +112,15 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(user => (
+              {loading ? (
+                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
+                  <Loader2 size={20} style={{ display: 'inline', animation: 'spin 1s linear infinite' }} /> جارٍ التحميل...
+                </td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  لا يوجد مستخدمين
+                </td></tr>
+              ) : users.map(user => (
                 <tr key={user.id} style={{ borderBottom: '1px solid #f8fafc' }}>
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -93,9 +141,9 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <span style={{
                       padding: '0.2rem 0.6rem', borderRadius: 6,
-                      background: user.role.includes('VIP') ? '#fef3c7' : '#f1f5f9',
+                      background: user.role === 'مدير' ? '#dbeafe' : user.role === 'محظور' ? '#fee2e2' : user.role === 'مشرف' ? '#e0e7ff' : '#f1f5f9',
                       fontSize: '0.72rem', fontWeight: 700,
-                      color: user.role.includes('VIP') ? '#d97706' : '#64748b',
+                      color: user.role === 'مدير' ? '#2563eb' : user.role === 'محظور' ? '#dc2626' : user.role === 'مشرف' ? '#4f46e5' : '#64748b',
                     }}>{user.role}</span>
                   </td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#334155', fontWeight: 600 }}>{user.orders}</td>
