@@ -29,31 +29,38 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
       background: 'rgba(255,255,255,0.97)',
       backdropFilter: 'blur(20px)',
       borderTop: '1px solid rgba(0,0,0,0.05)',
-      justifyContent: 'space-around', alignItems: 'center',
       padding: '0.5rem 0 0.6rem',
     }}>
-      {items.map(item => {
-        const Icon = item.icon;
-        const active = currentPage === item.id;
-        return (
-          <button key={item.id} onClick={() => setCurrentPage(item.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: 2, cursor: 'pointer', background: 'none', border: 'none',
-            color: active ? theme.primary : '#94a3b8',
-            fontFamily: 'Tajawal, sans-serif', position: 'relative',
-          }}>
-            {active && (
-              <div style={{
-                position: 'absolute', top: -8,
-                width: 20, height: 3, borderRadius: 2,
-                background: theme.primary,
-              }} />
-            )}
-            <Icon size={20} />
-            <span style={{ fontSize: '0.6rem', fontWeight: 700 }}>{item.label}</span>
-          </button>
-        );
-      })}
+      <div className="dash-bottom-nav-inner" style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        gap: 2,
+      }}>
+        {items.map(item => {
+          const Icon = item.icon;
+          const active = currentPage === item.id;
+          return (
+            <button key={item.id} onClick={() => setCurrentPage(item.id)} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 2, cursor: 'pointer', background: 'none', border: 'none',
+              color: active ? theme.primary : '#94a3b8',
+              fontFamily: 'Tajawal, sans-serif', position: 'relative',
+              flex: 1, minWidth: 0,
+            }}>
+              {active && (
+                <div style={{
+                  position: 'absolute', top: -8,
+                  width: 20, height: 3, borderRadius: 2,
+                  background: theme.primary,
+                }} />
+              )}
+              <Icon size={20} />
+              <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1.1 }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

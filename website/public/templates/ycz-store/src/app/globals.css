@@ -3,6 +3,13 @@ body { background: #f8fafc; }
 a { text-decoration: none; color: inherit; }
 input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 
+.dash-bottom-nav { display: none; }
+.dash-bottom-nav-inner {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
 /* ─── Store Responsive ─── */
 @media (max-width: 768px) {
   .store-hero-title { font-size: 1.5rem !important; }
@@ -64,6 +71,7 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     display: flex !important;
     padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
   }
+  .dash-bottom-nav-inner { display: flex !important; }
   .dash-mobile-close { display: grid !important; }
   .dash-collapse-btn { display: none !important; }
   .dash-drawer-open .dash-bottom-nav { display: none !important; }
