@@ -5,18 +5,18 @@ const {
   markAsRead,
   markAllAsRead
 } = require('../controllers/notificationController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 router.use(validateSite);
 
 // جلب الإشعارات
-router.get('/', authenticateToken, getNotifications);
+router.get('/', authenticateToken, requireRole('admin', 'user'), getNotifications);
 
 // قراءة الكل
-router.put('/read-all', authenticateToken, markAllAsRead);
+router.put('/read-all', authenticateToken, requireRole('admin', 'user'), markAllAsRead);
 
 // قراءة إشعار
-router.put('/:id/read', authenticateToken, markAsRead);
+router.put('/:id/read', authenticateToken, requireRole('admin', 'user'), markAsRead);
 
 module.exports = router;

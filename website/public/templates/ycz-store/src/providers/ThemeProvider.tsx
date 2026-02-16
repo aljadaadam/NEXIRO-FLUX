@@ -62,9 +62,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const fetchFromServer = useCallback(async () => {
     const myId = ++fetchIdRef.current;
     try {
-      const token = localStorage.getItem('admin_key') || localStorage.getItem('auth_token');
+      // جلب التخصيص من الباك اند — الأدمن يستخدم admin_key فقط
+      const adminToken = localStorage.getItem('admin_key');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
 
       // جلب التخصيص (ألوان، خط، تخطيط) — بدون كاش
       const customRes = await fetch(`/api/customization?_t=${Date.now()}`, { headers, cache: 'no-store' });
@@ -115,9 +116,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // ─── 4. حفظ التخصيص في الباك اند عند التعديل من الأدمن ───
   const saveToServer = useCallback(async () => {
     const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('admin_key') || localStorage.getItem('auth_token'))
+      ? localStorage.getItem('admin_key')
       : null;
-    if (!token) return; // فقط الأدمن يحفظ
+    if (!token) return; // فقط الأدمن يحفظ — بدون auth_token fallback
     try {
       await fetch('/api/customization', {
         method: 'PUT',

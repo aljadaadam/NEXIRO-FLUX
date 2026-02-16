@@ -13,7 +13,7 @@ const {
   seedTemplateProducts,
   debugProducts
 } = require('../controllers/productController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 const { checkPermission } = require('../middlewares/permissionMiddleware');
 
@@ -30,13 +30,13 @@ router.get('/debug', debugProducts);
 router.use(validateSite);
 
 // جلب جميع منتجات الموقع (يحتاج صلاحية products:read)
-router.get('/', authenticateToken, checkPermission('products:read'), getAllProducts);
+router.get('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getAllProducts);
 
 // جلب إحصائيات المنتجات (يحتاج صلاحية products:read)
-router.get('/stats', authenticateToken, checkPermission('products:read'), getProductsStats);
+router.get('/stats', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getProductsStats);
 
 // إنشاء منتج جديد (يحتاج صلاحية products:create)
-router.post('/', authenticateToken, checkPermission('products:create'), createProduct);
+router.post('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), createProduct);
 
 // ============================================
 // 1️⃣ SYNC (مزامنة Dashboard ↔ Backend)
@@ -45,7 +45,7 @@ router.post('/', authenticateToken, checkPermission('products:create'), createPr
 // الطريقة: جلب/عرض المنتجات الموجودة من Database
 // Request: جلب بسيط (GET) أو تحديث
 // مثال: GET /api/products/sync ترجع المنتجات الموجودة
-router.get('/sync', authenticateToken, checkPermission('products:read'), getAllProducts);
+router.get('/sync', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getAllProducts);
 
 // ============================================
 // 2️⃣ IMPORT (استيراد من مصدر خارجي)
@@ -59,21 +59,21 @@ router.get('/sync', authenticateToken, checkPermission('products:read'), getAllP
 // اختر المسار المناسب حسب مصدر البيانات:
 
 // استيراد من dashboard (منتجات جاهزة)
-router.post('/import', authenticateToken, checkPermission('products:create'), importProducts);
+router.post('/import', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), importProducts);
 
 // استيراد من أي API خارجي عام
-router.post('/import/sync', authenticateToken, checkPermission('products:sync'), syncProducts);
+router.post('/import/sync', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), syncProducts);
 
 // استيراد متخصص من SD-Unlocker
-router.post('/import/sd-unlocker', authenticateToken, checkPermission('products:sync'), importFromExternalApi);
+router.post('/import/sd-unlocker', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), importFromExternalApi);
 
 // استيراد من مصدر خارجي (اسم بديل عام)
-router.post('/import-external', authenticateToken, checkPermission('products:sync'), syncProducts);
+router.post('/import-external', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), syncProducts);
 
 // تحديث منتج (يحتاج صلاحية products:update)
-router.put('/:id', authenticateToken, checkPermission('products:update'), updateProduct);
+router.put('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), updateProduct);
 
 // حذف منتج (يحتاج صلاحية products:delete)
-router.delete('/:id', authenticateToken, checkPermission('products:delete'), deleteProduct);
+router.delete('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:delete'), deleteProduct);
 
 module.exports = router;

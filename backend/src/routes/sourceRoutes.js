@@ -10,34 +10,34 @@ const {
   getSourceStats,
   applyProfitToSourceProducts
 } = require('../controllers/sourceController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);
 
 // جلب جميع المصادر
-router.get('/', authenticateToken, getAllSources);
+router.get('/', authenticateToken, requireRole('admin', 'user'), getAllSources);
 
 // إنشاء مصدر جديد
-router.post('/', authenticateToken, createSource);
+router.post('/', authenticateToken, requireRole('admin', 'user'), createSource);
 
 // تحديث مصدر
-router.put('/:id', authenticateToken, updateSource);
+router.put('/:id', authenticateToken, requireRole('admin', 'user'), updateSource);
 
 // إحصائيات مصدر (عدد المنتجات + حالة الاتصال)
-router.get('/:id/stats', authenticateToken, getSourceStats);
+router.get('/:id/stats', authenticateToken, requireRole('admin', 'user'), getSourceStats);
 
 // اختبار اتصال المصدر (يرفع lastConnection* في DB)
-router.post('/:id/test', authenticateToken, testSourceConnection);
+router.post('/:id/test', authenticateToken, requireRole('admin', 'user'), testSourceConnection);
 
 // حذف مصدر
-router.delete('/:id', authenticateToken, deleteSource);
+router.delete('/:id', authenticateToken, requireRole('admin', 'user'), deleteSource);
 
 // مزامنة منتجات مصدر
-router.post('/:id/sync', authenticateToken, syncSourceProducts);
+router.post('/:id/sync', authenticateToken, requireRole('admin', 'user'), syncSourceProducts);
 
 // تطبيق نسبة ربح جديدة على كل منتجات المصدر (بدون تراكم)
-router.post('/:id/apply-profit', authenticateToken, applyProfitToSourceProducts);
+router.post('/:id/apply-profit', authenticateToken, requireRole('admin', 'user'), applyProfitToSourceProducts);
 
 module.exports = router;

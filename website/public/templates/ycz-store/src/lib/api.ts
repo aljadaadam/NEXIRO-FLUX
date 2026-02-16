@@ -14,8 +14,8 @@ function getAuthToken(): string | null {
 }
 
 async function adminFetch(endpoint: string, options: RequestInit = {}) {
-  // Admin dashboard stores JWT as 'admin_key', customer profile stores as 'auth_token'
-  const token = getAdminKey() || getAuthToken();
+  // Admin dashboard stores JWT as 'admin_key' — NEVER fall back to customer token
+  const token = getAdminKey();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     cache: 'no-store',
@@ -190,13 +190,14 @@ export const storeApi = {
     }
   },
   getProduct: (id: number) => customerFetch(`/products/${id}`),
-  getOrders: () => customerFetch('/orders'),
-  getPayments: () => customerFetch('/payments'),
-  createOrder: (data: Record<string, unknown>) => customerFetch('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  // ─── مسارات فريدة للزبائن (تحت /api/customers/*) ───
+  getOrders: () => customerFetch('/customers/orders'),
+  getPayments: () => customerFetch('/customers/payments'),
+  createOrder: (data: Record<string, unknown>) => customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
   getProfile: () => customerFetch('/customers/me'),
   updateProfile: (data: Record<string, unknown>) => customerFetch('/customers/me', { method: 'PUT', body: JSON.stringify(data) }),
   login: (data: { email: string; password: string }) => customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data: { name: string; email: string; password: string; phone?: string }) => customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
-  chargeWallet: (data: { amount: number; payment_method: string; description?: string }) => customerFetch('/payments', { method: 'POST', body: JSON.stringify({ type: 'deposit', ...data }) }),
+  chargeWallet: (data: { amount: number; payment_method: string; description?: string }) => customerFetch('/customers/payments', { method: 'POST', body: JSON.stringify({ type: 'deposit', ...data }) }),
   getStoreInfo: () => fetch(`${API_BASE}/store/info`).then(r => r.json()),
 };

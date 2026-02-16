@@ -15,51 +15,29 @@ const {
   forgotPassword,
   resetPassword
 } = require('../controllers/authController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);
 
-// تسجيل مستخدم جديد (حساب عادي - ليس أدمن)
+// ===== مسارات عامة (بدون مصادقة) =====
 router.post('/register', registerUser);
-
-// تسجيل أدمن جديد للموقع (يُستخدم من setup wizard فقط)
 router.post('/register-admin', registerAdmin);
-
-// تسجيل الدخول
 router.post('/login', login);
-
-// تسجيل الدخول عبر Google OAuth
 router.post('/google', googleLogin);
-
-// نسيت كلمة المرور
 router.post('/forgot-password', forgotPassword);
-
-// إعادة تعيين كلمة المرور
 router.post('/reset-password', resetPassword);
 
-// إنشاء مستخدم جديد (تتطلب توكن أدمن)
-router.post('/users', authenticateToken, createUser);
+// ===== مسارات الأدمن فقط (توكن أدمن/يوزر — ليس زبون) =====
+router.post('/users', authenticateToken, requireRole('admin', 'user'), createUser);
+router.get('/profile', authenticateToken, requireRole('admin', 'user'), getMyProfile);
+router.get('/users', authenticateToken, requireRole('admin', 'user'), getSiteUsers);
 
-// الحصول على بيانات الملف الشخصي (تتطلب توكن)
-router.get('/profile', authenticateToken, getMyProfile);
-
-// الحصول على جميع مستخدمي الموقع (للأدمن فقط)
-router.get('/users', authenticateToken, getSiteUsers);
-
-// ===== إدارة الصلاحيات =====
-
-// الحصول على جميع الصلاحيات المتاحة
-router.get('/permissions', authenticateToken, getAllPermissions);
-
-// الحصول على صلاحيات مستخدم معين (للأدمن فقط)
-router.get('/users/:userId/permissions', authenticateToken, getUserPermissions);
-
-// منح صلاحية لمستخدم (للأدمن فقط)
-router.post('/permissions/grant', authenticateToken, grantPermission);
-
-// إلغاء صلاحية من مستخدم (للأدمن فقط)
-router.post('/permissions/revoke', authenticateToken, revokePermission);
+// ===== إدارة الصلاحيات (أدمن فقط) =====
+router.get('/permissions', authenticateToken, requireRole('admin', 'user'), getAllPermissions);
+router.get('/users/:userId/permissions', authenticateToken, requireRole('admin'), getUserPermissions);
+router.post('/permissions/grant', authenticateToken, requireRole('admin'), grantPermission);
+router.post('/permissions/revoke', authenticateToken, requireRole('admin'), revokePermission);
 
 module.exports = router;

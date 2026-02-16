@@ -40,6 +40,21 @@ function authenticateToken(req, res, next) {
   next();
 }
 
+// ─── التحقق من صلاحية الدور (admin, user, customer) ───
+// يُستخدم بعد authenticateToken لضمان فصل مسارات الأدمن عن الزبائن
+function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({ error: 'غير مصرح — يرجى تسجيل الدخول' });
+    }
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'غير مصرح بالوصول لهذا المسار' });
+    }
+    next();
+  };
+}
+
 module.exports = {
-  authenticateToken
+  authenticateToken,
+  requireRole
 };
