@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Users, Search, Mail, Shield, Ban, CheckCircle, Eye,
-  ChevronLeft, ChevronRight, CreditCard, Crown, Loader2,
-  RefreshCw, AlertTriangle, Wallet, Globe
+  Users, Search, Shield, Crown, Loader2,
+  RefreshCw, AlertTriangle, UserPlus,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -17,6 +17,7 @@ const roleConfig = {
 export default function AdminUsers() {
   const { isRTL } = useLanguage();
   const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({ totalUsers: 0, admins: 0, regularUsers: 0, newToday: 0 });
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -33,6 +34,7 @@ export default function AdminUsers() {
       const data = await api.getPlatformUsers({ page: currentPage, limit: perPage, search: search || undefined });
       setUsers(data.users || []);
       setTotalCount(data.total || 0);
+      if (data.stats) setStats(data.stats);
     } catch (err) {
       setError(err?.error || 'فشل تحميل المستخدمين');
     } finally {
@@ -63,20 +65,18 @@ export default function AdminUsers() {
     );
   }
 
-  const adminCount = users.filter(u => u.role === 'admin' || u.role === 'super_admin').length;
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-white">
-            {isRTL ? 'جميع المستخدمين' : 'All Users'}
+            {isRTL ? 'مستخدمو المنصة' : 'Platform Users'}
           </h1>
           <p className="text-dark-400 text-sm mt-1">
             {isRTL
-              ? `${totalCount} مستخدم عبر جميع المواقع`
-              : `${totalCount} users across all sites`
+              ? `${stats.totalUsers} مستخدم مسجّل في المنصة`
+              : `${stats.totalUsers} users registered on the platform`
             }
           </p>
         </div>
@@ -86,27 +86,34 @@ export default function AdminUsers() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-[#111827] rounded-xl border border-white/5 p-4">
           <div className="w-8 h-8 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center mb-2">
             <Users className="w-4 h-4" />
           </div>
-          <p className="text-lg font-bold text-white">{totalCount}</p>
+          <p className="text-lg font-bold text-white">{stats.totalUsers}</p>
           <p className="text-dark-500 text-xs">{isRTL ? 'إجمالي المستخدمين' : 'Total Users'}</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-white/5 p-4">
           <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center mb-2">
             <Crown className="w-4 h-4" />
           </div>
-          <p className="text-lg font-bold text-white">{adminCount}</p>
+          <p className="text-lg font-bold text-white">{stats.admins}</p>
           <p className="text-dark-500 text-xs">{isRTL ? 'المديرين' : 'Admins'}</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-white/5 p-4">
           <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-400 flex items-center justify-center mb-2">
-            <Globe className="w-4 h-4" />
+            <Shield className="w-4 h-4" />
           </div>
-          <p className="text-lg font-bold text-white">{new Set(users.map(u => u.site_key)).size}</p>
-          <p className="text-dark-500 text-xs">{isRTL ? 'مواقع مختلفة' : 'Distinct Sites'}</p>
+          <p className="text-lg font-bold text-white">{stats.regularUsers}</p>
+          <p className="text-dark-500 text-xs">{isRTL ? 'مستخدمين عاديين' : 'Regular Users'}</p>
+        </div>
+        <div className="bg-[#111827] rounded-xl border border-white/5 p-4">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2">
+            <UserPlus className="w-4 h-4" />
+          </div>
+          <p className="text-lg font-bold text-white">{stats.newToday}</p>
+          <p className="text-dark-500 text-xs">{isRTL ? 'مسجّلين اليوم' : 'New Today'}</p>
         </div>
       </div>
 
@@ -130,7 +137,6 @@ export default function AdminUsers() {
               <tr className="border-b border-white/5">
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'المستخدم' : 'User'}</th>
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'الدور' : 'Role'}</th>
-                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'الموقع' : 'Site'}</th>
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'التاريخ' : 'Joined'}</th>
               </tr>
             </thead>
@@ -158,12 +164,6 @@ export default function AdminUsers() {
                         {isRTL ? rc.labelAr : rc.labelEn}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <Globe className="w-3 h-3 text-violet-400" />
-                        <span className="text-dark-300 text-xs truncate max-w-[140px]">{user.site_name || user.site_domain || user.site_key || '—'}</span>
-                      </div>
-                    </td>
                     <td className="px-5 py-3 text-dark-400 text-xs">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') : '-'}
                     </td>
@@ -172,7 +172,7 @@ export default function AdminUsers() {
               })}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-dark-500 text-sm">
+                  <td colSpan={3} className="text-center py-12 text-dark-500 text-sm">
                     {isRTL ? 'لا توجد نتائج' : 'No results'}
                   </td>
                 </tr>

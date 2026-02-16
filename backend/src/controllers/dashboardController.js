@@ -500,7 +500,8 @@ async function getPlatformUsers(req, res) {
     const { page = 1, limit = 50, search } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let where = 'WHERE u.site_key != ?';
+    // مستخدمو المنصة فقط (المسجلون في موقع المنصة نفسه)
+    let where = 'WHERE u.site_key = ?';
     const params = [PLATFORM_SITE_KEY];
     if (search) {
       where += ' AND (u.name LIKE ? OR u.email LIKE ?)';
@@ -511,10 +512,20 @@ async function getPlatformUsers(req, res) {
       `SELECT COUNT(*) as total FROM users u ${where}`, params
     );
 
+    // إحصائيات مستخدمي المنصة
+    const [[statsRow]] = await pool.query(`
+      SELECT
+        COUNT(*) as totalUsers,
+        SUM(CASE WHEN role = 'admin' OR role = 'super_admin' THEN 1 ELSE 0 END) as admins,
+        SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as regularUsers,
+        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as newToday
+      FROM users
+      WHERE site_key = ?
+    `, [PLATFORM_SITE_KEY]);
+
     const [users] = await pool.query(
-      `SELECT u.*, s.domain as site_domain, s.name as site_name, s.custom_domain
+      `SELECT u.id, u.name, u.email, u.role, u.site_key, u.created_at
        FROM users u
-       LEFT JOIN sites s ON u.site_key = s.site_key
        ${where}
        ORDER BY u.created_at DESC
        LIMIT ? OFFSET ?`,
@@ -528,11 +539,15 @@ async function getPlatformUsers(req, res) {
         email: u.email,
         role: u.role,
         site_key: u.site_key,
-        site_domain: u.custom_domain || u.site_domain || u.site_key,
-        site_name: u.site_name,
         created_at: u.created_at,
       })),
       total,
+      stats: {
+        totalUsers: statsRow.totalUsers || 0,
+        admins: statsRow.admins || 0,
+        regularUsers: statsRow.regularUsers || 0,
+        newToday: statsRow.newToday || 0,
+      },
       page: parseInt(page),
       limit: parseInt(limit),
     });
