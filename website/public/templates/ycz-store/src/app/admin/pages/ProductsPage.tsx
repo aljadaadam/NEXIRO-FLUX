@@ -158,11 +158,14 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   async function handleToggleFeatured(e: React.MouseEvent, id: number) {
     e.preventDefault();
     e.stopPropagation();
+    // Optimistic update — نغير اللون فوراً قبل ما يرجع الرد
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_featured: p.is_featured ? 0 : 1 } : p));
     try {
       await adminApi.toggleFeatured(id);
-      await loadProducts();
     } catch (err) {
       console.error('toggleFeatured error:', err);
+      // Rollback — نرجع الحالة الأصلية عند الفشل
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, is_featured: p.is_featured ? 0 : 1 } : p));
       alert('فشل تبديل حالة المنتج المميز — تأكد من أن الخادم يعمل');
     }
   }
