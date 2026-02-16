@@ -26,7 +26,9 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
     },
   });
   if (res.status === 401 || res.status === 403) {
-    if (typeof window !== 'undefined') {
+    // In demo mode (?demo=1), don't redirect to login — just throw so the page can handle gracefully
+    const isDemoMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
+    if (!isDemoMode && typeof window !== 'undefined') {
       localStorage.removeItem('admin_key');
       window.location.href = '/login';
     }

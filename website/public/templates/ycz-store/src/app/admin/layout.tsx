@@ -103,13 +103,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMobileDrawerOpen(false);
   };
 
-  // Check admin auth
+  // Check admin auth (skip in demo mode)
+  const isDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
   useEffect(() => {
+    if (isDemo) return;
     const key = localStorage.getItem('admin_key');
     if (!key) {
       router.push('/login');
     }
-  }, [router]);
+  }, [router, isDemo]);
 
   useEffect(() => {
     if (mobileDrawerOpen) {
