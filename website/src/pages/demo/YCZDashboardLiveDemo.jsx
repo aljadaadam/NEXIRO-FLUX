@@ -4,7 +4,7 @@ export default function YCZDashboardLiveDemo() {
   return (
     <LiveDemoFrame
       path="/admin?demo=1"
-      title="YCZ Dashboard — لوحة التحكم"
+      title="لوحة التحكم"
       storeName="YCZ Dashboard"
     />
   );

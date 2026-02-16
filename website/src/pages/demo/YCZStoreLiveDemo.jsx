@@ -4,7 +4,7 @@ export default function YCZStoreLiveDemo() {
   return (
     <LiveDemoFrame
       path="/?demo=1"
-      title="YCZ Store — المعاينة الحية"
+      title="المتجر"
       storeName="YCZ Store"
     />
   );
