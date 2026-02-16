@@ -9,6 +9,30 @@ const emailService = require('../services/email');
 const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
 const { decryptApiKey } = require('../utils/apiKeyCrypto');
 
+// ─── ترجمة أخطاء المصدر للعربية ─────────────────────────────
+function translateSourceError(msg) {
+  const m = (msg || '').toLowerCase();
+  const map = {
+    'invalid imei':        'رقم IMEI غير صالح',
+    'imei not found':      'رقم IMEI غير موجود',
+    'blacklisted':         'الجهاز في القائمة السوداء',
+    'already unlocked':    'الجهاز مفتوح مسبقاً',
+    'not supported':       'الجهاز غير مدعوم',
+    'invalid serial':      'الرقم التسلسلي غير صالح',
+    'wrong model':         'موديل غير متوافق',
+    'duplicate order':     'يوجد طلب مشابه قيد المعالجة',
+    'invalid service':     'الخدمة غير متوفرة',
+    'insufficient balance':'رصيد المصدر غير كافٍ',
+    'insufficient credit': 'رصيد المصدر غير كافٍ',
+    'service not found':   'الخدمة غير موجودة في المصدر',
+    'incorrect':           'البيانات المدخلة غير صحيحة',
+  };
+  for (const [key, val] of Object.entries(map)) {
+    if (m.includes(key)) return val;
+  }
+  return 'لم يتم قبول الطلب من المصدر';
+}
+
 // جلب جميع الطلبات (أدمن)
 async function getAllOrders(req, res) {
   try {
@@ -110,7 +134,105 @@ async function createOrder(req, res) {
       }
     } catch (e) { /* ignore */ }
 
-    res.status(201).json({ message: 'تم إنشاء الطلب بنجاح', order });
+    // ─── إرسال تلقائي للمصدر الخارجي (إذا المنتج مرتبط بمصدر) ───
+    let externalResult = null;
+    if (product_id) {
+      try {
+        const { getPool } = require('../config/db');
+        const pool = getPool();
+        const [products] = await pool.query('SELECT * FROM products WHERE id = ? AND site_key = ?', [product_id, site_key]);
+        const product = products[0];
+
+        if (product && product.source_id) {
+          const source = await Source.findById(product.source_id);
+          const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
+
+          if (source && source.site_key === site_key && dhruTypes.includes(source.type)) {
+            const apiKey = decryptApiKey(source.api_key);
+            if (apiKey) {
+              const serviceId = product.external_service_id || product.external_service_key;
+              const orderImei = imei || null;
+
+              if (serviceId && orderImei) {
+                const client = new DhruFusionClient({
+                  baseUrl: source.url,
+                  username: source.username || '',
+                  apiAccessKey: apiKey
+                });
+
+                try {
+                  const result = await client.placeOrder({
+                    serviceId,
+                    imei: orderImei,
+                    quantity: qty,
+                    customFields: notes ? (() => { try { return JSON.parse(notes); } catch { return null; } })() : null
+                  });
+
+                  if (result.referenceId) {
+                    // ✅ نجاح — حفظ Reference ID وتحديث الحالة
+                    await pool.query(
+                      `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing', server_response = ? WHERE id = ? AND site_key = ?`,
+                      [result.referenceId, source.id, JSON.stringify(result.raw), order.id, site_key]
+                    );
+                    externalResult = { ok: true, referenceId: result.referenceId };
+                    console.log(`✅ Order #${order.order_number} → Ref: ${result.referenceId}`);
+                  }
+                } catch (sourceErr) {
+                  // ❌ المصدر رفض الطلب — استرجاع الرصيد
+                  const errMsg = sourceErr instanceof DhruFusionError
+                    ? sourceErr.message
+                    : (sourceErr.message || 'خطأ اتصال بالمصدر');
+                  const translatedErr = translateSourceError(errMsg);
+                  const isConnectionError = !(sourceErr instanceof DhruFusionError);
+
+                  if (isConnectionError) {
+                    // مشكلة اتصال → الطلب يبقى pending
+                    await pool.query(
+                      `UPDATE orders SET status = 'pending', server_response = ? WHERE id = ? AND site_key = ?`,
+                      [JSON.stringify({ error: errMsg, type: 'CONNECTION_ERROR', at: new Date().toISOString() }), order.id, site_key]
+                    );
+                    externalResult = { ok: false, type: 'CONNECTION_ERROR', error: errMsg };
+                    console.log(`⏳ Order #${order.order_number} → PENDING (اتصال فاشل)`);
+                  } else {
+                    // المصدر رفض → استرجاع الرصيد
+                    if (payment_method === 'wallet') {
+                      await Customer.updateWallet(effectiveCustomerId, site_key, total_price);
+                      await Payment.create({
+                        site_key, customer_id: effectiveCustomerId, order_id: order.id,
+                        type: 'refund', amount: total_price, payment_method: 'wallet', status: 'completed',
+                        description: `استرجاع: ${translatedErr}`
+                      });
+                      await Order.updatePaymentStatus(order.id, site_key, 'refunded');
+                    }
+                    await pool.query(
+                      `UPDATE orders SET status = 'failed', server_response = ? WHERE id = ? AND site_key = ?`,
+                      [JSON.stringify({ error: errMsg, translated: translatedErr, type: 'ORDER_REJECTED', at: new Date().toISOString() }), order.id, site_key]
+                    );
+                    // إشعار الزبون
+                    await Notification.create({
+                      site_key, recipient_type: 'customer', recipient_id: effectiveCustomerId,
+                      title: 'تحديث الطلب',
+                      message: `طلبك #${order.order_number}: ${translatedErr}`,
+                      type: 'order'
+                    });
+                    externalResult = { ok: false, type: 'ORDER_REJECTED', error: translatedErr };
+                    console.log(`🚫 Order #${order.order_number} → REJECTED + Refunded: ${translatedErr}`);
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (extErr) {
+        console.error('Auto external order error (non-blocking):', extErr.message);
+      }
+    }
+
+    // إرجاع الطلب المحدّث
+    const finalOrder = await Order.findById(order.id);
+    const response = { message: 'تم إنشاء الطلب بنجاح', order: finalOrder };
+    if (externalResult) response.external = externalResult;
+    res.status(201).json(response);
   } catch (error) {
     console.error('Error in createOrder:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء الطلب' });

@@ -12,24 +12,50 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // تحويل حالات الباك اند إلى عربي مع ألوان
+  const statusMap: Record<string, { label: string; color: string }> = {
+    pending:    { label: 'قيد الانتظار', color: '#f59e0b' },
+    processing: { label: 'قيد المعالجة', color: '#3b82f6' },
+    completed:  { label: 'مكتمل', color: '#22c55e' },
+    failed:     { label: 'مرفوض', color: '#ef4444' },
+    cancelled:  { label: 'ملغي', color: '#94a3b8' },
+    refunded:   { label: 'مسترجع', color: '#8b5cf6' },
+  };
+
+  function mapOrder(raw: Record<string, unknown>): Order {
+    const st = String(raw.status || 'pending');
+    const mapped = statusMap[st] || statusMap['pending'];
+    return {
+      id: String(raw.order_number || raw.id || ''),
+      product: String(raw.product_name || ''),
+      status: mapped.label,
+      statusColor: mapped.color,
+      date: raw.created_at ? new Date(String(raw.created_at)).toLocaleDateString('ar-EG') : '--',
+      price: `$${Number(raw.total_price || 0).toFixed(2)}`,
+      icon: '📦',
+    };
+  }
+
   useEffect(() => {
     async function load() {
       try {
         const res = await storeApi.getOrders();
-        if (Array.isArray(res)) setOrders(res);
-        else if (res?.orders && Array.isArray(res.orders)) setOrders(res.orders);
+        const rawOrders = Array.isArray(res) ? res : (res?.orders && Array.isArray(res.orders) ? res.orders : []);
+        setOrders(rawOrders.map((o: Record<string, unknown>) => mapOrder(o)));
       } catch { /* keep fallback */ }
       finally { setLoading(false); }
     }
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filters = ['all', 'completed', 'pending', 'cancelled'];
-  const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', cancelled: 'ملغية' };
+  const filters = ['all', 'completed', 'pending', 'failed', 'cancelled'];
+  const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة', cancelled: 'ملغية' };
   const filtered = filter === 'all' ? orders : orders.filter(o => {
     if (filter === 'completed') return o.status === 'مكتمل';
-    if (filter === 'pending') return o.status === 'قيد التنفيذ';
-    if (filter === 'cancelled') return o.status === 'ملغي';
+    if (filter === 'pending') return o.status === 'قيد الانتظار' || o.status === 'قيد المعالجة';
+    if (filter === 'failed') return o.status === 'مرفوض';
+    if (filter === 'cancelled') return o.status === 'ملغي' || o.status === 'مسترجع';
     return true;
   });
 

@@ -217,6 +217,9 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال الطلب بنجاح!</h3>
             <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة &ldquo;طلباتي&rdquo;.</p>
+            {walletBalance !== null && (
+              <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>الرصيد المتبقي: <strong style={{ color: '#0b1020' }}>${walletBalance.toFixed(2)}</strong></p>
+            )}
             <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حسناً</button>
           </div>
         )}
