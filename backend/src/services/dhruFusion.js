@@ -160,10 +160,11 @@ class DhruFusionClient {
    */
   async placeOrder({ serviceId, imei, quantity, customFields }) {
     if (!serviceId) throw new Error('serviceId مطلوب');
-    if (!imei) throw new Error('IMEI مطلوب');
+    // SERVER-type services don't require IMEI
+    const effectiveImei = imei || '';
 
     // بناء XML Parameters
-    let xml = `<PARAMETERS><ID>${serviceId}</ID><IMEI>${imei}</IMEI>`;
+    let xml = `<PARAMETERS><ID>${serviceId}</ID><IMEI>${effectiveImei}</IMEI>`;
     
     if (quantity && quantity > 1) {
       xml += `<QNT>${quantity}</QNT>`;

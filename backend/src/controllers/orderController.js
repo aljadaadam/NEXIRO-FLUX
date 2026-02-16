@@ -152,8 +152,9 @@ async function createOrder(req, res) {
             if (apiKey) {
               const serviceId = product.external_service_id || product.external_service_key;
               const orderImei = imei || null;
+              const productServiceType = String(product.service_type || '').toUpperCase();
 
-              if (serviceId && orderImei) {
+              if (serviceId && (orderImei || productServiceType === 'SERVER')) {
                 const client = new DhruFusionClient({
                   baseUrl: source.url,
                   username: source.username || '',
@@ -367,14 +368,15 @@ async function placeExternalOrder(req, res) {
     }
 
     const imei = req.body.imei || order.imei;
-    if (!imei) {
+    const productServiceType = String(product.service_type || '').toUpperCase();
+    if (!imei && productServiceType !== 'SERVER') {
       return res.status(400).json({ error: 'IMEI مطلوب لهذا الطلب' });
     }
 
     // إرسال الطلب
     const result = await client.placeOrder({
       serviceId,
-      imei,
+      imei: imei || '',
       quantity: order.quantity || 1,
       customFields: req.body.customFields || null
     });
