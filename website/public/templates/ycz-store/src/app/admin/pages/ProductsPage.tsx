@@ -10,7 +10,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
   const [filterGroup, setFilterGroup] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -120,7 +119,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     } catch { /* ignore */ }
   }
 
-  const categories = Array.from(new Set(products.map((p) => String(p.category || '').trim()).filter(Boolean)));
   const groups = Array.from(new Set(products.map((p) => String(p.group_name || '').trim()).filter(Boolean)));
 
   const stats = {
@@ -140,10 +138,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     const statusMatch = filterStatus === 'all' || statusNormalized === filterStatus;
 
     const typeMatch = filterType === 'all' || String(p.service_type || '').toUpperCase() === filterType;
-    const categoryMatch = filterCategory === 'all' || String(p.category || '') === filterCategory;
     const groupMatch = filterGroup === 'all' || String(p.group_name || '') === filterGroup;
 
-    return searchMatch && statusMatch && typeMatch && categoryMatch && groupMatch;
+    return searchMatch && statusMatch && typeMatch && groupMatch;
   });
 
   return (
@@ -268,15 +265,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           <option value="SERVER">SERVER</option>
           <option value="IMEI">IMEI</option>
           <option value="REMOTE">REMOTE</option>
-          <option value="FILE">FILE</option>
-          <option value="CODE">CODE</option>
-        </select>
-
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160 }}>
-          <option value="all">كل التصنيفات</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
         </select>
 
         <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 180 }}>
