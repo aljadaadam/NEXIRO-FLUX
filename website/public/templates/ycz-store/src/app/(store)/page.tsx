@@ -235,13 +235,15 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         {/* Wallet Info */}
         <div style={{
           padding: '0.75rem 1rem', borderRadius: 12,
-          background: '#fff', border: '1px solid #e2e8f0',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           marginBottom: 12,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
           fontSize: '0.82rem',
         }}>
-          <div style={{ color: '#334155', fontWeight: 700 }}>الدفع بالمحفظة</div>
-          <div style={{ color: '#64748b', fontWeight: 700, textAlign: 'left' }}>
+          <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: '1rem' }}>💳</span> الدفع بالمحفظة
+          </div>
+          <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
             {loadingProfile ? 'جاري جلب الرصيد...' : walletBalance === null ? 'غير متاح' : `$${walletBalance.toFixed(2)}`}
           </div>
         </div>
