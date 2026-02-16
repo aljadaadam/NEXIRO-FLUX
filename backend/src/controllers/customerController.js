@@ -171,10 +171,71 @@ async function updateCustomerWallet(req, res) {
   }
 }
 
+// ===== ملف الزبون (للزبون نفسه) =====
+async function getMyCustomerProfile(req, res) {
+  try {
+    if (req.user?.role !== 'customer') {
+      return res.status(403).json({ error: 'هذا المسار مخصص للزبائن فقط' });
+    }
+
+    const customer = await Customer.findById(req.user.id);
+    if (!customer || customer.site_key !== req.user.site_key) {
+      return res.status(404).json({ error: 'الزبون غير موجود' });
+    }
+
+    res.json({ customer });
+  } catch (error) {
+    console.error('Error in getMyCustomerProfile:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب بيانات الملف الشخصي' });
+  }
+}
+
+async function updateMyCustomerProfile(req, res) {
+  try {
+    if (req.user?.role !== 'customer') {
+      return res.status(403).json({ error: 'هذا المسار مخصص للزبائن فقط' });
+    }
+
+    const { name, email, phone, country, password } = req.body || {};
+
+    if (email !== undefined && String(email).trim() === '') {
+      return res.status(400).json({ error: 'البريد الإلكتروني غير صالح' });
+    }
+    if (name !== undefined && String(name).trim() === '') {
+      return res.status(400).json({ error: 'الاسم غير صالح' });
+    }
+
+    const ok = await Customer.updateProfile(req.user.id, req.user.site_key, {
+      name: name !== undefined ? String(name).trim() : undefined,
+      email: email !== undefined ? String(email).trim() : undefined,
+      phone: phone !== undefined ? String(phone).trim() : undefined,
+      country: country !== undefined ? String(country).trim() : undefined,
+      password: password !== undefined ? String(password) : undefined,
+    });
+
+    if (!ok) {
+      return res.status(400).json({ error: 'لا توجد تغييرات للحفظ' });
+    }
+
+    const customer = await Customer.findById(req.user.id);
+    res.json({ message: 'تم تحديث الملف الشخصي', customer });
+  } catch (error) {
+    console.error('Error in updateMyCustomerProfile:', error);
+    // غالباً تعارض unique email
+    const msg = String(error?.message || '');
+    if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('unique')) {
+      return res.status(400).json({ error: 'البريد الإلكتروني مستخدم بالفعل' });
+    }
+    res.status(500).json({ error: 'حدث خطأ أثناء تحديث الملف الشخصي' });
+  }
+}
+
 module.exports = {
   registerCustomer,
   loginCustomer,
   getAllCustomers,
   toggleBlockCustomer,
-  updateCustomerWallet
+  updateCustomerWallet,
+  getMyCustomerProfile,
+  updateMyCustomerProfile
 };

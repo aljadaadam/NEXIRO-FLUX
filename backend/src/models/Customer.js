@@ -2,9 +2,18 @@ const { getPool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 class Customer {
+  static async ensureColumns() {
+    const pool = getPool();
+    const addCol = async (col, def) => {
+      try { await pool.query(`ALTER TABLE customers ADD COLUMN ${col} ${def}`); } catch (e) { /* exists */ }
+    };
+    await addCol('country', 'VARCHAR(100) NULL');
+  }
+
   // إنشاء زبون جديد
   static async create({ site_key, name, email, phone, password }) {
     const pool = getPool();
+    await this.ensureColumns();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(
@@ -19,7 +28,7 @@ class Customer {
   static async findById(id) {
     const pool = getPool();
     const [rows] = await pool.query(
-      'SELECT id, site_key, name, email, phone, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE id = ?',
+      'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE id = ?',
       [id]
     );
     return rows[0] || null;
@@ -40,7 +49,7 @@ class Customer {
     const pool = getPool();
     const offset = (page - 1) * limit;
 
-    let query = 'SELECT id, site_key, name, email, phone, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE site_key = ?';
+    let query = 'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE site_key = ?';
     const params = [site_key];
 
     if (search) {
@@ -95,6 +104,33 @@ class Customer {
   static async updateLastLogin(id) {
     const pool = getPool();
     await pool.query('UPDATE customers SET last_login_at = NOW() WHERE id = ?', [id]);
+  }
+
+  static async updateProfile(id, site_key, { name, email, phone, country, password } = {}) {
+    const pool = getPool();
+    await this.ensureColumns();
+
+    const updates = [];
+    const params = [];
+
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
+    if (phone !== undefined) { updates.push('phone = ?'); params.push(phone || null); }
+    if (country !== undefined) { updates.push('country = ?'); params.push(country || null); }
+    if (password !== undefined && password !== null && String(password).trim() !== '') {
+      const hashed = await bcrypt.hash(String(password), 10);
+      updates.push('password = ?');
+      params.push(hashed);
+    }
+
+    if (updates.length === 0) return false;
+
+    params.push(id, site_key);
+    const [result] = await pool.query(
+      `UPDATE customers SET ${updates.join(', ')} WHERE id = ? AND site_key = ?`,
+      params
+    );
+    return result.affectedRows > 0;
   }
 
   // حذف زبون

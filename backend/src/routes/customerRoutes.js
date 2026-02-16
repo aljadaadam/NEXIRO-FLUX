@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   registerCustomer,
   loginCustomer,
+  getMyCustomerProfile,
+  updateMyCustomerProfile,
   getAllCustomers,
   toggleBlockCustomer,
   updateCustomerWallet
@@ -15,6 +17,10 @@ router.use(validateSite);
 // ===== واجهة الزبائن (بدون مصادقة أدمن) =====
 router.post('/register', registerCustomer);
 router.post('/login', loginCustomer);
+
+// ===== ملف الزبون (يتطلب توكن زبون) =====
+router.get('/me', authenticateToken, getMyCustomerProfile);
+router.put('/me', authenticateToken, updateMyCustomerProfile);
 
 // ===== واجهة الأدمن =====
 router.get('/', authenticateToken, getAllCustomers);

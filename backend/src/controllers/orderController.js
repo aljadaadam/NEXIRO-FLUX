@@ -12,18 +12,25 @@ const { decryptApiKey } = require('../utils/apiKeyCrypto');
 // جلب جميع الطلبات (أدمن)
 async function getAllOrders(req, res) {
   try {
-    const { site_key } = req.user;
+    const { site_key, role, id: requesterId } = req.user;
     const { page, limit, status, customer_id } = req.query;
+
+    const effectiveCustomerId = role === 'customer'
+      ? requesterId
+      : (customer_id ? parseInt(customer_id) : undefined);
 
     const orders = await Order.findBySiteKey(site_key, {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 50,
       status,
-      customer_id: customer_id ? parseInt(customer_id) : undefined
+      customer_id: effectiveCustomerId
     });
 
-    const stats = await Order.getStats(site_key);
+    if (role === 'customer') {
+      return res.json({ orders });
+    }
 
+    const stats = await Order.getStats(site_key);
     res.json({ orders, stats });
   } catch (error) {
     console.error('Error in getAllOrders:', error);
@@ -34,10 +41,14 @@ async function getAllOrders(req, res) {
 // إنشاء طلب (من الزبون)
 async function createOrder(req, res) {
   try {
-    const { site_key } = req.user;
+    const { site_key, role, id: requesterId } = req.user;
     const { customer_id, product_id, product_name, quantity, unit_price, payment_method, imei, notes } = req.body;
 
-    if (!customer_id || !product_name || !unit_price) {
+    const effectiveCustomerId = role === 'customer'
+      ? requesterId
+      : customer_id;
+
+    if (!effectiveCustomerId || !product_name || !unit_price) {
       return res.status(400).json({ error: 'بيانات الطلب غير مكتملة' });
     }
 
@@ -46,7 +57,7 @@ async function createOrder(req, res) {
 
     // التحقق من رصيد المحفظة إذا كان الدفع من المحفظة
     if (payment_method === 'wallet') {
-      const customer = await Customer.findById(customer_id);
+      const customer = await Customer.findById(effectiveCustomerId);
       if (!customer || customer.site_key !== site_key) {
         return res.status(404).json({ error: 'الزبون غير موجود' });
       }
@@ -55,18 +66,18 @@ async function createOrder(req, res) {
       }
 
       // خصم من المحفظة
-      await Customer.updateWallet(customer_id, site_key, -total_price);
+      await Customer.updateWallet(effectiveCustomerId, site_key, -total_price);
     }
 
     const order = await Order.create({
-      site_key, customer_id, product_id, product_name, quantity: qty,
+      site_key, customer_id: effectiveCustomerId, product_id, product_name, quantity: qty,
       unit_price: parseFloat(unit_price), total_price, payment_method, imei, notes
     });
 
     // تسجيل الدفع
     if (payment_method === 'wallet') {
       await Payment.create({
-        site_key, customer_id, order_id: order.id,
+        site_key, customer_id: effectiveCustomerId, order_id: order.id,
         type: 'purchase', amount: total_price, payment_method: 'wallet', status: 'completed',
         description: `شراء: ${product_name}`
       });
@@ -82,14 +93,14 @@ async function createOrder(req, res) {
 
     // سجل النشاط
     await ActivityLog.log({
-      site_key, customer_id, action: 'order_created',
+      site_key, customer_id: effectiveCustomerId, action: 'order_created',
       entity_type: 'order', entity_id: order.id,
       details: { product_name, total_price, payment_method }
     });
 
     // بريد تأكيد الطلب للزبون + تنبيه للأدمن
     try {
-      const cust = await Customer.findById(customer_id);
+      const cust = await Customer.findById(effectiveCustomerId);
       if (cust?.email) {
         emailService.sendOrderConfirmation({
           to: cust.email, name: cust.name, orderId: order.order_number,

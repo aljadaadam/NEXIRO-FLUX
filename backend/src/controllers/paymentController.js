@@ -5,11 +5,16 @@ async function getAllPayments(req, res) {
   try {
     const siteKey = req.siteKey || req.user?.site_key;
     const { page = 1, limit = 50, type, customer_id } = req.query;
+
+    const effectiveCustomerId = req.user?.role === 'customer'
+      ? req.user.id
+      : (customer_id ? parseInt(customer_id) : undefined);
+
     const payments = await Payment.findBySiteKey(siteKey, {
       page: parseInt(page),
       limit: parseInt(limit),
       type,
-      customer_id: customer_id ? parseInt(customer_id) : undefined
+      customer_id: effectiveCustomerId
     });
     res.json({ payments });
   } catch (error) {
@@ -23,6 +28,10 @@ async function createPayment(req, res) {
   try {
     const siteKey = req.siteKey || req.user?.site_key;
     const { customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, description } = req.body;
+
+    const effectiveCustomerId = req.user?.role === 'customer'
+      ? req.user.id
+      : customer_id;
 
     if (!amount || !payment_method) {
       return res.status(400).json({ error: 'المبلغ وطريقة الدفع مطلوبان' });
@@ -39,7 +48,7 @@ async function createPayment(req, res) {
 
     const payment = await Payment.create({
       site_key: siteKey,
-      customer_id,
+      customer_id: effectiveCustomerId,
       order_id,
       type: type || 'purchase',
       amount: parseFloat(amount),

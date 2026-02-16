@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   User, CreditCard, Shield, Wallet, Lock, Mail, Phone,
   CheckCircle, X, Upload, Send, Save, ChevronRight, ChevronLeft,
@@ -10,12 +11,15 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
 
 // ─── WalletChargeModal (Demo-style: 4-step with payment details) ───
-function WalletChargeModal({ onClose }: { onClose: () => void }) {
+function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
   const { currentTheme, buttonRadius } = useTheme();
   const [step, setStep] = useState(1);
   const [method, setMethod] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [receipt, setReceipt] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const methods = [
@@ -159,14 +163,42 @@ function WalletChargeModal({ onClose }: { onClose: () => void }) {
 
             <input placeholder="ملاحظات إضافية (اختياري)" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }} />
 
+            {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginBottom: 10 }}>{submitError}</p>}
+
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setStep(2)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>رجوع</button>
-              <button onClick={() => receipt && setStep(4)} disabled={!receipt} style={{
+              <button
+                onClick={async () => {
+                  if (!receipt || !method) return;
+                  setSubmitting(true);
+                  setSubmitError('');
+                  try {
+                    const payment_method =
+                      method === 'bank' ? 'bank_transfer' :
+                      method === 'vodafone' ? 'e_wallet' :
+                      method;
+                    const res = await storeApi.chargeWallet({
+                      amount: Number(amount || 0),
+                      payment_method,
+                      description: `Wallet top-up via ${payment_method}`,
+                    });
+                    const id = String(res?.payment?.id || res?.id || '');
+                    if (id) setPaymentId(id);
+                    setStep(4);
+                    onSubmitted?.();
+                  } catch {
+                    setSubmitError('فشل إرسال طلب الشحن. حاول مرة أخرى.');
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                disabled={!receipt || !amount || !method || submitting}
+                style={{
                 flex: 2, padding: '0.7rem', borderRadius: btnR,
-                background: receipt ? currentTheme.primary : '#e2e8f0', color: receipt ? '#fff' : '#94a3b8',
+                background: receipt && amount && method && !submitting ? currentTheme.primary : '#e2e8f0', color: receipt && amount && method && !submitting ? '#fff' : '#94a3b8',
                 border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: receipt ? 'pointer' : 'not-allowed',
                 fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}><Send size={14} /> إرسال للمراجعة</button>
+              }}><Send size={14} /> {submitting ? 'جاري الإرسال...' : 'إرسال للمراجعة'}</button>
             </div>
           </div>
         )}
@@ -180,7 +212,7 @@ function WalletChargeModal({ onClose }: { onClose: () => void }) {
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال طلب الشحن!</h3>
             <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 6 }}>سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك خلال دقائق.</p>
             <div style={{ display: 'inline-block', padding: '0.5rem 1rem', borderRadius: 10, background: '#f0f9ff', marginBottom: 20 }}>
-              <span style={{ fontSize: '0.82rem', color: '#0369a1', fontWeight: 600 }}>رقم العملية: #WC-{Math.floor(Math.random() * 9000 + 1000)}</span>
+              <span style={{ fontSize: '0.82rem', color: '#0369a1', fontWeight: 600 }}>رقم العملية: {paymentId ? `#PAY-${paymentId}` : '—'}</span>
             </div>
             <br />
             <button onClick={onClose} style={{ padding: '0.7rem 2.5rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حسناً</button>
@@ -193,6 +225,7 @@ function WalletChargeModal({ onClose }: { onClose: () => void }) {
 
 // ─── صفحة الملف الشخصي (Demo-style) ───
 export default function ProfilePage() {
+  const router = useRouter();
   const { currentTheme, buttonRadius } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [tab, setTab] = useState('login');
@@ -202,6 +235,8 @@ export default function ProfilePage() {
   const [authError, setAuthError] = useState('');
   const [personalData, setPersonalData] = useState({ name: '', email: '', phone: '', country: '' });
   const [personalSaved, setPersonalSaved] = useState(false);
+  const [personalSaving, setPersonalSaving] = useState(false);
+  const [personalError, setPersonalError] = useState('');
   const [profile, setProfile] = useState<{ name: string; email: string; phone?: string; balance?: string }>({ name: '', email: '' });
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
@@ -210,7 +245,7 @@ export default function ProfilePage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const transactions: { id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[] = [];
+  const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
 
   // Check if already logged in
   useEffect(() => {
@@ -221,24 +256,95 @@ export default function ProfilePage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (isLoggedIn && view === 'wallet') {
+      loadPayments();
+    }
+  }, [isLoggedIn, view]);
+
   async function loadProfile() {
     try {
       const res = await storeApi.getProfile();
-      if (res && !res.error) {
+      const customer = res?.customer || res?.user || res;
+      if (customer && !customer.error) {
+        const walletBalance = Number(customer.wallet_balance ?? customer.balance ?? customer.wallet?.balance ?? 0);
         setProfile({
-          name: res.name || res.username || '',
-          email: res.email || '',
-          phone: res.phone || '',
-          balance: res.balance || res.wallet?.balance || '$0.00',
+          name: customer.name || customer.username || '',
+          email: customer.email || '',
+          phone: customer.phone || '',
+          balance: `$${walletBalance.toFixed(2)}`,
         });
         setPersonalData(d => ({
           ...d,
-          name: res.name || res.username || d.name,
-          email: res.email || d.email,
-          phone: res.phone || d.phone,
+          name: customer.name || customer.username || d.name,
+          email: customer.email || d.email,
+          phone: customer.phone || d.phone,
+          country: customer.country || d.country,
         }));
       }
     } catch { /* keep defaults */ }
+  }
+
+  async function loadPayments() {
+    try {
+      const res = await storeApi.getPayments();
+      const payments = Array.isArray(res) ? res : res?.payments;
+      if (!Array.isArray(payments)) return;
+
+      const mapped = payments.map((p: any) => {
+        const type = String(p.type || '').toLowerCase();
+        const status = String(p.status || 'pending').toLowerCase();
+        const amountNum = Number(p.amount || 0);
+
+        const signedAmount = type === 'purchase' ? -Math.abs(amountNum) : Math.abs(amountNum);
+        const amount = `${signedAmount >= 0 ? '+' : '-'}$${Math.abs(signedAmount).toFixed(2)}`;
+
+        const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+          completed: { label: 'مكتمل', color: '#16a34a', bg: '#dcfce7' },
+          pending: { label: 'قيد المراجعة', color: '#f59e0b', bg: '#fffbeb' },
+          failed: { label: 'فشل', color: '#ef4444', bg: '#fee2e2' },
+          refunded: { label: 'مسترجع', color: '#2563eb', bg: '#dbeafe' },
+          cancelled: { label: 'ملغي', color: '#64748b', bg: '#f1f5f9' },
+        };
+
+        const s = statusMap[status] || statusMap.pending;
+        const createdAt = p.created_at ? new Date(p.created_at) : null;
+        const date = createdAt ? createdAt.toLocaleString() : '';
+
+        return {
+          id: `#PAY-${p.id}`,
+          type: type === 'deposit' ? 'شحن محفظة' : type === 'purchase' ? 'شراء' : 'عملية',
+          amount,
+          method: String(p.payment_method || ''),
+          date,
+          status: s.label,
+          statusColor: s.color,
+          statusBg: s.bg,
+        };
+      });
+
+      setTransactions(mapped);
+    } catch { /* ignore */ }
+  }
+
+  async function handleSavePersonal() {
+    setPersonalSaving(true);
+    setPersonalError('');
+    try {
+      await storeApi.updateProfile({
+        name: personalData.name,
+        email: personalData.email,
+        phone: personalData.phone,
+        country: personalData.country,
+      });
+      setPersonalSaved(true);
+      await loadProfile();
+    } catch {
+      setPersonalError('فشل حفظ البيانات. تأكد من تسجيل الدخول.');
+      setPersonalSaved(false);
+    } finally {
+      setPersonalSaving(false);
+    }
   }
 
   async function handleAuth() {
@@ -254,7 +360,8 @@ export default function ProfilePage() {
       if (res?.token) {
         localStorage.setItem('auth_token', res.token);
         setIsLoggedIn(true);
-        setProfile({ name: res.name || name, email: res.email || email });
+        const customer = res?.customer || res;
+        setProfile({ name: customer?.name || name, email: customer?.email || email });
         loadProfile();
       } else if (res?.error) {
         setAuthError(res.error);
@@ -345,15 +452,17 @@ export default function ProfilePage() {
               <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>كلمة المرور الجديدة</label>
               <input type="password" placeholder="اتركه فارغاً إذا لم ترد تغييرها" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <button onClick={() => setPersonalSaved(true)} style={{
+            <button onClick={handleSavePersonal} disabled={personalSaving} style={{
               padding: '0.75rem', borderRadius: btnR,
               background: personalSaved ? '#16a34a' : currentTheme.primary,
               color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
               fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               transition: 'all 0.3s',
+              opacity: personalSaving ? 0.75 : 1,
             }}>
-              {personalSaved ? <><CheckCircle size={16} /> تم الحفظ</> : <><Save size={16} /> حفظ التغييرات</>}
+              {personalSaved ? <><CheckCircle size={16} /> تم الحفظ</> : <><Save size={16} /> {personalSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}</>}
             </button>
+            {personalError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{personalError}</p>}
           </div>
         </div>
       </div>
@@ -418,7 +527,7 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {showWalletModal && <WalletChargeModal onClose={() => setShowWalletModal(false)} />}
+        {showWalletModal && <WalletChargeModal onClose={() => setShowWalletModal(false)} onSubmitted={() => { loadProfile(); loadPayments(); }} />}
       </div>
     );
   }
@@ -523,7 +632,7 @@ export default function ProfilePage() {
           { icon: <User size={18} />, label: 'البيانات الشخصية', color: '#3b82f6', action: () => setView('personal') },
           { icon: <Wallet size={18} />, label: 'المحفظة والعمليات', color: '#22c55e', action: () => setView('wallet') },
           { icon: <CreditCard size={18} />, label: 'شحن الرصيد', color: '#f59e0b', action: () => setShowWalletModal(true) },
-          { icon: <ShoppingCart size={18} />, label: 'طلباتي', color: '#8b5cf6', action: () => {} },
+          { icon: <ShoppingCart size={18} />, label: 'طلباتي', color: '#8b5cf6', action: () => router.push('/orders') },
           { icon: <Shield size={18} />, label: 'التحقق من الهوية', color: '#06b6d4', action: () => setView('security') },
           { icon: <Bell size={18} />, label: 'الإشعارات', color: '#8b5cf6', action: () => {} },
           { icon: <Settings size={18} />, label: 'الإعدادات', color: '#64748b', action: () => {} },
@@ -537,7 +646,7 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {showWalletModal && <WalletChargeModal onClose={() => setShowWalletModal(false)} />}
+      {showWalletModal && <WalletChargeModal onClose={() => setShowWalletModal(false)} onSubmitted={() => { loadProfile(); loadPayments(); }} />}
     </div>
   );
 }
