@@ -1,5 +1,4 @@
 const { verifyToken } = require('../utils/token');
-const { SITE_KEY } = require('../config/env');
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -16,11 +15,12 @@ function authenticateToken(req, res, next) {
   }
 
   // ─── Dynamic tenant check ───
-  // If resolveTenant set req.siteKey, verify token matches it
-  // Otherwise fall back to SITE_KEY from env
-  const expectedSiteKey = req.siteKey || SITE_KEY;
+  // إذا resolveTenant حدد الموقع — تأكد أن التوكن تابع لنفس الموقع
+  // إذا لم يُحدد (سيناريو نادر) — نعتمد على site_key في التوكن نفسه
+  const expectedSiteKey = req.siteKey;
 
-  if (expectedSiteKey && expectedSiteKey !== 'default-site-key' && decoded.site_key !== expectedSiteKey) {
+  if (expectedSiteKey && decoded.site_key !== expectedSiteKey) {
+    console.warn(`[authMiddleware] ⚠ site_key mismatch: token=${decoded.site_key}, expected=${expectedSiteKey}`);
     return res.status(403).json({ 
       error: 'غير مصرح بالوصول: site_key غير مطابق' 
     });
