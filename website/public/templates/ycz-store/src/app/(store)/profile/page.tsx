@@ -11,6 +11,39 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
 
 // ─── WalletChargeModal (Demo-style: 4-step with payment details) ───
+// ─── Gateway type → display info ───
+const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string }> = {
+  binance: { icon: '₿', color: '#f0b90b', desc: 'USDT — Binance Pay' },
+  paypal:  { icon: '💳', color: '#003087', desc: 'تحويل عبر PayPal' },
+  bank_transfer: { icon: '🏦', color: '#059669', desc: 'حوالة بنكية مباشرة' },
+  usdt:    { icon: '💚', color: '#26a17b', desc: 'USDT — تيثر' },
+};
+
+function buildPaymentInfo(gw: { type: string; config?: Record<string, string> | null }): { label: string; value: string }[] {
+  const c = gw.config || {};
+  switch (gw.type) {
+    case 'binance': return [
+      ...(c.binance_id ? [{ label: 'Binance ID', value: c.binance_id }] : []),
+      ...(c.binance_email ? [{ label: 'البريد', value: c.binance_email }] : []),
+    ];
+    case 'paypal': return [
+      ...(c.email ? [{ label: 'إيميل PayPal', value: c.email }] : []),
+      { label: 'ملاحظة', value: 'أرسل كـ Friends & Family' },
+    ];
+    case 'bank_transfer': return [
+      ...(c.bank_name ? [{ label: 'البنك', value: c.bank_name }] : []),
+      ...(c.account_holder ? [{ label: 'اسم الحساب', value: c.account_holder }] : []),
+      ...(c.iban ? [{ label: 'IBAN', value: c.iban }] : []),
+      ...(c.currency ? [{ label: 'العملة', value: c.currency }] : []),
+    ];
+    case 'usdt': return [
+      ...(c.wallet_address ? [{ label: 'عنوان المحفظة', value: c.wallet_address }] : []),
+      ...(c.network ? [{ label: 'الشبكة', value: c.network }] : []),
+    ];
+    default: return [];
+  }
+}
+
 function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
   const { currentTheme, buttonRadius } = useTheme();
   const [step, setStep] = useState(1);
@@ -22,35 +55,25 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
-  const methods = [
-    { id: 'binance', name: 'Binance Pay', icon: '₿', color: '#f0b90b', desc: 'USDT — شبكة TRC20' },
-    { id: 'paypal', name: 'PayPal', icon: '💳', color: '#003087', desc: 'تحويل عبر PayPal' },
-    { id: 'bank', name: 'تحويل بنكي', icon: '🏦', color: '#059669', desc: 'حوالة بنكية مباشرة' },
-    { id: 'vodafone', name: 'محفظة إلكترونية', icon: '📱', color: '#e60000', desc: 'فودافون كاش / STC Pay' },
-  ];
+  // Fetch enabled gateways from backend
+  const [gateways, setGateways] = useState<{ id: number; type: string; name: string; name_en?: string; is_default: boolean; config?: Record<string, string> | null }[]>([]);
+  const [gatewaysLoading, setGatewaysLoading] = useState(true);
+
+  useEffect(() => {
+    storeApi.getEnabledGateways()
+      .then(res => {
+        const list = res?.gateways || [];
+        setGateways(list);
+        // Auto-select default gateway
+        const def = list.find((g: { is_default: boolean }) => g.is_default);
+        if (def) setMethod(def.type);
+      })
+      .catch(() => {})
+      .finally(() => setGatewaysLoading(false));
+  }, []);
 
   const presetAmounts = [5, 10, 25, 50, 100];
-
-  const paymentInfo: Record<string, { label: string; value: string }[]> = {
-    binance: [
-      { label: 'العنوان', value: '—' },
-      { label: 'الشبكة', value: 'TRC20 (Tron)' },
-      { label: 'العملة', value: 'USDT' },
-    ],
-    paypal: [
-      { label: 'إيميل PayPal', value: '—' },
-      { label: 'ملاحظة', value: 'أرسل كـ Friends & Family' },
-    ],
-    bank: [
-      { label: 'البنك', value: '—' },
-      { label: 'اسم الحساب', value: '—' },
-      { label: 'IBAN', value: '—' },
-    ],
-    vodafone: [
-      { label: 'رقم المحفظة', value: '—' },
-      { label: 'الاسم', value: '—' },
-    ],
-  };
+  const selectedGw = gateways.find(g => g.type === method);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
@@ -80,23 +103,41 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="أو أدخل مبلغ مخصص" type="number" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.88rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', marginBottom: 20, boxSizing: 'border-box' }} />
 
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 10, display: 'block' }}>طريقة الدفع</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {methods.map(m => (
-                <button key={m.id} onClick={() => setMethod(m.id)} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem',
-                  borderRadius: 12, cursor: 'pointer', width: '100%', fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
-                  border: method === m.id ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
-                  background: method === m.id ? `${currentTheme.primary}08` : '#fff',
-                }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}15`, color: m.color, display: 'grid', placeItems: 'center', fontSize: '1.2rem', fontWeight: 800, flexShrink: 0 }}>{m.icon}</div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020' }}>{m.name}</p>
-                    <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{m.desc}</p>
-                  </div>
-                  {method === m.id && <CheckCircle size={18} color={currentTheme.primary} />}
-                </button>
-              ))}
-            </div>
+            {gatewaysLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: currentTheme.primary, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>جاري تحميل بوابات الدفع...</p>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            ) : gateways.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: '#fef2f2', borderRadius: 12 }}>
+                <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>⚠️</p>
+                <p style={{ fontSize: '0.85rem', color: '#991b1b', fontWeight: 600 }}>لا توجد بوابات دفع مفعّلة حالياً</p>
+                <p style={{ fontSize: '0.78rem', color: '#b91c1c', marginTop: 4 }}>تواصل مع الإدارة لتفعيل بوابات الدفع</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {gateways.map(gw => {
+                  const meta = GATEWAY_ICONS[gw.type] || { icon: '💳', color: '#64748b', desc: gw.type };
+                  return (
+                    <button key={gw.id} onClick={() => setMethod(gw.type)} style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem',
+                      borderRadius: 12, cursor: 'pointer', width: '100%', fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                      border: method === gw.type ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
+                      background: method === gw.type ? `${currentTheme.primary}08` : '#fff',
+                    }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${meta.color}15`, color: meta.color, display: 'grid', placeItems: 'center', fontSize: '1.2rem', fontWeight: 800, flexShrink: 0 }}>{meta.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020' }}>{gw.name}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{meta.desc}</p>
+                      </div>
+                      {method === gw.type && <CheckCircle size={18} color={currentTheme.primary} />}
+                      {gw.is_default && <span style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 4, background: '#dbeafe', color: '#2563eb', fontWeight: 700 }}>افتراضي</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <button onClick={() => amount && method && setStep(2)} disabled={!amount || !method} style={{
               width: '100%', marginTop: 20, padding: '0.75rem', borderRadius: btnR,
@@ -113,15 +154,15 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             <div style={{ background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, borderRadius: 14, padding: '1.25rem', marginBottom: 20, color: '#fff', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: 4 }}>المبلغ المطلوب</p>
               <p style={{ fontSize: '2rem', fontWeight: 800 }}>${amount}</p>
-              <p style={{ fontSize: '0.78rem', opacity: 0.7, marginTop: 4 }}>عبر {methods.find(m => m.id === method)?.name}</p>
+              <p style={{ fontSize: '0.78rem', opacity: 0.7, marginTop: 4 }}>عبر {selectedGw?.name || method}</p>
             </div>
 
             <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
               <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Lock size={14} color={currentTheme.primary} /> بيانات التحويل
               </h4>
-              {paymentInfo[method]?.map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < paymentInfo[method].length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+              {(selectedGw ? buildPaymentInfo(selectedGw) : []).map((item, i, arr) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
                   <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
                 </div>
@@ -173,10 +214,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   setSubmitting(true);
                   setSubmitError('');
                   try {
-                    const payment_method =
-                      method === 'bank' ? 'bank_transfer' :
-                      method === 'vodafone' ? 'e_wallet' :
-                      method;
+                    const payment_method = method || '';
                     const res = await storeApi.chargeWallet({
                       amount: Number(amount || 0),
                       payment_method,

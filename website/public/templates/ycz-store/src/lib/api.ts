@@ -258,5 +258,6 @@ export const storeApi = {
   login: (data: { email: string; password: string }) => customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data: { name: string; email: string; password: string; phone?: string }) => customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
   chargeWallet: (data: { amount: number; payment_method: string; description?: string }) => customerFetch('/customers/payments', { method: 'POST', body: JSON.stringify({ type: 'deposit', ...data }) }),
+  getEnabledGateways: () => fetch(`${API_BASE}/payment-gateways/enabled`).then(r => r.json()),
   getStoreInfo: () => fetch(`${API_BASE}/store/info`).then(r => r.json()),
 };
