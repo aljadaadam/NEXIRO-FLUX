@@ -33,9 +33,6 @@ import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayments from './pages/admin/AdminPayments';
 import AdminPaymentGateways from './pages/admin/AdminPaymentGateways';
 import AdminPurchaseCodes from './pages/admin/AdminPurchaseCodes';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminSources from './pages/admin/AdminSources';
 import AdminTickets from './pages/admin/AdminTickets';
 
 function AppContent() {
@@ -106,9 +103,6 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<AdminOverview />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="sources" element={<AdminSources />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="templates" element={<AdminTemplates />} />
           <Route path="users" element={<AdminUsers />} />

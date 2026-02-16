@@ -3,16 +3,13 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
   Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark, Key,
-  Package, ShoppingCart, Globe, MessageSquare
+  MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview', exact: true },
-  { to: '/admin/products', icon: Package, labelAr: 'المنتجات', labelEn: 'Products' },
-  { to: '/admin/orders', icon: ShoppingCart, labelAr: 'الطلبات', labelEn: 'Orders' },
-  { to: '/admin/sources', icon: Globe, labelAr: 'المصادر', labelEn: 'Sources' },
   { to: '/admin/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
   { to: '/admin/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
   { to: '/admin/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
