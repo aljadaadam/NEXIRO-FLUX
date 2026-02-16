@@ -130,7 +130,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
   const filtered = products.filter(p => {
     const searchMatch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      String(p.name || '').toLowerCase().includes(search.toLowerCase()) ||
       String(p.arabic_name || '').toLowerCase().includes(search.toLowerCase());
 
     const statusRaw = String(p.status || '').toLowerCase();
@@ -138,7 +138,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     const statusMatch = filterStatus === 'all' || statusNormalized === filterStatus;
 
     const typeMatch = filterType === 'all' || String(p.service_type || '').toUpperCase() === filterType;
-    const groupMatch = filterGroup === 'all' || String(p.group_name || '') === filterGroup;
+    const groupMatch = filterGroup === 'all' || String(p.group_name || '').trim() === filterGroup;
 
     return searchMatch && statusMatch && typeMatch && groupMatch;
   });
