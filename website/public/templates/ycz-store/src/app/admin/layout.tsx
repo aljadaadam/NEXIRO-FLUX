@@ -30,12 +30,15 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
       backdropFilter: 'blur(20px)',
       borderTop: '1px solid rgba(0,0,0,0.05)',
       padding: '0.5rem 0 0.6rem',
+      flexDirection: 'row',
     }}>
       <div className="dash-bottom-nav-inner" style={{
         display: 'flex',
+        flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
         gap: 2,
+        width: '100%',
       }}>
         {items.map(item => {
           const Icon = item.icon;

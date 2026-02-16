@@ -66,12 +66,12 @@ async function getDashboardStats(req, res) {
       resolvedTickets: ticketStats.resolved,
       // الإشعارات
       unreadNotifications,
-      // الاشتراك
-      subscription: subscription ? {
-        plan: subscription.plan_id,
       // الأرباح (فرق سعر البيع - سعر المصدر)
       totalProfit: orderStats.totalProfit,
       todayProfit: orderStats.todayProfit,
+      // الاشتراك
+      subscription: subscription ? {
+        plan: subscription.plan_id,
         status: subscription.status,
         expires_at: subscription.expires_at,
         billing_cycle: subscription.billing_cycle

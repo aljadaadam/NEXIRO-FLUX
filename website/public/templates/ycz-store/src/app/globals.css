@@ -69,9 +69,16 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .dash-profile-text { display: none !important; }
   .dash-bottom-nav {
     display: flex !important;
+    flex-direction: row !important;
     padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
   }
-  .dash-bottom-nav-inner { display: flex !important; }
+  .dash-bottom-nav-inner {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
   .dash-mobile-close { display: grid !important; }
   .dash-collapse-btn { display: none !important; }
   .dash-drawer-open .dash-bottom-nav { display: none !important; }
