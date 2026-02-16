@@ -9,6 +9,7 @@ const {
   checkExternalOrderStatus,
   bulkCheckExternalOrders
 } = require('../controllers/orderController');
+const { getCronStatus, checkPendingOrders } = require('../services/orderCron');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
@@ -22,6 +23,21 @@ router.get('/', authenticateToken, requireRole('admin', 'user'), getAllOrders);
 
 // إحصائيات الطلبات
 router.get('/stats', authenticateToken, requireRole('admin', 'user'), getOrderStats);
+
+// حالة كرون فحص الطلبات
+router.get('/cron-status', authenticateToken, requireRole('admin'), (req, res) => {
+  res.json(getCronStatus());
+});
+
+// تشغيل فحص يدوي (بدون انتظار الكرون)
+router.post('/cron-run', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    await checkPendingOrders();
+    res.json({ success: true, message: 'تم تشغيل فحص الطلبات', ...getCronStatus() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // فحص جماعي لحالة الطلبات المعلقة
 router.post('/bulk-check', authenticateToken, requireRole('admin', 'user'), bulkCheckExternalOrders);

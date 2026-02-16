@@ -169,6 +169,10 @@ async function startServer() {
   try {
     await initializeDatabase();
     
+    // ─── تشغيل كرون فحص الطلبات التلقائي ───
+    const { startOrderCron } = require('./services/orderCron');
+    startOrderCron();
+
     app.listen(PORT, () => {
       console.log(`✅ السيرفر يعمل على http://localhost:${PORT}`);
       console.log(`📁 قاعدة البيانات المركزية: ${process.env.DB_NAME || 'nexiro_flux_central'}`);
