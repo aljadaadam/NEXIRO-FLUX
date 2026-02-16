@@ -202,6 +202,10 @@ class ApiService {
     return this.request('/dashboard/stats');
   }
 
+  async getPlatformStats() {
+    return this.request('/dashboard/platform-stats');
+  }
+
   async getDashboardActivities(limit = 10) {
     return this.request(`/dashboard/activities?limit=${limit}`);
   }

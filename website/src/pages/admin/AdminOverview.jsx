@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, ShoppingCart, Layers, DollarSign, TrendingUp,
-  Eye, Clock, CreditCard, Activity, Loader2, RefreshCw, AlertTriangle,
-  Package, Ticket
+import {
+  Globe, Users, Key, CreditCard, TrendingUp,
+  Loader2, RefreshCw, AlertTriangle, Clock, DollarSign,
+  Ticket, CheckCircle, XCircle, Sparkles, ExternalLink,
+  BarChart3, ShieldCheck, Zap
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -10,8 +11,6 @@ import api from '../../services/api';
 export default function AdminOverview() {
   const { isRTL } = useLanguage();
   const [stats, setStats] = useState(null);
-  const [recentPayments, setRecentPayments] = useState([]);
-  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,15 +20,8 @@ export default function AdminOverview() {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, paymentsRes, activitiesRes] = await Promise.allSettled([
-        api.getDashboardStats(),
-        api.getPayments({ limit: 5 }),
-        api.getDashboardActivities(5),
-      ]);
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value);
-      else throw statsRes.reason;
-      if (paymentsRes.status === 'fulfilled') setRecentPayments(paymentsRes.value?.payments || []);
-      if (activitiesRes.status === 'fulfilled') setActivities(activitiesRes.value?.activities || []);
+      const data = await api.getPlatformStats();
+      setStats(data);
     } catch (err) {
       setError(err?.error || 'فشل الاتصال بالسيرفر');
     } finally {
@@ -58,18 +50,66 @@ export default function AdminOverview() {
     );
   }
 
-  const statCards = [
-    { labelAr: 'إجمالي المستخدمين', labelEn: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'from-primary-500 to-primary-600', bgColor: 'bg-primary-500/10' },
-    { labelAr: 'العملاء', labelEn: 'Customers', value: stats?.totalCustomers || 0, icon: ShoppingCart, color: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-500/10' },
-    { labelAr: 'الإيرادات', labelEn: 'Revenue', value: `$${(stats?.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-500/10' },
-    { labelAr: 'المنتجات', labelEn: 'Products', value: stats?.totalProducts || 0, icon: Layers, color: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-500/10' },
+  const mainCards = [
+    {
+      labelAr: 'إجمالي المواقع', labelEn: 'Total Sites',
+      value: stats?.totalSites || 0,
+      sub: `+${stats?.newSitesToday || 0} ${isRTL ? 'اليوم' : 'today'}`,
+      icon: Globe,
+      bg: 'bg-violet-500/10',
+      iconColor: '#8b5cf6',
+    },
+    {
+      labelAr: 'الاشتراكات النشطة', labelEn: 'Active Subscriptions',
+      value: (stats?.activeSubscriptions || 0) + (stats?.trialSubscriptions || 0),
+      sub: `${stats?.trialSubscriptions || 0} ${isRTL ? 'تجريبي' : 'trial'}`,
+      icon: ShieldCheck,
+      bg: 'bg-emerald-500/10',
+      iconColor: '#10b981',
+    },
+    {
+      labelAr: 'إيرادات المنصة', labelEn: 'Platform Revenue',
+      value: `$${(stats?.totalRevenue || 0).toLocaleString()}`,
+      sub: `+$${(stats?.todayRevenue || 0).toLocaleString()} ${isRTL ? 'اليوم' : 'today'}`,
+      icon: DollarSign,
+      bg: 'bg-cyan-500/10',
+      iconColor: '#06b6d4',
+    },
+    {
+      labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes',
+      value: stats?.purchaseCodes?.active || 0,
+      sub: `${stats?.purchaseCodes?.totalUses || 0} ${isRTL ? 'استخدام' : 'uses'}`,
+      icon: Key,
+      bg: 'bg-amber-500/10',
+      iconColor: '#f59e0b',
+    },
   ];
 
-  const extraStats = [
-    { labelAr: 'الطلبات', labelEn: 'Orders', value: stats?.totalOrders || 0, sub: `${stats?.pendingOrders || 0} ${isRTL ? 'معلق' : 'pending'}`, icon: Package, color: 'text-blue-400 bg-blue-500/10' },
-    { labelAr: 'طلبات اليوم', labelEn: "Today's Orders", value: stats?.ordersToday || 0, sub: `$${(stats?.todayRevenue || 0).toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-400 bg-emerald-500/10' },
-    { labelAr: 'التذاكر', labelEn: 'Tickets', value: stats?.totalTickets || 0, sub: `${stats?.openTickets || 0} ${isRTL ? 'مفتوح' : 'open'}`, icon: Ticket, color: 'text-purple-400 bg-purple-500/10' },
-    { labelAr: 'الإشعارات', labelEn: 'Notifications', value: stats?.unreadNotifications || 0, sub: isRTL ? 'غير مقروء' : 'unread', icon: Activity, color: 'text-pink-400 bg-pink-500/10' },
+  const secondaryCards = [
+    {
+      labelAr: 'إجمالي المستخدمين', labelEn: 'Total Users',
+      value: stats?.totalUsers || 0,
+      sub: `+${stats?.newUsersToday || 0} ${isRTL ? 'اليوم' : 'today'}`,
+      icon: Users, color: 'text-indigo-400 bg-indigo-500/10',
+    },
+    {
+      labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets',
+      value: stats?.openTickets || 0,
+      sub: `${stats?.resolvedTickets || 0} ${isRTL ? 'محلول' : 'resolved'}`,
+      icon: Ticket, color: 'text-rose-400 bg-rose-500/10',
+    },
+    {
+      labelAr: 'الاشتراكات الملغاة', labelEn: 'Inactive Subs',
+      value: stats?.inactiveSubscriptions || 0,
+      sub: isRTL ? 'ملغى / منتهي' : 'cancelled / expired',
+      icon: XCircle, color: 'text-red-400 bg-red-500/10',
+    },
+    {
+      labelAr: 'أكواد مستنفدة', labelEn: 'Used Up Codes',
+      value: stats?.purchaseCodes?.fullyUsed || 0,
+      sub: `${stats?.purchaseCodes?.total || 0} ${isRTL ? 'إجمالي' : 'total'}`,
+      icon: CheckCircle, color: 'text-teal-400 bg-teal-500/10',
+    },
   ];
 
   return (
@@ -77,43 +117,48 @@ export default function AdminOverview() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">
-            {isRTL ? 'نظرة عامة' : 'Overview'}
+          <h1 className="text-2xl font-display font-bold text-white flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-primary-400" />
+            {isRTL ? 'لوحة تحكم المنصة' : 'Platform Dashboard'}
           </h1>
           <p className="text-dark-400 text-sm mt-1">
-            {isRTL ? 'بيانات حية من السيرفر' : 'Live data from server'}
+            {isRTL ? 'نظرة شاملة على جميع المواقع والاشتراكات' : 'Overview of all sites and subscriptions'}
           </p>
         </div>
-        <button onClick={loadData} className="p-2 rounded-xl bg-white/5 text-dark-400 hover:text-white transition-all" title={isRTL ? 'تحديث' : 'Refresh'}>
+        <button onClick={loadData} className="p-2.5 rounded-xl bg-white/5 text-dark-400 hover:text-white hover:bg-white/10 transition-all" title={isRTL ? 'تحديث' : 'Refresh'}>
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => {
-          const Icon = stat.icon;
+        {mainCards.map((card, i) => {
+          const Icon = card.icon;
           return (
-            <div key={i} className="bg-[#111827] rounded-2xl border border-white/5 p-5 hover:border-white/10 transition-all">
+            <div key={i} className="bg-[#111827] rounded-2xl border border-white/5 p-5 hover:border-white/10 transition-all group">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl ${stat.bgColor} flex items-center justify-center`}>
-                  <Icon className="w-5 h-5" style={{color: 'var(--tw-gradient-from, #7c3aed)'}} />
+                <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5" style={{ color: card.iconColor }} />
                 </div>
+                <span className="text-dark-600 text-[11px] font-medium flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 text-emerald-400" />
+                  {card.sub}
+                </span>
               </div>
-              <p className="text-2xl font-display font-bold text-white">{stat.value}</p>
-              <p className="text-dark-400 text-sm mt-1">{isRTL ? stat.labelAr : stat.labelEn}</p>
+              <p className="text-2xl font-display font-bold text-white">{card.value}</p>
+              <p className="text-dark-400 text-sm mt-1">{isRTL ? card.labelAr : card.labelEn}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Extra Stats */}
+      {/* Secondary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {extraStats.map((s, i) => {
+        {secondaryCards.map((s, i) => {
           const Icon = s.icon;
           return (
-            <div key={i} className="bg-[#111827] rounded-xl border border-white/5 p-4">
-              <div className={`w-8 h-8 rounded-lg ${s.color} flex items-center justify-center mb-2`}>
+            <div key={i} className="bg-[#111827] rounded-xl border border-white/5 p-4 hover:border-white/10 transition-all">
+              <div className={`w-9 h-9 rounded-lg ${s.color} flex items-center justify-center mb-3`}>
                 <Icon className="w-4 h-4" />
               </div>
               <p className="text-lg font-bold text-white">{s.value}</p>
@@ -124,55 +169,85 @@ export default function AdminOverview() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Payments */}
-        <div className="lg:col-span-2 bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
+      {/* Two-column: Recent Sites + Recent Payments */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Sites */}
+        <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <h3 className="font-bold text-white flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-primary-400" />
+              <Globe className="w-4 h-4 text-violet-400" />
+              {isRTL ? 'أحدث المواقع' : 'Recent Sites'}
+            </h3>
+            <span className="text-dark-600 text-[11px]">{isRTL ? `${stats?.totalSites || 0} موقع` : `${stats?.totalSites || 0} sites`}</span>
+          </div>
+          {stats?.recentSites?.length > 0 ? (
+            <div className="divide-y divide-white/5">
+              {stats.recentSites.map((site, i) => (
+                <div key={i} className="flex items-center gap-3 px-6 py-3 hover:bg-white/[0.02] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0 border border-violet-500/20">
+                    <Globe className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{site.name || site.domain}</p>
+                    <p className="text-dark-500 text-[11px] truncate flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" />
+                      {site.domain}
+                    </p>
+                  </div>
+                  <div className="text-dark-600 text-[11px] flex items-center gap-1 flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    {site.created_at ? new Date(site.created_at).toLocaleDateString() : '-'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Globe className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+              <p className="text-dark-500 text-xs">{isRTL ? 'لا توجد مواقع بعد' : 'No sites yet'}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Payments */}
+        <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-cyan-400" />
               {isRTL ? 'آخر المدفوعات' : 'Recent Payments'}
             </h3>
           </div>
-          {recentPayments.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="text-start px-6 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'العميل' : 'Customer'}</th>
-                    <th className="text-start px-6 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'النوع' : 'Type'}</th>
-                    <th className="text-start px-6 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'المبلغ' : 'Amount'}</th>
-                    <th className="text-start px-6 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'الحالة' : 'Status'}</th>
-                    <th className="text-start px-6 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'التاريخ' : 'Date'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPayments.slice(0, 5).map(p => (
-                    <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center text-xs font-bold text-primary-400 border border-primary-500/20">
-                            {(p.customer_name || p.customer_email || '?')[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-white font-medium text-xs">{p.customer_name || '-'}</p>
-                            <p className="text-dark-500 text-[11px]">{p.customer_email || ''}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-dark-300 text-xs capitalize">{p.type || '-'}</td>
-                      <td className="px-6 py-3 text-white font-medium text-xs">${p.amount || 0}</td>
-                      <td className="px-6 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' :
-                          p.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                          'bg-red-500/10 text-red-400'
-                        }`}>{p.status}</span>
-                      </td>
-                      <td className="px-6 py-3 text-dark-500 text-xs">{p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {stats?.recentPayments?.length > 0 ? (
+            <div className="divide-y divide-white/5">
+              {stats.recentPayments.map((p, i) => (
+                <div key={i} className="flex items-center gap-3 px-6 py-3 hover:bg-white/[0.02] transition-colors">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${
+                    p.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                    p.status === 'pending' ? 'bg-amber-500/10 border-amber-500/20' :
+                    'bg-red-500/10 border-red-500/20'
+                  }`}>
+                    <DollarSign className={`w-4 h-4 ${
+                      p.status === 'completed' ? 'text-emerald-400' :
+                      p.status === 'pending' ? 'text-amber-400' : 'text-red-400'
+                    }`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-white text-sm font-medium">${p.amount}</p>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        p.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
+                        p.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
+                        'bg-red-500/10 text-red-400'
+                      }`}>{p.status}</span>
+                    </div>
+                    <p className="text-dark-500 text-[11px] truncate">{p.site_name || p.site_domain}</p>
+                  </div>
+                  <div className="text-dark-600 text-[11px] flex items-center gap-1 flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    {p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -181,62 +256,32 @@ export default function AdminOverview() {
             </div>
           )}
         </div>
-
-        {/* Activity */}
-        <div className="bg-[#111827] rounded-2xl border border-white/5">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary-400" />
-              {isRTL ? 'النشاط الأخير' : 'Recent Activity'}
-            </h3>
-          </div>
-          <div className="p-4 space-y-1">
-            {activities.length > 0 ? activities.map((act, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl hover:bg-white/[0.02] transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 text-primary-400">
-                  <Activity className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-dark-300 text-xs leading-relaxed">{act.message || act.description || act.text}</p>
-                  <p className="text-dark-600 text-[11px] mt-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {act.created_at ? new Date(act.created_at).toLocaleString() : act.time || ''}
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <div className="text-center py-8">
-                <Activity className="w-8 h-8 text-dark-600 mx-auto mb-2" />
-                <p className="text-dark-500 text-xs">{isRTL ? 'لا يوجد نشاط' : 'No activity'}</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Subscription Info */}
-      {stats?.subscription && (
-        <div className="bg-[#111827] rounded-2xl border border-white/5 p-6">
-          <h3 className="font-bold text-white flex items-center gap-2 mb-4">
-            <CreditCard className="w-4 h-4 text-emerald-400" />
-            {isRTL ? 'الاشتراك' : 'Subscription'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-              <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'الخطة' : 'Plan'}</p>
-              <p className="text-white text-sm font-bold capitalize">{stats.subscription.plan || 'free'}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-              <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'الحالة' : 'Status'}</p>
-              <p className={`text-sm font-bold capitalize ${stats.subscription.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}`}>{stats.subscription.status || '-'}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-              <p className="text-dark-500 text-[11px] mb-1">{isRTL ? 'ينتهي' : 'Expires'}</p>
-              <p className="text-white text-sm font-bold">{stats.subscription.expires_at ? new Date(stats.subscription.expires_at).toLocaleDateString() : '-'}</p>
-            </div>
-          </div>
+      {/* Quick Actions */}
+      <div className="bg-[#111827] rounded-2xl border border-white/5 p-6">
+        <h3 className="font-bold text-white flex items-center gap-2 mb-4">
+          <Zap className="w-4 h-4 text-amber-400" />
+          {isRTL ? 'إجراءات سريعة' : 'Quick Actions'}
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { labelAr: 'إدارة المستخدمين', labelEn: 'Manage Users', icon: Users, href: '/admin/users', color: 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30', iconColor: 'text-indigo-400' },
+            { labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes', icon: Key, href: '/admin/purchase-codes', color: 'from-amber-500/10 to-amber-500/5 border-amber-500/10 hover:border-amber-500/30', iconColor: 'text-amber-400' },
+            { labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets', icon: Ticket, href: '/admin/tickets', color: 'from-rose-500/10 to-rose-500/5 border-rose-500/10 hover:border-rose-500/30', iconColor: 'text-rose-400' },
+            { labelAr: 'الإعدادات', labelEn: 'Settings', icon: BarChart3, href: '/admin/settings', color: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30', iconColor: 'text-emerald-400' },
+          ].map((action, i) => {
+            const Icon = action.icon;
+            return (
+              <a key={i} href={action.href}
+                className={`flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br ${action.color} border transition-all`}>
+                <Icon className={`w-5 h-5 ${action.iconColor}`} />
+                <span className="text-white text-sm font-medium">{isRTL ? action.labelAr : action.labelEn}</span>
+              </a>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
