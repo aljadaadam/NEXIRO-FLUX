@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, Languages } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -15,7 +15,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [showEdit, setShowEdit] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [nameFirst, setNameFirst] = useState<'ar' | 'en'>('ar');
 
   // New product form state
   const [newName, setNewName] = useState('');
@@ -38,6 +37,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editIcon, setEditIcon] = useState('📦');
   const [editGroup, setEditGroup] = useState('');
   const [editCustomGroup, setEditCustomGroup] = useState('');
+  const [editNamePriority, setEditNamePriority] = useState<'ar' | 'en'>('ar');
   const [updating, setUpdating] = useState(false);
 
   // Source & product linking state
@@ -100,6 +100,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     const pg = String(product.group_name || '').trim();
     setEditGroup(pg);
     setEditCustomGroup('');
+    setEditNamePriority(product.name_priority || 'ar');
     setEditSourceConnected(!!product.source_id);
     setEditOriginalSourceId(product.source_id || null);
     setEditLinkedProductId(product.linked_product_id ?? null);
@@ -127,6 +128,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         service_type: editServiceType,
         icon: editIcon,
         group_name: groupValue || null,
+        name_priority: editNamePriority,
       };
 
       // فصل/إعادة اتصال المصدر
@@ -156,23 +158,42 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   async function handleToggleFeatured(e: React.MouseEvent, id: number) {
     e.preventDefault();
     e.stopPropagation();
-    try { await adminApi.toggleFeatured(id); await loadProducts(); } catch { /* ignore */ }
+    try {
+      await adminApi.toggleFeatured(id);
+      await loadProducts();
+    } catch (err) {
+      console.error('toggleFeatured error:', err);
+    }
   }
 
-  // عرض الاسم حسب الأولوية
+  async function handleToggleNamePriority(e: React.MouseEvent, p: Product) {
+    e.preventDefault();
+    e.stopPropagation();
+    const newPriority = (p.name_priority || 'ar') === 'ar' ? 'en' : 'ar';
+    try {
+      await adminApi.updateProduct(p.id, { name_priority: newPriority });
+      await loadProducts();
+    } catch (err) {
+      console.error('toggleNamePriority error:', err);
+    }
+  }
+
+  // عرض الاسم حسب أولوية المنتج
   function displayName(p: Product) {
-    if (nameFirst === 'ar') return p.arabic_name || p.name;
+    const prio = p.name_priority || 'ar';
+    if (prio === 'ar') return p.arabic_name || p.name;
     return p.name || p.arabic_name || '';
   }
   function secondaryName(p: Product) {
-    if (nameFirst === 'ar' && p.arabic_name) return p.name;
-    if (nameFirst === 'en' && p.name && p.arabic_name) return p.arabic_name;
+    const prio = p.name_priority || 'ar';
+    if (prio === 'ar' && p.arabic_name) return p.name;
+    if (prio === 'en' && p.name && p.arabic_name) return p.arabic_name;
     return null;
   }
 
   // المنتجات المتاحة للتحويل (باستثناء المنتج الحالي)
   const linkableProducts = useMemo(() => {
-    return products.filter(p => p.id !== editId && p.source_id);
+    return products.filter(p => p.id !== editId);
   }, [products, editId]);
 
   const filteredLinkable = useMemo(() => {
@@ -229,16 +250,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📦 المنتجات</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setNameFirst(n => n === 'ar' ? 'en' : 'ar')} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '0.5rem 0.8rem', borderRadius: 10,
-            background: '#fff', border: '1px solid #e2e8f0',
-            fontSize: '0.75rem', fontWeight: 600, color: '#64748b',
-            cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-          }}>
-            <Languages size={14} />
-            {nameFirst === 'ar' ? 'عربي أولاً' : 'English أولاً'}
-          </button>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '0.5rem 0.85rem', borderRadius: 10,
@@ -428,6 +439,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button type="button" onClick={(e) => handleToggleFeatured(e, p.id)} title={p.is_featured ? 'إلغاء التمييز' : 'تمييز المنتج'} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: p.is_featured ? '#fef3c7' : '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Star size={13} color={p.is_featured ? '#f59e0b' : '#cbd5e1'} fill={p.is_featured ? '#f59e0b' : 'none'} /></button>
+                      <button type="button" onClick={(e) => handleToggleNamePriority(e, p)} title={`أولوية الاسم: ${(p.name_priority || 'ar') === 'ar' ? 'عربي' : 'إنجليزي'}`} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: (p.name_priority || 'ar') === 'ar' ? '#f0fdf4' : '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '0.6rem', fontWeight: 800, color: (p.name_priority || 'ar') === 'ar' ? '#16a34a' : '#2563eb' }}>{(p.name_priority || 'ar') === 'ar' ? 'ع' : 'En'}</button>
                       <button type="button" onClick={() => openEdit(p)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
                       <button type="button" onClick={() => handleDelete(p.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
                     </div>
@@ -442,117 +454,131 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       {/* Edit Product Modal */}
       {showEdit && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={closeEdit}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '92%', maxWidth: 720, maxHeight: '90vh', overflow: 'auto', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>تعديل المنتج</h3>
-              <button onClick={closeEdit} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                <X size={14} color="#64748b" />
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '95%', maxWidth: 820, maxHeight: '92vh', overflow: 'auto', padding: '1rem 1.15rem', border: '1px solid #e2e8f0' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>
+              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b1020' }}>✏️ تعديل المنتج</h3>
+              <button type="button" onClick={closeEdit} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                <X size={12} color="#64748b" />
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <input placeholder="اسم المنتج" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-              <input placeholder="اسم المنتج بالعربي" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-              <input placeholder="السعر" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-              <input placeholder="أيقونة" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+            {/* ─── معلومات أساسية ─── */}
+            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>معلومات أساسية</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+              <input placeholder="الاسم (إنجليزي)" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+              <input placeholder="الاسم (عربي)" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+              <input placeholder="السعر ($)" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
 
-              <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
+            {/* ─── إعدادات ─── */}
+            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>إعدادات</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 10 }}>
+              <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                 <option value="SERVER">SERVER</option>
                 <option value="IMEI">IMEI</option>
                 <option value="REMOTE">REMOTE</option>
               </select>
-
-              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
+              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                 <option value="active">نشط</option>
                 <option value="inactive">غير نشط</option>
               </select>
+              <input placeholder="أيقونة" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} />
+              <select value={editNamePriority} onChange={(e) => setEditNamePriority(e.target.value as 'ar' | 'en')} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                <option value="ar">🔤 عربي أولاً</option>
+                <option value="en">🔤 English أولاً</option>
+              </select>
+            </div>
 
-              <select value={editGroup === '__new__' ? '__new__' : editGroup} onChange={e => { setEditGroup(e.target.value); if (e.target.value !== '__new__') setEditCustomGroup(''); }} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff' }}>
+            {/* ─── القروب ─── */}
+            <div style={{ display: 'grid', gridTemplateColumns: editGroup === '__new__' ? '1fr 1fr' : '1fr', gap: 8, marginBottom: 10 }}>
+              <select value={editGroup === '__new__' ? '__new__' : editGroup} onChange={e => { setEditGroup(e.target.value); if (e.target.value !== '__new__') setEditCustomGroup(''); }} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                 <option value="">— بدون قروب —</option>
                 {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
                 <option value="__new__">➕ قروب جديد...</option>
               </select>
-              {editGroup === '__new__' ? (
-                <input placeholder="اسم القروب الجديد" value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-              ) : (
-                <div />
+              {editGroup === '__new__' && (
+                <input placeholder="اسم القروب الجديد" value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
               )}
             </div>
 
-            <textarea rows={3} placeholder="وصف المنتج" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ marginTop: 12, width: '100%', boxSizing: 'border-box', padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical' }} />
+            {/* ─── الوصف ─── */}
+            <textarea rows={2} placeholder="وصف المنتج" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
 
             {/* ─── إعدادات الاتصال بالمصدر ─── */}
-            <div style={{ marginTop: 14, padding: '1rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-              <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 10 }}>🔗 إعدادات الاتصال بالمصدر</p>
+            <div style={{ padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9', marginBottom: 10 }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 8 }}>🔗 اتصال المصدر</p>
 
-              {/* زر فصل/إعادة اتصال المصدر */}
               {editOriginalSourceId && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 8 }}>
                   <div>
-                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>
-                      {editSourceConnected ? '✅ متصل بالمصدر' : '❌ مفصول عن المصدر'}
+                    <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020' }}>
+                      {editSourceConnected ? '✅ متصل' : '❌ مفصول'}
                     </p>
-                    <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                      {editSourceConnected ? 'المنتج يرسل الطلبات تلقائياً للمصدر' : 'المنتج لن يُرسل طلبات للمصدر'}
+                    <p style={{ fontSize: '0.62rem', color: '#94a3b8' }}>
+                      {editSourceConnected ? 'يرسل الطلبات تلقائياً' : 'الطلبات تبقى معلقة'}
                     </p>
                   </div>
                   <button onClick={() => setEditSourceConnected(!editSourceConnected)} type="button" style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '0.4rem 0.85rem', borderRadius: 8,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '0.3rem 0.65rem', borderRadius: 6,
                     background: editSourceConnected ? '#fee2e2' : '#dcfce7',
                     color: editSourceConnected ? '#dc2626' : '#16a34a',
-                    border: 'none', fontSize: '0.75rem', fontWeight: 700,
+                    border: 'none', fontSize: '0.68rem', fontWeight: 700,
                     cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                   }}>
-                    {editSourceConnected ? <><Unlink size={13} /> فصل</> : <><Link2 size={13} /> إعادة اتصال</>}
+                    {editSourceConnected ? <><Unlink size={11} /> فصل</> : <><Link2 size={11} /> ربط</>}
                   </button>
                 </div>
               )}
 
-              {/* تحويل الاتصال لمنتج آخر */}
-              <div style={{ padding: '0.6rem 0.85rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0b1020', marginBottom: 6 }}>🔄 تحويل الاتصال لمنتج آخر</p>
-                <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 8 }}>عند تقديم طلب، يتم إرسال الطلب عبر المنتج المحدد بدلاً من المنتج الأصلي</p>
+              {/* تحويل لمنتج آخر */}
+              <div style={{ padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020' }}>🔄 تحويل لمنتج آخر</p>
+                  {editLinkedProductId && (
+                    <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ padding: '0.15rem 0.45rem', borderRadius: 4, border: 'none', background: '#fee2e2', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif' }}>
+                      إلغاء التحويل
+                    </button>
+                  )}
+                </div>
 
                 {editLinkedProductId && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.45rem 0.75rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', marginBottom: 8 }}>
-                    <Link2 size={13} color="#2563eb" />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.55rem', background: '#eff6ff', borderRadius: 6, border: '1px solid #bfdbfe', marginBottom: 6 }}>
+                    <Link2 size={11} color="#2563eb" />
+                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
                       {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) + ` (#${lp.id})` : `#${editLinkedProductId}`; })()}
                     </span>
-                    <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                      <X size={11} color="#dc2626" />
-                    </button>
                   </div>
                 )}
 
                 <div style={{ position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.45rem 0.75rem', background: '#fff' }}>
-                    <Search size={13} color="#94a3b8" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 6, padding: '0.35rem 0.55rem', background: '#fff' }}>
+                    <Search size={11} color="#94a3b8" />
                     <input
                       value={linkSearch}
                       onChange={e => { setLinkSearch(e.target.value); setShowLinkDropdown(true); }}
                       onFocus={() => setShowLinkDropdown(true)}
-                      placeholder="ابحث عن منتج للتحويل..."
-                      style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                      placeholder="ابحث عن منتج..."
+                      style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
                     />
                   </div>
 
                   {showLinkDropdown && filteredLinkable.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 4, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 200, overflow: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 180, overflow: 'auto' }}>
                       {filteredLinkable.map(p => (
                         <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
-                          display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                          padding: '0.55rem 0.85rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                          padding: '0.4rem 0.65rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
                           border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
                           fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
                         }}>
-                          <span style={{ fontSize: '1rem' }}>{p.icon}</span>
+                          <span style={{ fontSize: '0.85rem' }}>{p.icon}</span>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0b1020' }}>{p.arabic_name || p.name}</p>
-                            {p.arabic_name && <p style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{p.name}</p>}
+                            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020' }}>{p.arabic_name || p.name}</p>
+                            {p.arabic_name && <p style={{ fontSize: '0.58rem', color: '#94a3b8' }}>{p.name}</p>}
                           </div>
-                          <span style={{ fontSize: '0.68rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: 4 }}>#{p.id}</span>
+                          <span style={{ fontSize: '0.6rem', color: '#64748b', background: '#f1f5f9', padding: '0.1rem 0.3rem', borderRadius: 3 }}>#{p.id}</span>
                         </button>
                       ))}
                     </div>
@@ -561,11 +587,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={handleUpdateProduct} disabled={updating} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1 }}>
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 8, paddingTop: 6, borderTop: '1px solid #f1f5f9' }}>
+              <button type="button" onClick={handleUpdateProduct} disabled={updating} style={{ padding: '0.5rem 1.3rem', borderRadius: 8, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1 }}>
                 {updating ? 'جاري الحفظ...' : 'حفظ التعديل'}
               </button>
-              <button onClick={closeEdit} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+              <button type="button" onClick={closeEdit} style={{ padding: '0.5rem 1.3rem', borderRadius: 8, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
                 إلغاء
               </button>
             </div>

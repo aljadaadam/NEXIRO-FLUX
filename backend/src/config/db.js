@@ -112,6 +112,7 @@ async function createTables() {
         requires_custom_json JSON NULL,
         raw_json JSON NULL,
         is_featured TINYINT(1) DEFAULT 0,
+        name_priority VARCHAR(5) DEFAULT 'ar' COMMENT 'أولوية عرض الاسم: ar أو en',
         linked_product_id INT NULL COMMENT 'تحويل الاتصال لمنتج آخر',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE

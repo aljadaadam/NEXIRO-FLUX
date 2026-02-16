@@ -192,7 +192,7 @@ class Product {
     return this.findById(id);
   }
 
-  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt, linked_product_id, group_name }) {
+  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -216,6 +216,7 @@ class Product {
     if (qnt !== undefined) { updates.push('qnt = ?'); values.push(qnt); }
     if (linked_product_id !== undefined) { updates.push('linked_product_id = ?'); values.push(linked_product_id); }
     if (group_name !== undefined) { updates.push('group_name = ?'); values.push(group_name); }
+    if (name_priority !== undefined) { updates.push('name_priority = ?'); values.push(name_priority); }
     
     if (updates.length === 0) return this.findById(id);
     

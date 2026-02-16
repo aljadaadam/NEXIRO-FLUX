@@ -186,6 +186,12 @@ async function updateProduct(req, res) {
       updateData.group_name = group_name_val || null;
     }
 
+    // أولوية عرض الاسم (ar أو en)
+    const name_priority_val = req.body.name_priority;
+    if (name_priority_val !== undefined) {
+      updateData.name_priority = name_priority_val === 'en' ? 'en' : 'ar';
+    }
+
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'لا توجد بيانات للتحديث' });
     }
