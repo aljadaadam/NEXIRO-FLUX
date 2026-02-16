@@ -22,6 +22,7 @@ export interface Product {
   maxQuantity?: number;
   // حقول الباكند
   service_type?: string;
+  service_time?: string;
   group_name?: string;
   external_service_key?: string;
   source_id?: number;

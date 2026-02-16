@@ -142,6 +142,11 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
               lineHeight: 1.4,
             }}>{product.name}</h4>
             <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
+            {product.service_time && (
+              <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span>⏱</span> وقت الخدمة: {product.service_time}
+              </p>
+            )}
           </div>
         </div>
 
