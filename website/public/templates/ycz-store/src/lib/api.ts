@@ -73,6 +73,7 @@ export const adminApi = {
   createProduct: (data: Record<string, unknown>) => adminFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: number, data: Record<string, unknown>) => adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id: number) => adminFetch(`/products/${id}`, { method: 'DELETE' }),
+  toggleFeatured: (id: number) => adminFetch(`/products/${id}/featured`, { method: 'PATCH' }),
   getOrders: () => adminFetch('/orders'),
   updateOrder: (id: string, data: Record<string, unknown>) => adminFetch(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   getUsers: () => adminFetch('/auth/users'),
@@ -221,6 +222,7 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     requires_custom_json: requiresCustom,
     custom_json: customJson,
     customFields,
+    is_featured: p.is_featured ? 1 : 0,
   };
 }
 

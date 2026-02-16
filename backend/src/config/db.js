@@ -111,6 +111,7 @@ async function createTables() {
         custom_json JSON NULL,
         requires_custom_json JSON NULL,
         raw_json JSON NULL,
+        is_featured TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
       )

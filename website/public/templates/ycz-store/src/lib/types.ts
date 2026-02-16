@@ -15,6 +15,7 @@ export interface Product {
   desc?: string;
   stock?: number;
   status?: string;
+  is_featured?: number;
   // حقول الباكند
   service_type?: string;
   group_name?: string;

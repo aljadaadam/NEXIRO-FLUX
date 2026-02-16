@@ -340,7 +340,7 @@ export default function HomePage() {
               <p style={{ fontSize: '0.8rem' }}>سيتم عرض المنتجات هنا بعد إضافتها من لوحة التحكم</p>
             </div>
           ) : (
-            products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} onClick={() => setSelectedProduct(p)} />)
+            (products.filter(p => p.is_featured).length > 0 ? products.filter(p => p.is_featured) : products).slice(0, 6).map(p => <ProductCard key={p.id} product={p} onClick={() => setSelectedProduct(p)} />)
           )}
         </div>
       </section>

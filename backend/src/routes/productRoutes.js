@@ -11,7 +11,8 @@ const {
   getProductsStats,
   getPublicProducts,
   seedTemplateProducts,
-  debugProducts
+  debugProducts,
+  toggleFeatured
 } = require('../controllers/productController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -69,6 +70,9 @@ router.post('/import/sd-unlocker', authenticateToken, requireRole('admin', 'user
 
 // استيراد من مصدر خارجي (اسم بديل عام)
 router.post('/import-external', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), syncProducts);
+
+// تبديل حالة المنتج المميز
+router.patch('/:id/featured', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), toggleFeatured);
 
 // تحديث منتج (يحتاج صلاحية products:update)
 router.put('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), updateProduct);

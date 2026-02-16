@@ -927,6 +927,22 @@ async function seedTemplateProducts(req, res) {
   }
 }
 
+// تبديل حالة المنتج المميز
+async function toggleFeatured(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { id } = req.params;
+    const product = await Product.toggleFeatured(id, site_key);
+    if (!product) {
+      return res.status(404).json({ error: 'المنتج غير موجود' });
+    }
+    res.json({ message: product.is_featured ? 'تم تمييز المنتج' : 'تم إلغاء تمييز المنتج', product });
+  } catch (error) {
+    console.error('Error in toggleFeatured:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   getAllProducts,
   createProduct,
@@ -938,5 +954,6 @@ module.exports = {
   getProductsStats,
   getPublicProducts,
   seedTemplateProducts,
-  debugProducts
+  debugProducts,
+  toggleFeatured
 };

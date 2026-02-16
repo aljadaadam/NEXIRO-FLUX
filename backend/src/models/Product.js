@@ -182,6 +182,16 @@ class Product {
     return rows;
   }
 
+  static async toggleFeatured(id, site_key) {
+    const pool = getPool();
+    const [result] = await pool.query(
+      'UPDATE products SET is_featured = IF(is_featured = 1, 0, 1) WHERE id = ? AND site_key = ?',
+      [id, site_key]
+    );
+    if (result.affectedRows === 0) return null;
+    return this.findById(id);
+  }
+
   static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt }) {
     const pool = getPool();
     
