@@ -49,10 +49,13 @@ export default function CustomizePage() {
         show_banner: theme.showBanner,
         store_name: theme.storeName,
       });
+      // إعادة قراءة القيم من السيرفر للتأكد
+      await theme.refetch();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      console.warn('[Customize] فشل حفظ التخصيص');
+    } catch (err) {
+      console.error('[Customize] فشل حفظ التخصيص:', err);
+      alert('فشل حفظ التخصيصات! تأكد من اتصالك بالسيرفر.');
     } finally {
       setSaving(false);
     }

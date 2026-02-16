@@ -32,6 +32,10 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
     }
     throw new Error('Unauthorized');
   }
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody?.error || `HTTP ${res.status}`);
+  }
   return res.json();
 }
 

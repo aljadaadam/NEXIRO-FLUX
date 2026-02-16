@@ -112,4 +112,5 @@ export interface CustomizeState {
   setFontFamily: (v: string) => void;
   currentTheme: import('./themes').ColorTheme;
   colorThemes: import('./themes').ColorTheme[];
+  refetch: () => Promise<void>;
 }

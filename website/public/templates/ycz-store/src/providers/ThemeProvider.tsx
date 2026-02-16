@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { COLOR_THEMES, ColorTheme, getTheme } from '@/lib/themes';
 
 interface ThemeContextType {
@@ -23,6 +23,7 @@ interface ThemeContextType {
   setFontFamily: (v: string) => void;
   colorThemes: ColorTheme[];
   loaded: boolean;
+  refetch: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -42,7 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [fontFamily, setFontFamily] = useState('Tajawal');
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [serverFetched, setServerFetched] = useState(false);
+  const fetchIdRef = useRef(0);
 
   // ─── 1. قراءة من localStorage كـ cache أولي (سريع)  ───
   useEffect(() => {
@@ -58,44 +59,43 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ─── 2. جلب التخصيص من الباك اند (مصدر الحقيقة) ───
-  useEffect(() => {
-    if (!mounted || serverFetched) return;
+  const fetchFromServer = useCallback(async () => {
+    const myId = ++fetchIdRef.current;
+    try {
+      const token = localStorage.getItem('admin_key') || localStorage.getItem('auth_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    async function fetchConfig() {
-      try {
-        const token = localStorage.getItem('admin_key') || localStorage.getItem('auth_token');
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        // جلب التخصيص (ألوان، خط، تخطيط)
-        const customRes = await fetch('/api/customization', { headers });
-        if (customRes.ok) {
-          const data = await customRes.json();
-          const c = data.customization || data;
-          if (c.theme_id) setThemeId(c.theme_id);
-          if (c.logo_url) setLogoPreview(c.logo_url);
-          if (c.font_family) setFontFamily(c.font_family);
-          if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
-          if (c.button_radius) setButtonRadius(c.button_radius);
-          if (c.header_style) setHeaderStyle(c.header_style);
-          if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
-          if (c.store_name) setStoreName(c.store_name);
-          // حفظ في localStorage كـ cache
-          try {
-            localStorage.setItem('ycz_configTimestamp', String(Date.now()));
-          } catch { /* ignore */ }
-        }
-      } catch {
-        // إذا فشل الـ API — نبقى على localStorage cache
-        console.warn('[ThemeProvider] فشل جلب التخصيص من الخادم، استخدام الكاش المحلي');
-      } finally {
-        setLoaded(true);
-        setServerFetched(true);
+      // جلب التخصيص (ألوان، خط، تخطيط) — بدون كاش
+      const customRes = await fetch(`/api/customization?_t=${Date.now()}`, { headers, cache: 'no-store' });
+      if (customRes.ok && myId === fetchIdRef.current) {
+        const data = await customRes.json();
+        const c = data.customization || data;
+        if (c.theme_id) setThemeId(c.theme_id);
+        if (c.logo_url) setLogoPreview(c.logo_url);
+        if (c.font_family) setFontFamily(c.font_family);
+        if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
+        if (c.button_radius) setButtonRadius(c.button_radius);
+        if (c.header_style) setHeaderStyle(c.header_style);
+        if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
+        if (c.store_name) setStoreName(c.store_name);
+        // حفظ في localStorage كـ cache
+        try {
+          localStorage.setItem('ycz_configTimestamp', String(Date.now()));
+        } catch { /* ignore */ }
       }
+    } catch {
+      // إذا فشل الـ API — نبقى على localStorage cache
+      console.warn('[ThemeProvider] فشل جلب التخصيص من الخادم، استخدام الكاش المحلي');
+    } finally {
+      setLoaded(true);
     }
+  }, []);
 
-    fetchConfig();
-  }, [mounted, serverFetched]);
+  useEffect(() => {
+    if (!mounted) return;
+    fetchFromServer();
+  }, [mounted, fetchFromServer]);
 
   // ─── 3. حفظ في localStorage عند التغيير (للكاش + الأدمن) ───
   useEffect(() => {
@@ -150,6 +150,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       fontFamily, setFontFamily,
       colorThemes: COLOR_THEMES,
       loaded,
+      refetch: fetchFromServer,
     }}>
       {children}
     </ThemeContext.Provider>
