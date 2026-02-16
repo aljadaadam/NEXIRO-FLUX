@@ -91,6 +91,7 @@ export const adminApi = {
   getPaymentGateways: () => adminFetch('/payment-gateways'),
   getCustomize: () => adminFetch('/customization'),
   updateCustomize: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
+  updateCustomerWallet: (id: number, amount: number) => adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount }) }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───

@@ -52,6 +52,8 @@ export interface User {
   joined: string;
   orders?: number;
   spent?: string;
+  wallet_balance?: number;
+  _type?: 'customer' | 'staff';
 }
 
 export interface StatsCard {
