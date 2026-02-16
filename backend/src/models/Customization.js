@@ -25,7 +25,15 @@ class Customization {
       font_family: data.font_family,
       custom_css: data.custom_css,
       footer_text: data.footer_text,
-      social_links: data.social_links ? JSON.stringify(data.social_links) : undefined
+      social_links: data.social_links ? JSON.stringify(data.social_links) : undefined,
+      smtp_host: data.smtp_host,
+      smtp_port: data.smtp_port != null ? parseInt(data.smtp_port) : undefined,
+      smtp_user: data.smtp_user,
+      smtp_pass: data.smtp_pass,
+      smtp_from: data.smtp_from,
+      secondary_currency: data.secondary_currency,
+      currency_rate: data.currency_rate != null ? parseFloat(data.currency_rate) : undefined,
+      otp_enabled: data.otp_enabled != null ? (data.otp_enabled ? 1 : 0) : undefined,
     };
 
     // تصفية الحقول غير المعرّفة

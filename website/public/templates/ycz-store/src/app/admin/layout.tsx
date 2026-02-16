@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     sources: <ExternalSourcesPage />,
     customize: <CustomizePage />,
     announcements: <AnnouncementsPage />,
-    settings: <SettingsAdminPage />,
+    settings: <SettingsAdminPage theme={currentTheme} />,
   };
 
   return (
