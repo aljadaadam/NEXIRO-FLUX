@@ -48,17 +48,25 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 @media (max-width: 768px) {
   .dash-sidebar {
     transform: translateX(100%);
-    width: 260px !important;
+    width: min(82vw, 300px) !important;
     top: 0 !important;
+    height: 100dvh !important;
+    box-shadow: -12px 0 30px rgba(2, 6, 23, 0.12);
   }
   .dash-sidebar-open {
     transform: translateX(0) !important;
   }
-  .dash-main-content { margin-right: 0 !important; padding-bottom: 4.5rem !important; }
+  .dash-main-content { margin-right: 0 !important; padding-bottom: 5.25rem !important; }
   .dash-menu-btn { display: block !important; }
   .dash-search { width: 160px !important; }
   .dash-profile-text { display: none !important; }
-  .dash-bottom-nav { display: block !important; }
+  .dash-bottom-nav {
+    display: flex !important;
+    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .dash-mobile-close { display: grid !important; }
+  .dash-collapse-btn { display: none !important; }
+  .dash-drawer-open .dash-bottom-nav { display: none !important; }
   .dash-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
   .dash-stats-grid > div { padding: 0.85rem !important; }
   .dash-stats-grid p:first-of-type { font-size: 1.15rem !important; }

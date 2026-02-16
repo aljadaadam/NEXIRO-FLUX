@@ -77,6 +77,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
+  const handlePageChange = (id: string) => {
+    setCurrentPage(id);
+    setMobileDrawerOpen(false);
+  };
+
   // Check admin auth
   useEffect(() => {
     const key = localStorage.getItem('admin_key');
@@ -84,6 +89,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileDrawerOpen]);
 
 
 
@@ -100,7 +117,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div dir="rtl" style={{
+    <div dir="rtl" className={mobileDrawerOpen ? 'dash-drawer-open' : ''} style={{
       fontFamily: 'Tajawal, Cairo, sans-serif',
       background: '#f1f5f9', minHeight: '100vh', color: '#0b1020',
     }}>
@@ -114,10 +131,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <Sidebar
         currentPage={currentPage}
-        setCurrentPage={(id) => { setCurrentPage(id); setMobileDrawerOpen(false); }}
+        setCurrentPage={handlePageChange}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         mobileOpen={mobileDrawerOpen}
+        onCloseMobile={() => setMobileDrawerOpen(false)}
         theme={currentTheme}
         logoPreview={logoPreview}
         storeName={storeName}
@@ -130,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }}>
         <DashHeader
           collapsed={collapsed}
-          onMenuToggle={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+          onMenuToggle={() => setMobileDrawerOpen((prev) => !prev)}
           theme={currentTheme}
           logoPreview={logoPreview}
         />
@@ -139,7 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
 
-      <AdminMobileNav currentPage={currentPage} setCurrentPage={setCurrentPage} theme={currentTheme} />
+      <AdminMobileNav currentPage={currentPage} setCurrentPage={handlePageChange} theme={currentTheme} />
     </div>
   );
 }

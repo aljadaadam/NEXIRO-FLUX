@@ -3,7 +3,7 @@
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
   Link2, Paintbrush, Megaphone, Settings, ChevronRight, ChevronLeft,
-  Zap, LogOut,
+  Zap, LogOut, X,
 } from 'lucide-react';
 import type { ColorTheme } from '@/lib/themes';
 
@@ -13,6 +13,7 @@ interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
   mobileOpen: boolean;
+  onCloseMobile: () => void;
   theme: ColorTheme;
   logoPreview: string | null;
   storeName: string;
@@ -32,7 +33,7 @@ const menuItems = [
 
 export default function Sidebar({
   currentPage, setCurrentPage, collapsed, setCollapsed,
-  mobileOpen, theme, logoPreview, storeName,
+  mobileOpen, onCloseMobile, theme, logoPreview, storeName,
 }: SidebarProps) {
   return (
     <aside
@@ -71,7 +72,24 @@ export default function Sidebar({
             <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020' }}>{storeName}</span>
           )}
         </div>
-        <button onClick={() => setCollapsed(!collapsed)} style={{
+        <button
+          className="dash-mobile-close"
+          onClick={onCloseMobile}
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            border: '1px solid #f1f5f9',
+            background: '#fff',
+            cursor: 'pointer',
+            display: 'none',
+            placeItems: 'center',
+          }}
+          aria-label="إغلاق القائمة"
+        >
+          <X size={14} color="#64748b" />
+        </button>
+        <button className="dash-collapse-btn" onClick={() => setCollapsed(!collapsed)} style={{
           width: 28, height: 28, borderRadius: 6,
           border: '1px solid #f1f5f9', background: '#fff',
           cursor: 'pointer', display: collapsed ? 'none' : 'grid',
