@@ -149,8 +149,8 @@ async function checkPendingOrders() {
 
             // فقط نحدّث إذا تغيرت الحالة
             if (newStatus !== order.status) {
-              // حفظ المحتوى الفعلي فقط (الرد من المصدر)
-              const responseText = result.comments || result.message || result.statusLabel || '';
+              // حفظ المحتوى الفعلي من المصدر — fullResponse يجمع كل الحقول المفيدة
+              const responseText = result.fullResponse || result.comments || result.message || result.statusLabel || '';
 
               await Order.updateStatus(order.id, siteKey, newStatus, responseText);
               updated++;

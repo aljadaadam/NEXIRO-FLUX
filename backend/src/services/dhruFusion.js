@@ -217,13 +217,31 @@ class DhruFusionClient {
       '5': 'ملغي'
     };
 
+    // استخراج كل الحقول المفيدة من الرد — المصادر تختلف في أسماء الحقول
+    const comments = success?.COMMENTS || success?.comments || '';
+    const message = success?.MESSAGE || success?.message || '';
+    const code = success?.CODE || success?.code || success?.UNLOCK_CODE || success?.unlock_code || '';
+    const result = success?.RESULT || success?.result || '';
+    const info = success?.INFO || success?.info || '';
+
+    // تجميع كل المحتوى الفعلي بترتيب الأولوية
+    const allContent = [comments, code, result, message, info].filter(v => typeof v === 'string' && v.trim().length > 0);
+    const fullResponse = allContent.length > 0 ? allContent.join('\n') : null;
+
+    // لوق الرد الكامل لتشخيص
+    if (statusCode === '4' || statusCode === '2' || statusCode === '3') {
+      console.log(`[DhruFusion] getOrderStatus ref=${referenceId} status=${statusCode} SUCCESS keys:`, Object.keys(success || {}));
+      console.log(`[DhruFusion] COMMENTS=${JSON.stringify(comments)}, MESSAGE=${JSON.stringify(message)}, CODE=${JSON.stringify(code)}`);
+    }
+
     return {
       referenceId,
       statusCode,
       status: statusMap[statusCode] || 'unknown',
       statusLabel: statusLabels[statusCode] || 'غير معروف',
-      comments: success?.COMMENTS || success?.comments || null,
-      message: success?.MESSAGE || success?.message || null,
+      comments,
+      message,
+      fullResponse,
       raw: data
     };
   }
