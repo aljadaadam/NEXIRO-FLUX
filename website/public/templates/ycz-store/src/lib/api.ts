@@ -158,9 +158,45 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
       : (requiresCustom && typeof requiresCustom === 'object')
         ? Object.values(requiresCustom as Record<string, unknown>)
         : [];
-  const customFields = rawFieldList
+  const extraFields = rawFieldList
     .map(normalizeFieldDef)
     .filter((f): f is ProductCustomField => Boolean(f));
+
+  // ─── دمج حقل IMEI من custom_json إذا كان موجوداً ─────
+  // custom_json يحمل بيانات الحقل الرئيسي (IMEI) من المصدر
+  // نضيفه كأول حقل فقط إذا كان CUSTOM.allow === "1" ولم يكن موجوداً بالفعل
+  const customFields: ProductCustomField[] = [];
+  const hasCustomImei = customJson && typeof customJson === 'object' && !Array.isArray(customJson)
+    && String((customJson as Record<string, unknown>).allow || '') === '1';
+
+  if (hasCustomImei) {
+    const cj = customJson as Record<string, unknown>;
+    const imeiLabel = String(cj.customname || 'IMEI').trim() || 'IMEI';
+    // لا نكرر إذا كان حقل بنفس المفتاح موجود في Requires.Custom
+    const alreadyExists = extraFields.some(f => f.key.toLowerCase() === 'imei' || f.key.toLowerCase() === imeiLabel.toLowerCase().replace(/\s+/g, '_'));
+    if (!alreadyExists) {
+      customFields.push({
+        key: 'imei',
+        label: imeiLabel,
+        placeholder: cj.custominfo ? String(cj.custominfo) : `أدخل ${imeiLabel}`,
+        required: true,
+      });
+    }
+  } else if (sType === 'IMEI') {
+    // إذا نوع الخدمة IMEI ولا يوجد CUSTOM → نضيف حقل IMEI افتراضي
+    // (بعض الخدمات مثل Refund تحتاج IMEI حتى بدون حقل CUSTOM)
+    const alreadyExists = extraFields.some(f => f.key.toLowerCase() === 'imei');
+    if (!alreadyExists) {
+      customFields.push({
+        key: 'imei',
+        label: 'رقم IMEI',
+        placeholder: 'مثال: 356938035643809',
+        required: true,
+      });
+    }
+  }
+  // إضافة باقي الحقول من Requires.Custom
+  customFields.push(...extraFields);
   const mappedCategory = sType === 'IMEI' || sType === 'SERVER'
     ? serviceTypeCategories[sType]
     : String(p.group_name || serviceTypeCategories[sType] || 'خدمات');
