@@ -189,19 +189,21 @@ async function createOrder(req, res) {
                   }
                 } catch (sourceErr) {
                   // ❌ المصدر رفض الطلب — استرجاع الرصيد
-                  const errMsg = sourceErr instanceof DhruFusionError
+                  const originalMsg = sourceErr instanceof DhruFusionError
                     ? sourceErr.message
                     : (sourceErr.message || 'خطأ اتصال بالمصدر');
-                  const translatedErr = translateSourceError(errMsg);
+                  const translatedErr = translateSourceError(originalMsg);
+                  // نحفظ الرسالة الأصلية من المصدر كما هي للزبون
+                  const responseForCustomer = originalMsg;
                   const isConnectionError = !(sourceErr instanceof DhruFusionError);
 
                   if (isConnectionError) {
                     // مشكلة اتصال → الطلب يبقى pending
                     await pool.query(
                       `UPDATE orders SET status = 'pending', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [translatedErr || errMsg, order.id, site_key]
+                      [responseForCustomer, order.id, site_key]
                     );
-                    externalResult = { ok: false, type: 'CONNECTION_ERROR', error: errMsg };
+                    externalResult = { ok: false, type: 'CONNECTION_ERROR', error: originalMsg };
                     console.log(`⏳ Order #${order.order_number} → PENDING (اتصال فاشل)`);
                   } else {
                     // المصدر رفض → استرجاع الرصيد
@@ -216,17 +218,17 @@ async function createOrder(req, res) {
                     }
                     await pool.query(
                       `UPDATE orders SET status = 'failed', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [translatedErr || errMsg, order.id, site_key]
+                      [responseForCustomer, order.id, site_key]
                     );
                     // إشعار الزبون
                     await Notification.create({
                       site_key, recipient_type: 'customer', recipient_id: effectiveCustomerId,
                       title: 'تحديث الطلب',
-                      message: `طلبك #${order.order_number}: ${translatedErr}`,
+                      message: `طلبك #${order.order_number}: ${responseForCustomer}`,
                       type: 'order'
                     });
-                    externalResult = { ok: false, type: 'ORDER_REJECTED', error: translatedErr };
-                    console.log(`🚫 Order #${order.order_number} → REJECTED + Refunded: ${translatedErr}`);
+                    externalResult = { ok: false, type: 'ORDER_REJECTED', error: responseForCustomer };
+                    console.log(`🚫 Order #${order.order_number} → REJECTED + Refunded: ${responseForCustomer}`);
                   }
                 }
               }
