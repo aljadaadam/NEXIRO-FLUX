@@ -11,7 +11,21 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   const { currentTheme, buttonRadius } = useTheme();
   const [step, setStep] = useState(1);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
+
+  const parsePriceToNumber = (price: string): number => {
+    const cleaned = String(price || '').replace(/[^0-9.]/g, '');
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const unitPrice = parsePriceToNumber(product.price);
+  const qty = 1;
+  const totalPrice = unitPrice * qty;
 
   const orderFields = (() => {
     if (Array.isArray(product.customFields) && product.customFields.length > 0) {
@@ -26,6 +40,87 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   const allRequiredFilled = orderFields
     .filter((f) => f.required !== false)
     .every((f) => (formValues[f.key] || '').trim().length > 0);
+
+  const isLoggedIn = typeof window !== 'undefined' && Boolean(localStorage.getItem('auth_token'));
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProfile() {
+      setLoadingProfile(true);
+      setError(null);
+      try {
+        if (!isLoggedIn) {
+          if (!cancelled) setWalletBalance(null);
+          return;
+        }
+        const res = await storeApi.getProfile();
+        const customer = res?.customer || res;
+        const balance = Number(customer?.wallet_balance ?? customer?.balance ?? customer?.wallet?.balance ?? 0);
+        if (!cancelled) setWalletBalance(Number.isFinite(balance) ? balance : 0);
+      } catch {
+        if (!cancelled) setWalletBalance(null);
+      } finally {
+        if (!cancelled) setLoadingProfile(false);
+      }
+    }
+    loadProfile();
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
+
+  const canPayWithWallet = walletBalance !== null && walletBalance >= totalPrice;
+
+  const submitOrder = async () => {
+    if (submitting) return;
+    setError(null);
+
+    if (!isLoggedIn) {
+      setError('يرجى تسجيل الدخول أولاً');
+      return;
+    }
+
+    if (loadingProfile || walletBalance === null) {
+      setError('تعذر تحميل رصيد المحفظة');
+      return;
+    }
+
+    if (!canPayWithWallet) {
+      setError('رصيد المحفظة غير كافٍ');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const imeiValue = (formValues.imei || '').trim();
+      const otherFields = Object.fromEntries(
+        Object.entries(formValues)
+          .filter(([k, v]) => k !== 'imei' && String(v || '').trim().length > 0)
+          .map(([k, v]) => [k, String(v).trim()])
+      );
+
+      const notes = Object.keys(otherFields).length > 0
+        ? JSON.stringify(otherFields)
+        : undefined;
+
+      await storeApi.createOrder({
+        product_id: product.id,
+        product_name: product.name,
+        quantity: qty,
+        unit_price: unitPrice,
+        payment_method: 'wallet',
+        ...(imeiValue ? { imei: imeiValue } : {}),
+        ...(notes ? { notes } : {}),
+      });
+
+      // تحديث الرصيد محلياً فوراً
+      setWalletBalance((b) => (typeof b === 'number' ? Math.max(0, b - totalPrice) : b));
+      setStep(2);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'فشل إرسال الطلب';
+      setError(msg || 'فشل إرسال الطلب');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
@@ -49,6 +144,31 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
           </div>
         </div>
+
+        {/* Wallet Info */}
+        <div style={{
+          padding: '0.75rem 1rem', borderRadius: 12,
+          background: '#fff', border: '1px solid #e2e8f0',
+          marginBottom: 12,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+          fontSize: '0.82rem',
+        }}>
+          <div style={{ color: '#334155', fontWeight: 700 }}>الدفع بالمحفظة</div>
+          <div style={{ color: '#64748b', fontWeight: 700, textAlign: 'left' }}>
+            {loadingProfile ? 'جاري جلب الرصيد...' : walletBalance === null ? 'غير متاح' : `$${walletBalance.toFixed(2)}`}
+          </div>
+        </div>
+
+        {error && (
+          <div style={{
+            marginBottom: 12,
+            padding: '0.75rem 1rem', borderRadius: 12,
+            background: '#fef2f2', border: '1px solid #fecaca',
+            color: '#b91c1c', fontSize: '0.82rem', fontWeight: 700,
+          }}>
+            {error}
+          </div>
+        )}
 
         {step === 1 && (
           <>
@@ -76,11 +196,17 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             )}
 
             <button
-              onClick={() => setStep(2)}
-              disabled={!allRequiredFilled}
+              onClick={submitOrder}
+              disabled={!allRequiredFilled || submitting || loadingProfile || !isLoggedIn}
               style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif', opacity: allRequiredFilled ? 1 : 0.6 }}>
-              متابعة
+              {submitting ? 'جارٍ إرسال الطلب...' : 'تقديم الطلب'}
             </button>
+
+            {isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet && (
+              <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>
+                الرصيد غير كافٍ لإتمام الطلب (المطلوب: ${totalPrice.toFixed(2)})
+              </p>
+            )}
           </>
         )}
 
