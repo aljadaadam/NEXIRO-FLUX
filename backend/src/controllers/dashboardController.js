@@ -11,6 +11,58 @@ const Site = require('../models/Site');
 const PurchaseCode = require('../models/PurchaseCode');
 const { getPool } = require('../config/db');
 
+// ─── دومينات المنصة المعروفة (لاكتشاف موقع المنصة من قاعدة البيانات) ───
+const PLATFORM_DOMAINS = [
+  'nexiroflux.com', 'www.nexiroflux.com',
+  'nexiro-flux.com', 'www.nexiro-flux.com',
+  'localhost', '127.0.0.1',
+];
+
+// كاش لمفتاح موقع المنصة — يُحَل مرة واحدة ويُحفظ
+let _platformSiteKeys = null;
+
+/**
+ * جلب جميع site_key التي تخص المنصة نفسها (وليس مواقع العملاء)
+ * يُعرّف موقع المنصة بأنه الموقع الذي دومينه أحد PLATFORM_DOMAINS
+ */
+async function resolvePlatformSiteKeys(pool) {
+  if (_platformSiteKeys) return _platformSiteKeys;
+
+  const placeholders = PLATFORM_DOMAINS.map(() => '?').join(',');
+  const [rows] = await pool.query(
+    `SELECT DISTINCT site_key FROM sites WHERE domain IN (${placeholders}) OR custom_domain IN (${placeholders})`,
+    [...PLATFORM_DOMAINS, ...PLATFORM_DOMAINS]
+  );
+
+  _platformSiteKeys = rows.map(r => r.site_key);
+  // إعادة تحميل كل 10 دقائق
+  setTimeout(() => { _platformSiteKeys = null; }, 10 * 60 * 1000);
+  return _platformSiteKeys;
+}
+
+/**
+ * بناء شرط SQL لاستثناء مواقع المنصة
+ * يرجع { clause, params } — مثال: { clause: "site_key NOT IN (?,?)", params: ['key1','key2'] }
+ */
+function buildExcludePlatformClause(platformKeys, column = 'site_key') {
+  if (!platformKeys || platformKeys.length === 0) {
+    return { clause: '1=1', params: [] };
+  }
+  const placeholders = platformKeys.map(() => '?').join(',');
+  return { clause: `${column} NOT IN (${placeholders})`, params: [...platformKeys] };
+}
+
+/**
+ * بناء شرط SQL لتضمين مواقع المنصة فقط
+ */
+function buildIncludePlatformClause(platformKeys, column = 'site_key') {
+  if (!platformKeys || platformKeys.length === 0) {
+    return { clause: '1=0', params: [] };
+  }
+  const placeholders = platformKeys.map(() => '?').join(',');
+  return { clause: `${column} IN (${placeholders})`, params: [...platformKeys] };
+}
+
 // ─── مساعد: التحقق من أن المستخدم أدمن منصة ───
 function requirePlatformAdmin(req, res) {
   if (req.user?.role !== 'admin') {
@@ -123,20 +175,21 @@ async function getPlatformStats(req, res) {
     }
 
     const pool = getPool();
-    // استثناء موقع المنصة نفسه — فقط مواقع العملاء (نستخدم site_key من JWT)
-    const PK = req.user.site_key;
+    // اكتشاف موقع المنصة من الدومين (موثوق) — استثناءه من كل الاستعلامات
+    const platformKeys = await resolvePlatformSiteKeys(pool);
+    const ex = buildExcludePlatformClause(platformKeys);
 
     // جلب مواقع العملاء فقط (استثناء المنصة)
     const [clientSites] = await pool.query(
-      'SELECT * FROM sites WHERE site_key != ? ORDER BY created_at DESC',
-      [PK]
+      `SELECT * FROM sites WHERE ${ex.clause} ORDER BY created_at DESC`,
+      ex.params
     );
     const totalSites = clientSites.length;
 
     // المواقع الجديدة اليوم (استثناء المنصة)
     const [[{ newSitesToday }]] = await pool.query(
-      'SELECT COUNT(*) as newSitesToday FROM sites WHERE site_key != ? AND DATE(created_at) = CURDATE()',
-      [PK]
+      `SELECT COUNT(*) as newSitesToday FROM sites WHERE ${ex.clause} AND DATE(created_at) = CURDATE()`,
+      ex.params
     );
 
     // إحصائيات الاشتراكات (مواقع العملاء فقط)
@@ -147,30 +200,30 @@ async function getPlatformStats(req, res) {
         SUM(CASE WHEN status = 'trial' THEN 1 ELSE 0 END) as trialSubscriptions,
         SUM(CASE WHEN status = 'cancelled' OR status = 'expired' THEN 1 ELSE 0 END) as inactiveSubscriptions
       FROM subscriptions
-      WHERE site_key != ?
-    `, [PK]);
+      WHERE ${ex.clause}
+    `, ex.params);
 
     // إحصائيات أكواد الشراء
     const purchaseCodeStats = await PurchaseCode.getStats();
 
     // إجمالي الإيرادات (مواقع العملاء فقط)
     const [[globalRevenue]] = await pool.query(
-      "SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND site_key != ?",
-      [PK]
+      `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND ${ex.clause}`,
+      ex.params
     );
     const [[todayRevenue]] = await pool.query(
-      "SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND DATE(created_at) = CURDATE() AND site_key != ?",
-      [PK]
+      `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND DATE(created_at) = CURDATE() AND ${ex.clause}`,
+      ex.params
     );
 
     // إجمالي المستخدمين (مواقع العملاء فقط — استثناء مستخدمي المنصة)
     const [[{ totalUsers }]] = await pool.query(
-      'SELECT COUNT(*) as totalUsers FROM users WHERE site_key != ?',
-      [PK]
+      `SELECT COUNT(*) as totalUsers FROM users WHERE ${ex.clause}`,
+      ex.params
     );
     const [[{ newUsersToday }]] = await pool.query(
-      'SELECT COUNT(*) as newUsersToday FROM users WHERE site_key != ? AND DATE(created_at) = CURDATE()',
-      [PK]
+      `SELECT COUNT(*) as newUsersToday FROM users WHERE ${ex.clause} AND DATE(created_at) = CURDATE()`,
+      ex.params
     );
 
     // إجمالي التذاكر (مواقع العملاء فقط)
@@ -180,8 +233,8 @@ async function getPlatformStats(req, res) {
         SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open,
         SUM(CASE WHEN status = 'resolved' OR status = 'closed' THEN 1 ELSE 0 END) as resolved
       FROM tickets
-      WHERE site_key != ?
-    `, [PK]);
+      WHERE ${ex.clause}
+    `, ex.params);
 
     // آخر 10 مواقع عملاء أُنشئت (استثناء المنصة)
     const recentSites = clientSites.slice(0, 10).map(s => ({
@@ -197,9 +250,9 @@ async function getPlatformStats(req, res) {
       `SELECT p.*, s.domain as site_domain, s.name as site_name
        FROM payments p
        LEFT JOIN sites s ON p.site_key = s.site_key
-       WHERE p.site_key != ?
+       WHERE ${buildExcludePlatformClause(platformKeys, 'p.site_key').clause}
        ORDER BY p.created_at DESC LIMIT 10`,
-      [PK]
+      buildExcludePlatformClause(platformKeys, 'p.site_key').params
     );
 
     res.json({
@@ -256,8 +309,11 @@ async function getPlatformPayments(req, res) {
     const { page = 1, limit = 50, status } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let where = 'WHERE p.site_key != ?';
-    const params = [req.user.site_key];
+    const platformKeys = await resolvePlatformSiteKeys(pool);
+    const ex = buildExcludePlatformClause(platformKeys, 'p.site_key');
+
+    let where = `WHERE ${ex.clause}`;
+    const params = [...ex.params];
     if (status && status !== 'all') {
       where += ' AND p.status = ?';
       params.push(status);
@@ -278,6 +334,7 @@ async function getPlatformPayments(req, res) {
     );
 
     // إحصائيات عامة (استثناء المنصة)
+    const exStats = buildExcludePlatformClause(platformKeys);
     const [[stats]] = await pool.query(`
       SELECT
         COUNT(*) as total,
@@ -287,8 +344,8 @@ async function getPlatformPayments(req, res) {
         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
       FROM payments
-      WHERE site_key != ?
-    `, [req.user.site_key]);
+      WHERE ${exStats.clause}
+    `, exStats.params);
 
     res.json({
       payments: payments.map(p => ({
@@ -352,8 +409,11 @@ async function getPlatformTickets(req, res) {
     const { page = 1, limit = 50, status } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let where = 'WHERE t.site_key != ?';
-    const params = [req.user.site_key];
+    const platformKeys = await resolvePlatformSiteKeys(pool);
+    const ex = buildExcludePlatformClause(platformKeys, 't.site_key');
+
+    let where = `WHERE ${ex.clause}`;
+    const params = [...ex.params];
     if (status && status !== 'all') {
       where += ' AND t.status = ?';
       params.push(status);
@@ -374,6 +434,7 @@ async function getPlatformTickets(req, res) {
     );
 
     // إحصائيات عامة (استثناء المنصة)
+    const exStats = buildExcludePlatformClause(platformKeys);
     const [[stats]] = await pool.query(`
       SELECT
         COUNT(*) as total,
@@ -381,8 +442,8 @@ async function getPlatformTickets(req, res) {
         SUM(CASE WHEN status = 'replied' THEN 1 ELSE 0 END) as replied,
         SUM(CASE WHEN status = 'resolved' OR status = 'closed' THEN 1 ELSE 0 END) as resolved
       FROM tickets
-      WHERE site_key != ?
-    `, [req.user.site_key]);
+      WHERE ${exStats.clause}
+    `, exStats.params);
 
     res.json({
       tickets: tickets.map(t => ({
@@ -500,8 +561,11 @@ async function getPlatformUsers(req, res) {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     // مستخدمو المنصة فقط (المسجلون في موقع المنصة نفسه)
-    let where = 'WHERE u.site_key = ?';
-    const params = [req.user.site_key];
+    const platformKeys = await resolvePlatformSiteKeys(pool);
+    const inc = buildIncludePlatformClause(platformKeys, 'u.site_key');
+
+    let where = `WHERE ${inc.clause}`;
+    const params = [...inc.params];
     if (search) {
       where += ' AND (u.name LIKE ? OR u.email LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
@@ -512,6 +576,7 @@ async function getPlatformUsers(req, res) {
     );
 
     // إحصائيات مستخدمي المنصة
+    const incStats = buildIncludePlatformClause(platformKeys);
     const [[statsRow]] = await pool.query(`
       SELECT
         COUNT(*) as totalUsers,
@@ -519,8 +584,8 @@ async function getPlatformUsers(req, res) {
         SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as regularUsers,
         SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as newToday
       FROM users
-      WHERE site_key = ?
-    `, [req.user.site_key]);
+      WHERE ${incStats.clause}
+    `, incStats.params);
 
     const [users] = await pool.query(
       `SELECT u.id, u.name, u.email, u.role, u.site_key, u.created_at
@@ -563,6 +628,9 @@ async function getPlatformSites(req, res) {
 
     const pool = getPool();
 
+    const platformKeys = await resolvePlatformSiteKeys(pool);
+    const ex = buildExcludePlatformClause(platformKeys, 's.site_key');
+
     const [sites] = await pool.query(`
       SELECT s.*,
         (SELECT COUNT(*) FROM users u WHERE u.site_key = s.site_key) as users_count,
@@ -573,9 +641,9 @@ async function getPlatformSites(req, res) {
         sub.expires_at as subscription_expires
       FROM sites s
       LEFT JOIN subscriptions sub ON s.site_key = sub.site_key
-      WHERE s.site_key != ?
+      WHERE ${ex.clause}
       ORDER BY s.created_at DESC
-    `, [req.user.site_key]);
+    `, ex.params);
 
     res.json({ sites });
   } catch (error) {
