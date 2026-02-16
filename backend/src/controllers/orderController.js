@@ -141,7 +141,16 @@ async function createOrder(req, res) {
         const { getPool } = require('../config/db');
         const pool = getPool();
         const [products] = await pool.query('SELECT * FROM products WHERE id = ? AND site_key = ?', [product_id, site_key]);
-        const product = products[0];
+        let product = products[0];
+
+        // ─── تحويل الاتصال: إذا المنتج محوّل لمنتج آخر، نستخدم المنتج المحوّل إليه ───
+        if (product && product.linked_product_id) {
+          const [linkedProducts] = await pool.query('SELECT * FROM products WHERE id = ? AND site_key = ?', [product.linked_product_id, site_key]);
+          if (linkedProducts[0]) {
+            console.log(`🔗 Order #${order.order_number} → تحويل من منتج #${product.id} إلى منتج #${linkedProducts[0].id}`);
+            product = linkedProducts[0];
+          }
+        }
 
         if (product && product.source_id) {
           const source = await Source.findById(product.source_id);
@@ -340,10 +349,20 @@ async function placeExternalOrder(req, res) {
       'SELECT * FROM products WHERE id = ? AND site_key = ?',
       [order.product_id, site_key]
     );
-    const product = products[0];
+    let product = products[0];
     if (!product) {
       return res.status(404).json({ error: 'المنتج غير موجود' });
     }
+
+    // ─── تحويل الاتصال: إذا المنتج محوّل لمنتج آخر ───
+    if (product.linked_product_id) {
+      const [linkedProducts] = await pool.query('SELECT * FROM products WHERE id = ? AND site_key = ?', [product.linked_product_id, site_key]);
+      if (linkedProducts[0]) {
+        console.log(`🔗 Manual send: تحويل من منتج #${product.id} إلى منتج #${linkedProducts[0].id}`);
+        product = linkedProducts[0];
+      }
+    }
+
     if (!product.source_id) {
       return res.status(400).json({ error: 'المنتج غير مرتبط بمصدر خارجي' });
     }

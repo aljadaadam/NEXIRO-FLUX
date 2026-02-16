@@ -24,6 +24,7 @@ export interface Product {
   group_name?: string;
   external_service_key?: string;
   source_id?: number;
+  linked_product_id?: number | null;
   requires_custom_json?: unknown;
   custom_json?: unknown;
   customFields?: Array<{

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, X, Star } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus, Search, Edit, Trash2, Eye, X, Star, Unlink, Link2 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -36,6 +36,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editServiceType, setEditServiceType] = useState('SERVER');
   const [editIcon, setEditIcon] = useState('📦');
   const [updating, setUpdating] = useState(false);
+
+  // Source & product linking state
+  const [editSourceConnected, setEditSourceConnected] = useState(true);
+  const [editLinkedProductId, setEditLinkedProductId] = useState<number | null>(null);
+  const [linkSearch, setLinkSearch] = useState('');
+  const [showLinkDropdown, setShowLinkDropdown] = useState(false);
+  const [editOriginalSourceId, setEditOriginalSourceId] = useState<number | null>(null);
 
   useEffect(() => {
     loadProducts();
@@ -82,6 +89,11 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setEditStatus((product.status || 'active') === 'نشط' ? 'active' : String(product.status || 'active'));
     setEditServiceType(product.service_type || 'SERVER');
     setEditIcon(product.icon || '📦');
+    setEditSourceConnected(!!product.source_id);
+    setEditOriginalSourceId(product.source_id || null);
+    setEditLinkedProductId(product.linked_product_id ?? null);
+    setLinkSearch('');
+    setShowLinkDropdown(false);
     setShowEdit(true);
   }
 
@@ -94,7 +106,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     if (!editId || !editName || !editPrice) return;
     setUpdating(true);
     try {
-      await adminApi.updateProduct(editId, {
+      const updateData: Record<string, unknown> = {
         name: editName,
         arabic_name: editArabicName || null,
         price: Number.parseFloat(String(editPrice).replace(/[$,\s]/g, '')),
@@ -103,7 +115,19 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         status: editStatus,
         service_type: editServiceType,
         icon: editIcon,
-      });
+      };
+
+      // فصل/إعادة اتصال المصدر
+      if (!editSourceConnected && editOriginalSourceId) {
+        updateData.source_id = null; // فصل المنتج من المصدر
+      } else if (editSourceConnected && !editOriginalSourceId) {
+        // لا شيء — الأصل ليس متصل
+      }
+
+      // تحويل الاتصال لمنتج آخر
+      updateData.linked_product_id = editLinkedProductId;
+
+      await adminApi.updateProduct(editId, updateData);
       closeEdit();
       loadProducts();
     } catch { /* ignore */ }
@@ -116,6 +140,21 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch { /* ignore */ }
   }
+
+  // المنتجات المتاحة للتحويل (باستثناء المنتج الحالي)
+  const linkableProducts = useMemo(() => {
+    return products.filter(p => p.id !== editId && p.source_id);
+  }, [products, editId]);
+
+  const filteredLinkable = useMemo(() => {
+    if (!linkSearch.trim()) return linkableProducts.slice(0, 20);
+    const q = linkSearch.toLowerCase();
+    return linkableProducts.filter(p =>
+      (p.arabic_name || '').toLowerCase().includes(q) ||
+      (p.name || '').toLowerCase().includes(q) ||
+      String(p.id).includes(q)
+    ).slice(0, 20);
+  }, [linkableProducts, linkSearch]);
 
   const groupsForDropdown = useMemo(() => {
     const typeFiltered =
@@ -381,6 +420,86 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             </div>
 
             <textarea rows={3} placeholder="وصف المنتج" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ marginTop: 12, width: '100%', boxSizing: 'border-box', padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical' }} />
+
+            {/* ─── إعدادات الاتصال بالمصدر ─── */}
+            <div style={{ marginTop: 14, padding: '1rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 10 }}>🔗 إعدادات الاتصال بالمصدر</p>
+
+              {/* زر فصل/إعادة اتصال المصدر */}
+              {editOriginalSourceId && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 10 }}>
+                  <div>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>
+                      {editSourceConnected ? '✅ متصل بالمصدر' : '❌ مفصول عن المصدر'}
+                    </p>
+                    <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                      {editSourceConnected ? 'المنتج يرسل الطلبات تلقائياً للمصدر' : 'المنتج لن يُرسل طلبات للمصدر'}
+                    </p>
+                  </div>
+                  <button onClick={() => setEditSourceConnected(!editSourceConnected)} type="button" style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '0.4rem 0.85rem', borderRadius: 8,
+                    background: editSourceConnected ? '#fee2e2' : '#dcfce7',
+                    color: editSourceConnected ? '#dc2626' : '#16a34a',
+                    border: 'none', fontSize: '0.75rem', fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                  }}>
+                    {editSourceConnected ? <><Unlink size={13} /> فصل</> : <><Link2 size={13} /> إعادة اتصال</>}
+                  </button>
+                </div>
+              )}
+
+              {/* تحويل الاتصال لمنتج آخر */}
+              <div style={{ padding: '0.6rem 0.85rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0b1020', marginBottom: 6 }}>🔄 تحويل الاتصال لمنتج آخر</p>
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 8 }}>عند تقديم طلب، يتم إرسال الطلب عبر المنتج المحدد بدلاً من المنتج الأصلي</p>
+
+                {editLinkedProductId && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.45rem 0.75rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', marginBottom: 8 }}>
+                    <Link2 size={13} color="#2563eb" />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
+                      {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) + ` (#${lp.id})` : `#${editLinkedProductId}`; })()}
+                    </span>
+                    <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                      <X size={11} color="#dc2626" />
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.45rem 0.75rem', background: '#fff' }}>
+                    <Search size={13} color="#94a3b8" />
+                    <input
+                      value={linkSearch}
+                      onChange={e => { setLinkSearch(e.target.value); setShowLinkDropdown(true); }}
+                      onFocus={() => setShowLinkDropdown(true)}
+                      placeholder="ابحث عن منتج للتحويل..."
+                      style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                    />
+                  </div>
+
+                  {showLinkDropdown && filteredLinkable.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 4, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 200, overflow: 'auto' }}>
+                      {filteredLinkable.map(p => (
+                        <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
+                          display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                          padding: '0.55rem 0.85rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                          border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                          fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                        }}>
+                          <span style={{ fontSize: '1rem' }}>{p.icon}</span>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0b1020' }}>{p.arabic_name || p.name}</p>
+                            {p.arabic_name && <p style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{p.name}</p>}
+                          </div>
+                          <span style={{ fontSize: '0.68rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: 4 }}>#{p.id}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button onClick={handleUpdateProduct} disabled={updating} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1 }}>

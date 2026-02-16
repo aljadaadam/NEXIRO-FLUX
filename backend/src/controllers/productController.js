@@ -148,6 +148,7 @@ async function updateProduct(req, res) {
     const status = req.body.status !== undefined ? req.body.status : undefined;
     const category = req.body.category !== undefined ? req.body.category : undefined;
     const stock = req.body.stock !== undefined ? req.body.stock : req.body.qnt;
+    const linked_product_id = req.body.linked_product_id;
 
     // بناء بيانات التحديث ديناميكياً
     const updateData = {};
@@ -171,6 +172,11 @@ async function updateProduct(req, res) {
     // Add source_id if provided (can be null to unlink from source)
     if (source_id !== undefined) {
       updateData.source_id = source_id === null || source_id === 'null' || source_id === '' ? null : parseInt(source_id);
+    }
+
+    // تحويل الاتصال لمنتج آخر (يمكن null لإلغاء التحويل)
+    if (linked_product_id !== undefined) {
+      updateData.linked_product_id = linked_product_id === null || linked_product_id === 'null' || linked_product_id === '' ? null : parseInt(linked_product_id);
     }
 
     if (Object.keys(updateData).length === 0) {
