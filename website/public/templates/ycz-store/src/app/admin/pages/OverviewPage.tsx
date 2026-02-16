@@ -197,33 +197,44 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>🕐 آخر الطلبات</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {orders.slice(0, 5).map(order => (
+            {orders.slice(0, 5).map(order => {
+              const statusMap: Record<string, { label: string; color: string }> = {
+                pending: { label: 'معلق', color: '#f59e0b' },
+                processing: { label: 'جارٍ', color: '#3b82f6' },
+                completed: { label: 'مكتمل', color: '#22c55e' },
+                failed: { label: 'مرفوض', color: '#ef4444' },
+                cancelled: { label: 'ملغي', color: '#94a3b8' },
+                refunded: { label: 'مسترجع', color: '#8b5cf6' },
+              };
+              const si = statusMap[String(order.status)] || statusMap['pending'];
+              return (
               <div key={order.id} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '0.6rem 0.75rem', borderRadius: 10,
                 background: '#f8fafc',
               }}>
-                <span style={{ fontSize: '1.1rem' }}>{order.icon || '📦'}</span>
+                <span style={{ fontSize: '1.1rem' }}>📦</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
                     fontSize: '0.78rem', fontWeight: 600, color: '#0b1020',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
-                    {order.product}
+                    {order.product_name}
                   </p>
-                  <p style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{order.id}</p>
+                  <p style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{order.order_number}</p>
                 </div>
                 <div style={{ textAlign: 'left', flexShrink: 0 }}>
-                  <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020' }}>{order.price}</p>
+                  <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020' }}>${Number(order.total_price).toFixed(2)}</p>
                   <span style={{
                     fontSize: '0.6rem', fontWeight: 700,
-                    color: order.statusColor,
+                    color: si.color,
                   }}>
-                    {order.status}
+                    {si.label}
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

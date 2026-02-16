@@ -35,16 +35,26 @@ export interface Product {
 }
 
 export interface Order {
-  id: string;
-  product: string;
+  id: number;
+  order_number: string;
+  product_name: string;
+  product_id?: number;
+  customer_id?: number;
+  customer_name?: string;
+  customer_email?: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
   status: string;
-  statusColor: string;
-  date: string;
-  price: string;
-  icon?: string;
-  customer?: string;
-  email?: string;
-  payment?: string;
+  payment_method?: string;
+  payment_status?: string;
+  imei?: string;
+  server_response?: string;
+  notes?: string;
+  external_reference_id?: string;
+  source_id?: number;
+  created_at?: string;
+  completed_at?: string;
 }
 
 export interface User {

@@ -258,10 +258,20 @@ async function updateOrderStatus(req, res) {
 
     // إشعار للزبون
     if (order.customer_id) {
+      const statusLabels = {
+        pending: 'معلق',
+        processing: 'جارٍ التنفيذ',
+        completed: 'مكتمل',
+        failed: 'مرفوض',
+        cancelled: 'ملغي',
+        refunded: 'مسترجع'
+      };
+      const arStatus = statusLabels[status] || status;
+
       await Notification.create({
         site_key, recipient_type: 'customer', recipient_id: order.customer_id,
         title: 'تحديث الطلب',
-        message: `تم تحديث حالة طلبك #${order.order_number} إلى: ${status}`,
+        message: `تم تحديث حالة طلبك #${order.order_number} إلى: ${arStatus}`,
         type: 'order'
       });
 

@@ -75,7 +75,7 @@ export const adminApi = {
   deleteProduct: (id: number) => adminFetch(`/products/${id}`, { method: 'DELETE' }),
   toggleFeatured: (id: number) => adminFetch(`/products/${id}/featured`, { method: 'PATCH' }),
   getOrders: () => adminFetch('/orders'),
-  updateOrder: (id: string, data: Record<string, unknown>) => adminFetch(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  updateOrderStatus: (id: number, data: { status: string; server_response?: string }) => adminFetch(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
   getUsers: () => adminFetch('/auth/users'),
   getCustomers: (page = 1, limit = 50, search = '') => adminFetch(`/customers?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   getAnnouncements: () => adminFetch('/notifications'),

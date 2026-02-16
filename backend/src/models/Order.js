@@ -5,8 +5,13 @@ class Order {
   static async create({ site_key, customer_id, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes }) {
     const pool = getPool();
 
-    // إنشاء رقم طلب فريد
-    const order_number = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    // إنشاء رقم طلب فريد — يبدأ من 10000 ويزيد 43 لكل طلب
+    const [lastRow] = await pool.query(
+      'SELECT order_number FROM orders WHERE site_key = ? AND order_number REGEXP "^[0-9]+$" ORDER BY CAST(order_number AS UNSIGNED) DESC LIMIT 1',
+      [site_key]
+    );
+    const lastNum = lastRow.length > 0 ? parseInt(lastRow[0].order_number) : 0;
+    const order_number = String(lastNum < 10000 ? 10000 : lastNum + 43);
 
     const [result] = await pool.query(
       `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes)

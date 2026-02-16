@@ -24,17 +24,24 @@ export default function OrdersPage() {
 
   function mapOrder(raw: Record<string, unknown>): Order {
     const st = String(raw.status || 'pending');
-    const mapped = statusMap[st] || statusMap['pending'];
     return {
-      id: String(raw.order_number || raw.id || ''),
-      product: String(raw.product_name || ''),
-      status: mapped.label,
-      statusColor: mapped.color,
-      date: raw.created_at ? new Date(String(raw.created_at)).toLocaleDateString('ar-EG') : '--',
-      price: `$${Number(raw.total_price || 0).toFixed(2)}`,
-      icon: '📦',
+      id: Number(raw.id || 0),
+      order_number: String(raw.order_number || raw.id || ''),
+      product_name: String(raw.product_name || ''),
+      quantity: Number(raw.quantity || 1),
+      unit_price: Number(raw.unit_price || 0),
+      total_price: Number(raw.total_price || 0),
+      status: st,
+      payment_method: String(raw.payment_method || ''),
+      payment_status: String(raw.payment_status || ''),
+      created_at: raw.created_at ? String(raw.created_at) : undefined,
+      server_response: raw.server_response ? String(raw.server_response) : undefined,
     };
   }
+
+  const getStatusInfo = (status: string) => {
+    return statusMap[status] || statusMap['pending'];
+  };
 
   useEffect(() => {
     async function load() {
@@ -52,10 +59,10 @@ export default function OrdersPage() {
   const filters = ['all', 'completed', 'pending', 'failed', 'cancelled'];
   const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة', cancelled: 'ملغية' };
   const filtered = filter === 'all' ? orders : orders.filter(o => {
-    if (filter === 'completed') return o.status === 'مكتمل';
-    if (filter === 'pending') return o.status === 'قيد الانتظار' || o.status === 'قيد المعالجة';
-    if (filter === 'failed') return o.status === 'مرفوض';
-    if (filter === 'cancelled') return o.status === 'ملغي' || o.status === 'مسترجع';
+    if (filter === 'completed') return o.status === 'completed';
+    if (filter === 'pending') return o.status === 'pending' || o.status === 'processing';
+    if (filter === 'failed') return o.status === 'failed';
+    if (filter === 'cancelled') return o.status === 'cancelled' || o.status === 'refunded';
     return true;
   });
 
@@ -79,19 +86,28 @@ export default function OrdersPage() {
 
       {/* Orders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.map(order => (
+        {filtered.map(order => {
+          const si = getStatusInfo(order.status);
+          return (
           <div key={order.id} style={{ background: '#fff', borderRadius: 14, padding: '1rem 1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>{order.id}</span>
-              <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: `${order.statusColor}18`, color: order.statusColor }}>{order.status}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>{order.order_number}</span>
+              <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: `${si.color}18`, color: si.color }}>{si.label}</span>
             </div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{order.product}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{order.product_name}</p>
+            {order.server_response && order.status === 'completed' && (
+              <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: 8 }}>
+                <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>نتيجة الخدمة:</p>
+                <p style={{ fontSize: '0.78rem', color: '#166534', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#94a3b8' }}>
-              <span>{order.date}</span>
-              <span style={{ fontWeight: 700, color: '#0b1020' }}>{order.price}</span>
+              <span>{order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '--'}</span>
+              <span style={{ fontWeight: 700, color: '#0b1020' }}>${order.total_price.toFixed(2)}</span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
