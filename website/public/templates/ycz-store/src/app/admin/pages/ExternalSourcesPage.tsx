@@ -14,6 +14,7 @@ interface ConnectedSource {
   icon: string;
   type: string;
   url: string;
+  profitPercentage: number;
   status: string;
   statusColor: string;
   lastSync: string;
@@ -52,6 +53,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
   const [step, setStep] = useState<'form' | 'testing' | 'success' | 'error'>('form');
   const [errorMsg, setErrorMsg] = useState('');
   const [sourceName, setSourceName] = useState(source.name);
+  const [profitPercentage, setProfitPercentage] = useState('0');
 
   const fieldLabels: Record<string, string> = {
     'URL': 'رابط الـ API',
@@ -78,6 +80,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
         url: formData['URL'] || '',
         username: formData['Username'] || '',
         apiKey: formData['API Access Key'] || '',
+        profitPercentage: Number(profitPercentage || '0'),
         category: source.category,
       };
       const res = await adminApi.connectSource(payload);
@@ -163,6 +166,24 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
               </div>
             ))}
 
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                نسبة الربح الافتراضية (%)
+              </label>
+              <input
+                value={profitPercentage}
+                onChange={e => setProfitPercentage(e.target.value)}
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="0"
+                style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+              />
+              <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 4 }}>
+                تُحفظ في قاعدة البيانات كمعدل ثابت للمصدر وتُستخدم عند كل مزامنة.
+              </p>
+            </div>
+
             {/* Info Box */}
             <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <Link2 size={14} color="#0369a1" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -241,6 +262,8 @@ export default function ExternalSourcesPage() {
   const [sourceResults, setSourceResults] = useState<Record<number, { type: 'sync' | 'test'; success: boolean; message: string; logs?: string[]; count?: number; balance?: string; currency?: string }>>({});
   const [connectingSource, setConnectingSource] = useState<AvailableSource | null>(null);
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>(FALLBACK_CONNECTED);
+  const [profitInputs, setProfitInputs] = useState<Record<number, string>>({});
+  const [applyingProfit, setApplyingProfit] = useState<number | null>(null);
   const [availableSources, setAvailableSources] = useState<AvailableSource[]>(FALLBACK_AVAILABLE);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [stats, setStats] = useState({ connected: 0, balance: '$0.00', imported: 0, lastSync: '--' });
@@ -272,6 +295,7 @@ export default function ExternalSourcesPage() {
           icon: typeIcons[String(s.type)] || '🔧',
           type: String(s.type || ''),
           url: String(s.url || ''),
+          profitPercentage: Number(s.profitPercentage || 0),
           status: st.label,
           statusColor: st.color,
           lastSync: s.lastConnectionCheckedAt ? new Date(String(s.lastConnectionCheckedAt)).toLocaleString('ar-EG') : '--',
@@ -282,6 +306,11 @@ export default function ExternalSourcesPage() {
       });
 
       setConnectedSources(mapped);
+      const nextProfitInputs: Record<number, string> = {};
+      mapped.forEach((m) => {
+        nextProfitInputs[m.id] = String(m.profitPercentage ?? 0);
+      });
+      setProfitInputs(nextProfitInputs);
       // تحديث الإحصائيات
       setStats({
         connected: mapped.length,
@@ -295,6 +324,48 @@ export default function ExternalSourcesPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleApplyProfit = async (sourceId: number) => {
+    const current = Number(profitInputs[sourceId] ?? 0);
+    if (Number.isNaN(current) || current < 0) {
+      alert('نسبة الربح غير صالحة');
+      return;
+    }
+
+    setApplyingProfit(sourceId);
+    setExpandedSource(sourceId);
+    try {
+      const res = await adminApi.applySourceProfit(sourceId, { profitPercentage: current });
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'sync',
+          success: !!res?.success,
+          message: res?.success
+            ? `تم تطبيق نسبة الربح ${current}% على ${res?.productsCount || 0} منتج`
+            : (res?.error || 'فشل تطبيق نسبة الربح'),
+          logs: res?.success ? [
+            `✓ Profit percentage saved: ${current}%`,
+            `✓ Applied to products count: ${res?.productsCount || 0}`,
+            '✓ This source profit remains fixed in DB across sync updates',
+          ] : [],
+        }
+      }));
+      await fetchSources();
+    } catch (err: unknown) {
+      setSourceResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          type: 'sync',
+          success: false,
+          message: err instanceof Error ? err.message : 'فشل تطبيق نسبة الربح',
+          logs: [],
+        }
+      }));
+    } finally {
+      setApplyingProfit(null);
+    }
+  };
 
   useEffect(() => { fetchSources(); }, [fetchSources]);
 
@@ -507,6 +578,7 @@ export default function ExternalSourcesPage() {
                   { label: 'الخدمات', value: src.products, icon: Package },
                   { label: 'الرصيد', value: src.balance, icon: CreditCard },
                   { label: 'آخر مزامنة', value: src.lastSync, icon: Clock },
+                  { label: 'نسبة الربح', value: `${src.profitPercentage}%`, icon: Settings },
                 ].map((info, j) => {
                   const InfoIcon = info.icon;
                   return (
@@ -521,6 +593,48 @@ export default function ExternalSourcesPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                padding: '0.55rem 0.75rem', background: '#f8fafc', borderRadius: 10,
+                marginBottom: src.connectionError || result ? 12 : 0,
+              }}>
+                <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 700 }}>نسبة الربح (%)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={profitInputs[src.id] ?? String(src.profitPercentage)}
+                  onChange={(e) => setProfitInputs(prev => ({ ...prev, [src.id]: e.target.value }))}
+                  style={{
+                    width: 110,
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: 8,
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.78rem',
+                    fontFamily: 'Tajawal, sans-serif',
+                    background: '#fff',
+                  }}
+                />
+                <button
+                  onClick={() => handleApplyProfit(src.id)}
+                  disabled={applyingProfit === src.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '0.42rem 0.8rem', borderRadius: 8, border: 'none',
+                    background: '#7c5cff', color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                    cursor: applyingProfit === src.id ? 'wait' : 'pointer',
+                    opacity: applyingProfit === src.id ? 0.7 : 1,
+                    fontFamily: 'Tajawal, sans-serif',
+                  }}
+                >
+                  {applyingProfit === src.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={13} />}
+                  {applyingProfit === src.id ? 'جاري التطبيق...' : 'تطبيق على كل المنتجات'}
+                </button>
+                <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                  ثابتة في قاعدة البيانات ولا تتغير مع تحديث المنتجات.
+                </span>
               </div>
 
               {/* خطأ اتصال محفوظ */}

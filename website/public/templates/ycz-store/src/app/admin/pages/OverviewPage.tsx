@@ -7,7 +7,7 @@ import type { ColorTheme } from '@/lib/themes';
 import type { StatsCard, Order } from '@/lib/types';
 
 const EMPTY_STATS: StatsCard[] = [
-  { label: 'إجمالي المبيعات', value: '$0', change: '0%', positive: true, icon: '💰', color: '#7c5cff', bg: '#f5f3ff' },
+  { label: 'إجمالي الأرباح', value: '$0', change: '0%', positive: true, icon: '💰', color: '#7c5cff', bg: '#f5f3ff' },
   { label: 'الطلبات', value: '0', change: '0%', positive: true, icon: '📦', color: '#0ea5e9', bg: '#eff6ff' },
   { label: 'المستخدمين', value: '0', change: '0%', positive: true, icon: '👥', color: '#22c55e', bg: '#f0fdf4' },
   { label: 'معدل الإكمال', value: '0%', change: '0%', positive: true, icon: '📊', color: '#f59e0b', bg: '#fffbeb' },
@@ -25,7 +25,55 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
     async function load() {
       try {
         const res = await adminApi.getStats();
-        if (res?.stats && Array.isArray(res.stats)) setStats(res.stats);
+        if (res?.stats && Array.isArray(res.stats)) {
+          setStats(res.stats);
+        } else {
+          const totalOrders = Number(res?.totalOrders || 0);
+          const completedOrders = Number(res?.completedOrders || 0);
+          const totalUsers = Number(res?.totalUsers || 0);
+          const totalProfit = Number(res?.totalProfit || 0);
+          const todayProfit = Number(res?.todayProfit || 0);
+          const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+
+          setStats([
+            {
+              label: 'إجمالي الأرباح',
+              value: `$${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              change: `${todayProfit >= 0 ? '+' : ''}$${todayProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              positive: todayProfit >= 0,
+              icon: '💰',
+              color: '#7c5cff',
+              bg: '#f5f3ff',
+            },
+            {
+              label: 'الطلبات',
+              value: String(totalOrders),
+              change: `${Number(res?.ordersToday || 0) || 0} اليوم`,
+              positive: true,
+              icon: '📦',
+              color: '#0ea5e9',
+              bg: '#eff6ff',
+            },
+            {
+              label: 'المستخدمين',
+              value: String(totalUsers),
+              change: `+${Number(res?.newUsersToday || 0) || 0} اليوم`,
+              positive: true,
+              icon: '👥',
+              color: '#22c55e',
+              bg: '#f0fdf4',
+            },
+            {
+              label: 'معدل الإكمال',
+              value: `${completionRate.toFixed(1)}%`,
+              change: `${completedOrders}/${totalOrders}`,
+              positive: completionRate >= 50,
+              icon: '📊',
+              color: '#f59e0b',
+              bg: '#fffbeb',
+            },
+          ]);
+        }
         if (res?.chartData && Array.isArray(res.chartData)) setChartData(res.chartData);
         if (res?.recentOrders && Array.isArray(res.recentOrders)) setOrders(res.recentOrders);
       } catch { /* keep fallback */ }

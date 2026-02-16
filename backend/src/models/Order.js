@@ -114,6 +114,30 @@ class Order {
     const [todayRevenueRows] = await pool.query(
       "SELECT COALESCE(SUM(total_price), 0) as revenue FROM orders WHERE site_key = ? AND payment_status = 'paid' AND DATE(created_at) = CURDATE()", [site_key]
     );
+    const [profitRows] = await pool.query(
+      `SELECT COALESCE(SUM(
+         GREATEST(
+           ((o.unit_price - COALESCE(p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
+           0
+         )
+       ), 0) as profit
+       FROM orders o
+       LEFT JOIN products p ON p.id = o.product_id AND p.site_key = o.site_key
+       WHERE o.site_key = ? AND o.payment_status = 'paid'`,
+      [site_key]
+    );
+    const [todayProfitRows] = await pool.query(
+      `SELECT COALESCE(SUM(
+         GREATEST(
+           ((o.unit_price - COALESCE(p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
+           0
+         )
+       ), 0) as profit
+       FROM orders o
+       LEFT JOIN products p ON p.id = o.product_id AND p.site_key = o.site_key
+       WHERE o.site_key = ? AND o.payment_status = 'paid' AND DATE(o.created_at) = CURDATE()`,
+      [site_key]
+    );
 
     return {
       total: totalRows[0].total,
@@ -121,7 +145,9 @@ class Order {
       completed: completedRows[0].count,
       totalRevenue: parseFloat(revenueRows[0].revenue),
       todayOrders: todayRows[0].count,
-      todayRevenue: parseFloat(todayRevenueRows[0].revenue)
+      todayRevenue: parseFloat(todayRevenueRows[0].revenue),
+      totalProfit: parseFloat(profitRows[0].profit),
+      todayProfit: parseFloat(todayProfitRows[0].profit)
     };
   }
 

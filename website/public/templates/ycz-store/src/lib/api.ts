@@ -64,6 +64,7 @@ export const adminApi = {
   getSettings: () => adminFetch('/customization'),
   updateSettings: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
   getSources: () => adminFetch('/sources'),
+  applySourceProfit: (id: number, data: { profitPercentage: number; profitAmount?: number | null }) => adminFetch(`/sources/${id}/apply-profit`, { method: 'POST', body: JSON.stringify(data) }),
   syncSource: (id: number) => adminFetch(`/sources/${id}/sync`, { method: 'POST' }),
   testSource: (id: number) => adminFetch(`/sources/${id}/test`, { method: 'POST' }),
   connectSource: (data: Record<string, unknown>) => adminFetch('/sources', { method: 'POST', body: JSON.stringify(data) }),
