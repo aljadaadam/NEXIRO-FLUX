@@ -68,8 +68,8 @@ export default function OrdersPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  const filters = ['all', 'completed', 'pending', 'failed', 'cancelled'];
-  const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة', cancelled: 'ملغية' };
+  const filters = ['all', 'completed', 'pending', 'failed'];
+  const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة' };
   const filtered = filter === 'all' ? orders : orders.filter(o => {
     if (filter === 'completed') return o.status === 'completed';
     if (filter === 'pending') return o.status === 'pending' || o.status === 'processing';
@@ -83,7 +83,7 @@ export default function OrdersPage() {
       <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0b1020', marginBottom: 20 }}>📋 سجل الطلبات</h2>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '0.4rem 1rem', borderRadius: 8, border: 'none', cursor: 'pointer',
@@ -106,7 +106,7 @@ export default function OrdersPage() {
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>{order.order_number}</span>
               <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: `${si.color}18`, color: si.color }}>{si.label}</span>
             </div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{order.product_name}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</p>
             {order.server_response && order.status === 'completed' && (
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: 8 }}>
                 <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>نتيجة الخدمة:</p>

@@ -142,11 +142,11 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
                 return (
                 <tr key={order.id} style={{ borderBottom: '1px solid #f8fafc' }}>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', fontWeight: 700, color: theme.primary }}>{order.order_number}</td>
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <td style={{ padding: '0.85rem 1rem', maxWidth: 180 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                       <span>📦</span>
-                      <div>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>{order.product_name}</span>
+                      <div style={{ minWidth: 0 }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</span>
                         {order.quantity > 1 && <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginRight: 4 }}> ×{order.quantity}</span>}
                       </div>
                     </div>
