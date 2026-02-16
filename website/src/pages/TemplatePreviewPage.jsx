@@ -5,10 +5,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { templates as staticTemplates } from '../data/templates';
 import api from '../services/api';
 import YCZStoreDemo from '../components/templates/YCZStoreDemo';
+import GxVaultDemo from '../components/templates/GxVaultDemo';
 
 // Map of template IDs to their custom demo components
 const customDemos = {
   'digital-services-store': YCZStoreDemo,
+  'game-topup-store': GxVaultDemo,
 };
 
 export default function TemplatePreviewPage() {

@@ -22,6 +22,8 @@ import TerminalSetupPage from './pages/TerminalSetupPage';
 import TemplateBuyPage from './pages/TemplateBuyPage';
 import YCZStoreLiveDemo from './pages/demo/YCZStoreLiveDemo';
 import YCZDashboardLiveDemo from './pages/demo/YCZDashboardLiveDemo';
+import GxVaultStoreLiveDemo from './pages/demo/GxVaultStoreLiveDemo';
+import GxVaultDashboardLiveDemo from './pages/demo/GxVaultDashboardLiveDemo';
 
 // Admin Dashboard
 import AdminLayout from './pages/admin/AdminLayout';
@@ -50,6 +52,8 @@ function AppContent() {
       <Routes>
         <Route path="/demo/ycz-store" element={<YCZStoreLiveDemo />} />
         <Route path="/demo/ycz-dashboard" element={<YCZDashboardLiveDemo />} />
+        <Route path="/demo/gxv-store" element={<GxVaultStoreLiveDemo />} />
+        <Route path="/demo/gxv-dashboard" element={<GxVaultDashboardLiveDemo />} />
       </Routes>
     );
   }

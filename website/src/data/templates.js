@@ -18,6 +18,23 @@ export const templates = [
     hasLiveDemo: true,
   },
   {
+    id: 'game-topup-store',
+    name: 'متجر شحن ألعاب',
+    nameEn: 'Game Top-Up Store',
+    description: 'قالب متجر شحن ألعاب احترافي بتصميم سايبر جيمنج مع دعم PUBG وفورتنايت وفري فاير وكول اوف ديوتي، لوحة تحكم مخصصة، وبوابات دفع متعددة',
+    descriptionEn: 'Professional game top-up store with cyber-gaming design supporting PUBG, Fortnite, Free Fire & Call of Duty, custom dashboard, and multiple payment gateways',
+    category: 'gaming',
+    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
+    demoUrl: '/template/game-topup-store',
+    features: ['شحن PUBG و فورتنايت', 'فري فاير و كول اوف ديوتي', 'لوحة تحكم مخصصة', 'بوابات دفع متعددة', 'تصميم سايبر جيمنج', '6 ثيمات نيون', 'دعم كامل RTL', 'إشعارات فورية', 'API متكامل', 'Next.js 15'],
+    featuresEn: ['PUBG & Fortnite Top-Up', 'Free Fire & CoD Support', 'Custom Dashboard', 'Multiple Payment Gateways', 'Cyber Gaming Design', '6 Neon Themes', 'Full RTL Support', 'Real-time Notifications', 'Full API', 'Next.js 15'],
+    price: { monthly: 39.9, yearly: 369, lifetime: 899 },
+    popular: true,
+    color: 'from-violet-500 to-cyan-500',
+    badge: '🎮 جديد',
+    hasLiveDemo: true,
+  },
+  {
     id: 'ecommerce-pro',
     name: 'متجر إلكتروني احترافي',
     nameEn: 'E-Commerce Pro',
@@ -130,6 +147,7 @@ export const categories = [
   { id: 'landing', name: 'صفحات هبوط', nameEn: 'Landing Pages' },
   { id: 'medical', name: 'طبي', nameEn: 'Medical' },
   { id: 'digital-services', name: 'خدمات رقمية', nameEn: 'Digital Services' },
+  { id: 'gaming', name: 'شحن ألعاب', nameEn: 'Gaming' },
 ];
 
 export const testimonials = [
