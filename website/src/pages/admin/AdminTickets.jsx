@@ -43,14 +43,14 @@ export default function AdminTickets() {
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getTickets();
+      const data = await api.getPlatformTickets({ status: filterStatus !== 'all' ? filterStatus : undefined });
       setTickets(data.tickets || data || []);
     } catch (err) {
       console.error('Failed to fetch tickets:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterStatus]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
@@ -59,7 +59,7 @@ export default function AdminTickets() {
     setMessagesLoading(true);
     setReplyText('');
     try {
-      const data = await api.getTicketMessages(ticket.id);
+      const data = await api.getPlatformTicketMessages(ticket.id);
       setMessages(data.messages || data || []);
     } catch (err) {
       console.error('Failed to fetch messages:', err);
@@ -73,14 +73,13 @@ export default function AdminTickets() {
     if (!replyText.trim()) return;
     setSending(true);
     try {
-      await api.replyToTicket(selectedTicket.id, replyText.trim());
+      await api.replyPlatformTicket(selectedTicket.id, replyText.trim());
       setReplyText('');
-      // Refresh messages
-      const data = await api.getTicketMessages(selectedTicket.id);
+      const data = await api.getPlatformTicketMessages(selectedTicket.id);
       setMessages(data.messages || data || []);
       setSuccess(isRTL ? 'تم إرسال الرد' : 'Reply sent');
       setTimeout(() => setSuccess(''), 3000);
-      fetchTickets(); // refresh list to update status
+      fetchTickets();
     } catch (err) {
       setError(err.error || (isRTL ? 'فشل إرسال الرد' : 'Failed to send reply'));
       setTimeout(() => setError(''), 3000);
@@ -108,10 +107,9 @@ export default function AdminTickets() {
   };
 
   const filtered = tickets.filter(t => {
-    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return (t.subject || '').toLowerCase().includes(q) || (t.customer_name || t.user_name || '').toLowerCase().includes(q) || String(t.id).includes(q);
+      return (t.subject || '').toLowerCase().includes(q) || (t.customer_name || t.user_name || '').toLowerCase().includes(q) || (t.site_domain || '').toLowerCase().includes(q) || String(t.id).includes(q);
     }
     return true;
   });
@@ -135,9 +133,10 @@ export default function AdminTickets() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-white mb-1">{selectedTicket.subject}</h2>
-              <div className="flex items-center gap-3 text-xs text-dark-400">
+              <div className="flex items-center gap-3 text-xs text-dark-400 flex-wrap">
                 <span>#{selectedTicket.id}</span>
                 <span>{selectedTicket.customer_name || selectedTicket.user_name || (isRTL ? 'غير محدد' : 'N/A')}</span>
+                {selectedTicket.site_domain && <span className="text-primary-400">{selectedTicket.site_name || selectedTicket.site_domain}</span>}
                 <span>{selectedTicket.created_at ? new Date(selectedTicket.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') : ''}</span>
               </div>
             </div>
@@ -285,6 +284,7 @@ export default function AdminTickets() {
                     <div className="flex items-center gap-3 text-xs text-dark-500">
                       <span>#{ticket.id}</span>
                       <span>{ticket.customer_name || ticket.user_name || ''}</span>
+                      {ticket.site_domain && <span className="text-primary-400/60">{ticket.site_name || ticket.site_domain}</span>}
                       <span>{ticket.created_at ? new Date(ticket.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') : ''}</span>
                     </div>
                   </div>

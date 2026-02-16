@@ -39,38 +39,26 @@ export default function AdminPayments() {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getPayments();
+      const data = await api.getPlatformPayments({ status: filterStatus !== 'all' ? filterStatus : undefined });
       setPayments(data.payments || []);
+      setStats(data.stats || null);
     } catch (err) {
       console.error('Failed to fetch payments:', err);
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const data = await api.getPaymentStats();
-      setStats(data.stats || null);
-    } catch (err) {
-      console.error('Failed to fetch payment stats:', err);
-    } finally {
       setStatsLoading(false);
     }
-  }, []);
+  }, [filterStatus]);
 
   useEffect(() => {
     fetchPayments();
-    fetchStats();
-  }, [fetchPayments, fetchStats]);
+  }, [fetchPayments]);
 
   const handleUpdateStatus = async (id, newStatus) => {
     setUpdatingId(id);
     try {
-      await api.updatePaymentStatus(id, newStatus);
+      await api.updatePlatformPaymentStatus(id, newStatus);
       await fetchPayments();
-      await fetchStats();
     } catch (err) {
       console.error('Failed to update payment status:', err);
     } finally {
@@ -79,12 +67,13 @@ export default function AdminPayments() {
   };
 
   const filtered = payments.filter(p => {
-    if (filterStatus !== 'all' && p.status !== filterStatus) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
         (p.customer_name || '').toLowerCase().includes(q) ||
         (p.payment_method || '').toLowerCase().includes(q) ||
+        (p.site_domain || '').toLowerCase().includes(q) ||
+        (p.site_name || '').toLowerCase().includes(q) ||
         String(p.id).includes(q) ||
         String(p.amount).includes(q)
       );
@@ -95,23 +84,23 @@ export default function AdminPayments() {
   const statCards = [
     {
       labelAr: 'إجمالي الإيرادات', labelEn: 'Total Revenue',
-      value: stats ? `$${stats.totalRevenue?.toLocaleString()}` : '—',
+      value: stats ? `$${Number(stats.totalRevenue || 0).toLocaleString()}` : '—',
       icon: DollarSign, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-500/10'
     },
     {
       labelAr: 'إيرادات اليوم', labelEn: 'Today Revenue',
-      value: stats ? `$${stats.todayRevenue?.toLocaleString()}` : '—',
+      value: stats ? `$${Number(stats.todayRevenue || 0).toLocaleString()}` : '—',
       icon: TrendingUp, color: 'from-primary-500 to-primary-600', bg: 'bg-primary-500/10'
     },
     {
-      labelAr: 'إجمالي الإيداعات', labelEn: 'Total Deposits',
-      value: stats ? `$${stats.totalDeposits?.toLocaleString()}` : '—',
-      icon: Wallet, color: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10'
+      labelAr: 'قيد الانتظار', labelEn: 'Pending',
+      value: stats ? (stats.pending || 0) : '—',
+      icon: Clock, color: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10'
     },
     {
-      labelAr: 'عدد العمليات', labelEn: 'Transactions',
-      value: payments.length,
-      icon: CreditCard, color: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10'
+      labelAr: 'إجمالي العمليات', labelEn: 'Total Transactions',
+      value: stats ? (stats.total || 0) : '—',
+      icon: CreditCard, color: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10'
     },
   ];
 
@@ -197,7 +186,7 @@ export default function AdminPayments() {
               <thead>
                 <tr className="border-b border-white/5">
                   <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">#</th>
-                  <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">{isRTL ? 'العميل' : 'Customer'}</th>
+                  <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">{isRTL ? 'الموقع' : 'Site'}</th>
                   <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">{isRTL ? 'المبلغ' : 'Amount'}</th>
                   <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">{isRTL ? 'الطريقة' : 'Method'}</th>
                   <th className="text-start text-dark-500 font-medium px-5 py-3 text-xs uppercase tracking-wider">{isRTL ? 'النوع' : 'Type'}</th>
@@ -217,7 +206,8 @@ export default function AdminPayments() {
                     <tr key={payment.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-4 text-dark-400 font-mono text-xs">#{payment.id}</td>
                       <td className="px-5 py-4">
-                        <p className="text-white text-sm">{payment.customer_name || (isRTL ? 'غير محدد' : 'N/A')}</p>
+                        <p className="text-white text-sm truncate max-w-[150px]">{payment.site_name || payment.site_domain || '—'}</p>
+                        <p className="text-dark-500 text-[11px] truncate max-w-[150px]">{payment.site_domain || ''}</p>
                       </td>
                       <td className="px-5 py-4">
                         <p className="text-white font-semibold">${parseFloat(payment.amount).toLocaleString()}</p>

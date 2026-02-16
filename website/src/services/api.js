@@ -206,6 +206,52 @@ class ApiService {
     return this.request('/dashboard/platform-stats');
   }
 
+  // ─── Platform Admin (Global) ───
+
+  async getPlatformPayments(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/dashboard/platform-payments${query ? '?' + query : ''}`);
+  }
+
+  async updatePlatformPaymentStatus(id, status) {
+    return this.request(`/dashboard/platform-payments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getPlatformTickets(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/dashboard/platform-tickets${query ? '?' + query : ''}`);
+  }
+
+  async getPlatformTicketMessages(id) {
+    return this.request(`/dashboard/platform-tickets/${id}/messages`);
+  }
+
+  async replyPlatformTicket(id, message) {
+    return this.request(`/dashboard/platform-tickets/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async updatePlatformTicketStatus(id, status) {
+    return this.request(`/dashboard/platform-tickets/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getPlatformUsers(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/dashboard/platform-users${query ? '?' + query : ''}`);
+  }
+
+  async getPlatformSites() {
+    return this.request('/dashboard/platform-sites');
+  }
+
   async getDashboardActivities(limit = 10) {
     return this.request(`/dashboard/activities?limit=${limit}`);
   }

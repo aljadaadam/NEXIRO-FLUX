@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Globe, Users, Key, CreditCard, TrendingUp,
   Loader2, RefreshCw, AlertTriangle, Clock, DollarSign,
@@ -266,18 +267,18 @@ export default function AdminOverview() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { labelAr: 'إدارة المستخدمين', labelEn: 'Manage Users', icon: Users, href: '/admin/users', color: 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30', iconColor: 'text-indigo-400' },
-            { labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes', icon: Key, href: '/admin/purchase-codes', color: 'from-amber-500/10 to-amber-500/5 border-amber-500/10 hover:border-amber-500/30', iconColor: 'text-amber-400' },
-            { labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets', icon: Ticket, href: '/admin/tickets', color: 'from-rose-500/10 to-rose-500/5 border-rose-500/10 hover:border-rose-500/30', iconColor: 'text-rose-400' },
-            { labelAr: 'الإعدادات', labelEn: 'Settings', icon: BarChart3, href: '/admin/settings', color: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30', iconColor: 'text-emerald-400' },
+            { labelAr: 'إدارة المستخدمين', labelEn: 'Manage Users', icon: Users, to: '/admin/users', color: 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30', iconColor: 'text-indigo-400' },
+            { labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes', icon: Key, to: '/admin/purchase-codes', color: 'from-amber-500/10 to-amber-500/5 border-amber-500/10 hover:border-amber-500/30', iconColor: 'text-amber-400' },
+            { labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets', icon: Ticket, to: '/admin/tickets', color: 'from-rose-500/10 to-rose-500/5 border-rose-500/10 hover:border-rose-500/30', iconColor: 'text-rose-400' },
+            { labelAr: 'المدفوعات', labelEn: 'Payments', icon: CreditCard, to: '/admin/payments', color: 'from-cyan-500/10 to-cyan-500/5 border-cyan-500/10 hover:border-cyan-500/30', iconColor: 'text-cyan-400' },
           ].map((action, i) => {
             const Icon = action.icon;
             return (
-              <a key={i} href={action.href}
+              <Link key={i} to={action.to}
                 className={`flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br ${action.color} border transition-all`}>
                 <Icon className={`w-5 h-5 ${action.iconColor}`} />
                 <span className="text-white text-sm font-medium">{isRTL ? action.labelAr : action.labelEn}</span>
-              </a>
+              </Link>
             );
           })}
         </div>
