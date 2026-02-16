@@ -149,16 +149,10 @@ async function checkPendingOrders() {
 
             // فقط نحدّث إذا تغيرت الحالة
             if (newStatus !== order.status) {
-              const serverResponseData = {
-                dhruStatus: result.statusCode,
-                dhruStatusLabel: result.statusLabel,
-                comments: result.comments,
-                message: result.message,
-                checkedAt: new Date().toISOString(),
-                checkedBy: 'cron'
-              };
+              // حفظ المحتوى الفعلي فقط (الرد من المصدر)
+              const responseText = result.comments || result.message || result.statusLabel || '';
 
-              await Order.updateStatus(order.id, siteKey, newStatus, JSON.stringify(serverResponseData));
+              await Order.updateStatus(order.id, siteKey, newStatus, responseText);
               updated++;
 
               // ─── إشعارات حسب الحالة الجديدة ───

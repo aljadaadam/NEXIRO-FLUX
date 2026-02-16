@@ -172,8 +172,8 @@ async function createOrder(req, res) {
                   if (result.referenceId) {
                     // ✅ نجاح — حفظ Reference ID وتحديث الحالة
                     await pool.query(
-                      `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [result.referenceId, source.id, JSON.stringify(result.raw), order.id, site_key]
+                      `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing' WHERE id = ? AND site_key = ?`,
+                      [result.referenceId, source.id, order.id, site_key]
                     );
                     externalResult = { ok: true, referenceId: result.referenceId };
                     console.log(`✅ Order #${order.order_number} → Ref: ${result.referenceId}`);
@@ -190,7 +190,7 @@ async function createOrder(req, res) {
                     // مشكلة اتصال → الطلب يبقى pending
                     await pool.query(
                       `UPDATE orders SET status = 'pending', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [JSON.stringify({ error: errMsg, type: 'CONNECTION_ERROR', at: new Date().toISOString() }), order.id, site_key]
+                      [translatedErr || errMsg, order.id, site_key]
                     );
                     externalResult = { ok: false, type: 'CONNECTION_ERROR', error: errMsg };
                     console.log(`⏳ Order #${order.order_number} → PENDING (اتصال فاشل)`);
@@ -207,7 +207,7 @@ async function createOrder(req, res) {
                     }
                     await pool.query(
                       `UPDATE orders SET status = 'failed', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [JSON.stringify({ error: errMsg, translated: translatedErr, type: 'ORDER_REJECTED', at: new Date().toISOString() }), order.id, site_key]
+                      [translatedErr || errMsg, order.id, site_key]
                     );
                     // إشعار الزبون
                     await Notification.create({
@@ -400,10 +400,9 @@ async function placeExternalOrder(req, res) {
       `UPDATE orders SET 
         external_reference_id = ?,
         source_id = ?,
-        status = 'processing',
-        server_response = ?
+        status = 'processing'
       WHERE id = ? AND site_key = ?`,
-      [result.referenceId, source.id, JSON.stringify(result.raw), id, site_key]
+      [result.referenceId, source.id, id, site_key]
     );
 
     // إشعار

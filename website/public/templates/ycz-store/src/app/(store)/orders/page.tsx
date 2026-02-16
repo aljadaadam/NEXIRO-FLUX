@@ -35,8 +35,19 @@ export default function OrdersPage() {
       payment_method: String(raw.payment_method || ''),
       payment_status: String(raw.payment_status || ''),
       created_at: raw.created_at ? String(raw.created_at) : undefined,
-      server_response: raw.server_response ? String(raw.server_response) : undefined,
+      server_response: raw.server_response ? parseServerResponse(String(raw.server_response)) : undefined,
     };
+  }
+
+  /** استخراج المحتوى الفعلي من الرد — يدعم JSON القديم والنص العادي الجديد */
+  function parseServerResponse(raw: string): string {
+    try {
+      const obj = JSON.parse(raw);
+      // JSON قديم من الكرون: { comments, message, dhruStatusLabel, ... }
+      return obj.comments || obj.message || obj.translated || obj.error || obj.dhruStatusLabel || raw;
+    } catch {
+      return raw; // نص عادي
+    }
   }
 
   const getStatusInfo = (status: string) => {
@@ -100,6 +111,12 @@ export default function OrdersPage() {
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: 8 }}>
                 <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>نتيجة الخدمة:</p>
                 <p style={{ fontSize: '0.78rem', color: '#166534', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
+              </div>
+            )}
+            {order.server_response && order.status === 'failed' && (
+              <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 8 }}>
+                <p style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600, marginBottom: 2 }}>سبب الرفض:</p>
+                <p style={{ fontSize: '0.78rem', color: '#991b1b', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#94a3b8' }}>
