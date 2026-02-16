@@ -350,9 +350,9 @@ export default function HomePage() {
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🔥 المنتجات المميزة</h3>
           <Link href="/services" style={{ background: 'none', border: 'none', color: currentTheme.primary, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>عرض الكل ←</Link>
         </div>
-        <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+        <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>جاري التحميل...</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', gridColumn: '1 / -1' }}>جاري التحميل...</div>
           ) : products.length === 0 ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
               <p style={{ fontSize: '2rem', marginBottom: 8 }}>📦</p>
@@ -360,7 +360,7 @@ export default function HomePage() {
               <p style={{ fontSize: '0.8rem' }}>سيتم عرض المنتجات هنا بعد إضافتها من لوحة التحكم</p>
             </div>
           ) : (
-            (products.filter(p => p.is_featured).length > 0 ? products.filter(p => p.is_featured) : products).slice(0, 6).map(p => <ProductCard key={p.id} product={p} onClick={() => setSelectedProduct(p)} />)
+            (products.filter(p => p.is_featured).length > 0 ? products.filter(p => p.is_featured) : products).slice(0, 15).map(p => <ProductCard key={p.id} product={p} onClick={() => setSelectedProduct(p)} />)
           )}
         </div>
       </section>
