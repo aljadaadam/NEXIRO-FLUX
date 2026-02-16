@@ -52,39 +52,48 @@ const ThemeCtx = createContext(null);
 
 // ─── بيانات وهمية ───
 const banners = [
-  { title: 'عروض حصرية 🔥', subtitle: 'خصم 30% على جميع الخدمات', desc: 'لفترة محدودة — لا تفوّت الفرصة!', gradient: 'linear-gradient(135deg, #7c5cff 0%, #22c55e 100%)' },
-  { title: 'أدوات احترافية ⚡', subtitle: 'Sigma Plus متوفر الآن', desc: 'أسرع أداة لفتح قفل الهواتف', gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' },
-  { title: 'شحن فوري 🎮', subtitle: 'PUBG Mobile UC', desc: 'شحن فوري لجميع الألعاب بأسعار منافسة', gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)' },
+  { title: 'مرحباً بك 👋', subtitle: 'متجرك الإلكتروني جاهز', desc: 'أضف منتجاتك وابدأ البيع الآن', gradient: 'linear-gradient(135deg, #7c5cff 0%, #22c55e 100%)' },
+  { title: 'خدمات متنوعة ⚡', subtitle: 'كل ما تحتاجه في مكان واحد', desc: 'تصفح الخدمات واطلب بسهولة', gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' },
+  { title: 'دعم فني 🛡️', subtitle: 'نحن هنا لمساعدتك', desc: 'فريق دعم متاح على مدار الساعة', gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)' },
 ];
 
 const featuredProducts = [
-  { id: 1, name: 'Sigma Plus - 3 أيام', price: 12.00, oldPrice: 15.00, image: '🔧', category: 'أدوات سوفت', available: true },
-  { id: 2, name: 'Sigma Plus - سنة كاملة', price: 42.00, oldPrice: 55.00, image: '🔧', category: 'أدوات سوفت', available: true },
-  { id: 3, name: 'UnlockTool - 12 شهر', price: 38.50, oldPrice: 45.00, image: '🔓', category: 'أدوات سوفت', available: true },
-  { id: 4, name: 'فحص IMEI كامل', price: 2.50, oldPrice: 5.00, image: '📱', category: 'خدمات IMEI', available: true },
-  { id: 5, name: 'PUBG UC 660', price: 8.99, oldPrice: 10.00, image: '🎮', category: 'شحن ألعاب', available: true },
-  { id: 6, name: 'فري فاير 520 جوهرة', price: 5.99, oldPrice: 7.00, image: '🎮', category: 'شحن ألعاب', available: true },
+  { id: 1, name: 'Sigma Plus - 3 أيام', price: '$12.00', originalPrice: '$15.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'Sigma Software', allowsQuantity: false, customFields: [{ key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true }], service_time: '1-5 دقائق' },
+  { id: 2, name: 'Sigma Plus - سنة كاملة', price: '$42.00', originalPrice: '$55.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'Sigma Software', allowsQuantity: false, customFields: [{ key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true }], service_time: '1-5 دقائق' },
+  { id: 3, name: 'UnlockTool - 12 شهر', price: '$38.50', originalPrice: '$45.00', icon: '🔓', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'UnlockTool', allowsQuantity: false, customFields: [{ key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true }], service_time: '1-10 دقائق' },
+  { id: 4, name: 'فحص IMEI كامل (GSX Report)', price: '$2.50', originalPrice: '$5.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 1, service_type: 'IMEI', group_name: 'IMEI Checks', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }], service_time: '1-24 ساعة' },
+  { id: 5, name: 'Samsung FRP Remove (All Models)', price: '$8.99', originalPrice: '$12.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 1, service_type: 'IMEI', group_name: 'Samsung Services', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }, { key: 'model', label: 'موديل الجهاز', placeholder: 'مثال: SM-G998B', required: true }], service_time: '1-48 ساعة' },
+  { id: 6, name: 'iPhone Network Unlock (AT&T)', price: '$25.00', originalPrice: '$35.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 1, service_type: 'IMEI', group_name: 'iPhone Unlock', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }], service_time: '1-5 أيام' },
+  { id: 7, name: 'EFT Dongle - 6 أشهر', price: '$22.00', originalPrice: '$28.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'EFT Dongle', allowsQuantity: false, customFields: [{ key: 'serial', label: 'رقم السيريال', placeholder: 'أدخل رقم السيريال', required: true }], service_time: '1-5 دقائق' },
+  { id: 8, name: 'Chimera Tool - 12 شهر', price: '$55.00', originalPrice: '$65.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'Chimera Tool', allowsQuantity: false, customFields: [{ key: 'hwid', label: 'HWID', placeholder: 'أدخل رقم HWID', required: true }], service_time: '1-5 دقائق' },
+  { id: 9, name: 'iPhone iCloud Unlock (Clean)', price: '$45.00', originalPrice: '$60.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 1, service_type: 'IMEI', group_name: 'iPhone Unlock', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }], service_time: '3-10 أيام' },
+  { id: 10, name: 'Z3X Box - سنة', price: '$30.00', originalPrice: '$38.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 1, service_type: 'SERVER', group_name: 'Z3X Box', allowsQuantity: true, minQuantity: 1, maxQuantity: 10, customFields: [{ key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true }], service_time: '1-10 دقائق' },
+  { id: 11, name: 'PUBG UC 660', price: '$8.99', originalPrice: '$10.00', icon: '🎮', category: 'ألعاب', available: true, is_featured: 0, service_type: 'CODE', group_name: 'PUBG Mobile', allowsQuantity: true, minQuantity: 1, maxQuantity: 50, customFields: [{ key: 'player_id', label: 'معرف اللاعب', placeholder: 'أدخل Player ID', required: true }], service_time: '1-5 دقائق' },
+  { id: 12, name: 'فري فاير 520 جوهرة', price: '$5.99', originalPrice: '$7.00', icon: '🎮', category: 'ألعاب', available: true, is_featured: 0, service_type: 'CODE', group_name: 'Free Fire', allowsQuantity: true, minQuantity: 1, maxQuantity: 20, customFields: [{ key: 'player_id', label: 'معرف اللاعب', placeholder: 'أدخل Player ID', required: true }], service_time: '1-5 دقائق' },
+  { id: 13, name: 'Huawei FRP Remove', price: '$6.50', originalPrice: '$9.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 0, service_type: 'IMEI', group_name: 'Huawei Services', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }], service_time: '1-24 ساعة' },
+  { id: 14, name: 'Octoplus Box - 6 أشهر', price: '$18.00', originalPrice: '$24.00', icon: '🔧', category: 'أدوات سوفتوير', available: true, is_featured: 0, service_type: 'SERVER', group_name: 'Octoplus', allowsQuantity: false, customFields: [{ key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true }], service_time: '1-5 دقائق' },
+  { id: 15, name: 'Samsung MDM Remove', price: '$15.00', originalPrice: '$20.00', icon: '📱', category: 'خدمات IMEI', available: true, is_featured: 0, service_type: 'IMEI', group_name: 'Samsung Services', allowsQuantity: false, customFields: [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }, { key: 'model', label: 'موديل الجهاز', placeholder: 'مثال: SM-A536B', required: true }], service_time: '1-48 ساعة' },
 ];
 
 const categories = [
   { id: 'all', name: 'الكل', icon: '📦' },
-  { id: 'soft', name: 'أدوات سوفت', icon: '🔧' },
-  { id: 'imei', name: 'خدمات IMEI', icon: '📱' },
-  { id: 'games', name: 'شحن ألعاب', icon: '🎮' },
+  { id: 'أدوات سوفتوير', name: 'أدوات سوفتوير', icon: '🛠️' },
+  { id: 'خدمات IMEI', name: 'خدمات IMEI', icon: '📱' },
+  { id: 'ألعاب', name: 'ألعاب', icon: '🎮' },
 ];
 
 const steps = [
-  { icon: '👤', title: 'إنشاء حساب', desc: 'سجّل حساباً مجانياً في ثوانٍ' },
-  { icon: '🔍', title: 'اختر الخدمة', desc: 'تصفّح خدماتنا المتنوعة' },
-  { icon: '💰', title: 'اشحن محفظتك', desc: 'أضف رصيداً بطرق دفع متعددة' },
-  { icon: '🛒', title: 'أطلب الآن', desc: 'أكمل طلبك واستلم فوراً' },
+  { icon: '�', title: 'اختر الخدمة', desc: 'تصفح واختر الخدمة المناسبة' },
+  { icon: '📝', title: 'أدخل البيانات', desc: 'أدخل المعلومات المطلوبة' },
+  { icon: '💳', title: 'ادفع بأمان', desc: 'اختر طريقة الدفع المناسبة' },
+  { icon: '✅', title: 'استلم فوراً', desc: 'احصل على الخدمة خلال دقائق' },
 ];
 
 const faqs = [
-  { q: 'كيف أشحن محفظتي؟', a: 'يمكنك شحن محفظتك عبر Binance أو PayPal أو التحويل البنكي. اختر الطريقة المناسبة من صفحة شحن الرصيد.' },
-  { q: 'كم يستغرق تنفيذ الطلب؟', a: 'معظم الطلبات تُنفَّذ خلال دقائق. بعض الخدمات قد تستغرق حتى 24 ساعة كحد أقصى.' },
-  { q: 'هل يمكنني استرجاع أموالي؟', a: 'نعم، في حال عدم تنفيذ الطلب يتم إرجاع المبلغ تلقائياً لمحفظتك.' },
-  { q: 'هل البيانات آمنة؟', a: 'نستخدم تشفير SSL وأحدث تقنيات الحماية لضمان أمان بياناتك.' },
+  { q: 'كم يستغرق تنفيذ الطلب؟', a: 'معظم الخدمات تُنفّذ خلال 1-24 ساعة حسب نوع الخدمة.' },
+  { q: 'هل الدفع آمن؟', a: 'نعم، نستخدم بوابات دفع مشفرة ومعتمدة عالمياً.' },
+  { q: 'ماذا لو فشل الطلب؟', a: 'يتم استرداد المبلغ كاملاً أو إعادة المحاولة مجاناً.' },
+  { q: 'هل يوجد دعم فني؟', a: 'نعم، فريق الدعم متاح 24/7 عبر التذاكر والواتساب.' },
 ];
 
 // ─── المكونات ───
@@ -217,14 +226,18 @@ function ProductCard({ product, onClick }) {
       cursor: 'pointer', transition: 'all 0.3s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
     }} className="demo-product-card">
       <div style={{ fontSize: '1.8rem', textAlign: 'center', marginBottom: 8, height: 48, display: 'grid', placeItems: 'center', background: '#f8fafc', borderRadius: 10 }}>
-        {product.image}
+        {product.icon}
       </div>
       <p style={{ fontSize: '0.7rem', color: t.pc, fontWeight: 600, marginBottom: 4 }}>{product.category}</p>
-      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4 }}>{product.name}</h4>
+      <h4 style={{
+        fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4,
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        minHeight: '2.52rem',
+      }}>{product.name}</h4>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: t.pc }}>${product.price.toFixed(2)}</span>
-          {product.oldPrice && <span style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: 6 }}>${product.oldPrice.toFixed(2)}</span>}
+          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: t.pc }}>{product.price}</span>
+          {product.originalPrice && <span style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: 6 }}>{product.originalPrice}</span>}
         </div>
         <div style={{ padding: '0.35rem 0.75rem', borderRadius: t.btnR, background: product.available ? '#dcfce7' : '#fee2e2', color: product.available ? '#16a34a' : '#dc2626', fontSize: '0.7rem', fontWeight: 700 }}>
           {product.available ? 'متاح' : 'نفذ'}
@@ -237,7 +250,34 @@ function ProductCard({ product, onClick }) {
 function OrderModal({ product, onClose }) {
   const t = useContext(ThemeCtx);
   const [step, setStep] = useState(1);
-  const [imei, setImei] = useState('');
+  const [formValues, setFormValues] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [qty, setQty] = useState(product.minQuantity || 1);
+
+  const demoWalletBalance = 125.50;
+  const parsePriceToNumber = (price) => {
+    const cleaned = String(price || '').replace(/[^0-9.]/g, '');
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const unitPrice = parsePriceToNumber(product.price);
+  const totalPrice = unitPrice * qty;
+  const canPayWithWallet = demoWalletBalance >= totalPrice;
+
+  const orderFields = Array.isArray(product.customFields) && product.customFields.length > 0
+    ? product.customFields
+    : String(product.service_type || '').toUpperCase() === 'IMEI'
+      ? [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }]
+      : [];
+
+  const allRequiredFilled = orderFields
+    .filter(f => f.required !== false)
+    .every(f => (formValues[f.key] || '').trim().length > 0);
+
+  const handleSubmit = () => {
+    setSubmitting(true);
+    setTimeout(() => { setSubmitting(false); setStep(2); }, 1200);
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
@@ -249,22 +289,76 @@ function OrderModal({ product, onClose }) {
           </button>
         </div>
 
-        {/* Product Info */}
-        <div style={{ display: 'flex', gap: 12, padding: '1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: '2rem', width: 50, height: 50, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 10 }}>{product.image}</div>
-          <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{product.name}</h4>
-            <p style={{ fontSize: '1rem', fontWeight: 800, color: t.pc }}>${product.price.toFixed(2)}</p>
-          </div>
-        </div>
-
         {step === 1 && (
           <>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 8 }}>أدخل رقم IMEI</label>
-            <input value={imei} onChange={e => setImei(e.target.value)} placeholder="مثال: 356938035643809" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-            <button onClick={() => setStep(2)} style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: t.btnR, background: t.pc, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
-              متابعة
+            {/* Product Info Card */}
+            <div style={{ display: 'flex', gap: 12, padding: '1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 16 }}>
+              <div style={{ fontSize: '2rem', width: 50, height: 50, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 10 }}>{product.icon}</div>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 2 }}>{product.name}</h4>
+                <p style={{ fontSize: '1rem', fontWeight: 800, color: t.pc }}>{product.price}</p>
+                {product.service_time && (
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Clock size={11} /> مدة التنفيذ: {product.service_time}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Wallet Balance Bar */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1e293b, #334155)', borderRadius: 12, padding: '0.75rem 1rem',
+              marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Wallet size={16} color="#94a3b8" />
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>رصيد المحفظة</span>
+              </div>
+              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: canPayWithWallet ? '#22c55e' : '#ef4444' }}>
+                ${demoWalletBalance.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Quantity Input */}
+            {product.allowsQuantity && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الكمية</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', fontSize: '1rem', display: 'grid', placeItems: 'center' }}>−</button>
+                  <input value={qty} onChange={e => setQty(Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)))} style={{ width: 60, textAlign: 'center', padding: '0.5rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+                  <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', fontSize: '1rem', display: 'grid', placeItems: 'center' }}>+</button>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginRight: 4 }}>(الإجمالي: ${totalPrice.toFixed(2)})</span>
+                </div>
+              </div>
+            )}
+
+            {/* Custom Fields */}
+            {orderFields.map(field => (
+              <div key={field.key} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                  {field.label} {field.required && <span style={{ color: '#ef4444' }}>*</span>}
+                </label>
+                <input
+                  value={formValues[field.key] || ''}
+                  onChange={e => setFormValues(v => ({ ...v, [field.key]: e.target.value }))}
+                  placeholder={field.placeholder}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            ))}
+
+            <button
+              onClick={handleSubmit}
+              disabled={!allRequiredFilled || submitting}
+              style={{ width: '100%', marginTop: 8, padding: '0.75rem', borderRadius: t.btnR, background: t.pc, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif', opacity: allRequiredFilled ? 1 : 0.6 }}>
+              {submitting ? 'جارٍ إرسال الطلب...' : 'تقديم الطلب'}
             </button>
+
+            {!canPayWithWallet && (
+              <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>
+                الرصيد غير كافٍ لإتمام الطلب (المطلوب: ${totalPrice.toFixed(2)})
+              </p>
+            )}
           </>
         )}
 
@@ -274,7 +368,8 @@ function OrderModal({ product, onClose }) {
               <CheckCircle size={32} color="#16a34a" />
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال الطلب بنجاح!</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة "طلباتي".</p>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة &ldquo;طلباتي&rdquo;.</p>
+            <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>الرصيد المتبقي: <strong style={{ color: '#0b1020' }}>${(demoWalletBalance - totalPrice).toFixed(2)}</strong></p>
             <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: t.btnR, background: t.pc, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حسناً</button>
           </div>
         )}
@@ -475,10 +570,10 @@ function HomePage({ onProductClick }) {
       <section style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🔥 المنتجات المميزة</h3>
-          <button style={{ background: 'none', border: 'none', color: t.pc, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>عرض الكل ←</button>
+          <button onClick={() => {}} style={{ background: 'none', border: 'none', color: t.pc, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>عرض الكل ←</button>
         </div>
-        <div className="demo-products-grid">
-          {featuredProducts.map(p => (
+        <div className="demo-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+          {(featuredProducts.filter(p => p.is_featured).length > 0 ? featuredProducts.filter(p => p.is_featured) : featuredProducts).slice(0, 15).map(p => (
             <ProductCard key={p.id} product={p} onClick={() => onProductClick(p)} />
           ))}
         </div>
@@ -526,12 +621,30 @@ function HomePage({ onProductClick }) {
 function ServicesPage({ onProductClick }) {
   const t = useContext(ThemeCtx);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [activeGroup, setActiveGroup] = useState('all');
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Group filter logic matching real store
+  const groupSourceCategory = activeCategory === 'أدوات سوفتوير' || activeCategory === 'خدمات IMEI'
+    ? activeCategory : '';
+
+  const availableGroups = groupSourceCategory
+    ? [...new Set(featuredProducts
+        .filter(p => p.category === groupSourceCategory)
+        .map(p => (p.group_name || '').trim())
+        .filter(g => g.length > 0)
+      )]
+    : [];
+
+  // Reset group when category changes
+  useEffect(() => { setActiveGroup('all'); setGroupsOpen(false); }, [activeCategory]);
+
   const filtered = featuredProducts.filter(p => {
-    const matchCat = activeCategory === 'all' || (activeCategory === 'soft' && p.category === 'أدوات سوفت') || (activeCategory === 'imei' && p.category === 'خدمات IMEI') || (activeCategory === 'games' && p.category === 'شحن ألعاب');
-    const matchSearch = p.name.includes(searchQuery);
-    return matchCat && matchSearch;
+    const matchCat = activeCategory === 'all' || p.category === activeCategory;
+    const matchGroup = activeGroup === 'all' || (p.group_name || '').trim() === activeGroup;
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.includes(searchQuery);
+    return matchCat && matchGroup && matchSearch;
   });
 
   return (
@@ -557,10 +670,70 @@ function ServicesPage({ onProductClick }) {
         ))}
       </div>
 
-      {/* Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.65rem 1rem', borderRadius: 12, background: '#fff', border: '1px solid #e2e8f0', marginBottom: 20 }}>
+      {/* Search + Group Filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.65rem 1rem', borderRadius: 12, background: '#fff', border: '1px solid #e2e8f0', marginBottom: 20, position: 'relative' }}>
         <Search size={16} color="#94a3b8" />
-        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="بحث في الخدمات..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', color: '#0b1020' }} />
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="بحث في الخدمات..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', color: '#0b1020', background: 'transparent' }} />
+
+        {/* Group Dropdown */}
+        <div style={{ position: 'relative', minWidth: 0, width: 'clamp(140px, 42vw, 240px)' }}>
+          <button
+            onClick={() => setGroupsOpen(v => !v)}
+            disabled={!groupSourceCategory}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '0.45rem 0.7rem', borderRadius: 8,
+              border: '1px solid #e2e8f0', background: '#fff',
+              color: groupSourceCategory ? '#334155' : '#94a3b8',
+              cursor: groupSourceCategory ? 'pointer' : 'not-allowed',
+              fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+              width: '100%', minWidth: 0, justifyContent: 'space-between', overflow: 'hidden',
+            }}
+          >
+            <span style={{ flex: 1, minWidth: 0, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>
+              {activeGroup === 'all' ? 'اختر الجروب' : activeGroup}
+            </span>
+            <ChevronDown size={14} />
+          </button>
+
+          {groupsOpen && groupSourceCategory && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', left: 0,
+              width: '100%', minWidth: 220, background: '#fff', border: '1px solid #e2e8f0',
+              borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', zIndex: 20,
+              maxHeight: 260, overflowY: 'auto',
+            }}>
+              <button
+                onClick={() => { setActiveGroup('all'); setGroupsOpen(false); }}
+                style={{
+                  width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === 'all' ? '#f8fafc' : '#fff',
+                  fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                }}
+              >
+                كل الجروبات
+              </button>
+              {availableGroups.length === 0 ? (
+                <div style={{ padding: '0.7rem 0.8rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  لا توجد جروبات ضمن هذا التصنيف
+                </div>
+              ) : (
+                availableGroups.map(group => (
+                  <button
+                    key={group}
+                    onClick={() => { setActiveGroup(group); setGroupsOpen(false); }}
+                    style={{
+                      width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === group ? '#f8fafc' : '#fff',
+                      fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {group}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Products */}
@@ -569,6 +742,13 @@ function ServicesPage({ onProductClick }) {
           <ProductCard key={p.id} product={p} onClick={() => onProductClick(p)} />
         ))}
       </div>
+
+      {filtered.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+          <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔍</p>
+          <p>لا توجد نتائج مطابقة</p>
+        </div>
+      )}
     </>
   );
 }
@@ -577,49 +757,94 @@ function OrdersPage() {
   const t = useContext(ThemeCtx);
   const [filter, setFilter] = useState('all');
   const orders = [
-    { id: '#1042', product: 'Sigma Plus - 3 أيام', date: '2026-02-10', price: 12.00, status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#1041', product: 'UnlockTool - 12 شهر', date: '2026-02-09', price: 38.50, status: 'قيد المعالجة', statusColor: '#f59e0b', statusBg: '#fef3c7' },
-    { id: '#1040', product: 'PUBG UC 660', date: '2026-02-08', price: 8.99, status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
-    { id: '#1039', product: 'فحص IMEI كامل', date: '2026-02-07', price: 2.50, status: 'ملغي', statusColor: '#dc2626', statusBg: '#fee2e2' },
-    { id: '#1038', product: 'Sigma Plus - سنة', date: '2026-02-05', price: 42.00, status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7' },
+    { id: '#10042', product: 'Sigma Plus - 3 أيام', date: '2026-02-15', price: '$12.00', status: 'مكتمل', statusKey: 'completed', statusColor: '#16a34a', statusBg: '#dcfce7', server_response: 'Username: demo_user\nPassword: xxxxxxxx\nExpiry: 2026-02-18' },
+    { id: '#10041', product: 'Samsung FRP Remove', date: '2026-02-14', price: '$8.99', status: 'قيد المعالجة', statusKey: 'processing', statusColor: '#f59e0b', statusBg: '#fef3c7', server_response: null },
+    { id: '#10040', product: 'UnlockTool - 12 شهر', date: '2026-02-13', price: '$38.50', status: 'مكتمل', statusKey: 'completed', statusColor: '#16a34a', statusBg: '#dcfce7', server_response: 'Username: unlock_demo\nActivation Code: XXXX-XXXX-XXXX' },
+    { id: '#10039', product: 'فحص IMEI كامل (GSX Report)', date: '2026-02-12', price: '$2.50', status: 'مكتمل', statusKey: 'completed', statusColor: '#16a34a', statusBg: '#dcfce7', server_response: 'Model: iPhone 15 Pro Max\nColor: Natural Titanium\nCarrier: AT&T (Locked)\nFMI: OFF\nCoverage: Active' },
+    { id: '#10038', product: 'iPhone Network Unlock (AT&T)', date: '2026-02-10', price: '$25.00', status: 'مرفوض', statusKey: 'failed', statusColor: '#dc2626', statusBg: '#fee2e2', server_response: 'الجهاز غير مؤهل لفتح الشبكة — تم استرداد المبلغ' },
+    { id: '#10037', product: 'EFT Dongle - 6 أشهر', date: '2026-02-08', price: '$22.00', status: 'مكتمل', statusKey: 'completed', statusColor: '#16a34a', statusBg: '#dcfce7', server_response: 'Serial: EFT-DEMO-XXXX\nExpiry: 2026-08-08' },
+    { id: '#10036', product: 'Chimera Tool - 12 شهر', date: '2026-02-05', price: '$55.00', status: 'مسترد', statusKey: 'refunded', statusColor: '#8b5cf6', statusBg: '#f5f3ff', server_response: 'تم استرداد المبلغ للمحفظة' },
   ];
 
-  const filters = ['all', 'completed', 'pending', 'cancelled'];
-  const filterLabels = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', cancelled: 'ملغية' };
+  const filters = [
+    { key: 'all', label: 'الكل' },
+    { key: 'completed', label: 'مكتملة' },
+    { key: 'processing', label: 'قيد المعالجة' },
+    { key: 'failed', label: 'مرفوضة' },
+    { key: 'refunded', label: 'مستردة' },
+  ];
+
+  const filteredOrders = filter === 'all' ? orders : orders.filter(o => o.statusKey === filter);
 
   return (
     <>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0b1020', marginBottom: 20 }}>📋 سجل الطلبات</h2>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         {filters.map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
+          <button key={f.key} onClick={() => setFilter(f.key)} style={{
             padding: '0.4rem 1rem', borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: filter === f ? t.pc : '#f1f5f9', color: filter === f ? '#fff' : '#64748b',
+            background: filter === f.key ? t.pc : '#f1f5f9', color: filter === f.key ? '#fff' : '#64748b',
             fontSize: '0.78rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
           }}>
-            {filterLabels[f]}
+            {f.label}
           </button>
         ))}
       </div>
 
       {/* Orders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {orders.map(order => (
+        {filteredOrders.map(order => (
           <div key={order.id} style={{ background: '#fff', borderRadius: 14, padding: '1rem 1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>{order.id}</span>
               <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: order.statusBg, color: order.statusColor }}>{order.status}</span>
             </div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{order.product}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{order.product}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#94a3b8' }}>
               <span>{order.date}</span>
-              <span style={{ fontWeight: 700, color: '#0b1020' }}>${order.price.toFixed(2)}</span>
+              <span style={{ fontWeight: 700, color: '#0b1020' }}>{order.price}</span>
             </div>
+
+            {/* Server Response for completed orders */}
+            {order.server_response && order.statusKey === 'completed' && (
+              <div style={{ marginTop: 10, padding: '0.75rem', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle size={12} /> نتيجة الخدمة:
+                </p>
+                <pre style={{ fontSize: '0.75rem', color: '#0b1020', whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0, fontFamily: 'monospace', lineHeight: 1.6 }}>{order.server_response}</pre>
+              </div>
+            )}
+
+            {/* Rejection reason for failed orders */}
+            {order.server_response && order.statusKey === 'failed' && (
+              <div style={{ marginTop: 10, padding: '0.75rem', background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca' }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <X size={12} /> سبب الرفض:
+                </p>
+                <p style={{ fontSize: '0.78rem', color: '#991b1b', margin: 0 }}>{order.server_response}</p>
+              </div>
+            )}
+
+            {/* Refund info */}
+            {order.server_response && order.statusKey === 'refunded' && (
+              <div style={{ marginTop: 10, padding: '0.75rem', background: '#f5f3ff', borderRadius: 10, border: '1px solid #ddd6fe' }}>
+                <p style={{ fontSize: '0.78rem', color: '#6d28d9', margin: 0 }}>{order.server_response}</p>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {filteredOrders.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+          <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>📦</p>
+          <p>لا توجد طلبات بهذا الفلتر</p>
+        </div>
+      )}
     </>
   );
 }
@@ -1073,11 +1298,14 @@ export default function YCZStoreLiveDemo() {
       {walletModalOpen && <WalletChargeModal onClose={() => setWalletModalOpen(false)} />}
 
       <style>{`
-        .demo-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-        .demo-steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-        .demo-about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .demo-products-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+        .demo-steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .demo-about-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .demo-product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 
+        @media (max-width: 1024px) {
+          .demo-products-grid { grid-template-columns: repeat(3, 1fr); }
+        }
         @media (max-width: 768px) {
           .demo-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
           .demo-steps-grid { grid-template-columns: repeat(2, 1fr); }

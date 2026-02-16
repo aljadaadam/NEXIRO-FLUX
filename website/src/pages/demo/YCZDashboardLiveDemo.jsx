@@ -25,18 +25,20 @@ const recentOrders = [
   { id: '#1042', user: 'أحمد محمد', product: 'Sigma Plus - 3 أيام', price: '$12.00', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7', date: 'منذ 5 دقائق', avatar: '👤' },
   { id: '#1041', user: 'سارة أحمد', product: 'UnlockTool - 12 شهر', price: '$38.50', status: 'قيد المعالجة', statusColor: '#f59e0b', statusBg: '#fef3c7', date: 'منذ 12 دقيقة', avatar: '👩' },
   { id: '#1040', user: 'خالد علي', product: 'PUBG UC 660', price: '$8.99', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7', date: 'منذ 30 دقيقة', avatar: '👨' },
-  { id: '#1039', user: 'ليلى حسن', product: 'فحص IMEI كامل', price: '$2.50', status: 'ملغي', statusColor: '#dc2626', statusBg: '#fee2e2', date: 'منذ ساعة', avatar: '👩' },
+  { id: '#1039', user: 'ليلى حسن', product: 'فحص IMEI كامل', price: '$2.50', status: 'مرفوض', statusColor: '#dc2626', statusBg: '#fee2e2', date: 'منذ ساعة', avatar: '👩' },
   { id: '#1038', user: 'محمد يوسف', product: 'Sigma Plus - سنة', price: '$42.00', status: 'مكتمل', statusColor: '#16a34a', statusBg: '#dcfce7', date: 'منذ ساعتين', avatar: '👤' },
   { id: '#1037', user: 'نور الدين', product: 'فري فاير 520 جوهرة', price: '$5.99', status: 'قيد المعالجة', statusColor: '#f59e0b', statusBg: '#fef3c7', date: 'منذ 3 ساعات', avatar: '👨' },
 ];
 
 const products = [
-  { id: 1, name: 'Sigma Plus - 3 أيام', price: '$12.00', stock: 'متاح', stockColor: '#16a34a', category: 'أدوات سوفت', sales: 234, status: true },
-  { id: 2, name: 'Sigma Plus - سنة كاملة', price: '$42.00', stock: 'متاح', stockColor: '#16a34a', category: 'أدوات سوفت', sales: 156, status: true },
-  { id: 3, name: 'UnlockTool - 12 شهر', price: '$38.50', stock: 'متاح', stockColor: '#16a34a', category: 'أدوات سوفت', sales: 89, status: true },
-  { id: 4, name: 'فحص IMEI كامل', price: '$2.50', stock: 'متاح', stockColor: '#16a34a', category: 'خدمات IMEI', sales: 567, status: true },
-  { id: 5, name: 'PUBG UC 660', price: '$8.99', stock: 'محدود', stockColor: '#f59e0b', category: 'شحن ألعاب', sales: 312, status: true },
-  { id: 6, name: 'فري فاير 520 جوهرة', price: '$5.99', stock: 'نفذ', stockColor: '#dc2626', category: 'شحن ألعاب', sales: 198, status: false },
+  { id: 1, name: 'Sigma Plus - 3 أيام', arabicName: 'سيغما بلس 3 أيام', price: '$12.00', icon: '🔧', category: 'أدوات سوفتوير', group_name: 'Sigma', service_type: 'api', sales: 234, status: true, sourceConnected: true },
+  { id: 2, name: 'Sigma Plus - سنة كاملة', arabicName: 'سيغما بلس سنة', price: '$42.00', icon: '🔧', category: 'أدوات سوفتوير', group_name: 'Sigma', service_type: 'api', sales: 156, status: true, sourceConnected: true },
+  { id: 3, name: 'UnlockTool - 12 شهر', arabicName: 'أنلوك تول 12 شهر', price: '$38.50', icon: '🔧', category: 'أدوات سوفتوير', group_name: 'UnlockTool', service_type: 'api', sales: 89, status: true, sourceConnected: true },
+  { id: 4, name: 'فحص IMEI كامل', arabicName: 'فحص IMEI كامل', price: '$2.50', icon: '📱', category: 'خدمات IMEI', group_name: 'IMEI Services', service_type: 'api', sales: 567, status: true, sourceConnected: true },
+  { id: 5, name: 'Samsung FRP Unlock', arabicName: 'فتح FRP سامسونج', price: '$15.00', icon: '📱', category: 'خدمات IMEI', group_name: 'IMEI Services', service_type: 'api', sales: 120, status: true, sourceConnected: true },
+  { id: 6, name: 'PUBG UC 660', arabicName: 'شحن ببجي 660 UC', price: '$8.99', icon: '🎮', category: 'ألعاب', group_name: 'PUBG', service_type: 'manual', sales: 312, status: true, sourceConnected: false },
+  { id: 7, name: 'فري فاير 520 جوهرة', arabicName: 'فري فاير 520 جوهرة', price: '$5.99', icon: '🎮', category: 'ألعاب', group_name: 'Free Fire', service_type: 'manual', sales: 198, status: false, sourceConnected: false },
+  { id: 8, name: 'iPhone Network Unlock', arabicName: 'فتح شبكة آيفون', price: '$25.00', icon: '📱', category: 'خدمات IMEI', group_name: 'Network Unlock', service_type: 'api', sales: 85, status: true, sourceConnected: true },
 ];
 
 const users = [
@@ -310,14 +312,43 @@ function OverviewPage({ theme }) {
 
 function ProductsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterGroup, setFilterGroup] = useState('all');
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  const groups = [...new Set(products.map(p => p.group_name))];
+  const filtered = products.filter(p => {
+    if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase()) && !p.arabicName.includes(searchTerm)) return false;
+    if (filterType !== 'all' && p.service_type !== filterType) return false;
+    if (filterGroup !== 'all' && p.group_name !== filterGroup) return false;
+    return true;
+  });
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📦 إدارة المنتجات</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📦 إدارة المنتجات <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8' }}>({products.length})</span></h2>
         <button onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.6rem 1.25rem', borderRadius: 10, background: '#7c5cff', color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
           <Plus size={16} /> إضافة منتج
         </button>
+      </div>
+
+      {/* Search & Filters */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.85rem', borderRadius: 10, background: '#fff', border: '1px solid #e2e8f0', flex: 1, minWidth: 200 }}>
+          <Search size={15} color="#94a3b8" />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث عن منتج..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', width: '100%' }} />
+        </div>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ padding: '0.5rem 0.85rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', background: '#fff', cursor: 'pointer' }}>
+          <option value="all">كل الأنواع</option>
+          <option value="api">API تلقائي</option>
+          <option value="manual">يدوي</option>
+        </select>
+        <select value={filterGroup} onChange={e => setFilterGroup(e.target.value)} style={{ padding: '0.5rem 0.85rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', background: '#fff', cursor: 'pointer' }}>
+          <option value="all">كل المجموعات</option>
+          {groups.map(g => <option key={g} value={g}>{g}</option>)}
+        </select>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
@@ -325,32 +356,41 @@ function ProductsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['#', 'المنتج', 'السعر', 'الفئة', 'التوفر', 'المبيعات', 'الحالة', 'إجراءات'].map(h => (
-                  <th key={h} style={{ padding: '0.85rem 0.75rem', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.75rem' }}>{h}</th>
+                {['#', '', 'المنتج', 'السعر', 'الفئة', 'المجموعة', 'النوع', 'المبيعات', 'الحالة', 'إجراءات'].map(h => (
+                  <th key={h} style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {products.map(p => (
+              {filtered.map(p => (
                 <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '0.85rem 0.75rem', color: '#94a3b8' }}>{p.id}</td>
-                  <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600, color: '#0b1020' }}>{p.name}</td>
-                  <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#7c5cff' }}>{p.price}</td>
-                  <td style={{ padding: '0.85rem 0.75rem' }}>
+                  <td style={{ padding: '0.85rem 0.6rem', color: '#94a3b8' }}>{p.id}</td>
+                  <td style={{ padding: '0.85rem 0.3rem', fontSize: '1.1rem' }}>{p.icon}</td>
+                  <td style={{ padding: '0.85rem 0.6rem' }}>
+                    <div>
+                      <span style={{ fontWeight: 600, color: '#0b1020', display: 'block', fontSize: '0.82rem' }}>{p.name}</span>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{p.arabicName}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.85rem 0.6rem', fontWeight: 700, color: '#7c5cff' }}>{p.price}</td>
+                  <td style={{ padding: '0.85rem 0.6rem' }}>
                     <span style={{ padding: '0.2rem 0.6rem', borderRadius: 6, background: '#f1f5f9', fontSize: '0.72rem', fontWeight: 600, color: '#64748b' }}>{p.category}</span>
                   </td>
-                  <td style={{ padding: '0.85rem 0.75rem' }}>
-                    <span style={{ color: p.stockColor, fontWeight: 700, fontSize: '0.78rem' }}>{p.stock}</span>
+                  <td style={{ padding: '0.85rem 0.6rem', fontSize: '0.78rem', color: '#334155', fontWeight: 600 }}>{p.group_name}</td>
+                  <td style={{ padding: '0.85rem 0.6rem' }}>
+                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700, background: p.service_type === 'api' ? '#dbeafe' : '#fef3c7', color: p.service_type === 'api' ? '#2563eb' : '#d97706' }}>
+                      {p.service_type === 'api' ? '⚡ API' : '✋ يدوي'}
+                    </span>
                   </td>
-                  <td style={{ padding: '0.85rem 0.75rem', color: '#334155', fontWeight: 600 }}>{p.sales}</td>
-                  <td style={{ padding: '0.85rem 0.75rem' }}>
+                  <td style={{ padding: '0.85rem 0.6rem', color: '#334155', fontWeight: 600 }}>{p.sales}</td>
+                  <td style={{ padding: '0.85rem 0.6rem' }}>
                     <div style={{ width: 36, height: 20, borderRadius: 10, background: p.status ? '#22c55e' : '#e2e8f0', position: 'relative', cursor: 'pointer' }}>
                       <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, transition: 'all 0.2s', ...(p.status ? { left: 2 } : { right: 2 }) }} />
                     </div>
                   </td>
-                  <td style={{ padding: '0.85rem 0.75rem' }}>
+                  <td style={{ padding: '0.85rem 0.6rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
+                      <button onClick={() => setEditingProduct(p)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
                       <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
                     </div>
                   </td>
@@ -361,39 +401,77 @@ function ProductsPage() {
         </div>
       </div>
 
-      {/* Add Product Modal */}
-      {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowAddModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 480, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+      {/* Add/Edit Product Modal */}
+      {(showAddModal || editingProduct) && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => { setShowAddModal(false); setEditingProduct(null); }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 540, boxShadow: '0 25px 50px rgba(0,0,0,0.15)', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>إضافة منتج جديد</h3>
-              <button onClick={() => setShowAddModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={16} /></button>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>{editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}</h3>
+              <button onClick={() => { setShowAddModal(false); setEditingProduct(null); }} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={16} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>اسم المنتج</label>
-                <input placeholder="مثال: Sigma Plus - شهر" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>اسم المنتج (إنجليزي)</label>
+                  <input defaultValue={editingProduct?.name || ''} placeholder="Sigma Plus - 3 Days" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الاسم العربي</label>
+                  <input defaultValue={editingProduct?.arabicName || ''} placeholder="سيغما بلس 3 أيام" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>السعر</label>
-                  <input placeholder="$0.00" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                  <input defaultValue={editingProduct?.price || ''} placeholder="$0.00" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الفئة</label>
-                  <select style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                    <option>أدوات سوفت</option>
+                  <select defaultValue={editingProduct?.category || ''} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                    <option>أدوات سوفتوير</option>
                     <option>خدمات IMEI</option>
-                    <option>شحن ألعاب</option>
+                    <option>ألعاب</option>
                   </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>النوع</label>
+                  <select defaultValue={editingProduct?.service_type || 'api'} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                    <option value="api">API تلقائي</option>
+                    <option value="manual">يدوي</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>المجموعة</label>
+                  <input defaultValue={editingProduct?.group_name || ''} placeholder="Sigma" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الأيقونة (Emoji)</label>
+                  <input defaultValue={editingProduct?.icon || ''} placeholder="🔧" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الوصف</label>
                 <textarea rows={3} placeholder="وصف المنتج..." style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
               </div>
-              <button onClick={() => setShowAddModal(false)} style={{ padding: '0.75rem', borderRadius: 10, background: '#7c5cff', color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
-                حفظ المنتج
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>الحقول المخصصة (customFields)</label>
+                <div style={{ padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <input placeholder="اسم الحقل (مثال: IMEI)" style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+                    <select style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', background: '#fff' }}>
+                      <option>text</option>
+                      <option>select</option>
+                      <option>textarea</option>
+                    </select>
+                    <button style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#7c5cff', color: '#fff', border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>+</button>
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>هذه الحقول ستظهر للعميل عند الطلب</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowAddModal(false); setEditingProduct(null); }} style={{ padding: '0.75rem', borderRadius: 10, background: '#7c5cff', color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+                {editingProduct ? 'حفظ التعديلات' : 'حفظ المنتج'}
               </button>
             </div>
           </div>
@@ -404,18 +482,51 @@ function ProductsPage() {
 }
 
 function OrdersAdminPage() {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [actionModal, setActionModal] = useState(null); // { order, action: 'complete'|'reject'|'refund' }
+
+  const allOrders = [
+    ...recentOrders,
+    { id: '#1036', user: 'فاطمة علي', product: 'Samsung FRP Unlock', price: '$15.00', status: 'مرفوض', statusColor: '#dc2626', statusBg: '#fee2e2', date: 'منذ 5 ساعات', avatar: '👩', rejection_reason: 'IMEI غير صحيح' },
+    { id: '#1035', user: 'عمر حسين', product: 'Sigma Plus - شهر', price: '$18.00', status: 'مسترد', statusColor: '#7c3aed', statusBg: '#ede9fe', date: 'منذ يوم', avatar: '👤', refund_reason: 'طلب العميل الإلغاء' },
+  ];
+
+  const statusTabs = [
+    { id: 'all', label: 'الكل', count: allOrders.length },
+    { id: 'مكتمل', label: 'مكتمل', count: allOrders.filter(o => o.status === 'مكتمل').length, color: '#16a34a' },
+    { id: 'قيد المعالجة', label: 'قيد المعالجة', count: allOrders.filter(o => o.status === 'قيد المعالجة').length, color: '#f59e0b' },
+    { id: 'ملغي', label: 'ملغي', count: allOrders.filter(o => o.status === 'ملغي').length, color: '#dc2626' },
+    { id: 'مرفوض', label: 'مرفوض', count: allOrders.filter(o => o.status === 'مرفوض').length, color: '#dc2626' },
+    { id: 'مسترد', label: 'مسترد', count: allOrders.filter(o => o.status === 'مسترد').length, color: '#7c3aed' },
+  ];
+
+  const filtered = statusFilter === 'all' ? allOrders : allOrders.filter(o => o.status === statusFilter);
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🛒 إدارة الطلبات</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif', color: '#64748b' }}>
-            <Filter size={14} /> تصفية
-          </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif', color: '#64748b' }}>
             <Download size={14} /> تصدير
           </button>
         </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        {statusTabs.map(tab => (
+          <button key={tab.id} onClick={() => setStatusFilter(tab.id)} style={{
+            padding: '0.45rem 0.9rem', borderRadius: 8, border: 'none', cursor: 'pointer',
+            fontFamily: 'Tajawal, sans-serif', fontSize: '0.78rem', fontWeight: 600,
+            background: statusFilter === tab.id ? '#7c5cff' : '#fff',
+            color: statusFilter === tab.id ? '#fff' : '#64748b',
+            boxShadow: statusFilter === tab.id ? '0 2px 8px rgba(124,92,255,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
+            transition: 'all 0.2s',
+          }}>
+            {tab.label} <span style={{ marginRight: 4, opacity: 0.8 }}>({tab.count})</span>
+          </button>
+        ))}
       </div>
 
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
@@ -429,7 +540,7 @@ function OrdersAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map(order => (
+              {filtered.map(order => (
                 <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600, color: '#7c5cff' }}>{order.id}</td>
                   <td style={{ padding: '0.85rem 0.75rem' }}>
@@ -449,7 +560,15 @@ function OrdersAdminPage() {
                   <td style={{ padding: '0.85rem 0.75rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Eye size={13} color="#3b82f6" /></button>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Check size={13} color="#16a34a" /></button>
+                      {order.status === 'قيد المعالجة' && (
+                        <>
+                          <button onClick={() => setActionModal({ order, action: 'complete' })} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="إكمال"><Check size={13} color="#16a34a" /></button>
+                          <button onClick={() => setActionModal({ order, action: 'reject' })} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="رفض"><X size={13} color="#dc2626" /></button>
+                        </>
+                      )}
+                      {order.status === 'مكتمل' && (
+                        <button onClick={() => setActionModal({ order, action: 'refund' })} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#ede9fe', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="استرداد"><RefreshCcw size={13} color="#7c3aed" /></button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -458,18 +577,68 @@ function OrdersAdminPage() {
           </table>
         </div>
       </div>
+
+      {/* Action Modal */}
+      {actionModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setActionModal(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 420, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020' }}>
+                {actionModal.action === 'complete' && '✅ إكمال الطلب'}
+                {actionModal.action === 'reject' && '❌ رفض الطلب'}
+                {actionModal.action === 'refund' && '💜 استرداد الطلب'}
+              </h3>
+              <button onClick={() => setActionModal(null)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={16} /></button>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 16 }}>الطلب {actionModal.order.id} — {actionModal.order.product}</p>
+            {actionModal.action === 'complete' && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>رد السيرفر (server_response)</label>
+                <textarea rows={3} placeholder="أدخل رد السيرفر أو نتيجة الخدمة..." style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+              </div>
+            )}
+            {actionModal.action === 'reject' && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>سبب الرفض</label>
+                <textarea rows={2} placeholder="أدخل سبب رفض الطلب..." style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+              </div>
+            )}
+            {actionModal.action === 'refund' && (
+              <div style={{ marginBottom: 16, padding: '0.75rem', background: '#ede9fe', borderRadius: 10 }}>
+                <p style={{ fontSize: '0.82rem', color: '#6d28d9', fontWeight: 600 }}>سيتم إرجاع المبلغ {actionModal.order.price} إلى محفظة العميل</p>
+              </div>
+            )}
+            <button onClick={() => setActionModal(null)} style={{
+              width: '100%', padding: '0.75rem', borderRadius: 10, border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', color: '#fff',
+              background: actionModal.action === 'complete' ? '#16a34a' : actionModal.action === 'reject' ? '#dc2626' : '#7c3aed',
+            }}>
+              {actionModal.action === 'complete' && 'تأكيد الإكمال'}
+              {actionModal.action === 'reject' && 'تأكيد الرفض'}
+              {actionModal.action === 'refund' && 'تأكيد الاسترداد'}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
 function UsersAdminPage() {
+  const [walletModal, setWalletModal] = useState(null); // { user, action: 'add'|'deduct' }
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredUsers = users.filter(u => {
+    if (searchTerm && !u.name.includes(searchTerm) && !u.email.includes(searchTerm)) return false;
+    return true;
+  });
+
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 إدارة المستخدمين</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 إدارة المستخدمين <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8' }}>({users.length})</span></h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1rem', borderRadius: 10, background: '#fff', border: '1px solid #e2e8f0', width: 240 }}>
           <Search size={14} color="#94a3b8" />
-          <input placeholder="بحث عن مستخدم..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', width: '100%' }} />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث عن مستخدم..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', width: '100%' }} />
         </div>
       </div>
 
@@ -484,7 +653,7 @@ function UsersAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {filteredUsers.map(u => (
                 <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '0.85rem 0.75rem', color: '#94a3b8' }}>{u.id}</td>
                   <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600, color: '#0b1020' }}>{u.name}</td>
@@ -497,8 +666,10 @@ function UsersAdminPage() {
                   </td>
                   <td style={{ padding: '0.85rem 0.75rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Eye size={13} color="#3b82f6" /></button>
-                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Shield size={13} color="#dc2626" /></button>
+                      <button onClick={() => setWalletModal({ user: u, action: 'add' })} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="إضافة رصيد"><DollarSign size={13} color="#16a34a" /></button>
+                      <button onClick={() => setWalletModal({ user: u, action: 'deduct' })} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fef3c7', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="خصم رصيد"><ArrowDownRight size={13} color="#d97706" /></button>
+                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="عرض"><Eye size={13} color="#3b82f6" /></button>
+                      <button style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="حظر"><Shield size={13} color="#dc2626" /></button>
                     </div>
                   </td>
                 </tr>
@@ -507,6 +678,38 @@ function UsersAdminPage() {
           </table>
         </div>
       </div>
+
+      {/* Wallet Modal */}
+      {walletModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setWalletModal(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020' }}>
+                {walletModal.action === 'add' ? '💰 إضافة رصيد' : '📤 خصم رصيد'}
+              </h3>
+              <button onClick={() => setWalletModal(null)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={16} /></button>
+            </div>
+            <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: 10, marginBottom: 16 }}>
+              <p style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 600 }}>{walletModal.user.name}</p>
+              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>الرصيد الحالي: <strong style={{ color: '#22c55e' }}>{walletModal.user.balance}</strong></p>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>المبلغ ($)</label>
+              <input type="number" placeholder="0.00" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>ملاحظة (اختياري)</label>
+              <input placeholder="سبب التعديل..." style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <button onClick={() => setWalletModal(null)} style={{
+              width: '100%', padding: '0.75rem', borderRadius: 10, border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', color: '#fff',
+              background: walletModal.action === 'add' ? '#16a34a' : '#d97706',
+            }}>
+              {walletModal.action === 'add' ? 'تأكيد الإضافة' : 'تأكيد الخصم'}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -612,14 +815,53 @@ function SettingsAdminPage() {
               <input defaultValue="المتجر" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>العملة</label>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>العملة الأساسية</label>
               <select style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                 <option>USD ($)</option>
                 <option>SAR (ر.س)</option>
                 <option>EUR (€)</option>
               </select>
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>العملة الثانوية</label>
+              <select style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                <option value="">بدون</option>
+                <option>IQD (د.ع)</option>
+                <option>SAR (ر.س)</option>
+                <option>EGP (ج.م)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>سعر الصرف (1 USD =)</label>
+              <input type="number" defaultValue="1480" placeholder="1480" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
           </div>
+        </div>
+
+        {/* SMTP Settings */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 16 }}>📧 إعدادات البريد (SMTP)</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>SMTP Host</label>
+              <input placeholder="smtp.gmail.com" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>SMTP Port</label>
+              <input placeholder="587" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>البريد المرسل</label>
+              <input placeholder="noreply@example.com" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>كلمة مرور التطبيق</label>
+              <input type="password" placeholder="••••••••" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+          <button style={{ marginTop: 12, padding: '0.5rem 1.5rem', borderRadius: 10, background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
+            📨 إرسال بريد تجريبي
+          </button>
         </div>
 
         {/* Notifications */}
@@ -630,6 +872,7 @@ function SettingsAdminPage() {
               { label: 'إشعار طلب جديد', desc: 'عند استلام طلب جديد', on: true },
               { label: 'إشعار تسجيل مستخدم', desc: 'عند تسجيل مستخدم جديد', on: true },
               { label: 'إشعار بريد إلكتروني', desc: 'إرسال ملخص يومي', on: false },
+              { label: 'تفعيل OTP بالبريد', desc: 'إرسال رمز تحقق عند تسجيل الدخول', on: false },
             ].map((n, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 10 }}>
                 <div>
