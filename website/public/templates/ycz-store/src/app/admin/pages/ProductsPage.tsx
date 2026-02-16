@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, X } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
@@ -119,7 +119,22 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     } catch { /* ignore */ }
   }
 
-  const groups = Array.from(new Set(products.map((p) => String(p.group_name || '').trim()).filter(Boolean)));
+  const groupsForDropdown = useMemo(() => {
+    const typeFiltered =
+      filterType === 'all'
+        ? products
+        : products.filter((p) => String(p.service_type || '').toUpperCase() === filterType);
+
+    return Array.from(
+      new Set(typeFiltered.map((p) => String(p.group_name || '').trim()).filter(Boolean)),
+    );
+  }, [products, filterType]);
+
+  useEffect(() => {
+    if (filterGroup !== 'all' && !groupsForDropdown.includes(filterGroup)) {
+      setFilterGroup('all');
+    }
+  }, [filterGroup, groupsForDropdown]);
 
   const stats = {
     total: products.length,
@@ -269,7 +284,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
         <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 180 }}>
           <option value="all">كل القروبات</option>
-          {groups.map((group) => (
+          {groupsForDropdown.map((group) => (
             <option key={group} value={group}>{group}</option>
           ))}
         </select>
