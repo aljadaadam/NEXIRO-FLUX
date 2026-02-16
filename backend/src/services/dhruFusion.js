@@ -67,15 +67,23 @@ class DhruFusionClient {
         throw new Error(`استجابة غير JSON: ${text.slice(0, 200)}`);
       }
 
+      // ─── تطبيع البنية: بعض المصادر تلف الرد في DHRUFUSION ───
+      // data.DHRUFUSION.SUCCESS / data.DHRUFUSION.ERROR  →  أو مباشرة  →  data.SUCCESS / data.ERROR
+      const root = data?.DHRUFUSION || data;
+
       // التحقق من وجود خطأ
-      if (data.ERROR) {
-        const err = Array.isArray(data.ERROR) ? data.ERROR[0] : data.ERROR;
+      const errorBlock = root.ERROR || data.ERROR;
+      if (errorBlock) {
+        const err = Array.isArray(errorBlock) ? errorBlock[0] : errorBlock;
         const msg = err?.MESSAGE || err?.message || JSON.stringify(err);
         const fullDesc = err?.FULL_DESCRIPTION || err?.full_description || '';
         throw new DhruFusionError(msg, fullDesc, data);
       }
 
-      return data;
+      // نرجع root المطبّع (يحتوي SUCCESS دائماً في المستوى الأول)
+      // نضيف _raw للرد الخام الأصلي
+      root._raw = data;
+      return root;
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
@@ -88,7 +96,7 @@ class DhruFusionClient {
   // ─── معلومات الحساب ───────────────────────────────────────
   async getAccountInfo() {
     const data = await this._post('accountinfo');
-    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
     const info = success?.AccountInfo || success?.accountinfo || success || {};
 
     return {
@@ -97,14 +105,14 @@ class DhruFusionClient {
       creditFormatted: info.credit || null,
       currency: info.currency || info.CURRENCY || 'USD',
       apiVersion: data.apiversion || data.APIVERSION || null,
-      raw: data
+      raw: data._raw || data
     };
   }
 
   // ─── قائمة الخدمات ────────────────────────────────────────
   async getServiceList() {
     const data = await this._post('imeiservicelist');
-    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
     const list = success?.LIST;
 
     if (!list || typeof list !== 'object') {
@@ -179,11 +187,11 @@ class DhruFusionClient {
     xml += '</PARAMETERS>';
 
     const data = await this._post('placeimeiorder', { parameters: xml });
-    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
 
     return {
       referenceId: success?.REFERENCEID || success?.referenceid || null,
-      raw: data
+      raw: data._raw || data
     };
   }
 
@@ -196,7 +204,7 @@ class DhruFusionClient {
 
     const xml = `<PARAMETERS><ID>${referenceId}</ID></PARAMETERS>`;
     const data = await this._post('getimeiorder', { parameters: xml });
-    const success = Array.isArray(data.SUCCESS) ? data.SUCCESS[0] : data.SUCCESS;
+    const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
 
     const statusCode = String(success?.STATUS || '0');
     const statusMap = {
@@ -242,7 +250,7 @@ class DhruFusionClient {
       comments,
       message,
       fullResponse,
-      raw: data
+      raw: data._raw || data
     };
   }
 }
