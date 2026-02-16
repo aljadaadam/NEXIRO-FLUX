@@ -207,7 +207,7 @@ export default function ServicesPage() {
         <Search size={16} color="#94a3b8" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث في الخدمات..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', color: '#0b1020', background: 'transparent' }} />
 
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', minWidth: 0, width: 'clamp(140px, 42vw, 240px)' }}>
           <button
             onClick={() => setGroupsOpen((v) => !v)}
             disabled={!groupSourceCategory}
@@ -218,10 +218,10 @@ export default function ServicesPage() {
               color: groupSourceCategory ? '#334155' : '#94a3b8',
               cursor: groupSourceCategory ? 'pointer' : 'not-allowed',
               fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
-              minWidth: 140, justifyContent: 'space-between',
+              width: '100%', minWidth: 0, justifyContent: 'space-between', overflow: 'hidden',
             }}
           >
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ flex: 1, minWidth: 0, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>
               {activeGroup === 'all' ? 'اختر الجروب' : activeGroup}
             </span>
             <ChevronDown size={14} />
@@ -239,6 +239,7 @@ export default function ServicesPage() {
                 style={{
                   width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === 'all' ? '#f8fafc' : '#fff',
                   fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}
               >
                 كل الجروبات
@@ -256,6 +257,7 @@ export default function ServicesPage() {
                     style={{
                       width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === group ? '#f8fafc' : '#fff',
                       fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}
                   >
                     {group}
