@@ -30,7 +30,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         } else {
           const totalOrders = Number(res?.totalOrders || 0);
           const completedOrders = Number(res?.completedOrders || 0);
-          const totalUsers = Number(res?.totalUsers || 0);
+          const totalCustomers = Number(res?.totalCustomers || 0);
           const totalProfit = Number(res?.totalProfit || 0);
           const todayProfit = Number(res?.todayProfit || 0);
           const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
@@ -55,9 +55,9 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               bg: '#eff6ff',
             },
             {
-              label: 'المستخدمين',
-              value: String(totalUsers),
-              change: `+${Number(res?.newUsersToday || 0) || 0} اليوم`,
+              label: 'الزبائن',
+              value: String(totalCustomers),
+              change: 'إجمالي',
               positive: true,
               icon: '👥',
               color: '#22c55e',
