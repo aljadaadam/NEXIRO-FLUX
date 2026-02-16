@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Search, Eye, Shield, Ban, Loader2 } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { Search, Eye, Shield, Loader2 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
@@ -12,75 +12,91 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  const fetchUsers = useCallback(async (searchQuery = '') => {
-    setLoading(true);
-    try {
-      // جلب الزبائن (مستخدمي المتجر) + مستخدمي الإدارة
-      const [customersRes, staffRes] = await Promise.allSettled([
-        adminApi.getCustomers(1, 200, searchQuery),
-        adminApi.getUsers(),
-      ]);
+  // تحميل مرة واحدة فقط عند فتح الصفحة (بدون تحميل متكرر أثناء البحث)
+  useEffect(() => {
+    let cancelled = false;
 
-      const allUsers: User[] = [];
+    async function load() {
+      setLoading(true);
+      try {
+        const [customersRes, staffRes] = await Promise.allSettled([
+          adminApi.getCustomers(1, 200, ''),
+          adminApi.getUsers(),
+        ]);
 
-      // الزبائن (من جدول customers)
-      if (customersRes.status === 'fulfilled') {
-        const raw = customersRes.value;
-        const customers = Array.isArray(raw) ? raw : (Array.isArray(raw?.customers) ? raw.customers : []);
-        setTotal(raw?.total || customers.length);
-        customers.forEach((u: Record<string, unknown>) => {
-          allUsers.push({
-            id: Number(u.id),
-            name: String(u.name || ''),
-            email: String(u.email || ''),
-            role: u.is_blocked ? 'محظور' : 'زبون',
-            status: u.is_blocked ? 'محظور' : (u.is_verified ? 'نشط' : 'نشط'),
-            joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
-            orders: Number(u.orders || 0),
-            spent: String(u.spent || '$0.00'),
+        const allUsers: User[] = [];
+        let customersCount = 0;
+        let staffCount = 0;
+
+        if (customersRes.status === 'fulfilled') {
+          const raw = customersRes.value;
+          const customers = Array.isArray(raw) ? raw : (Array.isArray(raw?.customers) ? raw.customers : []);
+          customersCount = customers.length;
+          customers.forEach((u: Record<string, unknown>) => {
+            allUsers.push({
+              id: Number(u.id),
+              name: String(u.name || ''),
+              email: String(u.email || ''),
+              role: u.is_blocked ? 'محظور' : 'زبون',
+              status: u.is_blocked ? 'محظور' : 'نشط',
+              joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+              orders: Number(u.orders || 0),
+              spent: String(u.spent || '$0.00'),
+            });
           });
-        });
-      }
+        }
 
-      // مستخدمي الإدارة (admin/user)
-      if (staffRes.status === 'fulfilled') {
-        const raw = staffRes.value;
-        const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
-        staff.forEach((u: Record<string, unknown>) => {
-          allUsers.push({
-            id: Number(u.id),
-            name: String(u.name || ''),
-            email: String(u.email || ''),
-            role: String(u.role) === 'admin' ? 'مدير' : 'مشرف',
-            status: 'نشط',
-            joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
-            orders: 0,
-            spent: '$0.00',
+        if (staffRes.status === 'fulfilled') {
+          const raw = staffRes.value;
+          const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
+          staffCount = staff.length;
+          staff.forEach((u: Record<string, unknown>) => {
+            allUsers.push({
+              id: Number(u.id),
+              name: String(u.name || ''),
+              email: String(u.email || ''),
+              role: String(u.role) === 'admin' ? 'مدير' : 'مشرف',
+              status: 'نشط',
+              joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+              orders: 0,
+              spent: '$0.00',
+            });
           });
-        });
-      }
+        }
 
-      setUsers(allUsers);
-    } catch { /* keep empty */ }
-    finally { setLoading(false); }
+        if (!cancelled) {
+          setUsers(allUsers);
+          setTotal(customersCount + staffCount);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsers([]);
+          setTotal(0);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  // بحث مع تأخير
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers(search);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [search, fetchUsers]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(u => (
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
+    ));
+  }, [users, search]);
 
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 المستخدمين <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>({total})</span></h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>👥 المستخدمين <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>({search.trim() ? filtered.length : total})</span></h2>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '0.5rem 0.85rem', borderRadius: 10,
@@ -116,11 +132,11 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                 <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
                   <Loader2 size={20} style={{ display: 'inline', animation: 'spin 1s linear infinite' }} /> جارٍ التحميل...
                 </td></tr>
-              ) : users.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
                   لا يوجد مستخدمين
                 </td></tr>
-              ) : users.map(user => (
+              ) : filtered.map(user => (
                 <tr key={user.id} style={{ borderBottom: '1px solid #f8fafc' }}>
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
