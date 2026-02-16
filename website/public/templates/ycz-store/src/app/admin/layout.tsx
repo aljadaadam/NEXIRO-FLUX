@@ -84,10 +84,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { currentTheme, logoPreview, storeName } = useTheme();
 
   const [currentPage, setCurrentPage] = useState('overview');
+  const [overviewReload, setOverviewReload] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const handlePageChange = (id: string) => {
+    // إذا ضغط المستخدم على نفس الصفحة الحالية، لا تتجاهل الحدث
+    // (مهم خصوصاً لصفحة النظر العام: نجلب بيانات جديدة من القاعدة عند كل فتح)
+    if (id === currentPage) {
+      if (id === 'overview') {
+        setOverviewReload((v) => v + 1);
+      }
+      setMobileDrawerOpen(false);
+      return;
+    }
+
     setCurrentPage(id);
     setMobileDrawerOpen(false);
   };
@@ -115,7 +126,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 
   const pages: Record<string, React.ReactNode> = {
-    overview: <OverviewPage theme={currentTheme} />,
+    overview: <OverviewPage key={`overview-${overviewReload}`} theme={currentTheme} />,
     products: <ProductsPage theme={currentTheme} />,
     orders: <OrdersAdminPage theme={currentTheme} />,
     users: <UsersAdminPage theme={currentTheme} />,
