@@ -233,7 +233,7 @@ export default function ProfilePage() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [personalData, setPersonalData] = useState({ name: '', email: '', phone: '', country: '' });
+  const [personalData, setPersonalData] = useState({ name: '', email: '', phone: '', country: '', password: '' });
   const [personalSaved, setPersonalSaved] = useState(false);
   const [personalSaving, setPersonalSaving] = useState(false);
   const [personalError, setPersonalError] = useState('');
@@ -266,7 +266,7 @@ export default function ProfilePage() {
     try {
       const res = await storeApi.getProfile();
       const customer = res?.customer || res?.user || res;
-      if (customer && !customer.error) {
+      if (customer) {
         const walletBalance = Number(customer.wallet_balance ?? customer.balance ?? customer.wallet?.balance ?? 0);
         setProfile({
           name: customer.name || customer.username || '',
@@ -280,9 +280,17 @@ export default function ProfilePage() {
           email: customer.email || d.email,
           phone: customer.phone || d.phone,
           country: customer.country || d.country,
+          password: '',
         }));
       }
-    } catch { /* keep defaults */ }
+    } catch (err: any) {
+      console.error('[Profile] فشل جلب الملف الشخصي:', err?.message);
+      // إذا كان خطأ مصادقة — أخرج المستخدم
+      if (err?.message?.includes('غير مصرح') || err?.message?.includes('Token')) {
+        localStorage.removeItem('auth_token');
+        setIsLoggedIn(false);
+      }
+    }
   }
 
   async function loadPayments() {
@@ -331,16 +339,27 @@ export default function ProfilePage() {
     setPersonalSaving(true);
     setPersonalError('');
     try {
-      await storeApi.updateProfile({
+      const updateData: Record<string, string> = {
         name: personalData.name,
         email: personalData.email,
         phone: personalData.phone,
         country: personalData.country,
-      });
-      setPersonalSaved(true);
-      await loadProfile();
-    } catch {
-      setPersonalError('فشل حفظ البيانات. تأكد من تسجيل الدخول.');
+      };
+      // أرسل كلمة المرور فقط إذا أدخلها المستخدم
+      if (personalData.password && personalData.password.trim()) {
+        updateData.password = personalData.password;
+      }
+      const res = await storeApi.updateProfile(updateData);
+      if (res?.error) {
+        setPersonalError(res.error);
+        setPersonalSaved(false);
+      } else {
+        setPersonalSaved(true);
+        setPersonalData(d => ({ ...d, password: '' }));
+        await loadProfile();
+      }
+    } catch (err: any) {
+      setPersonalError(err?.message || 'فشل حفظ البيانات. تأكد من تسجيل الدخول.');
       setPersonalSaved(false);
     } finally {
       setPersonalSaving(false);
@@ -366,12 +385,10 @@ export default function ProfilePage() {
       } else if (res?.error) {
         setAuthError(res.error);
       } else {
-        setIsLoggedIn(true);
-        setProfile({ name: name || 'مستخدم', email });
+        setAuthError('حدث خطأ غير متوقع');
       }
-    } catch {
-      setIsLoggedIn(true);
-      setProfile({ name: name || 'مستخدم', email });
+    } catch (err: any) {
+      setAuthError(err?.message || 'فشل الاتصال بالخادم');
     } finally {
       setAuthLoading(false);
     }
@@ -450,7 +467,7 @@ export default function ProfilePage() {
             ))}
             <div>
               <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>كلمة المرور الجديدة</label>
-              <input type="password" placeholder="اتركه فارغاً إذا لم ترد تغييرها" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+              <input type="password" value={personalData.password} onChange={e => { setPersonalData(d => ({ ...d, password: e.target.value })); setPersonalSaved(false); }} placeholder="اتركه فارغاً إذا لم ترد تغييرها" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <button onClick={handleSavePersonal} disabled={personalSaving} style={{
               padding: '0.75rem', borderRadius: btnR,

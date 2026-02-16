@@ -50,6 +50,18 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
+  // إذا كان الرد خطأ مصادقة — نحذف التوكن
+  if (res.status === 401 || res.status === 403) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody?.error || 'غير مصرح');
+  }
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody?.error || `خطأ HTTP ${res.status}`);
+  }
   return res.json();
 }
 
