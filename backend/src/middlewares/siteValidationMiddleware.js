@@ -8,12 +8,13 @@ async function validateSite(req, res, next) {
       return next();
     }
 
-    // Try resolving from siteKey (set by resolveTenant or auth)
-    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
+    // Try resolving from siteKey (set by resolveTenant) or from authenticated user's token
+    // لا نرجع لـ SITE_KEY من الـ env — resolveTenant يتكفل بذلك للمنصة فقط
+    const siteKey = req.siteKey || req.user?.site_key;
 
     if (!siteKey || siteKey === 'default-site-key') {
       return res.status(500).json({ 
-        error: 'لم يتم تحديد الموقع. تأكد من إرسال X-Site-Key header أو تهيئة SITE_KEY' 
+        error: 'لم يتم تحديد الموقع. تأكد من أن الدومين مسجل في النظام' 
       });
     }
 

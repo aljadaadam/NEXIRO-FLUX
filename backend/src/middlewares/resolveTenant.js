@@ -4,7 +4,7 @@
  * 
  * Resolution order:
  *   1. X-Site-Key header (store frontends send this)
- *   2. Host header → lookup by domain/custom_domain
+ *   2. Host / X-Forwarded-Host header → lookup by domain/custom_domain
  *   3. SITE_KEY from env (fallback for platform admin / development)
  * 
  * Sets: req.siteKey, req.site
@@ -42,8 +42,22 @@ const PLATFORM_HOSTS = [
 ];
 
 function isPlatformHost(host) {
-  const hostname = host.split(':')[0].toLowerCase();
+  const hostname = (host || '').split(':')[0].toLowerCase();
   return PLATFORM_HOSTS.includes(hostname);
+}
+
+/**
+ * استخراج الدومين الأصلي — يتحقق من x-forwarded-host أولاً (لدعم proxy مثل Next.js rewrites)
+ * ثم يرجع للـ Host header العادي
+ */
+function getOriginalHost(req) {
+  // x-forwarded-host يُرسل تلقائياً من Next.js rewrites ومن reverse proxies
+  const forwarded = req.headers['x-forwarded-host'];
+  if (forwarded) {
+    // قد يحتوي على عدة قيم مفصولة بفاصلة — نأخذ الأول (الأصلي)
+    return forwarded.split(',')[0].trim().split(':')[0].toLowerCase();
+  }
+  return (req.headers.host || '').split(':')[0].toLowerCase();
 }
 
 async function resolveTenant(req, res, next) {
@@ -60,10 +74,10 @@ async function resolveTenant(req, res, next) {
       // Invalid site key — continue to other methods
     }
 
-    // ─── 2. Host header → domain lookup ───
-    const host = (req.headers.host || '').split(':')[0].toLowerCase();
+    // ─── 2. Host / X-Forwarded-Host header → domain lookup ───
+    const host = getOriginalHost(req);
 
-    if (host && !isPlatformHost(req.headers.host || '')) {
+    if (host && !isPlatformHost(host)) {
       // Check cache first
       const cached = getCached(host);
       if (cached) {
@@ -84,20 +98,25 @@ async function resolveTenant(req, res, next) {
         setCache(host, site);
         req.siteKey = site.site_key;
         req.site = site;
+        console.log(`[resolveTenant] ✓ دومين ${host} → site_key: ${site.site_key} (${site.name || site.domain})`);
         return next();
       }
     }
 
     // ─── 3. Fallback to ENV SITE_KEY ───
-    // Always use ENV SITE_KEY as last resort (needed for setup checkout & payment gateways)
-    if (SITE_KEY) {
+    // Only use ENV SITE_KEY for platform hosts (localhost, nexiroflux.com, etc.)
+    // NEVER use fallback for external domains — it would mix tenants!
+    const rawHost = (req.headers.host || '').split(':')[0].toLowerCase();
+    if (SITE_KEY && isPlatformHost(rawHost)) {
       const site = await Site.findBySiteKey(SITE_KEY);
       req.siteKey = SITE_KEY;
       req.site = site || null;
+      console.log(`[resolveTenant] ✓ منصة (${rawHost}) → site_key: ${SITE_KEY}`);
       return next();
     }
 
-    // No tenant resolved — still continue (some routes don't need it e.g., /api/setup/provision)
+    // External domain not found in DB — no tenant
+    console.warn(`[resolveTenant] لم يتم العثور على موقع للدومين: ${host} (Host: ${req.headers.host}, X-Forwarded-Host: ${req.headers['x-forwarded-host'] || 'none'})`);
     req.siteKey = null;
     req.site = null;
     next();
