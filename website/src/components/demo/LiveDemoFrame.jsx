@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Configure via env: VITE_DEMO_STORE_URL=https://demo.nexiroflux.com
-const DEMO_STORE_URL = import.meta.env.VITE_DEMO_STORE_URL || '';
+// Demo store URL — override with VITE_DEMO_STORE_URL env var if needed
+const DEMO_STORE_URL = import.meta.env.VITE_DEMO_STORE_URL || 'https://demo.nexiroflux.com';
 
 const DEVICES = [
   { id: 'desktop', icon: '🖥️', label: 'Desktop', width: '100%' },
