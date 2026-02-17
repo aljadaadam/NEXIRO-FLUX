@@ -157,6 +157,24 @@ class Payment {
     );
     return rows;
   }
+
+  // ─── Pending Binance payments (global, for cron) ───
+  // Includes purchases and deposits; wallet credit will only apply to deposits.
+  static async findPendingBinancePaymentsGlobal({ limit = 50 } = {}) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const [rows] = await pool.query(
+      `SELECT id, site_key, customer_id, payment_gateway_id, amount, currency, payment_method, external_id, status, type, created_at
+       FROM payments
+       WHERE status = 'pending'
+         AND payment_method = 'binance'
+         AND external_id IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT ?`,
+      [Number(limit) || 50]
+    );
+    return rows;
+  }
 }
 
 module.exports = Payment;

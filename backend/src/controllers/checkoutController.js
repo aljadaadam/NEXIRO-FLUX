@@ -336,6 +336,12 @@ async function cancelCallback(req, res) {
 // ─── Binance Pay Webhook ───
 async function binanceWebhook(req, res) {
   try {
+    // If you prefer query-only confirmation, disable webhook side-effects.
+    // Binance will retry webhooks if it does not get SUCCESS, so we still return SUCCESS.
+    if ((process.env.DISABLE_BINANCE_WEBHOOK || '').toLowerCase() === 'true') {
+      return res.json({ returnCode: 'SUCCESS', returnMessage: 'Webhook disabled (query-only mode)' });
+    }
+
     const { bizType, data: webhookData } = req.body;
 
     if (bizType !== 'PAY') {
@@ -367,23 +373,41 @@ async function binanceWebhook(req, res) {
     }
 
     const binanceGateway = await PaymentGateway.findByType('binance', siteKey);
-    if (binanceGateway?.config) {
-      const binance = new BinancePayProcessor(binanceGateway.config);
-      const isValid = binance.verifyWebhook(timestamp, nonce, req.body, signature);
-      if (!isValid) {
-        console.warn('Binance Webhook: invalid signature for payment', payment.id);
-        return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Invalid signature' });
-      }
-    } else {
+    if (!binanceGateway?.config) {
+      // Fail closed: never accept a payment confirmation without having a secret to verify the signature.
       console.warn('Binance Webhook: no gateway config found for site', siteKey);
+      return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Gateway not configured' });
+    }
+
+    const binance = new BinancePayProcessor(binanceGateway.config);
+    const isValid = binance.verifyWebhook(timestamp, nonce, req.body, signature);
+    if (!isValid) {
+      console.warn('Binance Webhook: invalid signature for payment', payment.id);
+      return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Invalid signature' });
     }
 
     if (webhookData.status === 'PAID') {
+      // Basic integrity check: amount should match what we created the order for.
+      const paidAmount = webhookData.totalFee;
+      if (paidAmount !== undefined && paidAmount !== null) {
+        const expected = Number(payment.amount);
+        const actual = Number(paidAmount);
+        if (Number.isFinite(expected) && Number.isFinite(actual)) {
+          const diff = Math.abs(expected - actual);
+          if (diff > 0.01) {
+            console.warn('Binance Webhook: amount mismatch for payment', payment.id, 'expected', expected, 'actual', actual);
+            return res.status(400).json({ returnCode: 'FAIL', returnMessage: 'Amount mismatch' });
+          }
+        }
+      }
+
       await Payment.updateStatus(payment.id, siteKey, 'completed');
       await Payment.updateMeta(payment.id, siteKey, {
         binance_transaction_id: webhookData.transactionId,
         paid_amount: webhookData.totalFee,
+        paid_currency: 'USDT',
         paid_at: new Date().toISOString(),
+        confirmed_via: 'webhook',
       });
 
       // Credit wallet if this was a deposit
@@ -584,6 +608,13 @@ async function checkPaymentStatus(req, res) {
           const result = await binance.queryOrder(payment.external_id);
           if (result.success) {
             await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
+            await Payment.updateMeta(payment.id, getSiteKey(req), {
+              binance_transaction_id: result.transactionId,
+              paid_amount: result.amount,
+              paid_currency: result.currency,
+              paid_at: new Date().toISOString(),
+              confirmed_via: 'status_query',
+            });
             await creditWalletOnce({ paymentId: payment.id, siteKey: getSiteKey(req) });
             return res.json({ status: 'completed', message: '✅ تم تأكيد الدفع' });
           }

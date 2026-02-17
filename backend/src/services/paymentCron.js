@@ -7,7 +7,7 @@ let timer = null;
 
 async function tick() {
   try {
-    const pending = await Payment.findPendingBinanceDepositsGlobal({ limit: 40 });
+    const pending = await Payment.findPendingBinancePaymentsGlobal({ limit: 60 });
     if (!Array.isArray(pending) || pending.length === 0) return;
 
     // Cache gateway per site
