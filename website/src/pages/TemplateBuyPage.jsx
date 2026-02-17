@@ -39,7 +39,34 @@ export default function TemplateBuyPage() {
   const templateId = params.get('template') || 'digital-services-store';
   const plan = params.get('plan') || 'monthly';
 
-  const template = staticTemplates.find(t => t.id === templateId);
+  // Start with static data, then override with API data
+  const [template, setTemplate] = useState(() => staticTemplates.find(t => t.id === templateId));
+
+  // Fetch live prices from API (same logic as TemplatePreviewPage)
+  useEffect(() => {
+    let cancelled = false;
+    api.getPublicProducts()
+      .then(res => {
+        if (cancelled) return;
+        const staticT = staticTemplates.find(tp => tp.id === templateId);
+        const apiByName = new Map((res.products || []).map(p => [p.name?.trim(), p]));
+        const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
+        if (live && staticT) {
+          const p = parseFloat(live.price);
+          setTemplate({
+            ...staticT,
+            _apiId: live.id,
+            name: live.name || staticT.name,
+            description: live.description || staticT.description,
+            price: p ? { monthly: p, yearly: p * 10, lifetime: p * 25 } : staticT.price,
+            image: live.image || staticT.image,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [templateId]);
+
   const templateName = isRTL ? (template?.name || templateId) : (template?.nameEn || templateId);
   const price = template?.price?.[plan] || 0;
   const planLabel = isRTL ? planLabels[plan]?.ar : planLabels[plan]?.en;

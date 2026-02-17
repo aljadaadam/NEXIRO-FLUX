@@ -38,7 +38,7 @@ export default function PricingSection() {
     {
       name: isRTL ? 'سنوي' : 'Yearly',
       description: isRTL ? 'وفّر حتى 25% مع الاشتراك السنوي' : 'Save up to 25% with yearly subscription',
-      startPrice: 129,
+      startPrice: 149,
       suffix: isRTL ? '/سنة' : '/yr',
       saveBadge: isRTL ? 'وفّر 25%' : 'Save 25%',
       features: isRTL
@@ -52,7 +52,7 @@ export default function PricingSection() {
     {
       name: isRTL ? 'مدى الحياة' : 'Lifetime',
       description: isRTL ? 'ادفع مرة واحدة واستمتع للأبد' : 'Pay once and enjoy forever',
-      startPrice: 249,
+      startPrice: 372.5,
       suffix: '',
       features: isRTL
         ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي مدى الحياة', 'تخزين غير محدود', 'تحديثات مدى الحياة', 'تحليلات متقدمة', 'بدون إعلانات', 'API كامل', 'نسخ احتياطية يومية', 'CDN عالمي', 'حماية DDoS']

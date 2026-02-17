@@ -31,8 +31,30 @@ export default function AdminTemplates() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [saving, setSaving] = useState(false);
 
-  // Try to get live data from API, merge with static templates
-  useEffect(() => {
+  // Load live data from API on mount
+  useEffect(() => { refreshFromApi(); }, []);
+
+  const filtered = templates.filter(t => {
+    const name = (isRTL ? t.name : t.nameEn) || t.name || '';
+    const desc = (isRTL ? t.description : t.descriptionEn) || t.description || '';
+    const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || desc.toLowerCase().includes(search.toLowerCase());
+    const status = t.status || (t.comingSoon ? 'coming-soon' : 'active');
+    const matchesStatus = filterStatus === 'all' || status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const startEdit = (template) => {
+    setEditingId(template.id);
+    setEditForm({ ...template });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  // Fetch live data from API
+  const refreshFromApi = () => {
     api.getPublicProducts()
       .then(res => {
         if (res.products?.length > 0) {
@@ -60,16 +82,12 @@ export default function AdminTemplates() {
             return { ...st, status: st.comingSoon ? 'coming-soon' : 'active' };
           });
 
-          // Add API products not matched to static templates
           apiProducts.forEach(p => {
             if (!matchedApiNames.has(p.name?.trim())) {
               const price = parseFloat(p.price) || 0;
               merged.push({
-                id: p.id,
-                name: p.name,
-                nameEn: p.name,
-                description: p.description || '',
-                descriptionEn: p.description || '',
+                id: p.id, name: p.name, nameEn: p.name,
+                description: p.description || '', descriptionEn: p.description || '',
                 category: p.category || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
                 price: { monthly: price, yearly: price * 10, lifetime: price * 25 },
@@ -79,40 +97,10 @@ export default function AdminTemplates() {
               });
             }
           });
-
           setTemplates(merged);
-        } else {
-          setTemplates(staticTemplates.map(st => ({
-            ...st,
-            status: st.comingSoon ? 'coming-soon' : 'active',
-          })));
         }
       })
-      .catch(() => {
-        setTemplates(staticTemplates.map(st => ({
-          ...st,
-          status: st.comingSoon ? 'coming-soon' : 'active',
-        })));
-      });
-  }, []);
-
-  const filtered = templates.filter(t => {
-    const name = (isRTL ? t.name : t.nameEn) || t.name || '';
-    const desc = (isRTL ? t.description : t.descriptionEn) || t.description || '';
-    const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || desc.toLowerCase().includes(search.toLowerCase());
-    const status = t.status || (t.comingSoon ? 'coming-soon' : 'active');
-    const matchesStatus = filterStatus === 'all' || status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const startEdit = (template) => {
-    setEditingId(template.id);
-    setEditForm({ ...template });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditForm({});
+      .catch(() => {});
   };
 
   const saveEdit = async () => {
@@ -126,12 +114,10 @@ export default function AdminTemplates() {
         price: editForm.price?.monthly || editForm.price,
         image: editForm.image,
       });
-      // Update locally
-      setTemplates(prev => prev.map(t =>
-        t.id === editingId ? { ...t, ...editForm } : t
-      ));
       setEditingId(null);
       setEditForm({});
+      // Re-fetch from API to show actual saved prices
+      refreshFromApi();
     } catch {
       // If API fails, still update locally
       setTemplates(prev => prev.map(t =>
@@ -266,16 +252,26 @@ export default function AdminTemplates() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'السعر الشهري' : 'Monthly Price'}</label>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'السعر الشهري ($)' : 'Monthly Price ($)'}</label>
                       <input
                         type="number"
+                        step="0.01"
                         value={editForm.price?.monthly || ''}
-                        onChange={e => setEditForm(f => ({
-                          ...f,
-                          price: { ...f.price, monthly: Number(e.target.value) }
-                        }))}
+                        onChange={e => {
+                          const m = Number(e.target.value);
+                          setEditForm(f => ({
+                            ...f,
+                            price: { monthly: m, yearly: +(m * 10).toFixed(2), lifetime: +(m * 25).toFixed(2) }
+                          }));
+                        }}
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
                       />
+                      {editForm.price?.monthly > 0 && (
+                        <div className="flex gap-3 mt-1.5 text-[10px] text-dark-500">
+                          <span>{isRTL ? 'سنوي' : 'Yearly'}: ${(editForm.price.monthly * 10).toFixed(2)}</span>
+                          <span>{isRTL ? 'مدى الحياة' : 'Lifetime'}: ${(editForm.price.monthly * 25).toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'رابط الصورة' : 'Image URL'}</label>
