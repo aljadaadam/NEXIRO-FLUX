@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/providers/ThemeProvider';
 import Sidebar from '@/components/admin/Sidebar';
@@ -111,15 +111,25 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // ─── التحقق من مفتاح لوحة الأدمن (admin_slug) ───
-  const isDemo = typeof window !== 'undefined' && (
-    new URLSearchParams(window.location.search).get('demo') === '1' ||
-    sessionStorage.getItem('demo_mode') === '1'
-  );
-  if (isDemo && typeof window !== 'undefined') {
-    sessionStorage.setItem('demo_mode', '1');
-  }
+  // ─── Extract stable primitive values from searchParams (avoid object reference changes) ───
+  const urlKey = searchParams.get('key') || '';
+  const isDemoParam = searchParams.get('demo') === '1';
 
+  // ─── Stable demo mode check ───
+  const isDemo = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    if (isDemoParam) return true;
+    return sessionStorage.getItem('demo_mode') === '1';
+  }, [isDemoParam]);
+
+  // Store demo flag in sessionStorage (inside useEffect, not during render)
+  useEffect(() => {
+    if (isDemo && typeof window !== 'undefined') {
+      sessionStorage.setItem('demo_mode', '1');
+    }
+  }, [isDemo]);
+
+  // ─── التحقق من مفتاح لوحة الأدمن (admin_slug) ───
   useEffect(() => {
     if (isDemo) {
       setSlugVerified(true);
@@ -127,12 +137,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     }
 
     async function verifySlug() {
-      // 1. Check URL param ?key=xxx
-      const urlKey = searchParams.get('key') || '';
-      // 2. Check sessionStorage (already verified in this session)
       const storedSlug = sessionStorage.getItem('admin_slug');
-
       const slugToCheck = urlKey || storedSlug;
+
       if (!slugToCheck) {
         setSlugVerified(false);
         return;
@@ -150,9 +157,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         }
       } catch { /* ignore */ }
 
-      // URL slug is invalid
+      // URL slug is invalid — try stored slug if different
       if (storedSlug && storedSlug !== urlKey) {
-        // Try stored slug if URL key failed
         try {
           const res = await fetch(`/api/customization/verify-slug/${storedSlug}`, { cache: 'no-store' });
           if (res.ok) {
@@ -170,7 +176,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     }
 
     verifySlug();
-  }, [isDemo, searchParams]);
+  }, [isDemo, urlKey]); // ← primitive string, stable reference
 
   // Check admin JWT auth — if no token, show login form (not redirect)
   useEffect(() => {
@@ -180,6 +186,19 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     const key = localStorage.getItem('admin_key');
     setAuthed(!!key);
   }, [isDemo, slugVerified]);
+
+  // Lock body scroll when mobile drawer is open (must be before conditional returns to respect Rules of Hooks)
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileDrawerOpen]);
 
   // Admin login handler
   async function handleAdminLogin(e: React.FormEvent) {
@@ -378,20 +397,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     setCurrentPage(id);
     setMobileDrawerOpen(false);
   };
-
-  useEffect(() => {
-    if (mobileDrawerOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileDrawerOpen]);
-
-
 
   const pages: Record<string, React.ReactNode> = {
     overview: <OverviewPage key={`overview-${overviewReload}`} theme={currentTheme} />,

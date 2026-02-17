@@ -45,11 +45,17 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
     },
   });
   if (res.status === 401 || res.status === 403) {
-    // In demo mode (?demo=1), don't redirect to login — just throw so the page can handle gracefully
+    // In demo mode (?demo=1), don't redirect — just throw so the page can handle gracefully
     const isDemoMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
     if (!isDemoMode && typeof window !== 'undefined') {
       localStorage.removeItem('admin_key');
-      window.location.href = '/login';
+      // Redirect to admin login — use stored slug to show the admin login form
+      const slug = sessionStorage.getItem('admin_slug') || '';
+      if (slug) {
+        window.location.href = `/admin?key=${slug}`;
+      } else {
+        window.location.href = '/admin';
+      }
     }
     throw new Error('Unauthorized');
   }
