@@ -205,6 +205,22 @@ const en: Record<string, string> = {
   'تحقق من الدفع': 'Verify Payment',
   'جاري التحقق من البلوكتشين...': 'Verifying on blockchain...',
   'لم يتم العثور على تحويل مطابق بعد': 'No matching transfer found yet',
+  'أرسل بالضبط': 'Send exactly',
+  'تحقق': 'Verify',
+  'نسخ العنوان': 'Copy Address',
+  'نسخ المبلغ': 'Copy Amount',
+  'تم النسخ': 'Copied',
+  'أرسل المبلغ بالضبط عبر الشبكة الصحيحة. المبلغ فريد لعمليتك.': 'Send the exact amount via the correct network. The amount is unique to your transaction.',
+  '✅ أرسلت المبلغ — التالي': '✅ I sent the amount — Next',
+  'المبلغ المرسل': 'Amount Sent',
+  'هاش المعاملة (Transaction Hash)': 'Transaction Hash',
+  'انسخ TX Hash من محفظتك والصقه هنا': 'Copy TX Hash from your wallet and paste it here',
+  'سيتم الكشف عن التحويل تلقائياً': 'Transfer will be detected automatically',
+  'اضغط زر التحقق بعد إتمام التحويل': 'Click verify after completing the transfer',
+  '🔍 تحقق من الدفع': '🔍 Verify Payment',
+  'جاري التحقق...': 'Verifying...',
+  '← العودة لبيانات التحويل': '→ Back to transfer details',
+  'يرجى إدخال هاش المعاملة (Transaction Hash)': 'Please enter the Transaction Hash',
   'البنك': 'Bank',
   'اسم الحساب': 'Account Name',
   'العملة': 'Currency',

@@ -75,6 +75,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   const [usdtChecking, setUsdtChecking] = useState(false);
   const [usdtCountdown, setUsdtCountdown] = useState(0);
   const [usdtTxHash, setUsdtTxHash] = useState('');
+  const [usdtSubStep, setUsdtSubStep] = useState<1 | 2>(1); // 1=send info, 2=verify
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
@@ -327,12 +328,14 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
         {/* Step 2: Payment Details (from real checkout API) */}
         {step === 2 && checkoutData && (
           <div>
-            {/* Amount banner */}
+            {/* Amount banner (hide for USDT - it has its own) */}
+            {checkoutData.method !== 'manual_crypto' && (
             <div style={{ background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, borderRadius: 14, padding: '1.25rem', marginBottom: 20, color: '#fff', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: 4 }}>{t('المبلغ المطلوب')}</p>
               <p style={{ fontSize: '2rem', fontWeight: 800 }}>${amount}</p>
               <p style={{ fontSize: '0.78rem', opacity: 0.7, marginTop: 4 }}>{t('عبر')} {selectedGw?.name || method}</p>
             </div>
+            )}
 
             {/* ── PayPal: redirect happened, show waiting ── */}
             {checkoutData.method === 'redirect' && (
@@ -383,146 +386,237 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
-            {/* ── USDT: manual crypto with QR code + unique amount ── */}
+            {/* ── USDT: 2-Step Flow ── */}
             {checkoutData.method === 'manual_crypto' && (
               <div>
-                {/* Countdown */}
-                {usdtCountdown > 0 && (
-                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', borderRadius: 10, background: usdtCountdown < 300 ? '#fef2f2' : '#f0fdf4' }}>
-                      <Clock size={14} color={usdtCountdown < 300 ? '#ef4444' : '#16a34a'} />
-                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: usdtCountdown < 300 ? '#ef4444' : '#16a34a', fontFamily: 'monospace' }}>{formatTime(usdtCountdown)}</span>
+                {/* Step indicator + Timer row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#26a17b', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>1</div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 1 ? 700 : 400, color: usdtSubStep === 1 ? '#0b1020' : '#94a3b8' }}>{t('إرسال')}</span>
+                    </div>
+                    <div style={{ width: 20, height: 1, background: '#e2e8f0' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: usdtSubStep === 2 ? '#3b82f6' : '#e2e8f0', color: usdtSubStep === 2 ? '#fff' : '#94a3b8', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>2</div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 2 ? 700 : 400, color: usdtSubStep === 2 ? '#0b1020' : '#94a3b8' }}>{t('تحقق')}</span>
                     </div>
                   </div>
-                )}
-
-                {/* QR Code للعنوان */}
-                {checkoutData.walletAddress && (
-                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                    <div style={{ display: 'inline-block', background: '#fff', borderRadius: 16, padding: 16, border: '2px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkoutData.walletAddress)}&bgcolor=ffffff&color=000000&margin=8`}
-                        alt="QR Code"
-                        width={200}
-                        height={200}
-                        style={{ display: 'block', borderRadius: 8 }}
-                      />
+                  {usdtCountdown > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: usdtCountdown < 300 ? '#fef2f2' : '#f0fdf4' }}>
+                      <Clock size={12} color={usdtCountdown < 300 ? '#ef4444' : '#16a34a'} />
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: usdtCountdown < 300 ? '#ef4444' : '#16a34a', fontFamily: 'monospace' }}>{formatTime(usdtCountdown)}</span>
                     </div>
-                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 8 }}>{t('امسح الباركود لنسخ العنوان')}</p>
-                  </div>
-                )}
-
-                {/* المبلغ الفريد - بارز */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #26a17b15, #26a17b08)',
-                  border: '2px solid #26a17b',
-                  borderRadius: 14,
-                  padding: '1.25rem',
-                  marginBottom: 16,
-                  textAlign: 'center',
-                }}>
-                  <p style={{ fontSize: '0.78rem', color: '#166534', marginBottom: 6, fontWeight: 600 }}>
-                    {t('⚠️ أرسل هذا المبلغ بالضبط')}
-                  </p>
-                  <p style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0b1020', fontFamily: 'monospace', letterSpacing: 1 }}>
-                    {checkoutData.amount} <span style={{ fontSize: '1rem', color: '#26a17b' }}>USDT</span>
-                  </p>
-                  {checkoutData.originalAmount && String(checkoutData.originalAmount) !== String(checkoutData.amount) && (
-                    <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 6 }}>
-                      {t('المبلغ الأصلي')}: ${checkoutData.originalAmount} + {t('رسوم تحقق')}: ${(Number(checkoutData.amount) - Number(checkoutData.originalAmount)).toFixed(2)}
-                    </p>
                   )}
-                  <div style={{ marginTop: 10, background: '#fef2f2', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
-                    <p style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700 }}>
-                      {t('المبلغ فريد لعمليتك — أرسل المبلغ كما هو بالضبط للتحقق التلقائي')}
-                    </p>
-                  </div>
                 </div>
 
-                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
-                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Lock size={14} color={currentTheme.primary} /> {t('بيانات التحويل')}
-                  </h4>
-                  {[
-                    { label: t('عنوان المحفظة'), value: checkoutData.walletAddress || '—', copyable: true },
-                    { label: t('الشبكة'), value: checkoutData.network || '—', copyable: false },
-                    { label: t('المبلغ المطلوب'), value: `${checkoutData.amount || amount} USDT`, copyable: true },
-                  ].map((item, i, arr) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: '65%' }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
-                        {item.copyable && (
+                {/* ── Sub-Step 1: Send ── */}
+                {usdtSubStep === 1 && (
+                  <div>
+                    {/* Amount + Network compact header */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #26a17b, #1a8a68)',
+                      borderRadius: 16,
+                      padding: '1.2rem',
+                      marginBottom: 14,
+                      color: '#fff',
+                      textAlign: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+                      <p style={{ fontSize: '0.72rem', opacity: 0.85, marginBottom: 4 }}>{t('أرسل بالضبط')}</p>
+                      <p style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'monospace', letterSpacing: 1 }}>
+                        {checkoutData.amount} <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.9 }}>USDT</span>
+                      </p>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, padding: '3px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.15)', fontSize: '0.72rem' }}>
+                        <span>{checkoutData.network}</span>
+                      </div>
+                      {checkoutData.originalAmount && String(checkoutData.originalAmount) !== String(checkoutData.amount) && (
+                        <p style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: 6 }}>
+                          ${checkoutData.originalAmount} + {t('تحقق')}: ${(Number(checkoutData.amount) - Number(checkoutData.originalAmount)).toFixed(3)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* QR + Address compact card */}
+                    <div style={{
+                      background: '#fff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 14,
+                      padding: '1rem',
+                      marginBottom: 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                    }}>
+                      {/* QR Code - smaller */}
+                      {checkoutData.walletAddress && (
+                        <div style={{ flexShrink: 0, background: '#fff', borderRadius: 10, padding: 6, border: '1px solid #f1f5f9' }}>
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(checkoutData.walletAddress)}&bgcolor=ffffff&color=000000&margin=4`}
+                            alt="QR"
+                            width={100}
+                            height={100}
+                            style={{ display: 'block', borderRadius: 6 }}
+                          />
+                        </div>
+                      )}
+                      {/* Address + Copy */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 4 }}>{t('عنوان المحفظة')}</p>
+                        <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.4, direction: 'ltr', textAlign: 'left' }}>
+                          {checkoutData.walletAddress}
+                        </p>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                           <button
                             onClick={() => {
-                              const text = item.value.replace(' USDT', '');
-                              navigator.clipboard.writeText(text).then(() => {
-                                const btn = document.activeElement as HTMLButtonElement;
-                                if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '📋'; }, 1500); }
-                              });
+                              navigator.clipboard.writeText(checkoutData.walletAddress || '');
+                              const el = document.getElementById('copy-addr-btn');
+                              if (el) { el.textContent = '✓ ' + t('تم النسخ'); setTimeout(() => { el.textContent = '📋 ' + t('نسخ العنوان'); }, 1500); }
                             }}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', padding: 2, flexShrink: 0 }}
-                            title={t('نسخ')}
-                          >📋</button>
-                        )}
+                            id="copy-addr-btn"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', color: '#334155', fontFamily: 'inherit' }}
+                          >📋 {t('نسخ العنوان')}</button>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(String(checkoutData.amount || ''));
+                              const el = document.getElementById('copy-amt-btn');
+                              if (el) { el.textContent = '✓'; setTimeout(() => { el.textContent = '📋 ' + t('نسخ المبلغ'); }, 1500); }
+                            }}
+                            id="copy-amt-btn"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', color: '#334155', fontFamily: 'inherit' }}
+                          >📋 {t('نسخ المبلغ')}</button>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-                {checkoutData.instructions && (
-                  <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
-                    <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>{typeof checkoutData.instructions === 'string' ? checkoutData.instructions : checkoutData.instructions?.ar || ''}</p>
-                  </div>
-                )}
 
-                {/* Transaction Hash input for BEP20/ERC20 */}
-                {(checkoutData.network === 'BEP20' || checkoutData.network === 'ERC20') && (
-                  <div style={{
-                    background: '#f0f9ff',
-                    border: '1.5px solid #3b82f6',
-                    borderRadius: 12,
-                    padding: '1rem',
-                    marginBottom: 16,
-                  }}>
-                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e40af', display: 'block', marginBottom: 8 }}>
-                      {t('هاش المعاملة (Transaction Hash)')} *
-                    </label>
-                    <p style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: 8, lineHeight: 1.5 }}>
-                      {t('بعد إرسال USDT، انسخ هاش المعاملة (TX Hash) من محفظتك والصقه هنا')}
-                    </p>
-                    <input
-                      type="text"
-                      value={usdtTxHash}
-                      onChange={e => setUsdtTxHash(e.target.value)}
-                      placeholder="0x..."
-                      dir="ltr"
+                    {/* Warning note - compact */}
+                    <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.6rem 0.8rem', marginBottom: 14, display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>⚠️</span>
+                      <p style={{ fontSize: '0.7rem', color: '#92400e', lineHeight: 1.5 }}>
+                        {t('أرسل المبلغ بالضبط عبر الشبكة الصحيحة. المبلغ فريد لعمليتك.')}
+                      </p>
+                    </div>
+
+                    {/* "I've sent" button */}
+                    <button
+                      onClick={() => setUsdtSubStep(2)}
+                      disabled={usdtCountdown <= 0}
                       style={{
-                        width: '100%',
-                        padding: '0.65rem 0.75rem',
-                        borderRadius: 8,
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.82rem',
-                        fontFamily: 'monospace',
-                        background: '#fff',
-                        color: '#0b1020',
-                        outline: 'none',
-                        boxSizing: 'border-box',
+                        width: '100%', padding: '0.75rem', borderRadius: btnR,
+                        background: usdtCountdown <= 0 ? '#e2e8f0' : '#26a17b', color: usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                        border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtCountdown <= 0 ? 'not-allowed' : 'pointer',
+                        fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       }}
-                    />
+                    >
+                      {usdtCountdown <= 0 ? t('انتهت المهلة') : <>{t('✅ أرسلت المبلغ — التالي')}</>}
+                    </button>
                   </div>
                 )}
 
-                <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
-                  width: '100%', padding: '0.75rem', borderRadius: btnR,
-                  background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : '#26a17b', color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
-                  border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtChecking ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                  {usdtChecking ? (
-                    <><div style={{ width: 14, height: 14, border: '2px solid #fff4', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> {t('جاري التحقق من البلوكتشين...')}</>
-                  ) : usdtCountdown <= 0 ? t('انتهت المهلة') : t('🔍 تحقق من الدفع')}
-                </button>
+                {/* ── Sub-Step 2: Verify ── */}
+                {usdtSubStep === 2 && (
+                  <div>
+                    {/* Summary mini card */}
+                    <div style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 12,
+                      padding: '0.8rem 1rem',
+                      marginBottom: 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}>
+                      <div>
+                        <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('المبلغ المرسل')}</p>
+                        <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', fontFamily: 'monospace' }}>{checkoutData.amount} USDT</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('الشبكة')}</p>
+                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#26a17b' }}>{checkoutData.network}</p>
+                      </div>
+                    </div>
+
+                    {/* TX Hash input for BEP20/ERC20 */}
+                    {(checkoutData.network === 'BEP20' || checkoutData.network === 'ERC20') && (
+                      <div style={{
+                        background: '#f0f9ff',
+                        border: '1.5px solid #3b82f6',
+                        borderRadius: 12,
+                        padding: '1rem',
+                        marginBottom: 14,
+                      }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e40af', display: 'block', marginBottom: 6 }}>
+                          {t('هاش المعاملة (Transaction Hash)')}
+                        </label>
+                        <p style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: 8, lineHeight: 1.4 }}>
+                          {t('انسخ TX Hash من محفظتك والصقه هنا')}
+                        </p>
+                        <input
+                          type="text"
+                          value={usdtTxHash}
+                          onChange={e => setUsdtTxHash(e.target.value)}
+                          placeholder="0x..."
+                          dir="ltr"
+                          style={{
+                            width: '100%',
+                            padding: '0.6rem 0.75rem',
+                            borderRadius: 8,
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.82rem',
+                            fontFamily: 'monospace',
+                            background: '#fff',
+                            color: '#0b1020',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* TRC20: auto-detection note */}
+                    {checkoutData.network === 'TRC20' && (
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '1rem', marginBottom: 14, textAlign: 'center' }}>
+                        <p style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 600 }}>
+                          {t('سيتم الكشف عن التحويل تلقائياً')}
+                        </p>
+                        <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 4 }}>
+                          {t('اضغط زر التحقق بعد إتمام التحويل')}
+                        </p>
+                      </div>
+                    )}
+
+                    {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginBottom: 10 }}>{submitError}</p>}
+
+                    {/* Verify button */}
+                    <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
+                      width: '100%', padding: '0.75rem', borderRadius: btnR,
+                      background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : '#3b82f6', color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                      border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtChecking ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      marginBottom: 10,
+                    }}>
+                      {usdtChecking ? (
+                        <><div style={{ width: 14, height: 14, border: '2px solid #fff4', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> {t('جاري التحقق...')}</>
+                      ) : usdtCountdown <= 0 ? t('انتهت المهلة') : t('🔍 تحقق من الدفع')}
+                    </button>
+
+                    {/* Back to step 1 */}
+                    <button
+                      onClick={() => setUsdtSubStep(1)}
+                      style={{
+                        width: '100%', padding: '0.55rem', borderRadius: btnR,
+                        background: 'transparent', color: '#64748b',
+                        border: '1px solid #e2e8f0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {t('← العودة لبيانات التحويل')}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
