@@ -272,7 +272,9 @@ async function provisionSite(req, res) {
       console.error('Activity log failed (non-blocking):', logErr.message);
     }
 
-    // ─── 5. إنشاء التخصيصات الافتراضية ───
+    // ─── 5. إنشاء التخصيصات الافتراضية + مفتاح الأدمن ───
+    const crypto = require('crypto');
+    const admin_slug = crypto.randomBytes(6).toString('hex');
     await Customization.upsert(site_key, {
       store_name,
       primary_color: primary_color || '#7c5cff',
@@ -283,6 +285,7 @@ async function provisionSite(req, res) {
       header_style: 'default',
       show_banner: true,
       font_family: 'Tajawal',
+      admin_slug,
     });
 
     // ─── 6. إنشاء توكن ───
@@ -341,6 +344,7 @@ async function provisionSite(req, res) {
       message: 'تم إنشاء الموقع وتفعيله بنجاح!',
       token,
       site_key,
+      admin_slug,
       user: {
         id: admin.id,
         name: admin.name,

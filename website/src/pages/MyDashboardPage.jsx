@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Globe, Settings, ExternalLink, CreditCard, Clock, CheckCircle2,
-  AlertTriangle, LayoutDashboard, Sparkles, Mail, Palette, Key,
+  AlertTriangle, LayoutDashboard, Sparkles, Mail, Key,
   ChevronRight, LogOut, RefreshCw, Loader2, Store, Shield, Zap, Wrench
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -502,8 +502,7 @@ export default function MyDashboardPage() {
           <h2 className="text-white font-bold mb-4">{isRTL ? 'روابط سريعة' : 'Quick Links'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[
-              { labelAr: 'لوحة تحكم المتجر', labelEn: 'Store Dashboard', icon: LayoutDashboard, href: '/admin', color: 'text-primary-400', bg: 'bg-primary-500/5 hover:bg-primary-500/10' },
-              { labelAr: 'تخصيص المظهر', labelEn: 'Customize Appearance', icon: Palette, href: '/admin/settings', color: 'text-pink-400', bg: 'bg-pink-500/5 hover:bg-pink-500/10' },
+              { labelAr: 'لوحة تحكم المتجر', labelEn: 'Store Dashboard', icon: LayoutDashboard, href: site?.domain ? `https://${site.domain}/login?token=${localStorage.getItem('nf_token') || ''}` : '#', color: 'text-primary-400', bg: 'bg-primary-500/5 hover:bg-primary-500/10', external: true },
               { labelAr: 'زيارة المتجر', labelEn: 'Visit Store', icon: ExternalLink, href: site?.domain ? `https://${site.domain}` : '#', color: 'text-cyan-400', bg: 'bg-cyan-500/5 hover:bg-cyan-500/10', external: true },
             ].map((link, i) => {
               const Icon = link.icon;
