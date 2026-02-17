@@ -5,18 +5,17 @@
  */
 const Payment = require('../models/Payment');
 const PaymentGateway = require('../models/PaymentGateway');
-const Customer = require('../models/Customer');
 const PayPalProcessor = require('../services/paypal');
 const BinancePayProcessor = require('../services/binancePay');
 const USDTProcessor = require('../services/usdt');
 const emailService = require('../services/email');
 const { SITE_KEY } = require('../config/env');
 const { verifyToken } = require('../utils/token');
+const { creditWalletOnce } = require('../services/walletCredit');
 
 // Helper: get siteKey from request (fallback to platform SITE_KEY for setup checkout)
 function getSiteKey(req) {
-  // Prefer token site_key if present (important when frontend domain isn't mapped by resolveTenant)
-  return req.user?.site_key || req.siteKey || SITE_KEY;
+  return req.siteKey || req.user?.site_key || SITE_KEY;
 }
 
 function tryAttachUserFromAuthHeader(req) {
@@ -33,42 +32,7 @@ function tryAttachUserFromAuthHeader(req) {
   }
 }
 
-async function creditWalletOnce({ paymentId, siteKey }) {
-  const payment = await Payment.findById(parseInt(paymentId));
-  if (!payment || payment.site_key !== siteKey) return { credited: false, reason: 'not_found' };
-  if (payment.status !== 'completed') return { credited: false, reason: 'not_completed' };
-  if (payment.type !== 'deposit') return { credited: false, reason: 'not_deposit' };
-  if (!payment.customer_id) return { credited: false, reason: 'no_customer' };
-
-  const meta = (await Payment.getMeta(payment.id, siteKey)) || {};
-  if (meta.wallet_credited_at) return { credited: false, reason: 'already_credited' };
-
-  const before = await Customer.findById(payment.customer_id);
-  await Customer.updateWallet(payment.customer_id, siteKey, parseFloat(payment.amount));
-  const after = await Customer.findById(payment.customer_id);
-
-  await Payment.updateMeta(payment.id, siteKey, {
-    wallet_credited_at: new Date().toISOString(),
-    wallet_old_balance: before?.wallet_balance,
-    wallet_new_balance: after?.wallet_balance,
-  });
-
-  try {
-    if (meta?.customer_email) {
-      await emailService.sendWalletUpdated({
-        to: meta.customer_email,
-        name: meta.customer_name || 'عميل',
-        oldBalance: Number(before?.wallet_balance || 0),
-        newBalance: Number(after?.wallet_balance || 0),
-        currency: meta.currency || payment.currency || 'USD',
-      });
-    }
-  } catch (e) {
-    // ignore email failures
-  }
-
-  return { credited: true };
-}
+// wallet credit helper lives in ../services/walletCredit
 
 // ─── بدء عملية الدفع ───
 async function initCheckout(req, res) {

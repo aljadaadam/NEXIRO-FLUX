@@ -96,38 +96,6 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
     return () => clearInterval(timer);
   }, [step, checkoutData]);
 
-  // Binance: poll status in background so user doesn't need to press return
-  useEffect(() => {
-    if (step !== 2) return;
-    if (!paymentId) return;
-    if (checkoutData?.method !== 'qr_or_redirect') return;
-    if (paymentConfirmed) return;
-
-    let stopped = false;
-    const startedAt = Date.now();
-    const maxMs = 3 * 60 * 1000; // 3 minutes
-
-    const tick = async () => {
-      if (stopped) return;
-      if (Date.now() - startedAt > maxMs) return;
-      try {
-        const res = await storeApi.checkPaymentStatus(paymentId);
-        if (res?.status === 'completed') {
-          setPaymentConfirmed(true);
-          setStep(4);
-          onSubmitted?.();
-          return;
-        }
-      } catch {
-        // ignore
-      }
-      setTimeout(tick, 5000);
-    };
-
-    tick();
-    return () => { stopped = true; };
-  }, [step, paymentId, checkoutData, paymentConfirmed, onSubmitted]);
-
   const presetAmounts = [5, 10, 25, 50, 100];
   const selectedGw = gateways.find(g => g.type === method);
 

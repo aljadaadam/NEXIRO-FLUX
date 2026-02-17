@@ -185,6 +185,10 @@ async function startServer() {
     const { startOrderCron } = require('./services/orderCron');
     startOrderCron();
 
+    // ─── تشغيل كرون تأكيد المدفوعات (Binance) ───
+    const { startPaymentCron } = require('./services/paymentCron');
+    startPaymentCron();
+
     app.listen(PORT, () => {
       console.log(`✅ السيرفر يعمل على http://localhost:${PORT}`);
       console.log(`📁 قاعدة البيانات المركزية: ${process.env.DB_NAME || 'nexiro_flux_central'}`);
