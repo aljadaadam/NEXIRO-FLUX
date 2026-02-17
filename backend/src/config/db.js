@@ -295,6 +295,7 @@ async function createTables() {
         secondary_currency VARCHAR(10) NULL COMMENT 'عملة العرض الثانوية',
         currency_rate DECIMAL(12, 4) NULL COMMENT 'سعر تحويل الدولار للعملة الثانوية',
         otp_enabled TINYINT(1) DEFAULT 0 COMMENT 'تفعيل كود OTP للزبائن',
+        store_language VARCHAR(5) DEFAULT 'ar' COMMENT 'لغة واجهة المتجر',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
