@@ -7,7 +7,7 @@ import Sidebar from '@/components/admin/Sidebar';
 import DashHeader from '@/components/admin/DashHeader';
 
 // ─── Admin Mobile Bottom Nav ───
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Zap, Mail, Lock, Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
 
 function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
   currentPage: string;
@@ -102,6 +102,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [slugVerified, setSlugVerified] = useState<boolean | null>(null); // null = checking
+  const [authed, setAuthed] = useState<boolean | null>(null); // null = checking
+
+  // Admin login form state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginShowPass, setLoginShowPass] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   // ─── التحقق من مفتاح لوحة الأدمن (admin_slug) ───
   const isDemo = typeof window !== 'undefined' && (
@@ -164,21 +172,56 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     verifySlug();
   }, [isDemo, searchParams]);
 
-  // Check admin JWT auth — if no token, redirect to login
+  // Check admin JWT auth — if no token, show login form (not redirect)
   useEffect(() => {
-    if (isDemo) return;
-    if (slugVerified === false) return; // will show 404
-    if (slugVerified === null) return; // still checking
+    if (isDemo) { setAuthed(true); return; }
+    if (slugVerified === false) return;
+    if (slugVerified === null) return;
     const key = localStorage.getItem('admin_key');
-    if (!key) {
-      // Redirect to login (no need to pass slug, user will login with credentials)
-      router.push('/login');
-    }
-  }, [router, isDemo, slugVerified]);
+    setAuthed(!!key);
+  }, [isDemo, slugVerified]);
 
-  // ─── Show 404 if slug not verified ───
+  // Admin login handler
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError('');
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('البريد الإلكتروني وكلمة المرور مطلوبان');
+      return;
+    }
+    setLoginLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword }),
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLoginError(data.error || 'حدث خطأ أثناء تسجيل الدخول');
+        setLoginLoading(false);
+        return;
+      }
+      if (data.user?.role !== 'admin') {
+        setLoginError('هذا الحساب ليس حساب مدير');
+        setLoginLoading(false);
+        return;
+      }
+      localStorage.setItem('admin_key', data.token);
+      if (data.admin_slug) {
+        sessionStorage.setItem('admin_slug', data.admin_slug);
+      }
+      setAuthed(true);
+      setLoginLoading(false);
+    } catch {
+      setLoginError('لا يمكن الاتصال بالخادم');
+      setLoginLoading(false);
+    }
+  }
+
+  // ─── Show loading while checking slug ───
   if (slugVerified === null) {
-    // Loading state
     return (
       <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
         <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -187,8 +230,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // ─── Show 404 if slug not verified ───
   if (slugVerified === false) {
-    // Show 404 page — hide admin existence
     return (
       <div dir="rtl" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f8fafc', fontFamily: 'Tajawal, sans-serif' }}>
         <div style={{ textAlign: 'center' }}>
@@ -196,6 +239,127 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: 24 }}>الصفحة غير موجودة</p>
           <a href="/" style={{ padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>العودة للرئيسية</a>
         </div>
+      </div>
+    );
+  }
+
+  // ─── Show admin login form if not authenticated ───
+  if (authed === null) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #0b1020 0%, #1a1040 100%)', fontFamily: 'Tajawal, sans-serif' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #374151', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (authed === false) {
+    return (
+      <div dir="rtl" style={{
+        minHeight: '100vh', display: 'grid', placeItems: 'center',
+        background: 'linear-gradient(135deg, #0b1020 0%, #1a1040 50%, #0f0a2a 100%)',
+        fontFamily: 'Tajawal, sans-serif', padding: '1rem',
+      }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
+              background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.primary}dd)`,
+              display: 'grid', placeItems: 'center',
+              boxShadow: `0 8px 32px ${currentTheme.primary}40`,
+            }}>
+              {logoPreview ? (
+                <img src={logoPreview} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain' }} />
+              ) : (
+                <Zap size={32} color="#fff" />
+              )}
+            </div>
+            <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: 6 }}>
+              {storeName || 'لوحة التحكم'}
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سجّل الدخول للوصول إلى لوحة الإدارة</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleAdminLogin} style={{
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 20, padding: '2rem',
+          }}>
+            {loginError && (
+              <div style={{
+                padding: '0.75rem 1rem', borderRadius: 12, marginBottom: 20,
+                background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                color: '#f87171', fontSize: '0.82rem', fontWeight: 600,
+              }}>
+                {loginError}
+              </div>
+            )}
+
+            {/* Email */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>
+                البريد الإلكتروني
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                <input
+                  type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+                  placeholder="admin@example.com" dir="ltr"
+                  style={{
+                    width: '100%', padding: '0.8rem 1rem', paddingRight: 42,
+                    borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.88rem',
+                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>
+                كلمة المرور
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                <input
+                  type={loginShowPass ? 'text' : 'password'} value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
+                  placeholder="••••••••" dir="ltr"
+                  style={{
+                    width: '100%', padding: '0.8rem 2.8rem 0.8rem 1rem', paddingRight: 42,
+                    borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.88rem',
+                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+                <button type="button" onClick={() => setLoginShowPass(!loginShowPass)} style={{
+                  position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4,
+                }}>
+                  {loginShowPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" disabled={loginLoading} style={{
+              width: '100%', padding: '0.85rem', borderRadius: 14, border: 'none',
+              background: loginLoading ? '#5a41c9' : `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.primary}dd)`,
+              color: '#fff', fontSize: '0.95rem', fontWeight: 700,
+              cursor: loginLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: `0 4px 20px ${currentTheme.primary}40`,
+              opacity: loginLoading ? 0.8 : 1,
+            }}>
+              {loginLoading ? <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite' }} /> : <LogIn size={18} />}
+              {loginLoading ? 'جاري الدخول...' : 'تسجيل الدخول'}
+            </button>
+          </form>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
