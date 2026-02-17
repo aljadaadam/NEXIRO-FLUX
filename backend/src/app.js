@@ -37,6 +37,7 @@ const globalLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { error: 'طلبات كثيرة جداً، حاول لاحقاً', errorEn: 'Too many requests, try again later' },
 });
 
@@ -46,14 +47,16 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { error: 'محاولات كثيرة، حاول بعد 15 دقيقة', errorEn: 'Too many attempts, try again in 15 minutes' },
-  keyGenerator: (req) => `${req.ip}:${req.siteKey || 'unknown'}`,
+  keyGenerator: (req) => req.ip,
 });
 
 // نسيان كلمة المرور: 5 محاولات / ساعة
 const resetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
+  validate: { xForwardedForHeader: false },
   message: { error: 'محاولات كثيرة، حاول بعد ساعة', errorEn: 'Too many attempts, try again in 1 hour' },
 });
 
@@ -61,6 +64,7 @@ const resetLimiter = rateLimit({
 const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
+  validate: { xForwardedForHeader: false },
   message: { error: 'محاولات OTP كثيرة، حاول لاحقاً', errorEn: 'Too many OTP attempts' },
 });
 
