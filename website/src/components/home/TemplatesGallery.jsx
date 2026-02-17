@@ -39,12 +39,14 @@ export default function TemplatesGallery() {
             if (live) {
               matchedApiNames.add(live.name?.trim());
               const price = parseFloat(live.price);
+              const py = live.price_yearly != null ? parseFloat(live.price_yearly) : (price ? price * 10 : null);
+              const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : (price ? price * 25 : null);
               return {
                 ...st,
                 _apiId: live.id,
                 name: live.name || st.name,
                 description: live.description || st.description,
-                price: price ? { monthly: price, yearly: price * 10, lifetime: price * 25 } : st.price,
+                price: price ? { monthly: price, yearly: py, lifetime: pl } : st.price,
                 image: live.image || st.image,
               };
             }
@@ -55,6 +57,8 @@ export default function TemplatesGallery() {
           apiProducts.forEach(p => {
             if (!matchedApiNames.has(p.name?.trim())) {
               const price = parseFloat(p.price) || 0;
+              const py = p.price_yearly != null ? parseFloat(p.price_yearly) : price * 10;
+              const pl = p.price_lifetime != null ? parseFloat(p.price_lifetime) : price * 25;
               merged.push({
                 id: p.id,
                 name: p.name,
@@ -63,7 +67,7 @@ export default function TemplatesGallery() {
                 descriptionEn: p.description || '',
                 category: p.category || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
-                price: { monthly: price, yearly: price * 10, lifetime: price * 25 },
+                price: { monthly: price, yearly: py, lifetime: pl },
                 features: [], featuresEn: [],
                 color: 'from-purple-500 to-indigo-600',
                 badge: null,

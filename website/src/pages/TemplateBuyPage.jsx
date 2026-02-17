@@ -53,12 +53,14 @@ export default function TemplateBuyPage() {
         const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
         if (live && staticT) {
           const p = parseFloat(live.price);
+          const py = live.price_yearly != null ? parseFloat(live.price_yearly) : (p ? p * 10 : null);
+          const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : (p ? p * 25 : null);
           setTemplate({
             ...staticT,
             _apiId: live.id,
             name: live.name || staticT.name,
             description: live.description || staticT.description,
-            price: p ? { monthly: p, yearly: p * 10, lifetime: p * 25 } : staticT.price,
+            price: p ? { monthly: p, yearly: py, lifetime: pl } : staticT.price,
             image: live.image || staticT.image,
           });
         }

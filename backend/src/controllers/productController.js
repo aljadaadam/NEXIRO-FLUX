@@ -168,6 +168,17 @@ async function updateProduct(req, res) {
       }
       updateData.price = normalizedPrice;
     }
+    // أسعار السنوي ومدى الحياة
+    const price_yearly = req.body.price_yearly;
+    if (price_yearly !== undefined) {
+      const val = Number.parseFloat(String(price_yearly).replace(/[$,\s]/g, ''));
+      updateData.price_yearly = (!Number.isNaN(val) && val > 0) ? val : null;
+    }
+    const price_lifetime = req.body.price_lifetime;
+    if (price_lifetime !== undefined) {
+      const val = Number.parseFloat(String(price_lifetime).replace(/[$,\s]/g, ''));
+      updateData.price_lifetime = (!Number.isNaN(val) && val > 0) ? val : null;
+    }
     if (service_type !== undefined) updateData.service_type = service_type;
     if (image !== undefined) updateData.image = image;
     if (status !== undefined) updateData.status = status;

@@ -67,12 +67,14 @@ export default function AdminTemplates() {
             if (live) {
               matchedApiNames.add(live.name?.trim());
               const price = parseFloat(live.price);
+              const py = live.price_yearly != null ? parseFloat(live.price_yearly) : (price ? price * 10 : null);
+              const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : (price ? price * 25 : null);
               return {
                 ...st,
                 name: live.name || st.name,
                 description: live.description || st.description,
                 price: price
-                  ? { monthly: price, yearly: price * 10, lifetime: price * 25 }
+                  ? { monthly: price, yearly: py, lifetime: pl }
                   : st.price,
                 image: live.image || st.image,
                 status: live.status || (st.comingSoon ? 'coming-soon' : 'active'),
@@ -85,15 +87,18 @@ export default function AdminTemplates() {
           apiProducts.forEach(p => {
             if (!matchedApiNames.has(p.name?.trim())) {
               const price = parseFloat(p.price) || 0;
+              const py = p.price_yearly != null ? parseFloat(p.price_yearly) : price * 10;
+              const pl = p.price_lifetime != null ? parseFloat(p.price_lifetime) : price * 25;
               merged.push({
                 id: p.id, name: p.name, nameEn: p.name,
                 description: p.description || '', descriptionEn: p.description || '',
                 category: p.category || 'digital-services',
                 image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
-                price: { monthly: price, yearly: price * 10, lifetime: price * 25 },
+                price: { monthly: price, yearly: py, lifetime: pl },
                 features: [], featuresEn: [],
                 color: 'from-purple-500 to-indigo-600',
                 status: p.status || 'active',
+                _apiId: p.id,
               });
             }
           });
@@ -112,6 +117,8 @@ export default function AdminTemplates() {
         name: editForm.name,
         description: editForm.description,
         price: editForm.price?.monthly || editForm.price,
+        price_yearly: editForm.price?.yearly || null,
+        price_lifetime: editForm.price?.lifetime || null,
         image: editForm.image,
       });
       setEditingId(null);
@@ -261,17 +268,41 @@ export default function AdminTemplates() {
                           const m = Number(e.target.value);
                           setEditForm(f => ({
                             ...f,
-                            price: { monthly: m, yearly: +(m * 10).toFixed(2), lifetime: +(m * 25).toFixed(2) }
+                            price: { ...f.price, monthly: m }
                           }));
                         }}
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
                       />
-                      {editForm.price?.monthly > 0 && (
-                        <div className="flex gap-3 mt-1.5 text-[10px] text-dark-500">
-                          <span>{isRTL ? 'سنوي' : 'Yearly'}: ${(editForm.price.monthly * 10).toFixed(2)}</span>
-                          <span>{isRTL ? 'مدى الحياة' : 'Lifetime'}: ${(editForm.price.monthly * 25).toFixed(2)}</span>
-                        </div>
-                      )}
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'السعر السنوي ($)' : 'Yearly Price ($)'}</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editForm.price?.yearly || ''}
+                        onChange={e => {
+                          setEditForm(f => ({
+                            ...f,
+                            price: { ...f.price, yearly: Number(e.target.value) }
+                          }));
+                        }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'سعر مدى الحياة ($)' : 'Lifetime Price ($)'}</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editForm.price?.lifetime || ''}
+                        onChange={e => {
+                          setEditForm(f => ({
+                            ...f,
+                            price: { ...f.price, lifetime: Number(e.target.value) }
+                          }));
+                        }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-primary-500/30 text-sm text-white outline-none"
+                      />
                     </div>
                     <div>
                       <label className="text-[10px] text-dark-500 mb-1 block">{isRTL ? 'رابط الصورة' : 'Image URL'}</label>

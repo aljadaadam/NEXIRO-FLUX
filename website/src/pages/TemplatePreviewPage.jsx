@@ -33,20 +33,25 @@ export default function TemplatePreviewPage() {
         const live = staticT ? apiByName.get(staticT.name?.trim()) : null;
         if (live && staticT) {
           const price = parseFloat(live.price);
+          const py = live.price_yearly != null ? parseFloat(live.price_yearly) : (price ? price * 10 : null);
+          const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : (price ? price * 25 : null);
           setTemplate({
             ...staticT,
             _apiId: live.id,
             name: live.name || staticT.name,
             description: live.description || staticT.description,
-            price: price ? { monthly: price, yearly: price * 10, lifetime: price * 25 } : staticT.price,
+            price: price ? { monthly: price, yearly: py, lifetime: pl } : staticT.price,
             image: live.image || staticT.image,
           });
         } else if (live) {
+          const price = parseFloat(live.price) || 0;
+          const py = live.price_yearly != null ? parseFloat(live.price_yearly) : price * 10;
+          const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : price * 25;
           setTemplate({
             id: live.id, name: live.name, nameEn: live.name,
             description: live.description || '', descriptionEn: live.description || '',
             image: live.image || '', features: [], featuresEn: [],
-            price: { monthly: live.price || 0, yearly: (live.price || 0) * 10, lifetime: (live.price || 0) * 25 },
+            price: { monthly: price, yearly: py, lifetime: pl },
           });
         }
       })
