@@ -58,7 +58,7 @@ export default function TerminalSetupPage() {
     welcome: isRTL ? 'مرحباً! شكراً على الشراء' : 'Welcome! Thanks for your purchase',
     welcomeSub: isRTL ? 'الآن دعنا نكمل إعداد موقعك' : "Now let's complete your site setup",
     domainLabel: isRTL ? 'أدخل رابط الدومين الخاص بك' : 'Enter your domain',
-    domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال magicdesign3.com' : 'Enter your domain e.g. magicdesign3.com',
+    domainPlaceholder: isRTL ? 'ادخل رابط الدومين الخاص بك  مثال nexiroflux.com' : 'Enter your domain e.g. nexiroflux.com',
     domainHint: isRTL ? 'وجّه الدومين إلى IP: 181.215.69.49 (سجل A) وتأكد أنه غير مرتبط باستضافة أخرى' : 'Point your domain to IP: 181.215.69.49 (A record) and make sure it is not linked to another hosting',
     checkDns: isRTL ? 'تحقق من الدومين' : 'Verify Domain',
     dnsOk: isRTL ? 'تم التحقق بنجاح! الدومين يشير لسيرفرنا' : 'Verified! Domain points to our server',
