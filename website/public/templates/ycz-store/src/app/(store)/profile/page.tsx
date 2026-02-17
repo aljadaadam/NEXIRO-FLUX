@@ -18,6 +18,7 @@ const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string 
   paypal:  { icon: '💳', color: '#003087', desc: 'تحويل عبر PayPal' },
   bank_transfer: { icon: '🏦', color: '#059669', desc: 'حوالة بنكية مباشرة' },
   usdt:    { icon: '💚', color: '#26a17b', desc: 'USDT — تيثر' },
+  wallet:  { icon: '📱', color: '#8b5cf6', desc: 'شحن عبر محفظة إلكترونية' },
 };
 
 // ─── Types for checkout response ───
@@ -51,6 +52,12 @@ type CheckoutResult = {
     currency?: string;
   };
   referenceId?: string;
+  // Wallet (info-only)
+  walletConfig?: {
+    instructions?: string;
+    contact_numbers?: string;
+    image_url?: string;
+  };
 };
 
 function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
@@ -103,6 +110,20 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   // ─── Start Checkout ───
   const handleStartCheckout = async () => {
     if (!amount || !method || !selectedGw) return;
+
+    // ─── Wallet type: info-only, no backend checkout ───
+    if (selectedGw.type === 'wallet') {
+      setCheckoutData({
+        success: true,
+        method: 'info_wallet',
+        paymentId: 0,
+        gatewayType: 'wallet',
+        walletConfig: selectedGw.config,
+      } as CheckoutResult);
+      setStep(2);
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -436,10 +457,51 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
-            {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
+            {/* ── Wallet: info-only, no checkout ── */}
+            {checkoutData.method === 'info_wallet' && checkoutData.walletConfig && (
+              <div>
+                {/* Image/Logo */}
+                {checkoutData.walletConfig.image_url && (
+                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                    <img src={checkoutData.walletConfig.image_url} alt={selectedGw?.name || ''} style={{ maxWidth: 140, maxHeight: 80, borderRadius: 12, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                  </div>
+                )}
 
-            {/* Back button for non-bank methods */}
-            {checkoutData.method !== 'manual_bank' && (
+                {/* Instructions */}
+                {checkoutData.walletConfig.instructions && (
+                  <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      📋 {t('تعليمات الشحن')}
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{checkoutData.walletConfig.instructions}</p>
+                  </div>
+                )}
+
+                {/* Contact Numbers */}
+                {checkoutData.walletConfig.contact_numbers && (
+                  <div style={{ background: '#f0fdf4', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 16 }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      📞 {t('أرقام التواصل للشحن')}
+                    </h4>
+                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020', direction: 'ltr', letterSpacing: 1 }}>{checkoutData.walletConfig.contact_numbers}</p>
+                  </div>
+                )}
+
+                {/* Info note */}
+                <div style={{ background: '#eff6ff', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>ℹ️</span>
+                  <p style={{ fontSize: '0.78rem', color: '#1e40af', lineHeight: 1.6 }}>{t('هذه البوابة للتواصل فقط. تواصل مع الأرقام أعلاه لإتمام عملية الشحن.')}</p>
+                </div>
+
+                <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{
+                  width: '100%', padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9',
+                  color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}>{t('← رجوع')}</button>
+              </div>
+            )}
+
+            {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
+            {checkoutData.method !== 'manual_bank' && checkoutData.method !== 'info_wallet' && (
               <button onClick={() => { setStep(1); setCheckoutData(null); setSubmitError(''); }} style={{
                 width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: '#f1f5f9',
                 color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',

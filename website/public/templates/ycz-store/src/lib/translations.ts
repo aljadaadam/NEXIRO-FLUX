@@ -330,6 +330,10 @@ const en: Record<string, string> = {
   // ─── Gateway Descriptions ───
   'تحويل عبر PayPal': 'Transfer via PayPal',
   'حوالة بنكية مباشرة': 'Direct Bank Transfer',
+  'شحن عبر محفظة إلكترونية': 'Top-up via E-Wallet',
+  'تعليمات الشحن': 'Charging Instructions',
+  'أرقام التواصل للشحن': 'Contact Numbers for Charging',
+  'هذه البوابة للتواصل فقط. تواصل مع الأرقام أعلاه لإتمام عملية الشحن.': 'This gateway is for contact only. Reach out to the numbers above to complete the charging process.',
 
   // ─── Meta ───
   'المتجر': 'Store',

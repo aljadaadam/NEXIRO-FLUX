@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/lib/api';
 
-type GatewayType = 'paypal' | 'bank_transfer' | 'usdt' | 'binance';
+type GatewayType = 'paypal' | 'bank_transfer' | 'usdt' | 'binance' | 'wallet';
 
 interface Gateway {
   id: number;
@@ -21,6 +21,7 @@ const GATEWAY_META: Record<GatewayType, { icon: string; label: string; labelEn: 
   paypal: { icon: '🔵', label: 'PayPal', labelEn: 'PayPal', desc: 'بطاقات ائتمان و PayPal' },
   bank_transfer: { icon: '🏦', label: 'التحويل البنكي', labelEn: 'Bank Transfer', desc: 'تحويل بنكي مباشر' },
   usdt: { icon: '💚', label: 'USDT', labelEn: 'USDT Crypto', desc: 'تيثر على شبكة Tron/ERC20/BEP20' },
+  wallet: { icon: '📱', label: 'محفظة إلكترونية', labelEn: 'E-Wallet', desc: 'شحن عبر محافظ إلكترونية (تعليمات فقط)' },
 };
 
 const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: string; placeholder: string; required?: boolean; options?: { value: string; label: string }[] }[]> = {
@@ -47,9 +48,14 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
     { key: 'iban', label: 'IBAN / رقم الحساب', placeholder: 'IQ...', required: true },
     { key: 'currency', label: 'عملة الحساب', placeholder: 'USD', required: true, options: [{ value: 'USD', label: 'USD ($)' }, { value: 'IQD', label: 'IQD (د.ع)' }, { value: 'SAR', label: 'SAR (ر.س)' }, { value: 'EUR', label: 'EUR (€)' }] },
   ],
+  wallet: [
+    { key: 'instructions', label: 'تعليمات الشحن', placeholder: 'اكتب تعليمات الشحن عبر هذه المحفظة...', required: true, type: 'textarea' },
+    { key: 'contact_numbers', label: 'أرقام التواصل للشحن', placeholder: 'مثال: 07701234567' },
+    { key: 'image_url', label: 'رابط صورة/لوغو المحفظة', placeholder: 'https://example.com/logo.png' },
+  ],
 };
 
-const AVAILABLE_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer'];
+const AVAILABLE_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer', 'wallet'];
 
 export default function PaymentsPage() {
   const [gateways, setGateways] = useState<Gateway[]>([]);
@@ -282,6 +288,17 @@ export default function PaymentsPage() {
                     {gw.config?.iban && <ConfigRow label="IBAN" value={maskString(gw.config.iban)} />}
                   </>
                 )}
+                {gw.type === 'wallet' && (
+                  <>
+                    {gw.config?.instructions && <ConfigRow label="التعليمات" value={gw.config.instructions.length > 40 ? gw.config.instructions.slice(0, 40) + '...' : gw.config.instructions} />}
+                    {gw.config?.contact_numbers && <ConfigRow label="التواصل" value={gw.config.contact_numbers} />}
+                    {gw.config?.image_url && (
+                      <div style={{ textAlign: 'center', marginTop: 4 }}>
+                        <img src={gw.config.image_url} alt="" style={{ maxWidth: 80, maxHeight: 40, borderRadius: 6, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Actions */}
@@ -371,6 +388,14 @@ export default function PaymentsPage() {
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
+                      ) : field.type === 'textarea' ? (
+                        <textarea
+                          value={formConfig[field.key] || ''}
+                          onChange={e => setFormConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.placeholder}
+                          rows={4}
+                          style={{ ...inputStyle, resize: 'vertical' as const, minHeight: 80 }}
+                        />
                       ) : (
                         <input
                           type={field.type || 'text'}
@@ -379,6 +404,11 @@ export default function PaymentsPage() {
                           placeholder={field.placeholder}
                           style={inputStyle}
                         />
+                      )}
+                      {field.key === 'image_url' && formConfig.image_url && (
+                        <div style={{ marginTop: 8, textAlign: 'center' }}>
+                          <img src={formConfig.image_url} alt="معاينة" style={{ maxWidth: 120, maxHeight: 60, borderRadius: 8, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                        </div>
                       )}
                     </div>
                   ))}

@@ -48,6 +48,12 @@ async function getEnabledGateways(req, res) {
           binance_id: gw.config.binance_id,
           binance_email: gw.config.binance_email,
         } : {}),
+        // Wallet - عرض تعليمات وأرقام تواصل وصورة
+        ...(gw.type === 'wallet' ? {
+          instructions: gw.config.instructions,
+          contact_numbers: gw.config.contact_numbers,
+          image_url: gw.config.image_url,
+        } : {}),
       } : null,
     }));
 
@@ -67,7 +73,7 @@ async function createGateway(req, res) {
       return res.status(400).json({ error: 'النوع والاسم مطلوبان' });
     }
 
-    const validTypes = ['paypal', 'bank_transfer', 'usdt', 'binance'];
+    const validTypes = ['paypal', 'bank_transfer', 'usdt', 'binance', 'wallet'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ error: `نوع غير صالح. الأنواع المتاحة: ${validTypes.join(', ')}` });
     }
@@ -134,6 +140,7 @@ const REQUIRED_CONFIG = {
   binance: ['api_key', 'api_secret', 'binance_id'],
   usdt: ['wallet_address', 'network'],
   bank_transfer: ['bank_name', 'account_holder', 'iban', 'currency'],
+  wallet: ['instructions'],
 };
 
 function getMissingFields(type, config) {
