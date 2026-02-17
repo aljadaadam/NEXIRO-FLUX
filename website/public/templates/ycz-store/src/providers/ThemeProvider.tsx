@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { COLOR_THEMES, ColorTheme, getTheme } from '@/lib/themes';
+import { translate, Language } from '@/lib/translations';
 
 interface ThemeContextType {
   themeId: string;
@@ -24,6 +25,11 @@ interface ThemeContextType {
   colorThemes: ColorTheme[];
   loaded: boolean;
   refetch: () => Promise<void>;
+  // ─── Language support ───
+  language: Language;
+  isRTL: boolean;
+  t: (key: string) => string;
+  dateLocale: string;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -41,9 +47,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [headerStyle, setHeaderStyle] = useState('default');
   const [showBanner, setShowBanner] = useState(true);
   const [fontFamily, setFontFamily] = useState('Tajawal');
+  const [language, setLanguage] = useState<Language>('ar');
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const fetchIdRef = useRef(0);
+
+  const isRTL = language === 'ar';
+  const dateLocale = language === 'ar' ? 'ar-EG' : 'en-US';
+  const t = useCallback((key: string) => translate(key, language), [language]);
+
+  // ─── Update <html> lang & dir dynamically ───
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const html = document.documentElement;
+    html.lang = language;
+    html.dir = isRTL ? 'rtl' : 'ltr';
+    // Switch font family for language
+    document.body.style.fontFamily = isRTL
+      ? 'Tajawal, Cairo, sans-serif'
+      : 'Inter, system-ui, -apple-system, sans-serif';
+  }, [language, isRTL]);
 
   // ─── 1. قراءة من localStorage كـ cache أولي (سريع)  ───
   useEffect(() => {
@@ -55,6 +78,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setHeaderStyle(safeGet('ycz_headerStyle', 'default'));
     setShowBanner(safeGet('ycz_showBanner', 'true') !== 'false');
     setFontFamily(safeGet('ycz_fontFamily', 'Tajawal'));
+    const cachedLang = safeGet('ycz_language', 'ar');
+    if (cachedLang === 'en' || cachedLang === 'ar') setLanguage(cachedLang);
     setMounted(true);
   }, []);
 
@@ -80,6 +105,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (c.header_style) setHeaderStyle(c.header_style);
         if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
         if (c.store_name) setStoreName(c.store_name);
+        if (c.store_language === 'en' || c.store_language === 'ar') setLanguage(c.store_language);
         // حفظ في localStorage كـ cache
         try {
           localStorage.setItem('ycz_configTimestamp', String(Date.now()));
@@ -110,8 +136,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('ycz_headerStyle', headerStyle);
       localStorage.setItem('ycz_showBanner', String(showBanner));
       localStorage.setItem('ycz_fontFamily', fontFamily);
+      localStorage.setItem('ycz_language', language);
     } catch { /* ignore */ }
-  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, mounted]);
+  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, mounted]);
 
   // ─── 4. حفظ التخصيص في الباك اند عند التعديل من الأدمن ───
   const saveToServer = useCallback(async () => {
@@ -152,6 +179,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       colorThemes: COLOR_THEMES,
       loaded,
       refetch: fetchFromServer,
+      language, isRTL, t, dateLocale,
     }}>
       {children}
     </ThemeContext.Provider>

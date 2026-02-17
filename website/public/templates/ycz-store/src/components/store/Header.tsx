@@ -6,15 +6,15 @@ import { Home, Package, ShoppingCart, HelpCircle, Bell, User, Zap } from 'lucide
 import { useTheme } from '@/providers/ThemeProvider';
 
 export default function Header() {
-  const { currentTheme, storeName, logoPreview, buttonRadius } = useTheme();
+  const { currentTheme, storeName, logoPreview, buttonRadius, t, isRTL } = useTheme();
   const pathname = usePathname();
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const navItems = [
-    { id: '/', label: 'الرئيسية', icon: Home },
-    { id: '/services', label: 'الخدمات', icon: Package },
-    { id: '/orders', label: 'طلباتي', icon: ShoppingCart },
-    { id: '/support', label: 'الدعم', icon: HelpCircle },
+    { id: '/', label: t('الرئيسية'), icon: Home },
+    { id: '/services', label: t('الخدمات'), icon: Package },
+    { id: '/orders', label: t('طلباتي'), icon: ShoppingCart },
+    { id: '/support', label: t('الدعم'), icon: HelpCircle },
   ];
 
   return (
@@ -41,7 +41,7 @@ export default function Header() {
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '0.5rem 1rem', borderRadius: btnR,
                 border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-                fontFamily: 'Tajawal, sans-serif',
+                fontFamily: 'inherit',
                 background: isActive ? currentTheme.primary : 'transparent',
                 color: isActive ? '#fff' : '#64748b',
                 transition: 'all 0.3s',
@@ -62,7 +62,7 @@ export default function Header() {
               <Zap size={18} color="#fff" />
             </div>
           )}
-          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', fontFamily: 'Tajawal, sans-serif' }}>{storeName}</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', fontFamily: 'inherit' }}>{storeName}</span>
         </Link>
 
         {/* Profile */}

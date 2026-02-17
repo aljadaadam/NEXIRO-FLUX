@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useTheme } from '@/providers/ThemeProvider';
 
 export default function Footer() {
-  const { storeName } = useTheme();
+  const { storeName, t } = useTheme();
 
   const legalLinks = [
-    { label: 'سياسة الخصوصية', href: '/privacy' },
-    { label: 'الشروط والأحكام', href: '/terms' },
-    { label: 'سياسة الاسترجاع', href: '/refund' },
+    { label: t('سياسة الخصوصية'), href: '/privacy' },
+    { label: t('الشروط والأحكام'), href: '/terms' },
+    { label: t('سياسة الاسترجاع'), href: '/refund' },
   ];
 
   return (
@@ -17,7 +17,7 @@ export default function Footer() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem' }}>
         <div className="store-footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', textAlign: 'center', marginBottom: '1.5rem' }}>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>نحن نقبل</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('نحن نقبل')}</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               {['Binance', 'PayPal', 'Bank'].map(m => (
                 <span key={m} style={{ padding: '0.3rem 0.75rem', borderRadius: 20, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>{m}</span>
@@ -25,7 +25,7 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>روابط مهمة</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('روابط مهمة')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {legalLinks.map(({ label, href }) => (
                 <Link
@@ -39,7 +39,7 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>تواصل معنا</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('تواصل معنا')}</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               {['📘', '📸', '💬'].map((s, i) => (
                 <span key={i} style={{ width: 36, height: 36, borderRadius: 10, background: '#f8fafc', display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: '1.1rem' }}>{s}</span>
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
         <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
           <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            © 2026 {storeName}. جميع الحقوق محفوظة — قالب من{' '}
+            © 2026 {storeName}. {t('جميع الحقوق محفوظة — قالب من')}{' '}
             <a href="https://www.nexiroflux.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>
               NEXIRO-FLUX
             </a>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Mail, DollarSign, Shield, Eye, EyeOff } from 'lucide-react';
+import { Save, Mail, DollarSign, Shield, Eye, EyeOff, Globe } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 
@@ -25,6 +25,9 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   // OTP
   const [otpEnabled, setOtpEnabled] = useState(false);
 
+  // Language
+  const [storeLanguage, setStoreLanguage] = useState<'ar' | 'en'>('ar');
+
   useEffect(() => {
     async function load() {
       try {
@@ -38,6 +41,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
           setSecondaryCurrency(res.secondary_currency || '');
           setCurrencyRate(res.currency_rate ? String(res.currency_rate) : '');
           setOtpEnabled(Boolean(res.otp_enabled));
+          setStoreLanguage(res.store_language === 'en' ? 'en' : 'ar');
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -58,6 +62,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
         secondary_currency: secondaryCurrency || null,
         currency_rate: currencyRate ? parseFloat(currencyRate) : null,
         otp_enabled: otpEnabled,
+        store_language: storeLanguage,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -68,7 +73,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   const inputStyle = {
     width: '100%', padding: '0.7rem 1rem', borderRadius: 10,
     border: '1px solid #e2e8f0', fontSize: '0.85rem',
-    fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' as const,
+    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' as const,
   };
   const labelStyle = { display: 'block' as const, fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 };
 
@@ -172,6 +177,88 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* ─── إعدادات اللغة ─── */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f9ff', display: 'grid', placeItems: 'center' }}>
+              <Globe size={18} color="#0ea5e9" />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>إعدادات اللغة</h3>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>لغة واجهة المتجر للزبائن</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => setStoreLanguage('ar')}
+              style={{
+                flex: 1, padding: '1rem', borderRadius: 12,
+                border: `2px solid ${storeLanguage === 'ar' ? theme.primary : '#e2e8f0'}`,
+                background: storeLanguage === 'ar' ? `${theme.primary}10` : '#f8fafc',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇸🇦</div>
+              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'ar' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة عربية (RTL)</p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الواجهة الافتراضية</p>
+            </button>
+            <button
+              onClick={() => setStoreLanguage('en')}
+              style={{
+                flex: 1, padding: '1rem', borderRadius: 12,
+                border: `2px solid ${storeLanguage === 'en' ? theme.primary : '#e2e8f0'}`,
+                background: storeLanguage === 'en' ? `${theme.primary}10` : '#f8fafc',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇺🇸</div>
+              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'en' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة إنجليزية (LTR)</p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>English Interface</p>
+            </button>
+          </div>
+        </div>
+
+        {/* ─── إعدادات اللغة ─── */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f9ff', display: 'grid', placeItems: 'center' }}>
+              <Globe size={18} color="#0ea5e9" />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>إعدادات اللغة</h3>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>لغة واجهة المتجر للزبائن</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => setStoreLanguage('ar')}
+              style={{
+                flex: 1, padding: '1rem', borderRadius: 12,
+                border: `2px solid ${storeLanguage === 'ar' ? theme.primary : '#e2e8f0'}`,
+                background: storeLanguage === 'ar' ? `${theme.primary}10` : '#f8fafc',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇸🇦</div>
+              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'ar' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة عربية (RTL)</p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الواجهة الافتراضية</p>
+            </button>
+            <button
+              onClick={() => setStoreLanguage('en')}
+              style={{
+                flex: 1, padding: '1rem', borderRadius: 12,
+                border: `2px solid ${storeLanguage === 'en' ? theme.primary : '#e2e8f0'}`,
+                background: storeLanguage === 'en' ? `${theme.primary}10` : '#f8fafc',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇺🇸</div>
+              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'en' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة إنجليزية (LTR)</p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>English Interface</p>
+            </button>
           </div>
         </div>
 

@@ -7,19 +7,19 @@ import { storeApi } from '@/lib/api';
 import type { Order } from '@/lib/types';
 
 export default function OrdersPage() {
-  const { currentTheme } = useTheme();
+  const { currentTheme, t, dateLocale } = useTheme();
   const [filter, setFilter] = useState('all');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   // تحويل حالات الباك اند إلى عربي مع ألوان
   const statusMap: Record<string, { label: string; color: string }> = {
-    pending:    { label: 'قيد الانتظار', color: '#f59e0b' },
-    processing: { label: 'قيد المعالجة', color: '#3b82f6' },
-    completed:  { label: 'مكتمل', color: '#22c55e' },
-    failed:     { label: 'مرفوض', color: '#ef4444' },
-    cancelled:  { label: 'ملغي', color: '#94a3b8' },
-    refunded:   { label: 'مسترجع', color: '#8b5cf6' },
+    pending:    { label: t('قيد الانتظار'), color: '#f59e0b' },
+    processing: { label: t('قيد المعالجة'), color: '#3b82f6' },
+    completed:  { label: t('مكتمل'), color: '#22c55e' },
+    failed:     { label: t('مرفوض'), color: '#ef4444' },
+    cancelled:  { label: t('ملغي'), color: '#94a3b8' },
+    refunded:   { label: t('مسترجع'), color: '#8b5cf6' },
   };
 
   function mapOrder(raw: Record<string, unknown>): Order {
@@ -69,7 +69,7 @@ export default function OrdersPage() {
   }, [filter]);
 
   const filters = ['all', 'completed', 'pending', 'failed'];
-  const filterLabels: Record<string, string> = { all: 'الكل', completed: 'مكتملة', pending: 'معلقة', failed: 'مرفوضة' };
+  const filterLabels: Record<string, string> = { all: t('الكل'), completed: t('مكتملة'), pending: t('معلقة'), failed: t('مرفوضة') };
   const filtered = filter === 'all' ? orders : orders.filter(o => {
     if (filter === 'completed') return o.status === 'completed';
     if (filter === 'pending') return o.status === 'pending' || o.status === 'processing';
@@ -80,7 +80,7 @@ export default function OrdersPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0b1020', marginBottom: 20 }}>📋 سجل الطلبات</h2>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0b1020', marginBottom: 20 }}>{t('📋 سجل الطلبات')}</h2>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -89,7 +89,7 @@ export default function OrdersPage() {
             padding: '0.4rem 1rem', borderRadius: 8, border: 'none', cursor: 'pointer',
             background: filter === f ? currentTheme.primary : '#f1f5f9',
             color: filter === f ? '#fff' : '#64748b',
-            fontSize: '0.78rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+            fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit',
           }}>
             {filterLabels[f]}
           </button>
@@ -109,18 +109,18 @@ export default function OrdersPage() {
             <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</p>
             {order.server_response && order.status === 'completed' && (
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: 8 }}>
-                <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>نتيجة الخدمة:</p>
+                <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>{t('نتيجة الخدمة:')}</p>
                 <p style={{ fontSize: '0.78rem', color: '#166534', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
               </div>
             )}
             {order.server_response && order.status === 'failed' && (
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 8 }}>
-                <p style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600, marginBottom: 2 }}>سبب الرفض:</p>
+                <p style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600, marginBottom: 2 }}>{t('سبب الرفض:')}</p>
                 <p style={{ fontSize: '0.78rem', color: '#991b1b', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#94a3b8' }}>
-              <span>{order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '--'}</span>
+              <span>{order.created_at ? new Date(order.created_at).toLocaleDateString(dateLocale) : '--'}</span>
               <span style={{ fontWeight: 700, color: '#0b1020' }}>${order.total_price.toFixed(2)}</span>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function OrdersPage() {
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
           <Package size={48} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-          <p style={{ fontWeight: 700 }}>لا توجد طلبات</p>
+          <p style={{ fontWeight: 700 }}>{t('لا توجد طلبات')}</p>
         </div>
       )}
     </div>

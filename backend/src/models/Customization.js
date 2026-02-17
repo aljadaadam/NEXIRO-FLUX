@@ -34,6 +34,7 @@ class Customization {
       secondary_currency: data.secondary_currency,
       currency_rate: data.currency_rate != null ? parseFloat(data.currency_rate) : undefined,
       otp_enabled: data.otp_enabled != null ? (data.otp_enabled ? 1 : 0) : undefined,
+      store_language: data.store_language,
     };
 
     // تصفية الحقول غير المعرّفة

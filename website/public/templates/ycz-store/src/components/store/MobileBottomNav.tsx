@@ -6,15 +6,15 @@ import { Home, Package, ShoppingCart, HelpCircle, User } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 
 export default function MobileBottomNav() {
-  const { currentTheme } = useTheme();
+  const { currentTheme, t } = useTheme();
   const pathname = usePathname();
 
   const items = [
-    { id: '/', icon: Home, label: 'الرئيسية' },
-    { id: '/services', icon: Package, label: 'الخدمات' },
-    { id: '/orders', icon: ShoppingCart, label: 'طلباتي' },
-    { id: '/support', icon: HelpCircle, label: 'الدعم' },
-    { id: '/profile', icon: User, label: 'حسابي' },
+    { id: '/', icon: Home, label: t('الرئيسية') },
+    { id: '/services', icon: Package, label: t('الخدمات') },
+    { id: '/orders', icon: ShoppingCart, label: t('طلباتي') },
+    { id: '/support', icon: HelpCircle, label: t('الدعم') },
+    { id: '/profile', icon: User, label: t('حسابي') },
   ];
 
   return (

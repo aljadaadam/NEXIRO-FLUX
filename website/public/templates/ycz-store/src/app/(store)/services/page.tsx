@@ -8,7 +8,7 @@ import type { Product } from '@/lib/types';
 
 // ─── OrderModal (Demo-style: IMEI input → success) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const { currentTheme, buttonRadius } = useTheme();
+  const { currentTheme, buttonRadius, t } = useTheme();
   const [step, setStep] = useState(1);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -32,7 +32,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
       return product.customFields;
     }
     if (String(product.service_type || '').toUpperCase() === 'IMEI') {
-      return [{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }];
+      return [{ key: 'imei', label: t('رقم IMEI'), placeholder: 'مثال: 356938035643809', required: true }];
     }
     return [];
   })();
@@ -74,17 +74,17 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
     setError(null);
 
     if (!isLoggedIn) {
-      setError('يرجى تسجيل الدخول أولاً');
+      setError(t('يرجى تسجيل الدخول أولاً'));
       return;
     }
 
     if (loadingProfile || walletBalance === null) {
-      setError('تعذر تحميل رصيد المحفظة');
+      setError(t('تعذر تحميل رصيد المحفظة'));
       return;
     }
 
     if (!canPayWithWallet) {
-      setError('رصيد المحفظة غير كافٍ');
+      setError(t('رصيد المحفظة غير كافٍ'));
       return;
     }
 
@@ -115,8 +115,8 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
       setWalletBalance((b) => (typeof b === 'number' ? Math.max(0, b - totalPrice) : b));
       setStep(2);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'فشل إرسال الطلب';
-      setError(msg || 'فشل إرسال الطلب');
+      const msg = e instanceof Error ? e.message : t('فشل إرسال الطلب');
+      setError(msg || t('فشل إرسال الطلب'));
     } finally {
       setSubmitting(false);
     }
@@ -126,7 +126,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 440, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>طلب المنتج</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>{t('طلب المنتج')}</h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} />
           </button>
@@ -144,7 +144,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
             {product.service_time && (
               <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span>⏱</span> وقت الخدمة: {product.service_time}
+                <span>⏱</span> {t('وقت الخدمة:')} {product.service_time}
               </p>
             )}
           </div>
@@ -153,10 +153,10 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         {/* Quantity Input */}
         {product.allowsQuantity && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 12, border: '1px solid #e2e8f0' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>الكمية</label>
+            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>{t('الكمية')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto' }}>
               <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>−</button>
-              <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+              <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none' }} />
               <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>+</button>
             </div>
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: currentTheme.primary, whiteSpace: 'nowrap' }}>${totalPrice.toFixed(2)}</span>
@@ -172,10 +172,10 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
           fontSize: '0.82rem',
         }}>
           <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1rem' }}>💳</span> الدفع بالمحفظة
+            <span style={{ fontSize: '1rem' }}>💳</span> {t('الدفع بالمحفظة')}
           </div>
           <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
-            {loadingProfile ? 'جاري جلب الرصيد...' : walletBalance === null ? 'غير متاح' : `$${walletBalance.toFixed(2)}`}
+            {loadingProfile ? t('جاري جلب الرصيد...') : walletBalance === null ? t('غير متاح') : `$${walletBalance.toFixed(2)}`}
           </div>
         </div>
 
@@ -194,7 +194,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
           <>
             {orderFields.length === 0 ? (
               <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.82rem' }}>
-                لا توجد حقول إضافية مطلوبة لهذا المنتج.
+                {t('لا توجد حقول إضافية مطلوبة لهذا المنتج.')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -208,7 +208,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                       value={formValues[field.key] || ''}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={field.placeholder || `أدخل ${field.label}`}
-                      style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
                 ))}
@@ -218,13 +218,13 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <button
               onClick={submitOrder}
               disabled={!allRequiredFilled || submitting || loadingProfile || !isLoggedIn}
-              style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif', opacity: allRequiredFilled ? 1 : 0.6 }}>
-              {submitting ? 'جارٍ إرسال الطلب...' : 'تقديم الطلب'}
+              style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: allRequiredFilled ? 1 : 0.6 }}>
+              {submitting ? t('جارٍ إرسال الطلب...') : t('تقديم الطلب')}
             </button>
 
             {isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet && (
               <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>
-                الرصيد غير كافٍ لإتمام الطلب (المطلوب: ${totalPrice.toFixed(2)})
+                {t('الرصيد غير كافٍ لإتمام الطلب')} (${totalPrice.toFixed(2)})
               </p>
             )}
           </>
@@ -235,12 +235,12 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={32} color="#16a34a" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم إرسال الطلب بنجاح!</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة &ldquo;طلباتي&rdquo;.</p>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('تم إرسال الطلب بنجاح!')}</h3>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>{t('سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة "طلباتي".')}</p>
             {walletBalance !== null && (
-              <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>الرصيد المتبقي: <strong style={{ color: '#0b1020' }}>${walletBalance.toFixed(2)}</strong></p>
+              <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>{t('الرصيد المتبقي:')} <strong style={{ color: '#0b1020' }}>${walletBalance.toFixed(2)}</strong></p>
             )}
-            <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حسناً</button>
+            <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('حسناً')}</button>
           </div>
         )}
       </div>
@@ -250,7 +250,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
 // ─── صفحة الخدمات (Demo-style) ───
 export default function ServicesPage() {
-  const { currentTheme, buttonRadius } = useTheme();
+  const { currentTheme, buttonRadius, t } = useTheme();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeGroup, setActiveGroup] = useState('all');
@@ -272,10 +272,10 @@ export default function ServicesPage() {
   }, []);
 
   const DEFAULT_CATEGORIES = [
-    { id: 'all', name: 'الكل', icon: '📦' },
-    { id: 'أدوات سوفتوير', name: 'أدوات سوفتوير', icon: '🛠️' },
-    { id: 'خدمات IMEI', name: 'خدمات IMEI', icon: '📱' },
-    { id: 'ألعاب', name: 'ألعاب', icon: '🎮' },
+    { id: 'all', name: t('الكل'), icon: '📦' },
+    { id: 'أدوات سوفتوير', name: t('أدوات سوفتوير'), icon: '🛠️' },
+    { id: 'خدمات IMEI', name: t('خدمات IMEI'), icon: '📱' },
+    { id: 'ألعاب', name: t('ألعاب'), icon: '🎮' },
   ];
 
   // تثبيت التصنيفات على القيم المعتمدة فقط
@@ -332,8 +332,8 @@ export default function ServicesPage() {
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       {/* Banner */}
       <div style={{ borderRadius: 20, overflow: 'hidden', background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, padding: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>تصفّح جميع خدماتنا</h2>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>اختر الخدمة المناسبة من بين مجموعة واسعة</p>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{t('تصفّح جميع خدماتنا')}</h2>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>{t('اختر الخدمة المناسبة من بين مجموعة واسعة')}</p>
       </div>
 
       {/* Filters */}
@@ -343,7 +343,7 @@ export default function ServicesPage() {
             padding: '0.5rem 1rem', borderRadius: btnR, border: 'none', cursor: 'pointer',
             background: activeCategory === cat.id ? currentTheme.primary : '#fff',
             color: activeCategory === cat.id ? '#fff' : '#64748b',
-            fontSize: '0.8rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+            fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit',
             boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
           }}>
             {cat.icon} {cat.name}
@@ -354,7 +354,7 @@ export default function ServicesPage() {
       {/* Search */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.65rem 1rem', borderRadius: 12, background: '#fff', border: '1px solid #e2e8f0', marginBottom: 20, position: 'relative' }}>
         <Search size={16} color="#94a3b8" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث في الخدمات..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', color: '#0b1020', background: 'transparent' }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('بحث في الخدمات...')} style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.85rem', fontFamily: 'inherit', color: '#0b1020', background: 'transparent' }} />
 
         <div style={{ position: 'relative', minWidth: 0, width: 'clamp(140px, 42vw, 240px)' }}>
           <button
@@ -366,12 +366,12 @@ export default function ServicesPage() {
               border: '1px solid #e2e8f0', background: '#fff',
               color: groupSourceCategory ? '#334155' : '#94a3b8',
               cursor: groupSourceCategory ? 'pointer' : 'not-allowed',
-              fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+              fontSize: '0.75rem', fontWeight: 600, fontFamily: 'inherit',
               width: '100%', minWidth: 0, justifyContent: 'space-between', overflow: 'hidden',
             }}
           >
             <span style={{ flex: 1, minWidth: 0, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>
-              {activeGroup === 'all' ? 'اختر الجروب' : activeGroup}
+              {activeGroup === 'all' ? t('اختر الجروب') : activeGroup}
             </span>
             <ChevronDown size={14} />
           </button>
@@ -387,16 +387,16 @@ export default function ServicesPage() {
                 onClick={() => { setActiveGroup('all'); setGroupsOpen(false); }}
                 style={{
                   width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === 'all' ? '#f8fafc' : '#fff',
-                  fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                  fontSize: '0.78rem', fontFamily: 'inherit', cursor: 'pointer', color: '#334155',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}
               >
-                كل الجروبات
+                {t('كل الجروبات')}
               </button>
 
               {availableGroups.length === 0 ? (
                 <div style={{ padding: '0.7rem 0.8rem', fontSize: '0.75rem', color: '#94a3b8' }}>
-                  لا توجد جروبات ضمن هذا التصنيف
+                  {t('لا توجد جروبات ضمن هذا التصنيف')}
                 </div>
               ) : (
                 availableGroups.map((group) => (
@@ -405,7 +405,7 @@ export default function ServicesPage() {
                     onClick={() => { setActiveGroup(group); setGroupsOpen(false); }}
                     style={{
                       width: '100%', textAlign: 'right', padding: '0.6rem 0.8rem', border: 'none', background: activeGroup === group ? '#f8fafc' : '#fff',
-                      fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', color: '#334155',
+                      fontSize: '0.78rem', fontFamily: 'inherit', cursor: 'pointer', color: '#334155',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}
                   >
@@ -440,7 +440,7 @@ export default function ServicesPage() {
                 {p.originalPrice && <span style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: 6 }}>{p.originalPrice}</span>}
               </div>
               <div style={{ padding: '0.35rem 0.75rem', borderRadius: btnR, background: '#dcfce7', color: '#16a34a', fontSize: '0.7rem', fontWeight: 700 }}>
-                متاح
+                {t('متاح')}
               </div>
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function ServicesPage() {
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
           <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔍</p>
-          <p>لا توجد نتائج مطابقة</p>
+          <p>{t('لا توجد نتائج مطابقة')}</p>
         </div>
       )}
 

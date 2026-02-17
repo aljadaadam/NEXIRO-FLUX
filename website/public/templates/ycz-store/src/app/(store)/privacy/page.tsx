@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Shield, Eye, Database, Lock, UserCheck, Mail } from 'lucide-react';
 
 export default function PrivacyPage() {
-  const { currentTheme, storeName } = useTheme();
+  const { currentTheme, storeName, t, isRTL } = useTheme();
 
   const sections = [
     {
@@ -39,20 +39,22 @@ export default function PrivacyPage() {
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       {/* Back */}
       <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
-        <ArrowRight size={16} /> العودة للرئيسية
+        <ArrowRight size={16} /> {t('العودة للرئيسية')}
       </Link>
 
       {/* Banner */}
       <div style={{ borderRadius: 20, background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.secondary})`, padding: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
         <Shield size={32} color="#fff" style={{ marginBottom: 8 }} />
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>سياسة الخصوصية</h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>آخر تحديث: فبراير 2026</p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{t('سياسة الخصوصية')}</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>{t('آخر تحديث: فبراير 2026')}</p>
       </div>
 
       {/* Intro */}
       <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginBottom: 16 }}>
         <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.8 }}>
-          نحن في {storeName} نلتزم بحماية خصوصيتك وبياناتك الشخصية. توضح هذه السياسة كيفية جمع واستخدام وحماية المعلومات التي تقدمها لنا عند استخدام خدماتنا.
+          {isRTL
+            ? <>نحن في {storeName} نلتزم بحماية خصوصيتك وبياناتك الشخصية. توضح هذه السياسة كيفية جمع واستخدام وحماية المعلومات التي تقدمها لنا عند استخدام خدماتنا.</>
+            : <>At {storeName}, we are committed to protecting your privacy and personal data. This policy explains how we collect, use, and protect the information you provide when using our services.</>}
         </p>
       </div>
 
@@ -62,9 +64,9 @@ export default function PrivacyPage() {
           <div key={i} style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: `${currentTheme.primary}15`, color: currentTheme.primary, display: 'grid', placeItems: 'center' }}>{s.icon}</div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>{s.title}</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>{t(s.title)}</h3>
             </div>
-            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.8 }}>{s.content}</p>
+            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.8 }}>{t(s.content)}</p>
           </div>
         ))}
       </div>
@@ -72,8 +74,8 @@ export default function PrivacyPage() {
       {/* Contact */}
       <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginTop: 16, textAlign: 'center' }}>
         <Mail size={20} color={currentTheme.primary} style={{ margin: '0 auto 8px' }} />
-        <p style={{ fontSize: '0.82rem', color: '#64748b' }}>لأي استفسارات حول سياسة الخصوصية، تواصل معنا عبر صفحة الدعم.</p>
-        <Link href="/support" style={{ color: currentTheme.primary, fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>مركز الدعم ←</Link>
+        <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('لأي استفسارات حول سياسة الخصوصية، تواصل معنا عبر صفحة الدعم.')}</p>
+        <Link href="/support" style={{ color: currentTheme.primary, fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>{t('مركز الدعم ←')}</Link>
       </div>
     </div>
   );

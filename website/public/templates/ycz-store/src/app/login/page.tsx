@@ -3,10 +3,12 @@
 import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Zap } from 'lucide-react';
+import { useTheme } from '@/providers/ThemeProvider';
 
 function LoginHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTheme();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -20,7 +22,7 @@ function LoginHandler() {
     <div style={{
       minHeight: '100vh', display: 'grid', placeItems: 'center',
       background: 'linear-gradient(135deg, #0b1020 0%, #1a1040 100%)',
-      fontFamily: 'Tajawal, sans-serif',
+      fontFamily: 'inherit',
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{
@@ -30,8 +32,8 @@ function LoginHandler() {
         }}>
           <Zap size={28} color="#fff" />
         </div>
-        <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>جاري تسجيل الدخول...</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>يرجى الانتظار</p>
+        <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>{t('جاري تسجيل الدخول...')}</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{t('يرجى الانتظار')}</p>
         <div style={{
           width: 32, height: 32, border: '3px solid #374151', borderTopColor: '#7c5cff',
           borderRadius: '50%', margin: '20px auto 0',
