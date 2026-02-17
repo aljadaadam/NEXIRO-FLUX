@@ -54,14 +54,19 @@ class USDTProcessor {
     return uniqueAmount.toFixed(3);
   }
 
-  // ─── إنشاء طلب دفع (عرض العنوان والمبلغ الفريد) ───
+  // ─── إنشاء طلب دفع ───
+  // TRC20: مبلغ فريد (للكشف التلقائي)
+  // BEP20/ERC20: المبلغ الأصلي (التحقق عبر TX Hash)
   createPayment({ amount, referenceId }) {
-    const uniqueAmount = this._generateUniqueAmount(amount);
+    const needsUniqueAmount = this.network === 'TRC20';
+    const finalAmount = needsUniqueAmount
+      ? this._generateUniqueAmount(amount)
+      : parseFloat(amount).toFixed(2);
     return {
       walletAddress: this.walletAddress,
       network: this.network,
       originalAmount: parseFloat(amount).toFixed(2),
-      amount: uniqueAmount,
+      amount: finalAmount,
       currency: 'USDT',
       referenceId,
       contractAddress: USDT_CONTRACTS[this.network],
@@ -294,10 +299,14 @@ class USDTProcessor {
       ERC20: 'Ethereum (ERC20)',
       BEP20: 'BSC (BEP20)',
     };
-    const needsTxHash = this.network !== 'TRC20';
+    const isTRC20 = this.network === 'TRC20';
     return {
-      ar: `⚠️ مهم جداً: أرسل المبلغ المحدد بالضبط (بما في ذلك السنتات) إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. المبلغ فريد لعمليتك ويُستخدم للتحقق التلقائي.${needsTxHash ? ' بعد الإرسال، انسخ هاش المعاملة (Transaction Hash) من محفظتك والصقه في خانة التحقق.' : ''} تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
-      en: `⚠️ Important: Send the EXACT amount shown (including cents) to the address above via ${networkNames[this.network]} network. The amount is unique to your transaction and used for automatic verification.${needsTxHash ? ' After sending, copy the Transaction Hash from your wallet and paste it in the verification field.' : ''} Make sure to select the correct network to avoid losing funds.`,
+      ar: isTRC20
+        ? `⚠️ مهم جداً: أرسل المبلغ المحدد بالضبط (بما في ذلك السنتات) إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. المبلغ فريد لعمليتك ويُستخدم للتحقق التلقائي. تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`
+        : `⚠️ مهم: أرسل المبلغ إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. بعد الإرسال، انسخ هاش المعاملة (Transaction Hash) من محفظتك والصقه في خانة التحقق. تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
+      en: isTRC20
+        ? `⚠️ Important: Send the EXACT amount shown (including cents) to the address above via ${networkNames[this.network]} network. The amount is unique to your transaction and used for automatic verification. Make sure to select the correct network to avoid losing funds.`
+        : `⚠️ Important: Send the amount to the address above via ${networkNames[this.network]} network. After sending, copy the Transaction Hash from your wallet and paste it in the verification field. Make sure to select the correct network to avoid losing funds.`,
     };
   }
 }

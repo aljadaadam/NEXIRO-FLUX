@@ -495,7 +495,9 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.6rem 0.8rem', marginBottom: 14, display: 'flex', gap: 6, alignItems: 'center' }}>
                       <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>⚠️</span>
                       <p style={{ fontSize: '0.7rem', color: '#92400e', lineHeight: 1.5 }}>
-                        {t('أرسل المبلغ بالضبط عبر الشبكة الصحيحة. المبلغ فريد لعمليتك.')}
+                        {checkoutData.network === 'TRC20'
+                          ? t('أرسل المبلغ بالضبط عبر الشبكة الصحيحة. المبلغ فريد لعمليتك.')
+                          : t('أرسل المبلغ عبر الشبكة الصحيحة. بعد الإرسال انسخ TX Hash للتحقق.')}
                       </p>
                     </div>
 

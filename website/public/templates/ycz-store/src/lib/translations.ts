@@ -211,6 +211,7 @@ const en: Record<string, string> = {
   'نسخ المبلغ': 'Copy Amount',
   'تم النسخ': 'Copied',
   'أرسل المبلغ بالضبط عبر الشبكة الصحيحة. المبلغ فريد لعمليتك.': 'Send the exact amount via the correct network. The amount is unique to your transaction.',
+  'أرسل المبلغ عبر الشبكة الصحيحة. بعد الإرسال انسخ TX Hash للتحقق.': 'Send the amount via the correct network. After sending, copy the TX Hash to verify.',
   '✅ أرسلت المبلغ — التالي': '✅ I sent the amount — Next',
   'المبلغ المرسل': 'Amount Sent',
   'هاش المعاملة (Transaction Hash)': 'Transaction Hash',
