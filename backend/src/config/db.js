@@ -296,6 +296,8 @@ async function createTables() {
         currency_rate DECIMAL(12, 4) NULL COMMENT 'سعر تحويل الدولار للعملة الثانوية',
         otp_enabled TINYINT(1) DEFAULT 0 COMMENT 'تفعيل كود OTP للزبائن',
         store_language VARCHAR(5) DEFAULT 'ar' COMMENT 'لغة واجهة المتجر',
+        support_email VARCHAR(255) NULL COMMENT 'بريد الدعم الفني',
+        support_phone VARCHAR(50) NULL COMMENT 'رقم واتساب/اتصال الدعم',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE

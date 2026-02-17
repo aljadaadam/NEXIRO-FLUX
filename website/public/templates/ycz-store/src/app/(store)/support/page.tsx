@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquare, Mail, Phone, Send, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { FAQ_DATA } from '@/lib/mockData';
@@ -9,6 +9,32 @@ export default function SupportPage() {
   const { currentTheme, buttonRadius, t } = useTheme();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
+
+  // ─── Contact info from settings ───
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportPhone, setSupportPhone] = useState('');
+
+  useEffect(() => {
+    async function loadContact() {
+      try {
+        const res = await fetch(`/api/customization?_t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          const c = data.customization || data;
+          if (c.support_email) setSupportEmail(c.support_email);
+          if (c.support_phone) setSupportPhone(c.support_phone);
+        }
+      } catch { /* silent */ }
+    }
+    loadContact();
+  }, []);
+
+  // Format phone for WhatsApp link (remove spaces, dashes, +)
+  const waLink = supportPhone
+    ? `https://wa.me/${supportPhone.replace(/[\s\-\+\(\)]/g, '')}`
+    : '#';
+  const mailLink = supportEmail ? `mailto:${supportEmail}` : '#';
+  const phoneLink = supportPhone ? `tel:${supportPhone}` : '#';
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
@@ -21,15 +47,19 @@ export default function SupportPage() {
       {/* Contact Methods */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: '2rem' }}>
         {[
-          { icon: <MessageSquare size={20} />, title: t('واتساب'), desc: t('تواصل مباشر'), color: '#25d366' },
-          { icon: <Mail size={20} />, title: t('البريد'), desc: '—', color: '#3b82f6' },
-          { icon: <Phone size={20} />, title: t('اتصل بنا'), desc: '—', color: '#8b5cf6' },
+          { icon: <MessageSquare size={20} />, title: t('واتساب'), desc: supportPhone || '—', color: '#25d366', href: waLink },
+          { icon: <Mail size={20} />, title: t('البريد'), desc: supportEmail || '—', color: '#3b82f6', href: mailLink },
+          { icon: <Phone size={20} />, title: t('اتصل بنا'), desc: supportPhone || '—', color: '#8b5cf6', href: phoneLink },
         ].map((m, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', textAlign: 'center', border: '1px solid #f1f5f9', cursor: 'pointer' }}>
+          <a key={i} href={m.href} target={m.href.startsWith('https') ? '_blank' : undefined} rel="noopener noreferrer"
+            style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', textAlign: 'center', border: '1px solid #f1f5f9', cursor: m.desc !== '—' ? 'pointer' : 'default', textDecoration: 'none', display: 'block', transition: 'box-shadow 0.2s' }}
+            onMouseEnter={e => { if (m.desc !== '—') (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+          >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}15`, color: m.color, display: 'grid', placeItems: 'center', margin: '0 auto 10px' }}>{m.icon}</div>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 4 }}>{m.title}</h4>
-            <p style={{ fontSize: '0.78rem', color: '#64748b' }}>{m.desc}</p>
-          </div>
+            <p style={{ fontSize: '0.78rem', color: '#64748b', direction: 'ltr' }}>{m.desc}</p>
+          </a>
         ))}
       </div>
 

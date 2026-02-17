@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Mail, DollarSign, Shield, Eye, EyeOff, Globe } from 'lucide-react';
+import { Save, Mail, DollarSign, Shield, Eye, EyeOff, Globe, Headphones } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 
@@ -28,6 +28,10 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   // Language
   const [storeLanguage, setStoreLanguage] = useState<'ar' | 'en'>('ar');
 
+  // Contact / Support
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportPhone, setSupportPhone] = useState('');
+
   // Toast
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
 
@@ -46,6 +50,8 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
           setCurrencyRate(c.currency_rate ? String(c.currency_rate) : '');
           setOtpEnabled(Boolean(c.otp_enabled));
           setStoreLanguage(c.store_language === 'en' ? 'en' : 'ar');
+          setSupportEmail(c.support_email || '');
+          setSupportPhone(c.support_phone || '');
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -67,6 +73,8 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
         currency_rate: currencyRate ? parseFloat(currencyRate) : null,
         otp_enabled: otpEnabled,
         store_language: storeLanguage,
+        support_email: supportEmail || null,
+        support_phone: supportPhone || null,
       });
       setSaved(true);
       setToast({ msg: '✅ تم حفظ الإعدادات بنجاح', type: 'ok' });
@@ -265,6 +273,35 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
               <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'en' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة إنجليزية (LTR)</p>
               <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>English Interface</p>
             </button>
+          </div>
+        </div>
+
+        {/* ─── بيانات التواصل والدعم ─── */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#faf5ff', display: 'grid', placeItems: 'center' }}>
+              <Headphones size={18} color="#8b5cf6" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>بيانات التواصل والدعم</h3>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>تظهر في صفحة الدعم للزبائن</p>
+            </div>
+            {supportEmail || supportPhone ? (
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', background: '#f0fdf4', padding: '4px 10px', borderRadius: 8, border: '1px solid #bbf7d0' }}>✓ مُعدّ</span>
+            ) : (
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', background: '#fef2f2', padding: '4px 10px', borderRadius: 8, border: '1px solid #fecaca' }}>✗ غير مُعدّ</span>
+            )}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>بريد الدعم (Email)</label>
+              <input value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@example.com" type="email" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>رقم واتساب / اتصال</label>
+              <input value={supportPhone} onChange={e => setSupportPhone(e.target.value)} placeholder="+964 7701234567" style={inputStyle} />
+              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 4 }}>اكتب الرقم بالصيغة الدولية لربطه بالواتساب</p>
+            </div>
           </div>
         </div>
 
