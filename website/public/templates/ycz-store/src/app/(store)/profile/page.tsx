@@ -74,6 +74,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   const [checkoutData, setCheckoutData] = useState<CheckoutResult | null>(null);
   const [usdtChecking, setUsdtChecking] = useState(false);
   const [usdtCountdown, setUsdtCountdown] = useState(0);
+  const [usdtTxHash, setUsdtTxHash] = useState('');
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
@@ -170,9 +171,17 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   // ─── Check USDT Payment ───
   const handleCheckUsdt = async () => {
     if (!paymentId) return;
+    // For BEP20/ERC20: require tx hash
+    const network = checkoutData?.network;
+    const needsTxHash = network === 'BEP20' || network === 'ERC20';
+    if (needsTxHash && !usdtTxHash.trim()) {
+      setSubmitError(t('يرجى إدخال هاش المعاملة (Transaction Hash)'));
+      setTimeout(() => setSubmitError(''), 4000);
+      return;
+    }
     setUsdtChecking(true);
     try {
-      const result = await storeApi.checkUsdtPayment(paymentId);
+      const result = await storeApi.checkUsdtPayment(paymentId, usdtTxHash.trim() || undefined);
       if (result.confirmed) {
         setPaymentConfirmed(true);
         setStep(4);
@@ -466,6 +475,44 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>{typeof checkoutData.instructions === 'string' ? checkoutData.instructions : checkoutData.instructions?.ar || ''}</p>
                   </div>
                 )}
+
+                {/* Transaction Hash input for BEP20/ERC20 */}
+                {(checkoutData.network === 'BEP20' || checkoutData.network === 'ERC20') && (
+                  <div style={{
+                    background: '#f0f9ff',
+                    border: '1.5px solid #3b82f6',
+                    borderRadius: 12,
+                    padding: '1rem',
+                    marginBottom: 16,
+                  }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e40af', display: 'block', marginBottom: 8 }}>
+                      {t('هاش المعاملة (Transaction Hash)')} *
+                    </label>
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: 8, lineHeight: 1.5 }}>
+                      {t('بعد إرسال USDT، انسخ هاش المعاملة (TX Hash) من محفظتك والصقه هنا')}
+                    </p>
+                    <input
+                      type="text"
+                      value={usdtTxHash}
+                      onChange={e => setUsdtTxHash(e.target.value)}
+                      placeholder="0x..."
+                      dir="ltr"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.75rem',
+                        borderRadius: 8,
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.82rem',
+                        fontFamily: 'monospace',
+                        background: '#fff',
+                        color: '#0b1020',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                )}
+
                 <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
                   width: '100%', padding: '0.75rem', borderRadius: btnR,
                   background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : '#26a17b', color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',

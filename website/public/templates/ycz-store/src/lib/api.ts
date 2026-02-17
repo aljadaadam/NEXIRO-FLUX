@@ -365,12 +365,16 @@ export const storeApi = {
     return res.json();
   },
 
-  checkUsdtPayment: async (id: number) => {
+  checkUsdtPayment: async (id: number, txHash?: string) => {
     if (isDemoMode()) {
       const demo = getDemoResponse(`/checkout/check-usdt/${id}`, 'POST');
       if (demo) return demo;
     }
-    const res = await fetch(`${API_BASE}/checkout/check-usdt/${id}`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/checkout/check-usdt/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ txHash: txHash || undefined }),
+    });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err?.error || `HTTP ${res.status}`);

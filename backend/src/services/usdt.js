@@ -5,12 +5,12 @@
  * Flow:
  * 1. createPayment() → يرجع عنوان المحفظة + المبلغ المطلوب
  * 2. العميل يرسل USDT للعنوان
- * 3. checkPayment() → يتحقق من البلوكتشين تلقائياً
+ * 3. checkPayment() → يتحقق من البلوكتشين (بهاش المعاملة أو تلقائياً)
  * 
  * APIs المستخدمة:
- * - TRC20: TronGrid API (مجاني)
- * - ERC20: Etherscan API 
- * - BEP20: BSCScan API
+ * - TRC20: TronGrid API (مجاني، كشف تلقائي)
+ * - ERC20: ETH RPC + eth_getTransactionReceipt (مجاني، بهاش المعاملة)
+ * - BEP20: BSC RPC + eth_getTransactionReceipt (مجاني، بهاش المعاملة)
  */
 const axios = require('axios');
 
@@ -21,11 +21,27 @@ const USDT_CONTRACTS = {
   BEP20: '0x55d398326f99059fF775485246999027B3197955',
 };
 
+// USDT decimals per network
+const USDT_DECIMALS = {
+  TRC20: 6,
+  ERC20: 6,
+  BEP20: 18,
+};
+
+// Public RPC endpoints (no API key needed)
+const RPC_ENDPOINTS = {
+  ERC20: 'https://eth.llamarpc.com',
+  BEP20: 'https://bsc-dataseed1.binance.org/',
+};
+
+// ERC20 Transfer event topic hash
+const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
 class USDTProcessor {
   constructor(config) {
     this.walletAddress = config.wallet_address;
     this.network = config.network || 'TRC20'; // TRC20, ERC20, BEP20
-    this.apiKey = config.api_key || ''; // مفتاح API لـ BscScan / Etherscan / TronGrid
+    this.apiKey = config.api_key || ''; // مفتاح API لـ TronGrid (اختياري)
   }
 
   // ─── توليد مبلغ فريد (إضافة سنتات عشوائية) ───
@@ -55,15 +71,25 @@ class USDTProcessor {
   }
 
   // ─── التحقق من وصول الدفع ───
-  async checkPayment({ amount, sinceTimestamp }) {
+  async checkPayment({ amount, sinceTimestamp, txHash }) {
     try {
       switch (this.network) {
         case 'TRC20':
+          // TRC20: كشف تلقائي عبر TronGrid (أو بالهاش إذا متوفر)
+          if (txHash) return await this._verifyTRC20ByHash(txHash, amount);
           return await this._checkTRC20(amount, sinceTimestamp);
         case 'ERC20':
-          return await this._checkERC20(amount, sinceTimestamp);
+          // ERC20: التحقق بهاش المعاملة عبر ETH RPC
+          if (!txHash) {
+            return { confirmed: false, error: 'tx_hash_required', message: 'يرجى إدخال هاش المعاملة (Transaction Hash) للتحقق', messageEn: 'Please enter the Transaction Hash to verify payment' };
+          }
+          return await this._verifyEvmByHash(txHash, amount, 'ERC20');
         case 'BEP20':
-          return await this._checkBEP20(amount, sinceTimestamp);
+          // BEP20: التحقق بهاش المعاملة عبر BSC RPC
+          if (!txHash) {
+            return { confirmed: false, error: 'tx_hash_required', message: 'يرجى إدخال هاش المعاملة (Transaction Hash) للتحقق', messageEn: 'Please enter the Transaction Hash to verify payment' };
+          }
+          return await this._verifyEvmByHash(txHash, amount, 'BEP20');
         default:
           throw new Error(`شبكة غير مدعومة: ${this.network}`);
       }
@@ -136,96 +162,129 @@ class USDTProcessor {
     return { confirmed: false, transactions: data.data.length };
   }
 
-  // ─── ERC20 - Ethereum Network ───
-  async _checkERC20(expectedAmount, sinceTimestamp) {
-    const contractAddr = USDT_CONTRACTS.ERC20;
-    const url = 'https://api.etherscan.io/api';
+  // ─── EVM (ETH/BSC) - التحقق بهاش المعاملة عبر RPC ───
+  async _verifyEvmByHash(txHash, expectedAmount, network) {
+    const rpcUrl = RPC_ENDPOINTS[network];
+    const contractAddr = USDT_CONTRACTS[network].toLowerCase();
+    const decimals = USDT_DECIMALS[network];
+    const divisor = Math.pow(10, decimals);
 
-    const params = {
-      module: 'account',
-      action: 'tokentx',
-      contractaddress: contractAddr,
-      address: this.walletAddress,
-      sort: 'desc',
-      page: 1,
-      offset: 50,
-    };
-    if (this.apiKey) params.apikey = this.apiKey;
-
-    const { data } = await axios.get(url, { params });
-
-    if (data.status !== '1' || !data.result) {
-      return { confirmed: false, transactions: [] };
+    // Validate tx hash format
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      return { confirmed: false, error: 'invalid_tx_hash', message: 'هاش المعاملة غير صالح', messageEn: 'Invalid transaction hash format' };
     }
 
+    console.log(`[USDT/${network}] Verifying tx: ${txHash} via RPC: ${rpcUrl}`);
+
+    // Call eth_getTransactionReceipt
+    const { data: receiptResp } = await axios.post(rpcUrl, {
+      jsonrpc: '2.0',
+      method: 'eth_getTransactionReceipt',
+      params: [txHash],
+      id: 1,
+    }, { timeout: 15000 });
+
+    if (receiptResp.error) {
+      console.log(`[USDT/${network}] RPC error:`, receiptResp.error);
+      return { confirmed: false, error: 'rpc_error', message: 'خطأ في الاتصال بالشبكة', messageEn: 'Network connection error' };
+    }
+
+    const receipt = receiptResp.result;
+    if (!receipt) {
+      return { confirmed: false, error: 'tx_not_found', message: 'المعاملة غير موجودة أو لم تُؤكد بعد. انتظر دقيقة وحاول مجدداً', messageEn: 'Transaction not found or not confirmed yet. Wait a minute and try again' };
+    }
+
+    // Check transaction status (0x1 = success)
+    if (receipt.status !== '0x1') {
+      return { confirmed: false, error: 'tx_failed', message: 'المعاملة فشلت على البلوكتشين', messageEn: 'Transaction failed on blockchain' };
+    }
+
+    // Parse logs to find USDT Transfer event to our wallet
+    const walletPadded = '0x' + this.walletAddress.slice(2).toLowerCase().padStart(64, '0');
     const targetAmount = parseFloat(expectedAmount);
-    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 1800000) / 1000);
 
-    const matching = data.result.filter(tx => {
-      const txAmount = parseFloat(tx.value) / 1e6; // USDT = 6 decimals
-      const toAddr = tx.to.toLowerCase() === this.walletAddress.toLowerCase();
-      const afterTime = parseInt(tx.timeStamp) >= minTimestamp;
-      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.001;
-    });
+    for (const log of receipt.logs) {
+      // Check: is this a Transfer event on the USDT contract to our wallet?
+      if (
+        log.address.toLowerCase() === contractAddr &&
+        log.topics[0] === TRANSFER_TOPIC &&
+        log.topics.length >= 3 &&
+        log.topics[2].toLowerCase() === walletPadded
+      ) {
+        const amountWei = BigInt(log.data);
+        const txAmount = Number(amountWei) / divisor;
+        const fromAddr = '0x' + log.topics[1].slice(26);
 
-    if (matching.length > 0) {
-      const tx = matching[0];
-      return {
-        confirmed: true,
-        transactionId: tx.hash,
-        amount: parseFloat(tx.value) / 1e6,
-        from: tx.from,
-        timestamp: parseInt(tx.timeStamp) * 1000,
-      };
+        console.log(`[USDT/${network}] Found transfer: ${txAmount} USDT from ${fromAddr}`);
+
+        // Verify amount matches (tolerance 0.001)
+        if (Math.abs(txAmount - targetAmount) < 0.001) {
+          return {
+            confirmed: true,
+            transactionId: txHash,
+            amount: txAmount,
+            from: fromAddr,
+            timestamp: Date.now(),
+          };
+        } else {
+          return {
+            confirmed: false,
+            error: 'amount_mismatch',
+            message: `المبلغ المرسل (${txAmount.toFixed(3)}) لا يتطابق مع المبلغ المطلوب (${targetAmount.toFixed(3)})`,
+            messageEn: `Amount sent (${txAmount.toFixed(3)}) does not match required amount (${targetAmount.toFixed(3)})`,
+          };
+        }
+      }
     }
 
-    return { confirmed: false, transactions: data.result.length };
+    // No matching Transfer event found
+    return {
+      confirmed: false,
+      error: 'no_matching_transfer',
+      message: 'لم يُعثر على تحويل USDT مطابق في هذه المعاملة. تأكد من الهاش الصحيح',
+      messageEn: 'No matching USDT transfer found in this transaction. Please check the correct hash',
+    };
   }
 
-  // ─── BEP20 - BSC Network ───
-  async _checkBEP20(expectedAmount, sinceTimestamp) {
-    const contractAddr = USDT_CONTRACTS.BEP20;
-    const url = 'https://api.bscscan.com/api';
+  // ─── TRC20 - التحقق بهاش المعاملة عبر TronGrid ───
+  async _verifyTRC20ByHash(txHash, expectedAmount) {
+    const url = `https://api.trongrid.io/v1/transactions/${txHash}/events`;
+    const headers = {};
+    if (this.apiKey) headers['TRON-PRO-API-KEY'] = this.apiKey;
 
-    const params = {
-      module: 'account',
-      action: 'tokentx',
-      contractaddress: contractAddr,
-      address: this.walletAddress,
-      sort: 'desc',
-      page: 1,
-      offset: 50,
-    };
-    if (this.apiKey) params.apikey = this.apiKey;
+    const { data } = await axios.get(url, { headers, timeout: 15000 });
 
-    const { data } = await axios.get(url, { params });
-
-    if (data.status !== '1' || !data.result) {
-      return { confirmed: false, transactions: [] };
+    if (!data.data || data.data.length === 0) {
+      return { confirmed: false, error: 'tx_not_found', message: 'المعاملة غير موجودة أو لم تُؤكد بعد', messageEn: 'Transaction not found or not confirmed yet' };
     }
 
     const targetAmount = parseFloat(expectedAmount);
-    const minTimestamp = sinceTimestamp ? Math.floor(sinceTimestamp / 1000) : Math.floor((Date.now() - 1800000) / 1000);
+    const contractAddr = USDT_CONTRACTS.TRC20;
 
-    const matching = data.result.filter(tx => {
-      const txAmount = parseFloat(tx.value) / 1e18; // BSC USDT = 18 decimals
-      const toAddr = tx.to.toLowerCase() === this.walletAddress.toLowerCase();
-      const afterTime = parseInt(tx.timeStamp) >= minTimestamp;
-      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.001;
-    });
-
-    if (matching.length > 0) {
-      const tx = matching[0];
-      return {
-        confirmed: true,
-        transactionId: tx.hash,
-        amount: parseFloat(tx.value) / 1e18,
-        from: tx.from,
-        timestamp: parseInt(tx.timeStamp) * 1000,
-      };
+    for (const event of data.data) {
+      if (
+        event.event_name === 'Transfer' &&
+        event.contract_address === contractAddr &&
+        event.result
+      ) {
+        const toAddr = event.result.to || event.result._to;
+        const value = event.result.value || event.result._value;
+        if (toAddr === this.walletAddress) {
+          const txAmount = parseFloat(value) / 1e6;
+          if (Math.abs(txAmount - targetAmount) < 0.001) {
+            return {
+              confirmed: true,
+              transactionId: txHash,
+              amount: txAmount,
+              from: event.result.from || event.result._from,
+              timestamp: event.block_timestamp,
+            };
+          }
+        }
+      }
     }
 
-    return { confirmed: false, transactions: data.result.length };
+    return { confirmed: false, error: 'no_matching_transfer', message: 'لم يُعثر على تحويل USDT مطابق', messageEn: 'No matching USDT transfer found' };
   }
 
   // ─── تعليمات الدفع حسب الشبكة ───
@@ -235,9 +294,10 @@ class USDTProcessor {
       ERC20: 'Ethereum (ERC20)',
       BEP20: 'BSC (BEP20)',
     };
+    const needsTxHash = this.network !== 'TRC20';
     return {
-      ar: `⚠️ مهم جداً: أرسل المبلغ المحدد بالضبط (بما في ذلك السنتات) إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. المبلغ فريد لعمليتك ويُستخدم للتحقق التلقائي. تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
-      en: `⚠️ Important: Send the EXACT amount shown (including cents) to the address above via ${networkNames[this.network]} network. The amount is unique to your transaction and used for automatic verification. Make sure to select the correct network to avoid losing funds.`,
+      ar: `⚠️ مهم جداً: أرسل المبلغ المحدد بالضبط (بما في ذلك السنتات) إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. المبلغ فريد لعمليتك ويُستخدم للتحقق التلقائي.${needsTxHash ? ' بعد الإرسال، انسخ هاش المعاملة (Transaction Hash) من محفظتك والصقه في خانة التحقق.' : ''} تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
+      en: `⚠️ Important: Send the EXACT amount shown (including cents) to the address above via ${networkNames[this.network]} network. The amount is unique to your transaction and used for automatic verification.${needsTxHash ? ' After sending, copy the Transaction Hash from your wallet and paste it in the verification field.' : ''} Make sure to select the correct network to avoid losing funds.`,
     };
   }
 }

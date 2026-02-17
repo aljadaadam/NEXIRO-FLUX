@@ -481,9 +481,11 @@ class ApiService {
     return this.request(`/checkout/status/${paymentId}`);
   }
 
-  async checkUsdtPayment(paymentId) {
+  async checkUsdtPayment(paymentId, txHash) {
     return this.request(`/checkout/check-usdt/${paymentId}`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ txHash: txHash || undefined }),
     });
   }
 

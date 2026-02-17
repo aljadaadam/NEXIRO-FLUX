@@ -493,10 +493,13 @@ async function checkUsdtPayment(req, res) {
     const checkAmount = meta?.usdt_unique_amount || payment.amount;
 
     const usdt = new USDTProcessor(gateway.config);
-    console.log(`🔍 USDT Check: payment #${payment.id}, network: ${usdt.network}, address: ${usdt.walletAddress}, checkAmount: ${checkAmount}, apiKey: ${usdt.apiKey ? 'SET' : 'NOT SET'}`);
+    // Accept txHash from request body (required for BEP20/ERC20)
+    const txHash = req.body?.txHash || req.body?.tx_hash || null;
+    console.log(`🔍 USDT Check: payment #${payment.id}, network: ${usdt.network}, address: ${usdt.walletAddress}, checkAmount: ${checkAmount}, txHash: ${txHash || 'NOT PROVIDED'}`);
     const result = await usdt.checkPayment({
       amount: checkAmount,
       sinceTimestamp: createdAt,
+      txHash,
     });
     console.log(`🔍 USDT Check result:`, JSON.stringify(result));
 
