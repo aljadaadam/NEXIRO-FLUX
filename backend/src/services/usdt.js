@@ -57,7 +57,26 @@ class USDTProcessor {
       }
     } catch (error) {
       console.error(`USDT check error (${this.network}):`, error.message);
-      return { confirmed: false, error: error.message };
+
+      // التعامل مع أخطاء API المحددة
+      const msg = error.message || '';
+      const status = error.response?.status;
+      const apiMsg = error.response?.data?.message || error.response?.data?.result || '';
+
+      // Rate limit
+      if (status === 429 || msg.includes('rate limit') || apiMsg.includes('rate limit')) {
+        return { confirmed: false, error: 'rate_limit', message: 'يرجى المحاولة بعد قليل (حد الطلبات)', messageEn: 'Please try again in a moment (rate limit)' };
+      }
+      // مفتاح API غير صالح
+      if (apiMsg.includes('Invalid API Key') || apiMsg.includes('invalid api key') || apiMsg.includes('NOTOK')) {
+        return { confirmed: false, error: 'invalid_api_key', message: 'خطأ في إعدادات بوابة الدفع. تواصل مع الدعم', messageEn: 'Payment gateway configuration error. Contact support' };
+      }
+      // عنوان محفظة غير صالح
+      if (msg.includes('Invalid address') || apiMsg.includes('Error') || status === 400) {
+        return { confirmed: false, error: 'invalid_address', message: 'خطأ في إعدادات بوابة الدفع. تواصل مع الدعم', messageEn: 'Payment gateway configuration error. Contact support' };
+      }
+
+      return { confirmed: false, error: 'check_failed', message: 'فشل في التحقق. حاول مرة أخرى', messageEn: 'Verification failed. Try again' };
     }
   }
 

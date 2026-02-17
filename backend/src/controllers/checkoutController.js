@@ -497,12 +497,24 @@ async function checkUsdtPayment(req, res) {
       });
     }
 
+    // خطأ من API (مفتاح غير صالح، rate limit، عنوان خاطئ)
+    if (result.error && result.error !== 'check_failed') {
+      return res.json({
+        confirmed: false,
+        error: result.error,
+        message: result.message || 'فشل في التحقق',
+        messageEn: result.messageEn || 'Verification failed',
+        remaining: Math.floor(remaining / 1000),
+        expires_at: new Date(createdAt + USDT_EXPIRY_MS).toISOString(),
+      });
+    }
+
     return res.json({
       confirmed: false,
-      message: 'لم يتم العثور على تحويل مطابق بعد. حاول مرة أخرى.',
-      messageEn: 'No matching transfer found yet. Try again.',
+      message: result.message || 'لم يتم العثور على تحويل مطابق بعد. حاول مرة أخرى.',
+      messageEn: result.messageEn || 'No matching transfer found yet. Try again.',
       checkedTransactions: result.transactions,
-      remaining: Math.floor(remaining / 1000), // seconds remaining
+      remaining: Math.floor(remaining / 1000),
       expires_at: new Date(createdAt + USDT_EXPIRY_MS).toISOString(),
     });
 

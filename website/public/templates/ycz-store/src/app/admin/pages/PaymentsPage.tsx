@@ -23,29 +23,29 @@ const GATEWAY_META: Record<GatewayType, { icon: string; label: string; labelEn: 
   usdt: { icon: '💚', label: 'USDT', labelEn: 'USDT Crypto', desc: 'تيثر على شبكة Tron/ERC20/BEP20' },
 };
 
-const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: string; placeholder: string; options?: { value: string; label: string }[] }[]> = {
+const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: string; placeholder: string; required?: boolean; options?: { value: string; label: string }[] }[]> = {
   paypal: [
-    { key: 'client_id', label: 'Client ID', placeholder: 'AX...' },
-    { key: 'secret', label: 'Secret', type: 'password', placeholder: 'EL...' },
-    { key: 'email', label: 'بريد PayPal', placeholder: 'email@example.com' },
-    { key: 'mode', label: 'الوضع', placeholder: 'sandbox', options: [{ value: 'sandbox', label: 'Sandbox (تجريبي)' }, { value: 'live', label: 'Live (حقيقي)' }] },
+    { key: 'client_id', label: 'Client ID', placeholder: 'AX...', required: true },
+    { key: 'secret', label: 'Secret', type: 'password', placeholder: 'EL...', required: true },
+    { key: 'email', label: 'بريد PayPal', placeholder: 'email@example.com', required: true },
+    { key: 'mode', label: 'الوضع', placeholder: 'sandbox', required: true, options: [{ value: 'sandbox', label: 'Sandbox (تجريبي)' }, { value: 'live', label: 'Live (حقيقي)' }] },
   ],
   binance: [
-    { key: 'api_key', label: 'API Key', placeholder: 'مفتاح الـ API' },
-    { key: 'api_secret', label: 'API Secret', type: 'password', placeholder: 'السر' },
-    { key: 'binance_id', label: 'Binance ID', placeholder: 'رقم حساب Binance' },
+    { key: 'api_key', label: 'API Key', placeholder: 'مفتاح الـ API', required: true },
+    { key: 'api_secret', label: 'API Secret', type: 'password', placeholder: 'السر', required: true },
+    { key: 'binance_id', label: 'Binance ID', placeholder: 'رقم حساب Binance', required: true },
     { key: 'binance_email', label: 'البريد (اختياري)', placeholder: 'binance@email.com' },
   ],
   usdt: [
-    { key: 'wallet_address', label: 'عنوان المحفظة', placeholder: 'T...' },
-    { key: 'network', label: 'الشبكة', placeholder: 'TRC20', options: [{ value: 'TRC20', label: 'TRC20 (Tron)' }, { value: 'ERC20', label: 'ERC20 (Ethereum)' }, { value: 'BEP20', label: 'BEP20 (BSC)' }] },
+    { key: 'wallet_address', label: 'عنوان المحفظة', placeholder: 'T...', required: true },
+    { key: 'network', label: 'الشبكة', placeholder: 'TRC20', required: true, options: [{ value: 'TRC20', label: 'TRC20 (Tron)' }, { value: 'ERC20', label: 'ERC20 (Ethereum)' }, { value: 'BEP20', label: 'BEP20 (BSC)' }] },
     { key: 'api_key', label: 'مفتاح API (اختياري)', placeholder: 'مفتاح BscScan / Etherscan / TronGrid', type: 'password' },
   ],
   bank_transfer: [
-    { key: 'bank_name', label: 'اسم البنك', placeholder: 'مثال: البنك المركزي' },
-    { key: 'account_holder', label: 'اسم صاحب الحساب', placeholder: 'الاسم الكامل' },
-    { key: 'iban', label: 'IBAN / رقم الحساب', placeholder: 'IQ...' },
-    { key: 'currency', label: 'عملة الحساب', placeholder: 'USD', options: [{ value: 'USD', label: 'USD ($)' }, { value: 'IQD', label: 'IQD (د.ع)' }, { value: 'SAR', label: 'SAR (ر.س)' }, { value: 'EUR', label: 'EUR (€)' }] },
+    { key: 'bank_name', label: 'اسم البنك', placeholder: 'مثال: البنك المركزي', required: true },
+    { key: 'account_holder', label: 'اسم صاحب الحساب', placeholder: 'الاسم الكامل', required: true },
+    { key: 'iban', label: 'IBAN / رقم الحساب', placeholder: 'IQ...', required: true },
+    { key: 'currency', label: 'عملة الحساب', placeholder: 'USD', required: true, options: [{ value: 'USD', label: 'USD ($)' }, { value: 'IQD', label: 'IQD (د.ع)' }, { value: 'SAR', label: 'SAR (ر.س)' }, { value: 'EUR', label: 'EUR (€)' }] },
   ],
 };
 
@@ -142,12 +142,25 @@ export default function PaymentsPage() {
   };
 
   const handleToggle = async (gw: Gateway) => {
+    // تحقق من اكتمال الحقول قبل التفعيل
+    if (!gw.is_enabled) {
+      const requiredFields = (CONFIG_FIELDS[gw.type] || []).filter(f => f.required);
+      const missing = requiredFields.filter(f => !gw.config?.[f.key]?.trim());
+      if (missing.length > 0) {
+        showToast(`أكمل الحقول المطلوبة أولاً: ${missing.map(f => f.label).join('، ')}`, 'error');
+        return;
+      }
+    }
     try {
-      await adminApi.togglePaymentGateway(gw.id);
+      const res = await adminApi.togglePaymentGateway(gw.id);
+      if (res.error) {
+        showToast(res.error, 'error');
+        return;
+      }
       setGateways(prev => prev.map(g => g.id === gw.id ? { ...g, is_enabled: !g.is_enabled } : g));
-    } catch (err) {
-      console.error(err);
-      showToast('فشل في تبديل الحالة', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل في تبديل الحالة';
+      showToast(msg, 'error');
     }
   };
 
@@ -236,6 +249,18 @@ export default function PaymentsPage() {
 
               {/* Config Preview */}
               <div style={{ marginBottom: 14 }}>
+                {(() => {
+                  const requiredFields = (CONFIG_FIELDS[gw.type] || []).filter(f => f.required);
+                  const missing = requiredFields.filter(f => !gw.config?.[f.key]?.trim());
+                  if (missing.length > 0) {
+                    return (
+                      <div style={{ padding: '0.5rem 0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, marginBottom: 8, fontSize: '0.75rem', color: '#b91c1c', fontWeight: 600 }}>
+                        ⚠️ حقول ناقصة: {missing.map(f => f.label).join('، ')}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 {gw.type === 'paypal' && gw.config?.email && (
                   <ConfigRow label="البريد" value={gw.config.email} />
                 )}
@@ -332,7 +357,10 @@ export default function PaymentsPage() {
                 <div style={{ padding: '1rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {fields.map(field => (
                     <div key={field.key}>
-                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#475569', marginBottom: 4 }}>{field.label}</label>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+                        {field.label}
+                        {field.required && <span style={{ color: '#dc2626', marginRight: 2 }}> *</span>}
+                      </label>
                       {field.options ? (
                         <select
                           value={formConfig[field.key] || field.options[0]?.value || ''}
