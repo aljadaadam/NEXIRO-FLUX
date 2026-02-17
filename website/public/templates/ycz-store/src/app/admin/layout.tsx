@@ -433,6 +433,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         theme={currentTheme}
         logoPreview={logoPreview}
         storeName={storeName}
+        onLogout={() => {
+          localStorage.removeItem('admin_key');
+          setAuthed(false);
+        }}
       />
 
       <div className="dash-main-content" style={{

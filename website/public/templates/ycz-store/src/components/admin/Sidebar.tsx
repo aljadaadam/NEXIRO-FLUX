@@ -17,6 +17,7 @@ interface SidebarProps {
   theme: ColorTheme;
   logoPreview: string | null;
   storeName: string;
+  onLogout?: () => void;
 }
 
 const menuItems = [
@@ -33,7 +34,7 @@ const menuItems = [
 
 export default function Sidebar({
   currentPage, setCurrentPage, collapsed, setCollapsed,
-  mobileOpen, onCloseMobile, theme, logoPreview, storeName,
+  mobileOpen, onCloseMobile, theme, logoPreview, storeName, onLogout,
 }: SidebarProps) {
   return (
     <aside
@@ -132,7 +133,7 @@ export default function Sidebar({
       {/* Logout */}
       {!collapsed && (
         <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #f1f5f9' }}>
-          <button style={{
+          <button onClick={onLogout} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             width: '100%', padding: '0.6rem 1rem',
             borderRadius: 10, border: 'none',
