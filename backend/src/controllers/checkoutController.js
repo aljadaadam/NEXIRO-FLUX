@@ -493,10 +493,12 @@ async function checkUsdtPayment(req, res) {
     const checkAmount = meta?.usdt_unique_amount || payment.amount;
 
     const usdt = new USDTProcessor(gateway.config);
+    console.log(`🔍 USDT Check: payment #${payment.id}, network: ${usdt.network}, address: ${usdt.walletAddress}, checkAmount: ${checkAmount}, apiKey: ${usdt.apiKey ? 'SET' : 'NOT SET'}`);
     const result = await usdt.checkPayment({
       amount: checkAmount,
       sinceTimestamp: createdAt,
     });
+    console.log(`🔍 USDT Check result:`, JSON.stringify(result));
 
     if (result.confirmed) {
       await Payment.updateStatus(payment.id, getSiteKey(req), 'completed');
