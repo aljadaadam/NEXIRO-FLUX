@@ -112,6 +112,7 @@ async function createTables() {
         requires_custom_json JSON NULL,
         raw_json JSON NULL,
         is_featured TINYINT(1) DEFAULT 0,
+        is_game TINYINT(1) DEFAULT 0,
         name_priority VARCHAR(5) DEFAULT 'ar' COMMENT 'أولوية عرض الاسم: ar أو en',
         linked_product_id INT NULL COMMENT 'تحويل الاتصال لمنتج آخر',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -390,6 +391,7 @@ async function createTables() {
     await ensureColumn('products', 'requires_custom_json', 'requires_custom_json JSON NULL');
     await ensureColumn('products', 'raw_json', 'raw_json JSON NULL');
     await ensureColumn('products', 'is_featured', 'is_featured TINYINT(1) DEFAULT 0');
+    await ensureColumn('products', 'is_game', 'is_game TINYINT(1) DEFAULT 0');
     await ensureColumn('products', 'name_priority', "name_priority VARCHAR(5) DEFAULT 'ar'");
     await ensureColumn('products', 'linked_product_id', 'linked_product_id INT NULL');
 

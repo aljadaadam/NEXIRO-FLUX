@@ -1,14 +1,14 @@
 const { getPool } = require('../config/db');
 
 class Product {
-  static async create({ site_key, name, arabic_name, description, price, service_type = 'SERVER', category = null, status = 'active', image = null, qnt = null, group_name = null }) {
+  static async create({ site_key, name, arabic_name, description, price, service_type = 'SERVER', category = null, status = 'active', image = null, qnt = null, group_name = null, is_game = 0 }) {
     const pool = getPool();
     
     const [result] = await pool.query(
       `INSERT INTO products
-       (site_key, name, arabic_name, description, price, service_type, category, status, image, qnt, group_name)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [site_key, name, arabic_name || null, description, price, service_type, category, status, image, qnt, group_name]
+       (site_key, name, arabic_name, description, price, service_type, category, status, image, qnt, group_name, is_game)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [site_key, name, arabic_name || null, description, price, service_type, category, status, image, qnt, group_name, is_game ? 1 : 0]
     );
     
     return this.findById(result.insertId);
@@ -192,7 +192,7 @@ class Product {
     return this.findById(id);
   }
 
-  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority }) {
+  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority, is_game }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -217,6 +217,7 @@ class Product {
     if (linked_product_id !== undefined) { updates.push('linked_product_id = ?'); values.push(linked_product_id); }
     if (group_name !== undefined) { updates.push('group_name = ?'); values.push(group_name); }
     if (name_priority !== undefined) { updates.push('name_priority = ?'); values.push(name_priority); }
+    if (is_game !== undefined) { updates.push('is_game = ?'); values.push(is_game ? 1 : 0); }
     
     if (updates.length === 0) return this.findById(id);
     

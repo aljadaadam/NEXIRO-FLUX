@@ -24,6 +24,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [newDesc, setNewDesc] = useState('');
   const [newGroup, setNewGroup] = useState('');
   const [newCustomGroup, setNewCustomGroup] = useState('');
+  const [newIsGame, setNewIsGame] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Edit product form state
@@ -38,6 +39,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editGroup, setEditGroup] = useState('');
   const [editCustomGroup, setEditCustomGroup] = useState('');
   const [editNamePriority, setEditNamePriority] = useState<'ar' | 'en'>('ar');
+  const [editIsGame, setEditIsGame] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   // Source & product linking state
@@ -79,10 +81,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         service_type: newServiceType,
         group_name: groupValue,
         status: 'active',
+        is_game: newIsGame ? 1 : 0,
       });
       setShowAdd(false);
       setNewName(''); setNewArabicName(''); setNewPrice(''); setNewDesc('');
       setNewServiceType('SERVER'); setNewGroup(''); setNewCustomGroup('');
+      setNewIsGame(false);
       loadProducts();
     } catch { /* ignore */ }
     finally { setSaving(false); }
@@ -101,6 +105,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setEditGroup(pg);
     setEditCustomGroup('');
     setEditNamePriority(product.name_priority || 'ar');
+    setEditIsGame(!!product.is_game);
     setEditSourceConnected(!!product.source_id);
     setEditOriginalSourceId(product.source_id || null);
     setEditLinkedProductId(product.linked_product_id ?? null);
@@ -129,6 +134,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         icon: editIcon,
         group_name: groupValue || null,
         name_priority: editNamePriority,
+        is_game: editIsGame ? 1 : 0,
       };
 
       // فصل/إعادة اتصال المصدر
@@ -341,6 +347,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             fontFamily: 'Tajawal, sans-serif', outline: 'none',
             resize: 'vertical', marginBottom: 14, boxSizing: 'border-box',
           }} />
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.8rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>
+            <input type="checkbox" checked={newIsGame} onChange={(e) => setNewIsGame(e.target.checked)} style={{ width: 16, height: 16 }} />
+            تصنيف كـ لعبة (isGame)
+          </label>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleAddProduct} disabled={saving} style={{
               padding: '0.6rem 1.5rem', borderRadius: 10,
@@ -493,6 +505,11 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <option value="en">🔤 English أولاً</option>
               </select>
             </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: '0.76rem', fontWeight: 800, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>
+              <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 16, height: 16 }} />
+              تصنيف كـ لعبة (isGame)
+            </label>
 
             {/* ─── القروب ─── */}
             <div style={{ display: 'grid', gridTemplateColumns: editGroup === '__new__' ? '1fr 1fr' : '1fr', gap: 8, marginBottom: 10 }}>

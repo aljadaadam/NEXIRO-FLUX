@@ -85,6 +85,8 @@ async function createProduct(req, res) {
   try {
     const { site_key } = req.user;
     const { name, arabic_name, description, service_type, category, status, image, group_name } = req.body;
+    const isGameRaw = req.body.is_game !== undefined ? req.body.is_game : req.body.isGame;
+    const is_game = isGameRaw === undefined ? 0 : (['1', 'true', 'on', 'yes'].includes(String(isGameRaw).toLowerCase()) ? 1 : 0);
     const rawPrice = req.body.price;
     const normalizedPrice = Number.parseFloat(String(rawPrice ?? '').replace(/[$,\s]/g, ''));
     const stockValue = req.body.stock ?? req.body.qnt;
@@ -118,6 +120,7 @@ async function createProduct(req, res) {
       image: image || null,
       qnt: normalizedStock,
       group_name: group_name || null,
+      is_game,
     });
 
     res.status(201).json({
@@ -150,6 +153,7 @@ async function updateProduct(req, res) {
     const category = req.body.category !== undefined ? req.body.category : undefined;
     const stock = req.body.stock !== undefined ? req.body.stock : req.body.qnt;
     const linked_product_id = req.body.linked_product_id;
+    const is_game_raw = req.body.is_game !== undefined ? req.body.is_game : req.body.isGame;
 
     // بناء بيانات التحديث ديناميكياً
     const updateData = {};
@@ -190,6 +194,11 @@ async function updateProduct(req, res) {
     const name_priority_val = req.body.name_priority;
     if (name_priority_val !== undefined) {
       updateData.name_priority = name_priority_val === 'en' ? 'en' : 'ar';
+    }
+
+    // تصنيف المنتج كـ لعبة
+    if (is_game_raw !== undefined) {
+      updateData.is_game = ['1', 'true', 'on', 'yes'].includes(String(is_game_raw).toLowerCase()) ? 1 : 0;
     }
 
     if (Object.keys(updateData).length === 0) {

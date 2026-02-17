@@ -229,9 +229,12 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
   }
   // إضافة باقي الحقول من Requires.Custom
   customFields.push(...extraFields);
-  const mappedCategory = sType === 'IMEI' || sType === 'SERVER'
-    ? serviceTypeCategories[sType]
-    : String(p.group_name || serviceTypeCategories[sType] || 'خدمات');
+  const isGame = ['1', 'true', 'on', 'yes'].includes(String((p as { is_game?: unknown }).is_game ?? '').toLowerCase());
+  const mappedCategory = isGame
+    ? 'ألعاب'
+    : (sType === 'IMEI' || sType === 'SERVER'
+      ? serviceTypeCategories[sType]
+      : String(p.group_name || serviceTypeCategories[sType] || 'خدمات'));
   return {
     id: p.id,
     name: String(p.arabic_name || p.name || ''),
@@ -257,6 +260,7 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     custom_json: customJson,
     customFields,
     is_featured: p.is_featured ? 1 : 0,
+    is_game: isGame ? 1 : 0,
   };
 }
 

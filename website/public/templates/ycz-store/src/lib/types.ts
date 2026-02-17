@@ -16,6 +16,7 @@ export interface Product {
   stock?: number;
   status?: string;
   is_featured?: number;
+  is_game?: number;
   name_priority?: 'ar' | 'en';
   allowsQuantity?: boolean;
   minQuantity?: number;
