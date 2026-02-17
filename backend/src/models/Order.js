@@ -22,16 +22,19 @@ class Order {
     return this.findById(result.insertId);
   }
 
-  // البحث بالـ ID
-  static async findById(id) {
+  // البحث بالـ ID (مع عزل بـ site_key إختياري)
+  static async findById(id, site_key = null) {
     const pool = getPool();
-    const [rows] = await pool.query(
-      `SELECT o.*, c.name as customer_name, c.email as customer_email
+    let query = `SELECT o.*, c.name as customer_name, c.email as customer_email
        FROM orders o
        LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE o.id = ?`,
-      [id]
-    );
+       WHERE o.id = ?`;
+    const params = [id];
+    if (site_key) {
+      query += ' AND o.site_key = ?';
+      params.push(site_key);
+    }
+    const [rows] = await pool.query(query, params);
     return rows[0] || null;
   }
 

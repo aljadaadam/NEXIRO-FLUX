@@ -14,8 +14,11 @@ const { authenticateToken } = require('../middlewares/authMiddleware');
 // ─── عام (بدون مصادقة) — للتحقق من الكود أثناء الشراء ───
 router.post('/validate', validateCode);
 
-// ─── باقي الطلبات تحتاج مصادقة + صلاحيات أدمن المنصة ───
+const { requireRole } = require('../middlewares/authMiddleware');
+
+// ─── باقي الطلبات تحتاج مصادقة + صلاحيات أدمن ───
 router.use(authenticateToken);
+router.use(requireRole('admin'));
 
 // جلب جميع الأكواد
 router.get('/', getAllCodes);

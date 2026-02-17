@@ -21,14 +21,19 @@ setInterval(() => {
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// إنشاء حساب أدمن جديد للموقع
+// إنشاء حساب أدمن جديد للموقع (فقط إذا لا يوجد أدمن مسجل بعد)
 async function registerAdmin(req, res) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, purchase_code } = req.body;
 
     // التحقق من المدخلات
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
+    }
+
+    // ─── تقوية كلمة المرور ───
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل', errorEn: 'Password must be at least 8 characters' });
     }
 
     const siteKey = req.siteKey;
@@ -43,6 +48,16 @@ async function registerAdmin(req, res) {
     if (!site) {
       return res.status(404).json({ 
         error: 'الموقع غير مسجل في النظام. اتصل بالدعم.' 
+      });
+    }
+
+    // ─── حماية: لا يمكن تسجيل أدمن إذا كان هنالك أدمن موجود مسبقاً ───
+    const existingAdmins = await User.findBySiteKey(siteKey);
+    const hasAdmin = existingAdmins.some(u => u.role === 'admin');
+    if (hasAdmin) {
+      return res.status(403).json({ 
+        error: 'يوجد أدمن مسجل بالفعل لهذا الموقع',
+        errorEn: 'An admin is already registered for this site'
       });
     }
 
@@ -93,13 +108,17 @@ async function registerAdmin(req, res) {
   }
 }
 
-// ─── تسجيل مستخدم جديد على المنصة (ليس أدمن) ───
+// ─── تسجيل مستخدم جديد على المنصة (ليس أدمن — يحتاج مصادقة أدمن) ───
 async function registerUser(req, res) {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل', errorEn: 'Password must be at least 8 characters' });
     }
 
     const siteKey = req.siteKey;
@@ -166,9 +185,6 @@ async function registerUser(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
-    // 🚨 أضف هذا السطر المؤقت
-    console.log('Login Request Body:', req.body);
-
     // التحقق من المدخلات
     if (!email || !password) {
       return res.status(400).json({ 
@@ -652,8 +668,8 @@ async function resetPassword(req, res) {
       return res.status(400).json({ error: 'الرمز وكلمة المرور مطلوبان', errorEn: 'Token and password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل', errorEn: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل', errorEn: 'Password must be at least 8 characters' });
     }
 
     const tokenData = resetTokens.get(token);
@@ -667,7 +683,7 @@ async function resetPassword(req, res) {
     }
 
     // Hash new password and update
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const pool = require('../config/db').getPool();
     const [result] = await pool.query(
       'UPDATE users SET password = ? WHERE id = ? AND site_key = ?',

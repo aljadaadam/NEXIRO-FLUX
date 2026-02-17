@@ -24,8 +24,8 @@ router.get('/public', getPublicProducts);
 // ─── تعبئة القوالب الافتراضية (بدون مصادقة — يُنفَّذ مرة واحدة) ───
 router.get('/seed-templates', seedTemplateProducts);
 
-// ─── تشخيص (debug) ───
-router.get('/debug', debugProducts);
+// ─── تشخيص (debug) — محمي بمصادقة أدمن ───
+router.get('/debug', authenticateToken, requireRole('admin'), debugProducts);
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);

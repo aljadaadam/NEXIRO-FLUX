@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 class User {
   static async create({ site_key, name, email, password, role = 'user' }) {
     const pool = getPool();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     
     const [result] = await pool.query(
       'INSERT INTO users (site_key, name, email, password, role) VALUES (?, ?, ?, ?, ?)',
@@ -14,12 +14,15 @@ class User {
     return this.findById(result.insertId);
   }
 
-  static async findById(id) {
+  static async findById(id, site_key = null) {
     const pool = getPool();
-    const [rows] = await pool.query(
-      'SELECT id, site_key, name, email, role, created_at FROM users WHERE id = ?', 
-      [id]
-    );
+    let query = 'SELECT id, site_key, name, email, role, created_at FROM users WHERE id = ?';
+    const params = [id];
+    if (site_key) {
+      query += ' AND site_key = ?';
+      params.push(site_key);
+    }
+    const [rows] = await pool.query(query, params);
     return rows[0] || null;
   }
 
@@ -76,16 +79,10 @@ class User {
 
 
   static async comparePassword(candidatePassword, hashedPassword) {
-      // 🚨 طباعة القيم للمقارنة
-      console.log('Password to compare (Input):', candidatePassword);
-      console.log('Stored Hash (DB):', hashedPassword); 
-
       try {
-          const isMatch = await bcrypt.compare(candidatePassword, hashedPassword);
-          console.log('Bcrypt Match Result:', isMatch); // 🚨 يجب أن تكون TRUE
-          return isMatch;
+          return await bcrypt.compare(candidatePassword, hashedPassword);
       } catch (error) {
-          console.error("Bcrypt Compare Error:", error); 
+          console.error('Bcrypt compare error');
           return false;
       }
   }

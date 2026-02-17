@@ -4,8 +4,10 @@ const Customization = require('../models/Customization');
 const { generateToken } = require('../utils/token');
 const emailService = require('../services/email');
 
+const crypto = require('crypto');
+
 // ─── OTP store (in-memory, short-lived) ───
-const otpStore = new Map(); // key: `${siteKey}:${email}` → { code, expires, customerId }
+const otpStore = new Map(); // key: `${siteKey}:${email}` → { code, expires, customerId, attempts }
 
 // تسجيل زبون جديد
 async function registerCustomer(req, res) {
@@ -15,6 +17,10 @@ async function registerCustomer(req, res) {
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'الاسم والبريد وكلمة المرور مطلوبة' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل', errorEn: 'Password must be at least 8 characters' });
     }
 
     const existing = await Customer.findByEmailAndSite(email, siteKey);
@@ -73,10 +79,10 @@ async function loginCustomer(req, res) {
     // ─── التحقق من OTP ───
     const customization = await Customization.findBySiteKey(siteKey);
     if (customization?.otp_enabled) {
-      // إنشاء كود OTP وإرساله بالبريد
-      const code = String(Math.floor(100000 + Math.random() * 900000));
+      // إنشاء كود OTP آمن وإرساله بالبريد
+      const code = String(crypto.randomInt(100000, 999999));
       const key = `${siteKey}:${email.toLowerCase().trim()}`;
-      otpStore.set(key, { code, expires: Date.now() + 10 * 60 * 1000, customerId: customer.id });
+      otpStore.set(key, { code, expires: Date.now() + 10 * 60 * 1000, customerId: customer.id, attempts: 0 });
 
       // إرسال الكود بالبريد
       emailService.sendEmailVerification({
@@ -281,6 +287,12 @@ async function verifyOtp(req, res) {
     }
 
     if (stored.code !== String(code).trim()) {
+      // ─── حد محاولات ───
+      stored.attempts = (stored.attempts || 0) + 1;
+      if (stored.attempts >= 5) {
+        otpStore.delete(key);
+        return res.status(429).json({ error: 'محاولات كثيرة. أعد تسجيل الدخول للحصول على كود جديد', errorEn: 'Too many attempts. Re-login to get a new code' });
+      }
       return res.status(400).json({ error: 'كود التحقق غير صحيح' });
     }
 

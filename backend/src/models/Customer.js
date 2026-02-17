@@ -14,7 +14,7 @@ class Customer {
   static async create({ site_key, name, email, phone, password }) {
     const pool = getPool();
     await this.ensureColumns();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const [result] = await pool.query(
       'INSERT INTO customers (site_key, name, email, phone, password) VALUES (?, ?, ?, ?, ?)',
@@ -24,13 +24,16 @@ class Customer {
     return this.findById(result.insertId);
   }
 
-  // البحث بالـ ID
-  static async findById(id) {
+  // البحث بالـ ID (مع عزل بـ site_key إختياري)
+  static async findById(id, site_key = null) {
     const pool = getPool();
-    const [rows] = await pool.query(
-      'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE id = ?',
-      [id]
-    );
+    let query = 'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE id = ?';
+    const params = [id];
+    if (site_key) {
+      query += ' AND site_key = ?';
+      params.push(site_key);
+    }
+    const [rows] = await pool.query(query, params);
     return rows[0] || null;
   }
 

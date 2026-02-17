@@ -1,11 +1,12 @@
 const crypto = require('crypto');
 
 function getSecret() {
-  return (
-    process.env.API_KEY_ENCRYPTION_SECRET ||
-    process.env.JWT_SECRET ||
-    'dev-insecure-change-me'
-  );
+  const secret = process.env.API_KEY_ENCRYPTION_SECRET || process.env.JWT_SECRET;
+  if (!secret || secret.includes('CHANGE-THIS') || secret === 'your-secret-key-change-in-production') {
+    console.warn('⚠️ API key encryption using weak fallback secret. Set API_KEY_ENCRYPTION_SECRET in .env');
+    return 'dev-fallback-' + require('os').hostname();
+  }
+  return secret;
 }
 
 function deriveKey(secret) {

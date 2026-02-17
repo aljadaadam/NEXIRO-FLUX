@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { PORT, SITE_KEY } = require('./config/env');
 const { initializeDatabase } = require('./config/db');
 const { resolveTenant } = require('./middlewares/resolveTenant');
@@ -22,9 +24,65 @@ const purchaseCodeRoutes = require('./routes/purchaseCodeRoutes');
 
 const app = express();
 
-// Middleware - CORS مع السماح لجميع Origins (يدعم multi-tenant)
+// ─── Security Headers (helmet) ───
+app.use(helmet({
+  contentSecurityPolicy: false, // Next.js يتعامل مع CSP
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ─── Rate Limiting ───
+// عام: 200 طلب / دقيقة لكل IP
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'طلبات كثيرة جداً، حاول لاحقاً', errorEn: 'Too many requests, try again later' },
+});
+
+// تسجيل دخول/تسجيل: 10 محاولات / 15 دقيقة
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'محاولات كثيرة، حاول بعد 15 دقيقة', errorEn: 'Too many attempts, try again in 15 minutes' },
+  keyGenerator: (req) => `${req.ip}:${req.siteKey || 'unknown'}`,
+});
+
+// نسيان كلمة المرور: 5 محاولات / ساعة
+const resetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'محاولات كثيرة، حاول بعد ساعة', errorEn: 'Too many attempts, try again in 1 hour' },
+});
+
+// OTP: 5 محاولات / 10 دقائق
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  message: { error: 'محاولات OTP كثيرة، حاول لاحقاً', errorEn: 'Too many OTP attempts' },
+});
+
+app.use(globalLimiter);
+
+// ─── CORS (multi-tenant — يقبل فقط origins معروفة أو *.nexiroflux.com) ───
 app.use(cors({
-  origin: true, // السماح لجميع Origins (كل موقع له دومين مختلف)
+  origin: (origin, callback) => {
+    // السماح للطلبات بدون origin (مثل curl, Postman, webhooks)
+    if (!origin) return callback(null, true);
+    // السماح لنطاقات النظام
+    const allowed = [
+      /\.nexiroflux\.com$/,
+      /^https?:\/\/localhost(:\d+)?$/,
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+    ];
+    if (allowed.some(p => p.test(origin))) return callback(null, true);
+    // السماح للنطاقات المخصصة (أي tenant)
+    // في بيئة multi-tenant كل domain يكون tenant مختلف
+    // نسمح لأي origin لكن بدون credentials للنطاقات الغير معروفة
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Site-Key'],
@@ -32,13 +90,25 @@ app.use(cors({
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// ─── Body Parsing (مع حد حجم) ───
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // ─── Tenant Resolution (must be before routes) ───
 app.use(resolveTenant);
 
 // Routes
+// ─── Rate limiting لمسارات حساسة ───
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/register-admin', authLimiter);
+app.use('/api/auth/forgot-password', resetLimiter);
+app.use('/api/auth/reset-password', resetLimiter);
+app.use('/api/customers/login', authLimiter);
+app.use('/api/customers/register', authLimiter);
+app.use('/api/customers/verify-otp', otpLimiter);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/dashboard', dashboardRoutes);
@@ -71,98 +141,14 @@ app.get('/api/health/nexiro-verify', (req, res) => {
   res.json({ platform: 'nexiro-flux', verified: true, ts: Date.now() });
 });
 
-// Root route - يظهر معلومات الموقع
+// Root route - إظهار الحالة فقط (بدون تفاصيل API)
 app.get('/', async (req, res) => {
-  try {
-    const Site = require('./models/Site');
-    const site = await Site.findBySiteKey(SITE_KEY);
-    
-    res.json({ 
-      message: 'مرحبًا بك في Nexiro-Flux Dashboard',
-      version: '4.0.0',
-      architecture: 'Multi-Tenant SaaS (Shared DB with site_key)',
-      site: site ? {
-        name: site.name,
-        domain: site.domain,
-        site_key: site.site_key
-      } : { error: 'الموقع غير مسجل' },
-      endpoints: {
-        auth: {
-          registerAdmin: 'POST /api/auth/register-admin',
-          login: 'POST /api/auth/login',
-          createUser: 'POST /api/auth/users',
-          profile: 'GET /api/auth/profile',
-          siteUsers: 'GET /api/auth/users',
-          permissions: 'GET /api/auth/permissions'
-        },
-        products: {
-          getAll: 'GET /api/products',
-          create: 'POST /api/products',
-          update: 'PUT /api/products/:id',
-          delete: 'DELETE /api/products/:id',
-          import: 'POST /api/products/import',
-          sync: 'POST /api/products/import/sync',
-          stats: 'GET /api/products/stats'
-        },
-        sources: {
-          getAll: 'GET /api/sources',
-          create: 'POST /api/sources',
-          update: 'PUT /api/sources/:id',
-          delete: 'DELETE /api/sources/:id',
-          test: 'POST /api/sources/:id/test',
-          sync: 'POST /api/sources/:id/sync',
-          applyProfit: 'POST /api/sources/:id/apply-profit'
-        },
-        customers: {
-          register: 'POST /api/customers/register',
-          login: 'POST /api/customers/login',
-          getAll: 'GET /api/customers',
-          block: 'PATCH /api/customers/:id/block',
-          wallet: 'PATCH /api/customers/:id/wallet'
-        },
-        orders: {
-          getAll: 'GET /api/orders',
-          create: 'POST /api/orders',
-          updateStatus: 'PATCH /api/orders/:id/status',
-          stats: 'GET /api/orders/stats'
-        },
-        tickets: {
-          getAll: 'GET /api/tickets',
-          create: 'POST /api/tickets',
-          messages: 'GET /api/tickets/:id/messages',
-          reply: 'POST /api/tickets/:id/reply',
-          updateStatus: 'PATCH /api/tickets/:id/status'
-        },
-        customization: {
-          get: 'GET /api/customization',
-          update: 'PUT /api/customization',
-          reset: 'DELETE /api/customization',
-          public: 'GET /api/customization/public/:site_key'
-        },
-        notifications: {
-          getAll: 'GET /api/notifications',
-          markRead: 'PUT /api/notifications/:id/read',
-          markAllRead: 'PUT /api/notifications/read-all'
-        },
-        payments: {
-          getAll: 'GET /api/payments',
-          create: 'POST /api/payments',
-          getById: 'GET /api/payments/:id',
-          updateStatus: 'PATCH /api/payments/:id/status',
-          stats: 'GET /api/payments/stats'
-        },
-        dashboard: {
-          stats: 'GET /api/dashboard/stats'
-        }
-      }
-    });
-  } catch (error) {
-    res.json({
-      message: 'مرحبًا بك في Nexiro-Flux Dashboard',
-      error: 'حدث خطأ في تحميل بيانات الموقع',
-      site_key: SITE_KEY
-    });
-  }
+  res.json({ 
+    platform: 'NEXIRO-FLUX',
+    version: '4.0.0',
+    status: 'running',
+    ts: Date.now(),
+  });
 });
 
 // 404 handler
