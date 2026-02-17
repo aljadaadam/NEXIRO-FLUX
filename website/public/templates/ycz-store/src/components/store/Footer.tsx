@@ -1,14 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useTheme } from '@/providers/ThemeProvider';
 
 export default function Footer() {
   const { storeName } = useTheme();
 
   const legalLinks = [
-    { label: 'سياسة الخصوصية', href: 'https://www.nexiroflux.com/privacy' },
-    { label: 'الشروط والأحكام', href: 'https://www.nexiroflux.com/terms' },
-    { label: 'سياسة الاسترجاع', href: 'https://www.nexiroflux.com/refund' },
+    { label: 'سياسة الخصوصية', href: '/privacy' },
+    { label: 'الشروط والأحكام', href: '/terms' },
+    { label: 'سياسة الاسترجاع', href: '/refund' },
   ];
 
   return (
@@ -27,15 +28,13 @@ export default function Footer() {
             <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>روابط مهمة</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {legalLinks.map(({ label, href }) => (
-                <a
+                <Link
                   key={label}
                   href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   style={{ fontSize: '0.78rem', color: '#64748b', cursor: 'pointer', textDecoration: 'none' }}
                 >
                   {label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
