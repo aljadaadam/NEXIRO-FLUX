@@ -37,6 +37,7 @@ type CheckoutResult = {
   walletAddress?: string;
   network?: string;
   amount?: number;
+  originalAmount?: number;
   currency?: string;
   contractAddress?: string;
   instructions?: string | { ar: string; en: string };
@@ -373,7 +374,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
-            {/* ── USDT: manual crypto with countdown ── */}
+            {/* ── USDT: manual crypto with QR code + unique amount ── */}
             {checkoutData.method === 'manual_crypto' && (
               <div>
                 {/* Countdown */}
@@ -385,18 +386,77 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     </div>
                   </div>
                 )}
+
+                {/* QR Code للعنوان */}
+                {checkoutData.walletAddress && (
+                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <div style={{ display: 'inline-block', background: '#fff', borderRadius: 16, padding: 16, border: '2px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkoutData.walletAddress)}&bgcolor=ffffff&color=000000&margin=8`}
+                        alt="QR Code"
+                        width={200}
+                        height={200}
+                        style={{ display: 'block', borderRadius: 8 }}
+                      />
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 8 }}>{t('امسح الباركود لنسخ العنوان')}</p>
+                  </div>
+                )}
+
+                {/* المبلغ الفريد - بارز */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #26a17b15, #26a17b08)',
+                  border: '2px solid #26a17b',
+                  borderRadius: 14,
+                  padding: '1.25rem',
+                  marginBottom: 16,
+                  textAlign: 'center',
+                }}>
+                  <p style={{ fontSize: '0.78rem', color: '#166534', marginBottom: 6, fontWeight: 600 }}>
+                    {t('⚠️ أرسل هذا المبلغ بالضبط')}
+                  </p>
+                  <p style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0b1020', fontFamily: 'monospace', letterSpacing: 1 }}>
+                    {checkoutData.amount} <span style={{ fontSize: '1rem', color: '#26a17b' }}>USDT</span>
+                  </p>
+                  {checkoutData.originalAmount && String(checkoutData.originalAmount) !== String(checkoutData.amount) && (
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 6 }}>
+                      {t('المبلغ الأصلي')}: ${checkoutData.originalAmount} + {t('رسوم تحقق')}: ${(Number(checkoutData.amount) - Number(checkoutData.originalAmount)).toFixed(2)}
+                    </p>
+                  )}
+                  <div style={{ marginTop: 10, background: '#fef2f2', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                    <p style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700 }}>
+                      {t('المبلغ فريد لعمليتك — أرسل المبلغ كما هو بالضبط للتحقق التلقائي')}
+                    </p>
+                  </div>
+                </div>
+
                 <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
                   <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Lock size={14} color={currentTheme.primary} /> {t('بيانات التحويل')}
                   </h4>
                   {[
-                    { label: t('عنوان المحفظة'), value: checkoutData.walletAddress || '—' },
-                    { label: t('الشبكة'), value: checkoutData.network || '—' },
-                    { label: t('المبلغ'), value: `${checkoutData.amount || amount} USDT` },
+                    { label: t('عنوان المحفظة'), value: checkoutData.walletAddress || '—', copyable: true },
+                    { label: t('الشبكة'), value: checkoutData.network || '—', copyable: false },
+                    { label: t('المبلغ المطلوب'), value: `${checkoutData.amount || amount} USDT`, copyable: true },
                   ].map((item, i, arr) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
                       <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: '65%' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                        {item.copyable && (
+                          <button
+                            onClick={() => {
+                              const text = item.value.replace(' USDT', '');
+                              navigator.clipboard.writeText(text).then(() => {
+                                const btn = document.activeElement as HTMLButtonElement;
+                                if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '📋'; }, 1500); }
+                              });
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', padding: 2, flexShrink: 0 }}
+                            title={t('نسخ')}
+                          >📋</button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

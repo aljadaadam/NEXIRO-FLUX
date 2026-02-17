@@ -28,12 +28,24 @@ class USDTProcessor {
     this.apiKey = config.api_key || ''; // مفتاح API لـ BscScan / Etherscan / TronGrid
   }
 
-  // ─── إنشاء طلب دفع (عرض العنوان والمبلغ) ───
+  // ─── توليد مبلغ فريد (إضافة سنتات عشوائية) ───
+  // هذا يساعد في تمييز كل عملية دفع عن الأخرى على البلوكتشين
+  _generateUniqueAmount(amount) {
+    const base = parseFloat(amount);
+    // إضافة مبلغ عشوائي بين 0.01 و 0.99
+    const randomCents = (Math.floor(Math.random() * 99) + 1) / 100;
+    const uniqueAmount = base + randomCents;
+    return uniqueAmount.toFixed(2);
+  }
+
+  // ─── إنشاء طلب دفع (عرض العنوان والمبلغ الفريد) ───
   createPayment({ amount, referenceId }) {
+    const uniqueAmount = this._generateUniqueAmount(amount);
     return {
       walletAddress: this.walletAddress,
       network: this.network,
-      amount: parseFloat(amount).toFixed(2),
+      originalAmount: parseFloat(amount).toFixed(2),
+      amount: uniqueAmount,
       currency: 'USDT',
       referenceId,
       contractAddress: USDT_CONTRACTS[this.network],
@@ -224,8 +236,8 @@ class USDTProcessor {
       BEP20: 'BSC (BEP20)',
     };
     return {
-      ar: `أرسل المبلغ المطلوب من USDT إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
-      en: `Send the required USDT amount to the address above via ${networkNames[this.network]} network. Make sure to select the correct network to avoid losing funds.`,
+      ar: `⚠️ مهم جداً: أرسل المبلغ المحدد بالضبط (بما في ذلك السنتات) إلى العنوان أعلاه عبر شبكة ${networkNames[this.network]}. المبلغ فريد لعمليتك ويُستخدم للتحقق التلقائي. تأكد من اختيار الشبكة الصحيحة لتجنب فقدان الأموال.`,
+      en: `⚠️ Important: Send the EXACT amount shown (including cents) to the address above via ${networkNames[this.network]} network. The amount is unique to your transaction and used for automatic verification. Make sure to select the correct network to avoid losing funds.`,
     };
   }
 }

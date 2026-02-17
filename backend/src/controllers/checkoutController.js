@@ -172,12 +172,20 @@ async function initCheckout(req, res) {
           referenceId,
         });
         await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
+        // حفظ المبلغ الفريد في الميتا للتحقق لاحقاً
+        await Payment.updateMeta(payment.id, getSiteKey(req), {
+          usdt_unique_amount: paymentInfo.amount,
+          usdt_original_amount: paymentInfo.originalAmount,
+          usdt_wallet_address: paymentInfo.walletAddress,
+          usdt_network: paymentInfo.network,
+        });
         const USDT_EXPIRY_MS = 30 * 60 * 1000;
         result = {
           method: 'manual_crypto',
           walletAddress: paymentInfo.walletAddress,
           network: paymentInfo.network,
           amount: paymentInfo.amount,
+          originalAmount: paymentInfo.originalAmount,
           currency: 'USDT',
           contractAddress: paymentInfo.contractAddress,
           instructions: paymentInfo.instructions,
@@ -480,9 +488,13 @@ async function checkUsdtPayment(req, res) {
       return res.status(400).json({ error: 'هذه الدفعة ليست USDT' });
     }
 
+    // استخدام المبلغ الفريد المحفوظ في الميتا للتحقق الدقيق
+    const meta = await Payment.getMeta(payment.id, getSiteKey(req));
+    const checkAmount = meta?.usdt_unique_amount || payment.amount;
+
     const usdt = new USDTProcessor(gateway.config);
     const result = await usdt.checkPayment({
-      amount: payment.amount,
+      amount: checkAmount,
       sinceTimestamp: createdAt,
     });
 
