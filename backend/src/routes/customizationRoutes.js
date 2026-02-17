@@ -4,13 +4,15 @@ const {
   getCustomization,
   updateCustomization,
   resetCustomization,
-  getPublicCustomization
+  getPublicCustomization,
+  getStoreCustomization
 } = require('../controllers/customizationController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // ===== واجهة عامة (للمتجر بدون مصادقة) =====
 router.get('/public/:site_key', getPublicCustomization);
+router.get('/store', getStoreCustomization);
 
 // ===== واجهة الأدمن =====
 router.use(validateSite);

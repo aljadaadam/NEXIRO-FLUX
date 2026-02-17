@@ -76,9 +76,36 @@ async function getPublicCustomization(req, res) {
   }
 }
 
+// جلب التخصيصات للمتجر (بدون مصادقة — يستخدم siteKey من resolveTenant)
+async function getStoreCustomization(req, res) {
+  try {
+    const siteKey = req.siteKey;
+    if (!siteKey) {
+      return res.status(400).json({ error: 'لم يتم تحديد الموقع' });
+    }
+
+    const customization = await Customization.findBySiteKey(siteKey);
+
+    res.json({
+      customization: customization || {
+        theme_id: 'purple',
+        primary_color: '#7c5cff',
+        dark_mode: true,
+        button_radius: 'rounded-xl',
+        show_banner: true,
+        font_family: 'Tajawal'
+      }
+    });
+  } catch (error) {
+    console.error('Error in getStoreCustomization:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   getCustomization,
   updateCustomization,
   resetCustomization,
-  getPublicCustomization
+  getPublicCustomization,
+  getStoreCustomization
 };

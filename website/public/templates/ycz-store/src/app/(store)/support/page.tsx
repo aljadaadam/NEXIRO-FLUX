@@ -17,7 +17,7 @@ export default function SupportPage() {
   useEffect(() => {
     async function loadContact() {
       try {
-        const res = await fetch(`/api/customization?_t=${Date.now()}`, { cache: 'no-store' });
+        const res = await fetch(`/api/customization/store?_t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           const c = data.customization || data;
