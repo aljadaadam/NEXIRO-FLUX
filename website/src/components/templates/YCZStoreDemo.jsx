@@ -18,6 +18,8 @@ export default function YCZStoreDemo() {
   // Fetch real price from database
   const staticT = staticTemplates.find(tp => tp.id === 'digital-services-store');
   const [basePrice, setBasePrice] = useState(staticT?.price?.monthly || 39);
+  const [yearlyPrice, setYearlyPrice] = useState(staticT?.price?.yearly || 390);
+  const [lifetimePrice, setLifetimePrice] = useState(staticT?.price?.lifetime || 975);
 
   useEffect(() => {
     api.getPublicProducts()
@@ -27,6 +29,10 @@ export default function YCZStoreDemo() {
         if (live) {
           const p = parseFloat(live.price);
           if (p > 0) setBasePrice(p);
+          const py = live.price_yearly != null ? parseFloat(live.price_yearly) : (p > 0 ? p * 10 : null);
+          const pl = live.price_lifetime != null ? parseFloat(live.price_lifetime) : (p > 0 ? p * 25 : null);
+          if (py > 0) setYearlyPrice(py);
+          if (pl > 0) setLifetimePrice(pl);
         }
       })
       .catch(() => {});
@@ -34,8 +40,8 @@ export default function YCZStoreDemo() {
 
   const prices = {
     monthly: { price: basePrice, suffix: isRTL ? '/شهر' : '/mo', label: isRTL ? 'شهري' : 'Monthly', save: null },
-    yearly: { price: Math.round(basePrice * 10), suffix: isRTL ? '/سنة' : '/yr', label: isRTL ? 'سنوي' : 'Yearly', save: isRTL ? 'وفّر 25%' : 'Save 25%' },
-    lifetime: { price: Math.round(basePrice * 25), suffix: '', label: isRTL ? 'مدى الحياة' : 'Lifetime', save: isRTL ? 'أفضل قيمة' : 'Best Value' },
+    yearly: { price: yearlyPrice, suffix: isRTL ? '/سنة' : '/yr', label: isRTL ? 'سنوي' : 'Yearly', save: isRTL ? 'وفّر 25%' : 'Save 25%' },
+    lifetime: { price: lifetimePrice, suffix: '', label: isRTL ? 'مدى الحياة' : 'Lifetime', save: isRTL ? 'أفضل قيمة' : 'Best Value' },
   };
 
   const features = [
