@@ -680,20 +680,39 @@ export default function SetupWizardPage() {
                   )}
 
                   {selectedGw.type === 'usdt' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <p className="text-dark-400 text-sm">
-                        {isRTL ? `أرسل USDT إلى العنوان التالي (شبكة ${cfg.network || 'TRC20'}):` : `Send USDT to the following address (${cfg.network || 'TRC20'} network):`}
+                        {isRTL ? `أرسل $${templatePrice} USDT إلى العنوان التالي (شبكة ${cfg.network || 'TRC20'}):` : `Send $${templatePrice} USDT to the following address (${cfg.network || 'TRC20'} network):`}
                       </p>
                       {cfg.wallet_address && (
-                        <div className="flex items-center gap-2 bg-dark-900/50 rounded-lg px-3 py-2">
-                          <code className="text-green-400 text-xs flex-1 font-mono break-all">{cfg.wallet_address}</code>
-                          <button onClick={() => handleCopy(cfg.wallet_address)} className="text-dark-400 hover:text-white transition-colors">
-                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                          </button>
+                        <div className="bg-dark-900/50 rounded-xl p-4">
+                          <div className="flex items-center gap-4">
+                            {/* QR Code */}
+                            <div className="flex-shrink-0 bg-white rounded-xl p-2">
+                              <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(cfg.wallet_address)}`}
+                                alt="QR Code"
+                                className="w-[100px] h-[100px]"
+                              />
+                            </div>
+                            {/* Address */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-dark-500 text-xs">{isRTL ? 'عنوان المحفظة' : 'Wallet Address'}</span>
+                                <button onClick={() => handleCopy(cfg.wallet_address)} className="text-dark-400 hover:text-white transition-colors">
+                                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                              <code className="text-green-400 text-xs font-mono break-all bg-white/5 rounded-lg p-2.5 block leading-relaxed">{cfg.wallet_address}</code>
+                              {cfg.network && (
+                                <p className="text-dark-500 text-xs mt-2 flex items-center gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  {isRTL ? 'الشبكة:' : 'Network:'} {cfg.network}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {cfg.network && (
-                        <p className="text-dark-500 text-xs">{isRTL ? 'الشبكة:' : 'Network:'} {cfg.network}</p>
                       )}
                     </div>
                   )}

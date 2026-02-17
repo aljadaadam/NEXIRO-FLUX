@@ -98,6 +98,8 @@ export default function TemplateBuyPage() {
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [usdtExpired, setUsdtExpired] = useState(false);
   const [usdtTimeLeft, setUsdtTimeLeft] = useState(null); // seconds remaining
+  const [usdtSubStep, setUsdtSubStep] = useState(1); // 1=send, 2=verify
+  const [usdtTxHash, setUsdtTxHash] = useState('');
 
   // Country detection
   const [country, setCountry] = useState(null);
@@ -258,6 +260,8 @@ export default function TemplateBuyPage() {
         const expiresIn = result.expires_in || 1800; // 30 min default
         setUsdtTimeLeft(expiresIn);
         setUsdtExpired(false);
+        setUsdtSubStep(1);
+        setUsdtTxHash('');
         setStep('paying');
       }
 
@@ -275,10 +279,17 @@ export default function TemplateBuyPage() {
   // ─── Check USDT ───
   const handleCheckUsdt = async () => {
     if (!paymentId || usdtExpired) return;
+    // BEP20/ERC20: require tx hash
+    const network = paymentResult?.network;
+    const needsTxHash = network === 'BEP20' || network === 'ERC20';
+    if (needsTxHash && !usdtTxHash.trim()) {
+      setError(isRTL ? 'يرجى إدخال هاش المعاملة (Transaction Hash)' : 'Please enter the Transaction Hash');
+      return;
+    }
     setChecking(true);
     setError(null);
     try {
-      const result = await api.checkUsdtPayment(paymentId);
+      const result = await api.checkUsdtPayment(paymentId, needsTxHash ? usdtTxHash.trim() : undefined);
       if (result.confirmed) {
         try { localStorage.setItem('nexiro_pending_setup', JSON.stringify({ payment_id: paymentId, template_id: templateId, plan, paid_at: new Date().toISOString() })); } catch(e) {}
         navigate(`/setup?template=${templateId}&plan=${plan}&payment_ref=${paymentId}&payment_status=success&gateway=usdt`);
@@ -615,6 +626,8 @@ export default function TemplateBuyPage() {
                           setPaymentId(null);
                           setUsdtExpired(false);
                           setUsdtTimeLeft(null);
+                          setUsdtSubStep(1);
+                          setUsdtTxHash('');
                           setError(null);
                         }}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all"
@@ -626,58 +639,155 @@ export default function TemplateBuyPage() {
                   ) : (
                     /* ═══ Active Payment ═══ */
                     <>
-                      <div className="text-center">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
-                          <Bitcoin className="w-8 h-8 text-white" />
+                      {/* Step indicator + Timer */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${usdtSubStep >= 1 ? 'bg-green-500 text-white' : 'bg-white/10 text-dark-500'}`}>1</div>
+                            <span className={`text-xs ${usdtSubStep === 1 ? 'text-white font-semibold' : 'text-dark-500'}`}>{isRTL ? 'إرسال' : 'Send'}</span>
+                          </div>
+                          <div className="w-5 h-px bg-white/10" />
+                          <div className="flex items-center gap-1">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${usdtSubStep === 2 ? 'bg-green-500 text-white' : 'bg-white/10 text-dark-500'}`}>2</div>
+                            <span className={`text-xs ${usdtSubStep === 2 ? 'text-white font-semibold' : 'text-dark-500'}`}>{isRTL ? 'تحقق' : 'Verify'}</span>
+                          </div>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-1">{isRTL ? 'الدفع بـ USDT' : 'Pay with USDT'}</h3>
-                        <p className="text-dark-400 text-sm mb-2">
-                          {isRTL ? `حوّل ${paymentResult.amount} USDT إلى العنوان التالي` : `Send ${paymentResult.amount} USDT to the address below`}
-                        </p>
-                        {/* Countdown Timer */}
-                        {usdtTimeLeft !== null && (
-                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono ${
+                        {usdtTimeLeft !== null && usdtTimeLeft > 0 && (
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono ${
                             usdtTimeLeft <= 300
                               ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                              : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                              : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                           }`}>
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>
-                              {Math.floor(usdtTimeLeft / 60).toString().padStart(2, '0')}:{(usdtTimeLeft % 60).toString().padStart(2, '0')}
-                            </span>
+                            <Clock className="w-3 h-3" />
+                            {Math.floor(usdtTimeLeft / 60).toString().padStart(2, '0')}:{(usdtTimeLeft % 60).toString().padStart(2, '0')}
                           </div>
                         )}
                       </div>
 
-                      {/* Wallet details */}
-                      <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-dark-500 text-xs">{isRTL ? 'عنوان المحفظة' : 'Wallet Address'}</span>
-                          <button onClick={() => copyText(paymentResult.walletAddress, 'wallet')} className="text-dark-500 hover:text-white transition-colors">
-                            {copied === 'wallet' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {/* ── Sub-Step 1: Send ── */}
+                      {usdtSubStep === 1 && (
+                        <>
+                          {/* Amount card */}
+                          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-teal-600 p-5 text-center text-white">
+                            <div className="absolute -top-5 -right-5 w-20 h-20 rounded-full bg-white/10" />
+                            <p className="text-xs opacity-80 mb-1">{isRTL ? 'أرسل بالضبط' : 'Send Exactly'}</p>
+                            <p className="text-3xl font-extrabold font-mono tracking-wide">{paymentResult.amount} <span className="text-base font-semibold opacity-90">USDT</span></p>
+                            <div className="inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-md bg-white/15 text-xs">
+                              <Globe className="w-3 h-3" />
+                              {paymentResult.network}
+                            </div>
+                          </div>
+
+                          {/* QR + Address */}
+                          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                            <div className="flex items-center gap-4">
+                              {/* QR Code */}
+                              {paymentResult.walletAddress && (
+                                <div className="flex-shrink-0 bg-white rounded-xl p-2">
+                                  <img
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(paymentResult.walletAddress)}`}
+                                    alt="QR Code"
+                                    className="w-[100px] h-[100px]"
+                                  />
+                                </div>
+                              )}
+                              {/* Address */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-dark-500 text-xs">{isRTL ? 'عنوان المحفظة' : 'Wallet Address'}</span>
+                                  <button onClick={() => copyText(paymentResult.walletAddress, 'wallet')} className="text-dark-500 hover:text-white transition-colors">
+                                    {copied === 'wallet' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                  </button>
+                                </div>
+                                <p className="text-white text-xs font-mono break-all bg-white/5 rounded-lg p-2.5 leading-relaxed">{paymentResult.walletAddress}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Warning */}
+                          <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-yellow-400 text-xs">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                            <span>{isRTL ? paymentResult.instructions?.ar : paymentResult.instructions?.en}</span>
+                          </div>
+
+                          {/* Next button */}
+                          <button
+                            onClick={() => setUsdtSubStep(2)}
+                            disabled={usdtTimeLeft <= 0}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            {isRTL ? 'أرسلت المبلغ — التالي' : "I've Sent — Next"}
                           </button>
-                        </div>
-                        <p className="text-white text-sm font-mono break-all bg-white/5 rounded-lg p-3">{paymentResult.walletAddress}</p>
-                        <p className="flex items-center gap-1 text-dark-400 text-xs">
-                          <Globe className="w-3 h-3" />
-                          {isRTL ? `الشبكة: ${paymentResult.network}` : `Network: ${paymentResult.network}`}
-                        </p>
-                      </div>
+                        </>
+                      )}
 
-                      {/* Warning */}
-                      <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-yellow-400 text-xs">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <span>{isRTL ? paymentResult.instructions?.ar : paymentResult.instructions?.en}</span>
-                      </div>
+                      {/* ── Sub-Step 2: Verify ── */}
+                      {usdtSubStep === 2 && (
+                        <>
+                          {/* Summary mini card */}
+                          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                              <p className="text-dark-500 text-[0.65rem]">{isRTL ? 'المبلغ المرسل' : 'Amount Sent'}</p>
+                              <p className="text-white text-lg font-extrabold font-mono">{paymentResult.amount} USDT</p>
+                            </div>
+                            <div className="text-end">
+                              <p className="text-dark-500 text-[0.65rem]">{isRTL ? 'الشبكة' : 'Network'}</p>
+                              <p className="text-green-400 text-sm font-bold">{paymentResult.network}</p>
+                            </div>
+                          </div>
 
-                      <button
-                        onClick={handleCheckUsdt}
-                        disabled={checking || usdtExpired}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all disabled:opacity-50"
-                      >
-                        {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                        {isRTL ? 'تحقق من الدفع' : 'Verify Payment'}
-                      </button>
+                          {/* TX Hash input for BEP20/ERC20 */}
+                          {(paymentResult.network === 'BEP20' || paymentResult.network === 'ERC20') && (
+                            <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+                              <label className="block text-sm font-bold text-green-400 mb-1">
+                                {isRTL ? 'هاش المعاملة (Transaction Hash)' : 'Transaction Hash'}
+                              </label>
+                              <p className="text-dark-500 text-xs mb-2">
+                                {isRTL ? 'انسخ TX Hash من محفظتك والصقه هنا' : 'Copy the TX Hash from your wallet and paste it here'}
+                              </p>
+                              <input
+                                type="text"
+                                value={usdtTxHash}
+                                onChange={e => setUsdtTxHash(e.target.value)}
+                                placeholder="0x..."
+                                dir="ltr"
+                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm font-mono placeholder:text-dark-600 outline-none focus:border-green-500/30"
+                              />
+                            </div>
+                          )}
+
+                          {/* TRC20: auto-detection note */}
+                          {paymentResult.network === 'TRC20' && (
+                            <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 text-center">
+                              <p className="text-green-400 text-sm font-semibold">
+                                {isRTL ? 'سيتم الكشف عن التحويل تلقائياً' : 'Transfer will be detected automatically'}
+                              </p>
+                              <p className="text-dark-500 text-xs mt-1">
+                                {isRTL ? 'اضغط زر التحقق بعد إتمام التحويل' : 'Press verify after completing the transfer'}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Verify button */}
+                          <button
+                            onClick={handleCheckUsdt}
+                            disabled={checking || usdtTimeLeft <= 0}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all disabled:opacity-50"
+                          >
+                            {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            {checking ? (isRTL ? 'جاري التحقق...' : 'Verifying...') : (isRTL ? '🔍 تحقق من الدفع' : '🔍 Verify Payment')}
+                          </button>
+
+                          {/* Back to step 1 */}
+                          <button
+                            onClick={() => setUsdtSubStep(1)}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-dark-400 text-sm font-medium hover:bg-white/10 transition-all"
+                          >
+                            {isRTL ? '← العودة لبيانات التحويل' : '← Back to transfer details'}
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                 </>
