@@ -287,16 +287,17 @@ export default function ServicesPage() {
       const serviceType = String((p as { service_type?: string }).service_type || '').toUpperCase();
       const rawCategory = String(p.category || '');
 
+      // ألعاب أولاً — حتى لو service_type كان IMEI أو SERVER
+      if (rawCategory === 'ألعاب') {
+        return { ...p, category: 'ألعاب' };
+      }
+
       if (serviceType === 'IMEI' || rawCategory === 'IMEI' || rawCategory === 'خدمات IMEI') {
         return { ...p, category: 'خدمات IMEI' };
       }
 
       if (serviceType === 'SERVER' || rawCategory === 'منتجات سوفت وير' || rawCategory === 'أدوات سوفتوير') {
         return { ...p, category: 'أدوات سوفتوير' };
-      }
-
-      if (rawCategory === 'ألعاب') {
-        return { ...p, category: 'ألعاب' };
       }
 
       return null;
