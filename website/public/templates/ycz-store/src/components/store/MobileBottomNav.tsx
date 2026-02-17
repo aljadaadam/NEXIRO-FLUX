@@ -21,33 +21,41 @@ export default function MobileBottomNav() {
     <nav className="store-mobile-nav" style={{
       display: 'none',
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      zIndex: 50,
-      background: 'rgba(255,255,255,0.97)',
+      zIndex: 9999,
+      background: 'rgba(255,255,255,0.98)',
       backdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(0,0,0,0.05)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderTop: '1px solid rgba(0,0,0,0.06)',
       justifyContent: 'space-around',
       alignItems: 'center',
-      padding: '0.5rem 0 0.6rem',
+      padding: '0.45rem 0 calc(0.5rem + env(safe-area-inset-bottom, 0px))',
+      boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
     }}>
       {items.map(item => {
         const Icon = item.icon;
         const active = pathname === item.id;
         return (
-          <Link key={item.id} href={item.id} style={{
+          <Link key={item.id} href={item.id} prefetch={true} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center',
             gap: 2, cursor: 'pointer', background: 'none', border: 'none',
             color: active ? currentTheme.primary : '#94a3b8',
             position: 'relative',
+            minWidth: 48, minHeight: 44,
+            padding: '4px 8px',
+            WebkitTapHighlightColor: 'transparent',
+            touchAction: 'manipulation',
+            textDecoration: 'none',
           }}>
             {active && (
               <div style={{
-                position: 'absolute', top: -8,
+                position: 'absolute', top: -2,
                 width: 20, height: 3, borderRadius: 2,
                 background: currentTheme.primary,
               }} />
             )}
             <Icon size={20} />
-            <span style={{ fontSize: '0.6rem', fontWeight: 700 }}>{item.label}</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{item.label}</span>
           </Link>
         );
       })}
