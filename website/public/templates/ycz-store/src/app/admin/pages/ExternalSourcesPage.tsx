@@ -63,7 +63,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
   };
 
   const fieldPlaceholders: Record<string, string> = {
-    'URL': 'https://example.com/api',
+    'URL': 'https://sd-unlocker.com',
     'Username': 'اسم المستخدم في النظام',
     'API Access Key': 'أدخل مفتاح الوصول',
   };
@@ -161,7 +161,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
                 </div>
                 {field === 'URL' && (
                   <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 4 }}>
-                    مثال: https://sd-unlocker.com أو https://yourdomain.com
+                    أدخل رابط الموقع فقط — سيتم اكتشاف مسار API تلقائياً 🔍
                   </p>
                 )}
               </div>
@@ -417,11 +417,14 @@ export default function ExternalSourcesPage() {
         [sourceId]: {
           type: 'test',
           success: !!res?.connectionOk,
-          message: res?.connectionOk ? 'الاتصال ناجح ✅' : (res?.error || 'فشل الاتصال'),
+          message: res?.connectionOk
+            ? `الاتصال ناجح ✅${res?.resolvedUrl ? ` — تم اكتشاف رابط API: ${res.resolvedUrl}` : ''}`
+            : (res?.error || 'فشل الاتصال'),
           balance: res?.sourceBalance,
           currency: res?.sourceCurrency,
         }
       }));
+      // إعادة جلب المصادر لتحديث الرابط المُكتشف
       await fetchSources();
     } catch (err: unknown) {
       setSourceResults(prev => ({

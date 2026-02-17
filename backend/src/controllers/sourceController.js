@@ -21,6 +21,83 @@ function isPrivateOrLocalHostname(hostname) {
   return false;
 }
 
+// ─── اكتشاف رابط API تلقائياً ───
+// المسارات الشائعة لأنظمة DHRU FUSION
+const COMMON_API_PATHS = [
+  '/api/index.php',
+  '/api/',
+  '/index.php',
+  '/api/v2',
+  '/api/v1',
+  '/reseller/api/index.php',
+];
+
+/**
+ * يحاول اكتشاف رابط API الصحيح من رابط الموقع الأساسي
+ * مثال: https://sd-unlocker.com → https://sd-unlocker.com/api/index.php
+ */
+async function resolveApiUrl(inputUrl, apiKey, username) {
+  let base = inputUrl.trim().replace(/\/+$/, '');
+
+  // إذا كان الرابط يحتوي بالفعل على مسار API، جرّبه أولاً
+  const parsed = new URL(base);
+  const hasApiPath = parsed.pathname && parsed.pathname !== '/' && parsed.pathname.length > 1;
+
+  // جرّب الرابط كما هو أولاً
+  const tryUrl = async (url) => {
+    try {
+      const body = new URLSearchParams({
+        action: 'accountinfo',
+        requestformat: 'JSON',
+        ...(apiKey ? { apiaccesskey: apiKey } : {}),
+        ...(username ? { username } : {}),
+      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!response.ok) return null;
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        if (json?.SUCCESS || json?.success) return url;
+      } catch { /* not JSON */ }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // 1) جرّب الرابط كما أدخله المستخدم
+  if (hasApiPath) {
+    const result = await tryUrl(base);
+    if (result) return result;
+  }
+
+  // 2) جرّب المسارات الشائعة
+  const origin = parsed.origin; // https://sd-unlocker.com
+  for (const path of COMMON_API_PATHS) {
+    const candidate = origin + path;
+    if (candidate === base) continue; // تم اختباره بالفعل
+    const result = await tryUrl(candidate);
+    if (result) return result;
+  }
+
+  // 3) آخر محاولة: الرابط كما هو (بدون مسار)
+  if (!hasApiPath) {
+    const result = await tryUrl(base);
+    if (result) return result;
+  }
+
+  // لم يتم العثور على رابط صالح — أعد الرابط الأصلي
+  return base;
+}
+
 // دالة فلترة المنتجات حسب نوع الخدمة وخيارات Setup
 function checkSetupFilter(serviceType, setupIMEI, setupServer, setupRemote) {
   // إذا لم يتم اختيار أي setup option، نقبل جميع المنتجات
@@ -174,7 +251,7 @@ async function createSource(req, res) {
       description
     } = req.body;
 
-    const finalUrl = url || apiUrl;
+    let finalUrl = url || apiUrl;
 
     // التحقق من المدخلات
     if (!name || !type || !finalUrl) {
@@ -189,6 +266,14 @@ async function createSource(req, res) {
       return res.status(400).json({ 
         error: `النوع يجب أن يكون أحد: ${validTypes.join(', ')}` 
       });
+    }
+
+    // ─── اكتشاف رابط API تلقائياً ───
+    try {
+      finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
+      console.log(`✅ Resolved API URL: ${finalUrl}`);
+    } catch (e) {
+      console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
     }
 
     const source = await Source.create({
@@ -253,13 +338,20 @@ async function updateSource(req, res) {
       syncOnly
     } = req.body;
 
-    const finalUrl = url || apiUrl;
+    let finalUrl = url || apiUrl;
 
     // التحقق من المدخلات
     if (!name || !type || !finalUrl) {
       return res.status(400).json({ 
         error: 'الاسم والنوع والرابط مطلوبة' 
       });
+    }
+
+    // ─── اكتشاف رابط API تلقائياً ───
+    try {
+      finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
+    } catch (e) {
+      console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
     }
 
     const source = await Source.update(id, site_key, {
@@ -377,9 +469,22 @@ async function testSourceConnection(req, res) {
       return res.status(404).json({ error: 'المصدر غير موجود' });
     }
 
-    const baseUrl = req.body?.url || req.body?.apiUrl || source.url;
+    let baseUrl = req.body?.url || req.body?.apiUrl || source.url;
     const apiKeyPlain = req.body?.apiKey || req.body?.api_key || decryptApiKey(source.api_key);
     const username = req.body?.username || source.username || null;
+
+    // ─── اكتشاف رابط API تلقائياً ───
+    try {
+      const resolvedUrl = await resolveApiUrl(baseUrl, apiKeyPlain, username);
+      if (resolvedUrl !== baseUrl) {
+        console.log(`✅ Auto-resolved API URL: ${baseUrl} → ${resolvedUrl}`);
+        baseUrl = resolvedUrl;
+        // تحديث الرابط في قاعدة البيانات
+        await Source.update(source.id, source.site_key, { url: resolvedUrl });
+      }
+    } catch (e) {
+      console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
+    }
 
     const logs = [];
     logs.push('Black List domain check.....');
@@ -502,6 +607,7 @@ async function testSourceConnection(req, res) {
     return res.json({
       success: true,
       connectionOk: true,
+      resolvedUrl: baseUrl,
       sourceBalance: balance,
       sourceCurrency: currency,
       lastChecked: checkedAt.toISOString()
