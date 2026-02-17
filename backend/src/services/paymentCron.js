@@ -2,6 +2,7 @@ const Payment = require('../models/Payment');
 const PaymentGateway = require('../models/PaymentGateway');
 const BinancePayProcessor = require('./binancePay');
 const { creditWalletOnce } = require('./walletCredit');
+const emailService = require('./email');
 
 let timer = null;
 
@@ -37,6 +38,19 @@ async function tick() {
             confirmed_via: 'cron_query',
           });
           await creditWalletOnce({ paymentId: p.id, siteKey });
+
+          // بريد إيصال الدفع
+          try {
+            const meta = await Payment.getMeta(p.id, siteKey);
+            if (meta?.customer_email) {
+              emailService.sendPaymentReceipt({
+                to: meta.customer_email, name: meta.customer_name || 'عميل',
+                amount: result.amount || p.amount, currency: result.currency || 'USDT',
+                method: 'Binance Pay', transactionId: result.transactionId,
+                siteKey
+              }).catch(() => {});
+            }
+          } catch (e) { /* ignore */ }
         }
       } catch (e) {
         // keep silent to avoid log spam; next tick will retry

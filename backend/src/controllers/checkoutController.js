@@ -616,6 +616,20 @@ async function checkPaymentStatus(req, res) {
               confirmed_via: 'status_query',
             });
             await creditWalletOnce({ paymentId: payment.id, siteKey: getSiteKey(req) });
+
+            // بريد إيصال الدفع
+            try {
+              const confirmedMeta = await Payment.getMeta(payment.id, getSiteKey(req));
+              if (confirmedMeta?.customer_email) {
+                emailService.sendPaymentReceipt({
+                  to: confirmedMeta.customer_email, name: confirmedMeta.customer_name || 'عميل',
+                  amount: result.amount || payment.amount, currency: result.currency || 'USDT',
+                  method: 'Binance Pay', transactionId: result.transactionId,
+                  siteKey: getSiteKey(req)
+                }).catch(() => {});
+              }
+            } catch (e) { /* ignore */ }
+
             return res.json({ status: 'completed', message: '✅ تم تأكيد الدفع' });
           }
         } catch (e) {

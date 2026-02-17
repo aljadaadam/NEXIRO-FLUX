@@ -30,6 +30,7 @@ async function creditWalletOnce({ paymentId, siteKey }) {
         oldBalance: Number(before?.wallet_balance || 0),
         newBalance: Number(after?.wallet_balance || 0),
         currency: meta.currency || payment.currency || 'USD',
+        siteKey,
       });
     }
   } catch {
