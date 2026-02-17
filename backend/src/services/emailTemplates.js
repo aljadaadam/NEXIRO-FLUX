@@ -1,13 +1,79 @@
 // ─── Email HTML Templates ───
 // All email templates for NEXIRO-FLUX platform
+// Per-site branding support (store name, logo, colors)
 // Bilingual (Arabic primary + English fallback)
 // Responsive HTML email design
+
+// ═══════════════════════════════════
+//  COLOR HELPERS
+// ═══════════════════════════════════
+
+function darkenHex(hex, amount = 20) {
+  const c = (hex || '#7c3aed').replace('#', '');
+  const r = Math.max(0, parseInt(c.substr(0, 2), 16) - amount);
+  const g = Math.max(0, parseInt(c.substr(2, 2), 16) - amount);
+  const b = Math.max(0, parseInt(c.substr(4, 2), 16) - amount);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+function lightenHex(hex, amount = 60) {
+  const c = (hex || '#7c3aed').replace('#', '');
+  const r = Math.min(255, parseInt(c.substr(0, 2), 16) + amount);
+  const g = Math.min(255, parseInt(c.substr(2, 2), 16) + amount);
+  const b = Math.min(255, parseInt(c.substr(4, 2), 16) + amount);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+function hexToRgb(hex) {
+  const c = (hex || '#7c3aed').replace('#', '');
+  return {
+    r: parseInt(c.substr(0, 2), 16),
+    g: parseInt(c.substr(2, 2), 16),
+    b: parseInt(c.substr(4, 2), 16),
+  };
+}
+
+// ═══════════════════════════════════
+//  UI HELPERS FACTORY
+// ═══════════════════════════════════
+
+function createUI(primaryColor = '#7c3aed') {
+  const darkColor = darkenHex(primaryColor);
+  const lightColor = lightenHex(primaryColor);
+  const rgb = hexToRgb(primaryColor);
+
+  return {
+    heading: (text) => `<h2 style="margin:0 0 16px;color:#fff;font-size:20px;font-weight:700;">${text}</h2>`,
+    text: (text) => `<p style="margin:0 0 12px;color:#9ca3af;font-size:14px;line-height:1.7;">${text}</p>`,
+    highlight: (text) => `<span style="color:${lightColor};font-weight:600;">${text}</span>`,
+    button: (text, url) => `<div style="text-align:center;margin:28px 0;">
+    <a href="${url}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,${primaryColor},${darkColor});color:#fff;text-decoration:none;border-radius:12px;font-size:14px;font-weight:700;">${text}</a>
+  </div>`,
+    divider: () => `<div style="height:1px;background:rgba(255,255,255,0.05);margin:24px 0;"></div>`,
+    infoRow: (label, value) => `<tr>
+    <td style="padding:8px 12px;color:#6b7280;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);">${label}</td>
+    <td style="padding:8px 12px;color:#e5e7eb;font-size:13px;font-weight:600;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);">${value}</td>
+  </tr>`,
+    infoTable: (rows) => `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border-radius:12px;overflow:hidden;margin:16px 0;">
+    ${rows}
+  </table>`,
+    badge: (text, color = primaryColor) => `<span style="display:inline-block;padding:4px 12px;background:${color}20;color:${color};border-radius:8px;font-size:12px;font-weight:700;">${text}</span>`,
+    icon: (emoji) => `<div style="text-align:center;margin-bottom:20px;"><span style="font-size:48px;">${emoji}</span></div>`,
+    accentBorder: () => `border-right:3px solid ${primaryColor};`,
+    accentBg: () => `background:rgba(${rgb.r},${rgb.g},${rgb.b},0.05);border:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.15);`,
+  };
+}
 
 // ═══════════════════════════════════
 //  BASE LAYOUT
 // ═══════════════════════════════════
 
-function baseLayout({ title, content, footer = '' }) {
+function baseLayout({ title, content, footer = '', branding = {} }) {
+  const storeName = branding.storeName || 'NEXIRO-FLUX';
+  const logoUrl = branding.logoUrl || '';
+  const primaryColor = branding.primaryColor || '#7c3aed';
+  const gradientEnd = darkenHex(primaryColor);
+
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -21,9 +87,10 @@ function baseLayout({ title, content, footer = '' }) {
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111827;border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;">
 
 <!-- Header -->
-<tr><td style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:32px 40px;text-align:center;">
-  <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">NEXIRO-FLUX</h1>
-  <p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">منصة بناء المواقع الاحترافية</p>
+<tr><td style="background:linear-gradient(135deg,${primaryColor},${gradientEnd});padding:32px 40px;text-align:center;">
+  ${logoUrl ? `<img src="${logoUrl}" alt="${storeName}" style="max-height:48px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">` : ''}
+  <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">${storeName}</h1>
+  ${!branding.storeName ? '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">منصة بناء المواقع الاحترافية</p>' : ''}
 </td></tr>
 
 <!-- Content -->
@@ -33,7 +100,7 @@ function baseLayout({ title, content, footer = '' }) {
 
 <!-- Footer -->
 <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;">
-  ${footer || `<p style="margin:0;color:#6b7280;font-size:11px;">© ${new Date().getFullYear()} NEXIRO-FLUX. جميع الحقوق محفوظة.</p>
+  ${footer || `<p style="margin:0;color:#6b7280;font-size:11px;">© ${new Date().getFullYear()} ${storeName}. جميع الحقوق محفوظة.</p>
   <p style="margin:6px 0 0;color:#4b5563;font-size:10px;">هذه رسالة تلقائية — لا ترد عليها مباشرة.</p>`}
 </td></tr>
 
@@ -44,38 +111,20 @@ function baseLayout({ title, content, footer = '' }) {
 </html>`;
 }
 
-// Reusable UI components
-const ui = {
-  heading: (text) => `<h2 style="margin:0 0 16px;color:#fff;font-size:20px;font-weight:700;">${text}</h2>`,
-  text: (text) => `<p style="margin:0 0 12px;color:#9ca3af;font-size:14px;line-height:1.7;">${text}</p>`,
-  highlight: (text) => `<span style="color:#a78bfa;font-weight:600;">${text}</span>`,
-  button: (text, url) => `<div style="text-align:center;margin:28px 0;">
-    <a href="${url}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;border-radius:12px;font-size:14px;font-weight:700;">${text}</a>
-  </div>`,
-  divider: () => `<div style="height:1px;background:rgba(255,255,255,0.05);margin:24px 0;"></div>`,
-  infoRow: (label, value) => `<tr>
-    <td style="padding:8px 12px;color:#6b7280;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);">${label}</td>
-    <td style="padding:8px 12px;color:#e5e7eb;font-size:13px;font-weight:600;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);">${value}</td>
-  </tr>`,
-  infoTable: (rows) => `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border-radius:12px;overflow:hidden;margin:16px 0;">
-    ${rows}
-  </table>`,
-  badge: (text, color = '#7c3aed') => `<span style="display:inline-block;padding:4px 12px;background:${color}20;color:${color};border-radius:8px;font-size:12px;font-weight:700;">${text}</span>`,
-  icon: (emoji) => `<div style="text-align:center;margin-bottom:20px;"><span style="font-size:48px;">${emoji}</span></div>`,
-};
-
 
 // ═══════════════════════════════════
 //  AUTH TEMPLATES
 // ═══════════════════════════════════
 
-function welcomeAdmin({ name, siteName }) {
+function welcomeAdmin({ name, siteName, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'مرحباً بك',
+    branding,
     content: `
       ${ui.icon('🎉')}
       ${ui.heading(`مرحباً ${name || ''}!`)}
-      ${ui.text(`تم إنشاء حسابك بنجاح على منصة ${ui.highlight(siteName || 'NEXIRO-FLUX')}.`)}
+      ${ui.text(`تم إنشاء حسابك بنجاح على منصة ${ui.highlight(siteName || branding.storeName || 'NEXIRO-FLUX')}.`)}
       ${ui.text('يمكنك الآن الوصول إلى لوحة التحكم وإدارة موقعك بالكامل:')}
       ${ui.text('• إضافة وتعديل المنتجات')}
       ${ui.text('• إدارة الطلبات والمدفوعات')}
@@ -87,114 +136,124 @@ function welcomeAdmin({ name, siteName }) {
   });
 }
 
-function welcomeUser({ name }) {
+function welcomeUser({ name, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
+  const sName = branding.storeName || 'NEXIRO-FLUX';
   return baseLayout({
-    title: 'مرحباً بك في NEXIRO-FLUX',
+    title: `مرحباً بك في ${sName}`,
+    branding,
     content: `
       ${ui.icon('👋')}
       ${ui.heading(`مرحباً ${name || ''}!`)}
-      ${ui.text(`شكراً لتسجيلك في ${ui.highlight('NEXIRO-FLUX')}. نحن سعداء بانضمامك!`)}
+      ${ui.text(`شكراً لتسجيلك في ${ui.highlight(sName)}. نحن سعداء بانضمامك!`)}
       ${ui.text('حسابك جاهز الآن على المنصة. يمكنك:')}
       ${ui.text('• تصفح القوالب الاحترافية المتاحة')}
       ${ui.text('• اختيار القالب المناسب لمشروعك')}
       ${ui.text('• شراء قالب والحصول على متجرك الخاص وموقعك الإلكتروني')}
-      ${ui.text('• لوحة تحكم كاملة لإدارة متجرك بعد الشراء')}
-      ${ui.divider()}
-      ${ui.text('🚀 ابدأ الآن باختيار القالب المناسب وأطلق مشروعك الرقمي!')}
-      ${ui.button('تصفح القوالب', 'https://nexiroflux.com/templates')}
+      ${ui.button('استكشف القوالب', '#')}
     `,
   });
 }
 
-function welcomeCustomer({ name, storeName }) {
+function welcomeCustomer({ name, storeName, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
+  const sName = storeName || branding.storeName || 'متجرنا';
   return baseLayout({
-    title: 'مرحباً بك',
+    title: `مرحباً بك في ${sName}`,
+    branding,
     content: `
-      ${ui.icon('👋')}
+      ${ui.icon('🛍️')}
       ${ui.heading(`مرحباً ${name || ''}!`)}
-      ${ui.text(`شكراً لتسجيلك في ${ui.highlight(storeName || 'متجرنا')}. نحن سعداء بانضمامك!`)}
+      ${ui.text(`شكراً لتسجيلك في ${ui.highlight(sName)}. نحن سعداء بانضمامك!`)}
       ${ui.text('حسابك جاهز الآن. يمكنك:')}
-      ${ui.text('• تصفح المنتجات والخدمات المتاحة')}
-      ${ui.text('• إجراء عمليات شراء بسهولة')}
-      ${ui.text('• متابعة طلباتك وحالتها')}
-      ${ui.text('• التواصل مع الدعم الفني عند الحاجة')}
+      ${ui.text('• تصفح المنتجات والخدمات')}
+      ${ui.text('• إضافة منتجات لسلة التسوق')}
+      ${ui.text('• متابعة طلباتك ومدفوعاتك')}
       ${ui.button('ابدأ التسوق', '#')}
     `,
   });
 }
 
-function passwordReset({ name, resetLink }) {
+function passwordReset({ name, resetLink, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'إعادة تعيين كلمة المرور',
+    branding,
     content: `
       ${ui.icon('🔑')}
       ${ui.heading('إعادة تعيين كلمة المرور')}
       ${ui.text(`مرحباً ${name || ''},`)}
-      ${ui.text('تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.')}
-      ${ui.text('اضغط على الزر أدناه لتعيين كلمة مرور جديدة:')}
-      ${ui.button('تعيين كلمة مرور جديدة', resetLink || '#')}
+      ${ui.text('تم طلب إعادة تعيين كلمة المرور لحسابك.')}
+      ${ui.text('اضغط على الزر أدناه لإعادة تعيين كلمة المرور:')}
+      ${ui.button('إعادة تعيين كلمة المرور', resetLink || '#')}
       ${ui.divider()}
       ${ui.text('⏰ هذا الرابط صالح لمدة ساعة واحدة فقط.')}
-      ${ui.text('إذا لم تطلب إعادة التعيين، يمكنك تجاهل هذه الرسالة بأمان.')}
+      ${ui.text('إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة.')}
     `,
   });
 }
 
-function emailVerification({ name, code }) {
+function emailVerification({ name, code, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تأكيد البريد الإلكتروني',
+    branding,
     content: `
       ${ui.icon('✉️')}
       ${ui.heading('تأكيد بريدك الإلكتروني')}
       ${ui.text(`مرحباً ${name || ''},`)}
-      ${ui.text('لإكمال عملية التسجيل، أدخل رمز التحقق التالي:')}
-      <div style="text-align:center;margin:28px 0;">
-        <div style="display:inline-block;padding:16px 48px;background:rgba(124,58,237,0.1);border:2px dashed rgba(124,58,237,0.3);border-radius:16px;">
-          <span style="font-size:36px;font-weight:800;color:#a78bfa;letter-spacing:12px;">${code || '000000'}</span>
-        </div>
+      ${ui.text('استخدم الرمز التالي لتأكيد بريدك الإلكتروني:')}
+      <div style="text-align:center;margin:24px 0;">
+        <span style="display:inline-block;padding:16px 40px;background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.1);border-radius:12px;font-size:32px;font-weight:800;color:#fff;letter-spacing:8px;">${code || '------'}</span>
       </div>
-      ${ui.text('⏰ الرمز صالح لمدة 15 دقيقة.')}
-      ${ui.text('إذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة.')}
+      ${ui.text('⏰ هذا الرمز صالح لمدة 10 دقائق فقط.')}
     `,
   });
 }
 
-function loginAlert({ name, ip, device, time }) {
+function loginAlert({ name, ip, device, time, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تنبيه تسجيل دخول',
+    branding,
     content: `
       ${ui.icon('🔐')}
       ${ui.heading('تسجيل دخول جديد')}
       ${ui.text(`مرحباً ${name || ''},`)}
-      ${ui.text('تم تسجيل دخول جديد إلى حسابك:')}
+      ${ui.text('تم تسجيل دخول جديد لحسابك:')}
       ${ui.infoTable(
-        ui.infoRow('🕐 الوقت', time || new Date().toLocaleString('ar-SA')) +
-        ui.infoRow('📱 الجهاز', device || 'غير معروف') +
-        ui.infoRow('🌐 IP', ip || 'غير معروف')
+        ui.infoRow('العنوان IP', ip || 'غير معروف') +
+        ui.infoRow('الجهاز', device || 'غير معروف') +
+        ui.infoRow('الوقت', time || new Date().toLocaleString('ar-SA'))
       )}
-      ${ui.text('إذا لم تكن أنت من قام بتسجيل الدخول، قم فوراً بتغيير كلمة المرور.')}
+      ${ui.text('إذا لم تقم بتسجيل الدخول، قم بتغيير كلمة المرور فوراً.')}
+      ${ui.button('تغيير كلمة المرور', '#')}
     `,
   });
 }
 
-function accountBlocked({ name, reason }) {
+function accountBlocked({ name, reason, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
-    title: 'تم تعليق الحساب',
+    title: 'تعليق الحساب',
+    branding,
     content: `
       ${ui.icon('⚠️')}
       ${ui.heading('تم تعليق حسابك')}
       ${ui.text(`مرحباً ${name || ''},`)}
-      ${ui.text('نأسف لإبلاغك بأنه تم تعليق حسابك.')}
+      ${ui.text('تم تعليق حسابك بشكل مؤقت.')}
       ${reason ? ui.text(`السبب: ${ui.highlight(reason)}`) : ''}
       ${ui.divider()}
-      ${ui.text('إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع فريق الدعم الفني.')}
+      ${ui.text('إذا كان لديك أي استفسار، تواصل مع فريق الدعم.')}
     `,
   });
 }
 
-function accountUnblocked({ name }) {
+function accountUnblocked({ name, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
-    title: 'تم إعادة تفعيل الحساب',
+    title: 'إعادة تفعيل الحساب',
+    branding,
     content: `
       ${ui.icon('✅')}
       ${ui.heading('تم إعادة تفعيل حسابك!')}
@@ -211,13 +270,15 @@ function accountUnblocked({ name }) {
 //  ORDER TEMPLATES
 // ═══════════════════════════════════
 
-function orderConfirmation({ name, orderId, items, total, currency }) {
+function orderConfirmation({ name, orderId, items, total, currency, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   const itemsHtml = (items || []).map(item =>
     ui.infoRow(item.name || item.product_name || 'منتج', `${item.quantity || 1}x — ${currency || '$'}${item.price || 0}`)
   ).join('');
 
   return baseLayout({
     title: 'تأكيد الطلب',
+    branding,
     content: `
       ${ui.icon('🛍️')}
       ${ui.heading('تم تأكيد طلبك!')}
@@ -232,9 +293,11 @@ function orderConfirmation({ name, orderId, items, total, currency }) {
   });
 }
 
-function newOrderAlert({ orderId, customerName, total, currency }) {
+function newOrderAlert({ orderId, customerName, total, currency, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'طلب جديد',
+    branding,
     content: `
       ${ui.icon('🛒')}
       ${ui.heading('طلب جديد!')}
@@ -249,7 +312,8 @@ function newOrderAlert({ orderId, customerName, total, currency }) {
   });
 }
 
-function orderStatusUpdate({ name, orderId, status, statusLabel }) {
+function orderStatusUpdate({ name, orderId, status, statusLabel, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   const statusEmojis = {
     processing: '⏳',
     completed: '✅',
@@ -267,13 +331,14 @@ function orderStatusUpdate({ name, orderId, status, statusLabel }) {
 
   return baseLayout({
     title: 'تحديث الطلب',
+    branding,
     content: `
       ${ui.icon(statusEmojis[status] || '📋')}
       ${ui.heading('تحديث حالة الطلب')}
       ${ui.text(`مرحباً ${name || ''},`)}
       ${ui.text(`تم تحديث حالة طلبك رقم ${ui.highlight('#' + (orderId || ''))}:`)}
       <div style="text-align:center;margin:20px 0;">
-        ${ui.badge(statusLabel || status, statusColors[status] || '#7c3aed')}
+        ${ui.badge(statusLabel || status, statusColors[status] || branding.primaryColor || '#7c3aed')}
       </div>
       ${status === 'completed' ? ui.text('🎉 شكراً لتسوقك معنا! نتمنى أن تكون راضياً عن تجربتك.') : ''}
       ${status === 'refunded' ? ui.text('💰 تم استرجاع المبلغ إلى حسابك. قد يستغرق الأمر 3-5 أيام عمل.') : ''}
@@ -287,9 +352,11 @@ function orderStatusUpdate({ name, orderId, status, statusLabel }) {
 //  PAYMENT TEMPLATES
 // ═══════════════════════════════════
 
-function paymentReceipt({ name, amount, currency, method, transactionId }) {
+function paymentReceipt({ name, amount, currency, method, transactionId, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'إيصال الدفع',
+    branding,
     content: `
       ${ui.icon('💳')}
       ${ui.heading('إيصال الدفع')}
@@ -306,9 +373,11 @@ function paymentReceipt({ name, amount, currency, method, transactionId }) {
   });
 }
 
-function paymentFailed({ name, amount, currency, reason }) {
+function paymentFailed({ name, amount, currency, reason, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'فشل الدفع',
+    branding,
     content: `
       ${ui.icon('❌')}
       ${ui.heading('فشل عملية الدفع')}
@@ -322,15 +391,17 @@ function paymentFailed({ name, amount, currency, reason }) {
   });
 }
 
-function paymentInstructions({ name, method, amount, currency, details }) {
+function paymentInstructions({ name, method, amount, currency, details, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تعليمات الدفع',
+    branding,
     content: `
       ${ui.icon('📋')}
       ${ui.heading('تعليمات الدفع')}
       ${ui.text(`مرحباً ${name || ''},`)}
       ${ui.text(`لإتمام عملية الدفع بمبلغ ${ui.highlight(`${currency || '$'}${amount || 0}`)} عبر ${ui.highlight(method || 'التحويل')}:`)}
-      ${details ? `<div style="background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.15);border-radius:12px;padding:20px;margin:16px 0;">
+      ${details ? `<div style="${ui.accentBg()}border-radius:12px;padding:20px;margin:16px 0;">
         <pre style="margin:0;color:#d1d5db;font-size:13px;white-space:pre-wrap;font-family:monospace;">${details}</pre>
       </div>` : ''}
       ${ui.text('⏰ يرجى إتمام الدفع خلال 24 ساعة لتجنب إلغاء الطلب.')}
@@ -339,9 +410,11 @@ function paymentInstructions({ name, method, amount, currency, details }) {
   });
 }
 
-function bankReceiptReview({ orderId, customerName, amount }) {
+function bankReceiptReview({ orderId, customerName, amount, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'مراجعة إيصال بنكي',
+    branding,
     content: `
       ${ui.icon('📎')}
       ${ui.heading('إيصال بنكي بحاجة مراجعة')}
@@ -362,9 +435,11 @@ function bankReceiptReview({ orderId, customerName, amount }) {
 //  TICKET (SUPPORT) TEMPLATES
 // ═══════════════════════════════════
 
-function newTicket({ ticketId, ticketSubject, customerName }) {
+function newTicket({ ticketId, ticketSubject, customerName, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تذكرة دعم جديدة',
+    branding,
     content: `
       ${ui.icon('🎫')}
       ${ui.heading('تذكرة دعم جديدة')}
@@ -379,15 +454,17 @@ function newTicket({ ticketId, ticketSubject, customerName }) {
   });
 }
 
-function ticketReply({ name, ticketId, message, replierName }) {
+function ticketReply({ name, ticketId, message, replierName, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'رد على تذكرة',
+    branding,
     content: `
       ${ui.icon('💬')}
       ${ui.heading(`رد جديد على تذكرة #${ticketId || ''}`)}
       ${ui.text(`مرحباً ${name || ''},`)}
       ${ui.text(`قام ${ui.highlight(replierName || 'فريق الدعم')} بالرد على تذكرتك:`)}
-      <div style="background:rgba(255,255,255,0.03);border-right:3px solid #7c3aed;border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;">
+      <div style="background:rgba(255,255,255,0.03);${ui.accentBorder()}border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;">
         <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.7;">${message || ''}</p>
       </div>
       ${ui.button('عرض التذكرة', '#')}
@@ -395,9 +472,11 @@ function ticketReply({ name, ticketId, message, replierName }) {
   });
 }
 
-function ticketClosed({ name, ticketId }) {
+function ticketClosed({ name, ticketId, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تم إغلاق التذكرة',
+    branding,
     content: `
       ${ui.icon('✅')}
       ${ui.heading(`تم إغلاق التذكرة #${ticketId || ''}`)}
@@ -415,14 +494,16 @@ function ticketClosed({ name, ticketId }) {
 //  SITE & SUBSCRIPTION TEMPLATES
 // ═══════════════════════════════════
 
-function siteCreated({ name, siteName, siteKey, domain, plan }) {
+function siteCreated({ name, siteName, siteKey, domain, plan, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تم إنشاء موقعك',
+    branding,
     content: `
       ${ui.icon('🚀')}
       ${ui.heading('تم إنشاء موقعك بنجاح!')}
       ${ui.text(`مرحباً ${name || ''},`)}
-      ${ui.text(`تهانينا! تم إنشاء موقعك "${ui.highlight(siteName || '')}" بنجاح على منصة NEXIRO-FLUX.`)}
+      ${ui.text(`تهانينا! تم إنشاء موقعك "${ui.highlight(siteName || '')}" بنجاح.`)}
       ${ui.infoTable(
         ui.infoRow('اسم الموقع', siteName || '-') +
         ui.infoRow('مفتاح الموقع', siteKey || '-') +
@@ -440,9 +521,11 @@ function siteCreated({ name, siteName, siteKey, domain, plan }) {
   });
 }
 
-function trialStarted({ name, siteName, trialDays }) {
+function trialStarted({ name, siteName, trialDays, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'بدء الفترة التجريبية',
+    branding,
     content: `
       ${ui.icon('🕐')}
       ${ui.heading('بدأت الفترة التجريبية!')}
@@ -458,9 +541,11 @@ function trialStarted({ name, siteName, trialDays }) {
   });
 }
 
-function trialExpiring({ name, siteName, daysLeft }) {
+function trialExpiring({ name, siteName, daysLeft, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'الفترة التجريبية تنتهي قريباً',
+    branding,
     content: `
       ${ui.icon('⚠️')}
       ${ui.heading('الفترة التجريبية تنتهي قريباً!')}
@@ -474,9 +559,11 @@ function trialExpiring({ name, siteName, daysLeft }) {
   });
 }
 
-function trialExpired({ name, siteName }) {
+function trialExpired({ name, siteName, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'انتهت الفترة التجريبية',
+    branding,
     content: `
       ${ui.icon('⏰')}
       ${ui.heading('انتهت الفترة التجريبية')}
@@ -490,9 +577,11 @@ function trialExpired({ name, siteName }) {
   });
 }
 
-function subscriptionRenewed({ name, plan, nextBilling }) {
+function subscriptionRenewed({ name, plan, nextBilling, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'تم تجديد الاشتراك',
+    branding,
     content: `
       ${ui.icon('✅')}
       ${ui.heading('تم تجديد اشتراكك!')}
@@ -507,9 +596,11 @@ function subscriptionRenewed({ name, plan, nextBilling }) {
   });
 }
 
-function subscriptionCancelled({ name, expiresAt }) {
+function subscriptionCancelled({ name, expiresAt, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   return baseLayout({
     title: 'إلغاء الاشتراك',
+    branding,
     content: `
       ${ui.icon('😔')}
       ${ui.heading('تم إلغاء اشتراكك')}
@@ -529,12 +620,14 @@ function subscriptionCancelled({ name, expiresAt }) {
 //  WALLET TEMPLATE
 // ═══════════════════════════════════
 
-function walletUpdated({ name, oldBalance, newBalance, currency }) {
+function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
   const diff = (newBalance || 0) - (oldBalance || 0);
   const isDeposit = diff >= 0;
 
   return baseLayout({
     title: 'تحديث المحفظة',
+    branding,
     content: `
       ${ui.icon(isDeposit ? '💰' : '💸')}
       ${ui.heading('تحديث رصيد المحفظة')}

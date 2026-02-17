@@ -629,6 +629,7 @@ async function forgotPassword(req, res) {
       name: user.name,
       resetLink,
       siteSettings,
+      siteKey: site_key,
     });
 
     res.json({

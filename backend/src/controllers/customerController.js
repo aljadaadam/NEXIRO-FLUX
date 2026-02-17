@@ -29,7 +29,7 @@ async function registerCustomer(req, res) {
     const token = generateToken(customer.id, 'customer', siteKey);
 
     // بريد ترحيبي
-    emailService.sendWelcomeCustomer({ to: customer.email, name: customer.name, storeName: 'متجرنا' }).catch(e => console.error('Email error:', e.message));
+    emailService.sendWelcomeCustomer({ to: customer.email, name: customer.name, storeName: 'متجرنا', siteKey }).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
       message: 'تم إنشاء الحساب بنجاح',
@@ -123,9 +123,9 @@ async function toggleBlockCustomer(req, res) {
       const cust = await Customer.findById(id);
       if (cust?.email) {
         if (blocked) {
-          emailService.sendAccountBlocked({ to: cust.email, name: cust.name }).catch(() => {});
+          emailService.sendAccountBlocked({ to: cust.email, name: cust.name, siteKey: site_key }).catch(() => {});
         } else {
-          emailService.sendAccountUnblocked({ to: cust.email, name: cust.name }).catch(() => {});
+          emailService.sendAccountUnblocked({ to: cust.email, name: cust.name, siteKey: site_key }).catch(() => {});
         }
       }
     } catch (e) { /* ignore */ }
@@ -160,7 +160,8 @@ async function updateCustomerWallet(req, res) {
       const oldBalance = parseFloat(customer.wallet_balance) - parseFloat(amount);
       emailService.sendWalletUpdated({
         to: customer.email, name: customer.name,
-        oldBalance, newBalance: parseFloat(customer.wallet_balance), currency: '$'
+        oldBalance, newBalance: parseFloat(customer.wallet_balance), currency: '$',
+        siteKey: site_key
       }).catch(e => console.error('Email error:', e.message));
     }
 

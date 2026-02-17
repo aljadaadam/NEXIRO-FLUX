@@ -294,7 +294,7 @@ async function provisionSite(req, res) {
       siteKey: site_key, domain, plan: cycle
     }).catch(e => console.error('Email error:', e.message));
     emailService.sendTrialStarted({
-      to: owner_email, name: owner_name, siteName: store_name, trialDays: 14
+      to: owner_email, name: owner_name, siteName: store_name, trialDays: 14, siteKey: site_key
     }).catch(e => console.error('Email error:', e.message));
 
     // ─── 7.5 إشعار الأدمن الرئيسي بإنشاء موقع جديد ───

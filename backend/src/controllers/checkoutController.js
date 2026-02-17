@@ -265,7 +265,8 @@ async function paypalCallback(req, res) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
             amount: capture.amount || payment.amount, currency: 'USD',
-            method: 'PayPal', transactionId: capture.transactionId
+            method: 'PayPal', transactionId: capture.transactionId,
+            siteKey: getSiteKey(req)
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -288,7 +289,8 @@ async function paypalCallback(req, res) {
           emailService.sendPaymentFailed({
             to: meta.customer_email, name: meta.customer_name,
             amount: payment.amount, currency: payment.currency,
-            reason: 'PayPal capture failed'
+            reason: 'PayPal capture failed',
+            siteKey: getSiteKey(req)
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -394,7 +396,8 @@ async function binanceWebhook(req, res) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
             amount: webhookData.totalFee || payment.amount, currency: 'USDT',
-            method: 'Binance Pay', transactionId: webhookData.transactionId
+            method: 'Binance Pay', transactionId: webhookData.transactionId,
+            siteKey
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -478,7 +481,8 @@ async function checkUsdtPayment(req, res) {
           emailService.sendPaymentReceipt({
             to: meta.customer_email, name: meta.customer_name,
             amount: result.amount || payment.amount, currency: 'USDT',
-            method: 'USDT', transactionId: result.transactionId
+            method: 'USDT', transactionId: result.transactionId,
+            siteKey: getSiteKey(req)
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -534,7 +538,8 @@ async function uploadBankReceipt(req, res) {
       emailService.sendBankReceiptReview({
         orderId: payment.id,
         customerName: meta?.customer_name || 'عميل',
-        amount: payment.amount
+        amount: payment.amount,
+        siteKey: getSiteKey(req)
       }).catch(() => {});
     } catch (e) { /* ignore */ }
 

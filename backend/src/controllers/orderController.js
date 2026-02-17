@@ -129,7 +129,7 @@ async function createOrder(req, res) {
         emailService.sendOrderConfirmation({
           to: cust.email, name: cust.name, orderId: order.order_number,
           items: [{ name: product_name, quantity: qty, price: parseFloat(unit_price) }],
-          total: total_price, currency: 'USD'
+          total: total_price, currency: 'USD', siteKey: site_key
         }).catch(() => {});
       }
     } catch (e) { /* ignore */ }
@@ -292,7 +292,7 @@ async function updateOrderStatus(req, res) {
         if (cust?.email) {
           emailService.sendOrderStatusUpdate({
             to: cust.email, name: cust.name,
-            orderId: order.order_number, status
+            orderId: order.order_number, status, siteKey: site_key
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -540,7 +540,8 @@ async function checkExternalOrderStatus(req, res) {
             to: cust.email,
             name: cust.name,
             orderId: order.order_number,
-            status: 'completed'
+            status: 'completed',
+            siteKey: site_key
           }).catch(() => {});
         }
       } catch { /* ignore */ }

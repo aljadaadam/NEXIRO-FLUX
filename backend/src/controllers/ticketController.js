@@ -60,7 +60,7 @@ async function createTicket(req, res) {
         const cust = await Customer.findById(customer_id);
         emailService.sendNewTicketAlert({
           to: cust?.email, ticketId: ticket.ticket_number,
-          subject, customerName: cust?.name
+          subject, customerName: cust?.name, siteKey: site_key
         }).catch(() => {});
       } catch (e) { /* ignore */ }
     }
@@ -132,7 +132,7 @@ async function replyToTicket(req, res) {
           emailService.sendTicketReply({
             to: cust.email, name: cust.name,
             ticketId: ticket.ticket_number, message,
-            replierName: 'فريق الدعم'
+            replierName: 'فريق الدعم', siteKey: site_key
           }).catch(() => {});
         }
       } catch (e) { /* ignore */ }
@@ -166,7 +166,7 @@ async function updateTicketStatus(req, res) {
           if (cust?.email) {
             emailService.sendTicketClosed({
               to: cust.email, name: cust.name,
-              ticketId: ticket.ticket_number
+              ticketId: ticket.ticket_number, siteKey: site_key
             }).catch(() => {});
           }
         }
