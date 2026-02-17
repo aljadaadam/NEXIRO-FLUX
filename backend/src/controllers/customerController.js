@@ -1,7 +1,11 @@
 const Customer = require('../models/Customer');
 const ActivityLog = require('../models/ActivityLog');
+const Customization = require('../models/Customization');
 const { generateToken } = require('../utils/token');
 const emailService = require('../services/email');
+
+// ─── OTP store (in-memory, short-lived) ───
+const otpStore = new Map(); // key: `${siteKey}:${email}` → { code, expires, customerId }
 
 // تسجيل زبون جديد
 async function registerCustomer(req, res) {
@@ -66,6 +70,29 @@ async function loginCustomer(req, res) {
       return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
     }
 
+    // ─── التحقق من OTP ───
+    const customization = await Customization.findBySiteKey(siteKey);
+    if (customization?.otp_enabled) {
+      // إنشاء كود OTP وإرساله بالبريد
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const key = `${siteKey}:${email.toLowerCase().trim()}`;
+      otpStore.set(key, { code, expires: Date.now() + 10 * 60 * 1000, customerId: customer.id });
+
+      // إرسال الكود بالبريد
+      emailService.sendEmailVerification({
+        to: customer.email,
+        name: customer.name,
+        code,
+        siteKey,
+      }).catch(e => console.error('OTP email error:', e.message));
+
+      return res.json({
+        otpRequired: true,
+        message: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
+      });
+    }
+
+    // ─── بدون OTP: إصدار التوكن مباشرة ───
     await Customer.updateLastLogin(customer.id);
     const token = generateToken(customer.id, 'customer', siteKey);
 
@@ -231,9 +258,63 @@ async function updateMyCustomerProfile(req, res) {
   }
 }
 
+// التحقق من كود OTP
+async function verifyOtp(req, res) {
+  try {
+    const { email, code } = req.body;
+    const siteKey = req.siteKey;
+
+    if (!email || !code) {
+      return res.status(400).json({ error: 'البريد وكود التحقق مطلوبان' });
+    }
+
+    const key = `${siteKey}:${email.toLowerCase().trim()}`;
+    const stored = otpStore.get(key);
+
+    if (!stored) {
+      return res.status(400).json({ error: 'لم يتم طلب كود تحقق. أعد تسجيل الدخول.' });
+    }
+
+    if (Date.now() > stored.expires) {
+      otpStore.delete(key);
+      return res.status(400).json({ error: 'انتهت صلاحية كود التحقق. أعد تسجيل الدخول.' });
+    }
+
+    if (stored.code !== String(code).trim()) {
+      return res.status(400).json({ error: 'كود التحقق غير صحيح' });
+    }
+
+    // الكود صحيح — حذفه وإصدار التوكن
+    otpStore.delete(key);
+    const customer = await Customer.findById(stored.customerId);
+    if (!customer) {
+      return res.status(404).json({ error: 'الزبون غير موجود' });
+    }
+
+    await Customer.updateLastLogin(customer.id);
+    const token = generateToken(customer.id, 'customer', siteKey);
+
+    await ActivityLog.log({
+      site_key: siteKey, customer_id: customer.id,
+      action: 'customer_login', entity_type: 'customer', entity_id: customer.id,
+      ip_address: req.ip
+    });
+
+    res.json({
+      message: 'تم تسجيل الدخول بنجاح',
+      token,
+      customer: { id: customer.id, name: customer.name, email: customer.email, wallet_balance: customer.wallet_balance }
+    });
+  } catch (error) {
+    console.error('Error in verifyOtp:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء التحقق' });
+  }
+}
+
 module.exports = {
   registerCustomer,
   loginCustomer,
+  verifyOtp,
   getAllCustomers,
   toggleBlockCustomer,
   updateCustomerWallet,

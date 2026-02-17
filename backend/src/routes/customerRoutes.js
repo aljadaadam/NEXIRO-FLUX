@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   registerCustomer,
   loginCustomer,
+  verifyOtp,
   getMyCustomerProfile,
   updateMyCustomerProfile,
   getAllCustomers,
@@ -20,6 +21,7 @@ router.use(validateSite);
 // ===== واجهة الزبائن (بدون مصادقة) =====
 router.post('/register', registerCustomer);
 router.post('/login', loginCustomer);
+router.post('/verify-otp', verifyOtp);
 
 // ===== ملف الزبون (يتطلب توكن زبون) =====
 router.get('/me', authenticateToken, requireRole('customer'), getMyCustomerProfile);

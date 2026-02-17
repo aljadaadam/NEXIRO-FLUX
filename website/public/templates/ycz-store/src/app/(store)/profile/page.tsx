@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
   User, CreditCard, Shield, Wallet, Lock, Mail, Phone,
   CheckCircle, X, Upload, Send, Save, ChevronRight, ChevronLeft,
-  ShoppingCart, Bell, Settings, LogOut, DollarSign, Clock
+  ShoppingCart, Bell, Settings, LogOut, DollarSign, Clock,
+  Eye, EyeOff
 } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
@@ -529,6 +530,10 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
 
   const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
   const [walletStats, setWalletStats] = useState({ totalDeposits: 0, totalPurchases: 0, totalRefunded: 0 });
@@ -709,6 +714,13 @@ export default function ProfilePage() {
       } else {
         res = await storeApi.register({ name, email, password });
       }
+      // OTP required — show code input
+      if (res?.otpRequired) {
+        setOtpStep(true);
+        setOtpEmail(email);
+        setAuthError('');
+        return;
+      }
       if (res?.token) {
         localStorage.setItem('auth_token', res.token);
         setIsLoggedIn(true);
@@ -727,6 +739,29 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleVerifyOtp() {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const res = await storeApi.verifyOtp({ email: otpEmail, code: otpCode });
+      if (res?.token) {
+        localStorage.setItem('auth_token', res.token);
+        setIsLoggedIn(true);
+        const customer = res?.customer || res;
+        setProfile({ name: customer?.name || name, email: customer?.email || email });
+        setOtpStep(false);
+        setOtpCode('');
+        loadProfile();
+      } else if (res?.error) {
+        setAuthError(res.error);
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || 'فشل التحقق');
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem('auth_token');
     setIsLoggedIn(false);
@@ -736,6 +771,39 @@ export default function ProfilePage() {
 
   // ─── Login / Register (Demo-style tabs) ───
   if (!isLoggedIn) {
+    // ─── OTP Verification Step ───
+    if (otpStep) {
+      return (
+        <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}22, ${currentTheme.primary}11)`, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <Shield size={26} color={currentTheme.primary} />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, fontFamily: 'Tajawal, sans-serif' }}>كود التحقق</h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 20, fontFamily: 'Tajawal, sans-serif' }}>تم إرسال كود التحقق إلى <strong style={{ color: '#0b1020' }}>{otpEmail}</strong></p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <input
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="أدخل الكود المكون من 6 أرقام"
+                maxLength={6}
+                inputMode="numeric"
+                autoFocus
+                style={{ padding: '0.85rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '1.1rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', textAlign: 'center', letterSpacing: 8, fontWeight: 700 }}
+              />
+              <button onClick={handleVerifyOtp} disabled={authLoading || otpCode.length < 6} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: (authLoading || otpCode.length < 6) ? 0.6 : 1 }}>
+                {authLoading ? 'جاري التحقق...' : 'تأكيد'}
+              </button>
+              <button onClick={() => { setOtpStep(false); setOtpCode(''); setAuthError(''); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+                ← رجوع لتسجيل الدخول
+              </button>
+              {authError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{authError}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
         <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
@@ -753,7 +821,12 @@ export default function ProfilePage() {
               <input value={name} onChange={e => setName(e.target.value)} placeholder="الاسم الكامل" style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
             )}
             <input value={email} onChange={e => setEmail(e.target.value)} placeholder="البريد الإلكتروني" style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-            <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="كلمة المرور" style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
+            <div style={{ position: 'relative' }}>
+              <input value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} placeholder="كلمة المرور" style={{ padding: '0.7rem 1rem', paddingLeft: '2.5rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <button onClick={handleAuth} disabled={authLoading} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: authLoading ? 0.7 : 1 }}>
               {authLoading ? 'جاري...' : tab === 'login' ? 'دخول' : 'إنشاء حساب'}
             </button>
