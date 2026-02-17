@@ -531,6 +531,7 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
 
   const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
+  const [walletStats, setWalletStats] = useState({ totalDeposits: 0, totalPurchases: 0, totalRefunded: 0 });
 
   // Check if already logged in (or demo mode)
   useEffect(() => {
@@ -615,10 +616,25 @@ export default function ProfilePage() {
       const payments = Array.isArray(res) ? res : res?.payments;
       if (!Array.isArray(payments)) return;
 
+      // ── Compute wallet stats from raw payments ──
+      let totalDeposits = 0;
+      let totalPurchases = 0;
+      let totalRefunded = 0;
+
       const mapped = payments.map((p: any) => {
         const type = String(p.type || '').toLowerCase();
         const status = String(p.status || 'pending').toLowerCase();
         const amountNum = Number(p.amount || 0);
+
+        // Accumulate stats (only count completed / refunded)
+        if (type === 'deposit' && status === 'completed') {
+          totalDeposits += Math.abs(amountNum);
+        } else if (type === 'purchase' && (status === 'completed' || status === 'paid')) {
+          totalPurchases += Math.abs(amountNum);
+        }
+        if (status === 'refunded') {
+          totalRefunded += Math.abs(amountNum);
+        }
 
         const signedAmount = type === 'purchase' ? -Math.abs(amountNum) : Math.abs(amountNum);
         const amount = `${signedAmount >= 0 ? '+' : '-'}$${Math.abs(signedAmount).toFixed(2)}`;
@@ -647,6 +663,7 @@ export default function ProfilePage() {
         };
       });
 
+      setWalletStats({ totalDeposits, totalPurchases, totalRefunded });
       setTransactions(mapped);
     } catch { /* ignore */ }
   }
@@ -825,9 +842,9 @@ export default function ProfilePage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
           {[
-            { label: 'إجمالي الشحن', value: '$0.00', color: '#22c55e' },
-            { label: 'إجمالي الشراء', value: '$0.00', color: '#f59e0b' },
-            { label: 'المسترجع', value: '$0.00', color: '#3b82f6' },
+            { label: 'إجمالي الشحن', value: `$${walletStats.totalDeposits.toFixed(2)}`, color: '#22c55e' },
+            { label: 'إجمالي الشراء', value: `$${walletStats.totalPurchases.toFixed(2)}`, color: '#f59e0b' },
+            { label: 'المسترجع', value: `$${walletStats.totalRefunded.toFixed(2)}`, color: '#3b82f6' },
           ].map((s, i) => (
             <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '1rem 0.75rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
               <p style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color }}>{s.value}</p>
