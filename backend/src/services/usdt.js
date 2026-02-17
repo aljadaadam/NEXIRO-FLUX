@@ -25,6 +25,7 @@ class USDTProcessor {
   constructor(config) {
     this.walletAddress = config.wallet_address;
     this.network = config.network || 'TRC20'; // TRC20, ERC20, BEP20
+    this.apiKey = config.api_key || ''; // مفتاح API لـ BscScan / Etherscan / TronGrid
   }
 
   // ─── إنشاء طلب دفع (عرض العنوان والمبلغ) ───
@@ -65,6 +66,9 @@ class USDTProcessor {
     const contractAddr = USDT_CONTRACTS.TRC20;
     const url = `https://api.trongrid.io/v1/accounts/${this.walletAddress}/transactions/trc20`;
 
+    const headers = {};
+    if (this.apiKey) headers['TRON-PRO-API-KEY'] = this.apiKey;
+
     const { data } = await axios.get(url, {
       params: {
         only_confirmed: true,
@@ -72,6 +76,7 @@ class USDTProcessor {
         contract_address: contractAddr,
         min_timestamp: sinceTimestamp || (Date.now() - 1800000), // آخر 30 دقيقة
       },
+      headers,
     });
 
     if (!data.data || data.data.length === 0) {
@@ -105,17 +110,18 @@ class USDTProcessor {
     const contractAddr = USDT_CONTRACTS.ERC20;
     const url = 'https://api.etherscan.io/api';
 
-    const { data } = await axios.get(url, {
-      params: {
-        module: 'account',
-        action: 'tokentx',
-        contractaddress: contractAddr,
-        address: this.walletAddress,
-        sort: 'desc',
-        page: 1,
-        offset: 50,
-      },
-    });
+    const params = {
+      module: 'account',
+      action: 'tokentx',
+      contractaddress: contractAddr,
+      address: this.walletAddress,
+      sort: 'desc',
+      page: 1,
+      offset: 50,
+    };
+    if (this.apiKey) params.apikey = this.apiKey;
+
+    const { data } = await axios.get(url, { params });
 
     if (data.status !== '1' || !data.result) {
       return { confirmed: false, transactions: [] };
@@ -150,17 +156,18 @@ class USDTProcessor {
     const contractAddr = USDT_CONTRACTS.BEP20;
     const url = 'https://api.bscscan.com/api';
 
-    const { data } = await axios.get(url, {
-      params: {
-        module: 'account',
-        action: 'tokentx',
-        contractaddress: contractAddr,
-        address: this.walletAddress,
-        sort: 'desc',
-        page: 1,
-        offset: 50,
-      },
-    });
+    const params = {
+      module: 'account',
+      action: 'tokentx',
+      contractaddress: contractAddr,
+      address: this.walletAddress,
+      sort: 'desc',
+      page: 1,
+      offset: 50,
+    };
+    if (this.apiKey) params.apikey = this.apiKey;
+
+    const { data } = await axios.get(url, { params });
 
     if (data.status !== '1' || !data.result) {
       return { confirmed: false, transactions: [] };

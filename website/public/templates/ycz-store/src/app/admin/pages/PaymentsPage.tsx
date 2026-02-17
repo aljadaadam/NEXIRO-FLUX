@@ -39,6 +39,7 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
   usdt: [
     { key: 'wallet_address', label: 'عنوان المحفظة', placeholder: 'T...' },
     { key: 'network', label: 'الشبكة', placeholder: 'TRC20', options: [{ value: 'TRC20', label: 'TRC20 (Tron)' }, { value: 'ERC20', label: 'ERC20 (Ethereum)' }, { value: 'BEP20', label: 'BEP20 (BSC)' }] },
+    { key: 'api_key', label: 'مفتاح API (اختياري)', placeholder: 'مفتاح BscScan / Etherscan / TronGrid', type: 'password' },
   ],
   bank_transfer: [
     { key: 'bank_name', label: 'اسم البنك', placeholder: 'مثال: البنك المركزي' },
