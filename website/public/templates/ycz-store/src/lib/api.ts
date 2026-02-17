@@ -345,7 +345,12 @@ export const storeApi = {
       const demo = getDemoResponse(`/checkout/status/${id}`, 'GET');
       if (demo) return demo;
     }
-    const res = await fetch(`${API_BASE}/checkout/status/${id}`);
+    const token = getAuthToken();
+    const res = await fetch(`${API_BASE}/checkout/status/${id}`, {
+      headers: {
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+    });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err?.error || `HTTP ${res.status}`);

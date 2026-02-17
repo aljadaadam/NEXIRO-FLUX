@@ -15,7 +15,8 @@ const { verifyToken } = require('../utils/token');
 
 // Helper: get siteKey from request (fallback to platform SITE_KEY for setup checkout)
 function getSiteKey(req) {
-  return req.siteKey || req.user?.site_key || SITE_KEY;
+  // Prefer token site_key if present (important when frontend domain isn't mapped by resolveTenant)
+  return req.user?.site_key || req.siteKey || SITE_KEY;
 }
 
 function tryAttachUserFromAuthHeader(req) {

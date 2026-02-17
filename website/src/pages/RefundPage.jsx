@@ -42,6 +42,11 @@ export default function RefundPage() {
                   ? 'نظراً لطبيعة المنتجات الرقمية وإمكانية معاينة القالب بالكامل قبل الشراء عبر العرض التجريبي المباشر (Live Demo)، فإن جميع عمليات الشراء نهائية وغير قابلة للاسترجاع أو الاسترداد.'
                   : 'Due to the nature of digital products and the ability to fully preview the template before purchase through the Live Demo, all purchases are final and non-refundable.'}
               </p>
+              <p className="text-dark-400 text-sm leading-relaxed mt-3">
+                {isRTL
+                  ? 'ملاحظة: شحن المحفظة يُضاف كرصيد للاستخدام داخل المنصة فقط، ولا يمكن سحب الرصيد إلى البنك مرة أخرى.'
+                  : 'Note: Wallet top-ups are added as platform credit only and cannot be withdrawn back to your bank.'}
+              </p>
             </div>
           </div>
         </div>
