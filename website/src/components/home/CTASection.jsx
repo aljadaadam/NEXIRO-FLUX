@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 function useInView(ref) {
   const [visible, setVisible] = useState(false);
@@ -15,6 +16,7 @@ function useInView(ref) {
 
 export default function CTASection() {
   const { t, isRTL } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const ref = useRef();
   const visible = useInView(ref);
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
@@ -43,7 +45,7 @@ export default function CTASection() {
               {t('cta.subtitle')}
             </p>
 
-            <Link to="/register" className="btn-primary text-lg gap-2 group">
+            <Link to={isAuthenticated ? '/templates' : '/register'} className="btn-primary text-lg gap-2 group">
               {t('cta.button')}
               <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
             </Link>

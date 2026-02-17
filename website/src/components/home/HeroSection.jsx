@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Play, Star, Zap, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { stats } from '../../data/templates';
 
 export default function HeroSection() {
   const { t, isRTL } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
@@ -40,7 +42,7 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <Link to="/register" className="btn-primary group gap-2 text-lg w-full sm:w-auto">
+            <Link to={isAuthenticated ? '/templates' : '/register'} className="btn-primary group gap-2 text-lg w-full sm:w-auto">
               {t('hero.cta')}
               <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
             </Link>

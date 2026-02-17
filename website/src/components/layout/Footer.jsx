@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, Github, Twitter, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Footer() {
   const { t, isRTL } = useLanguage();
+  const { isAuthenticated } = useAuth();
 
   const footerLinks = {
     product: [
@@ -14,7 +16,7 @@ export default function Footer() {
     ],
     company: [
       { label: isRTL ? 'الرئيسية' : 'Home', to: '/' },
-      { label: isRTL ? 'سجّل مجاناً' : 'Get Started', to: '/register' },
+      { label: isRTL ? 'سجّل مجاناً' : 'Get Started', to: isAuthenticated ? '/templates' : '/register' },
       { label: isRTL ? 'تسجيل الدخول' : 'Login', to: '/login' },
       { label: isRTL ? 'تواصل معنا' : 'Contact', to: 'mailto:info@nexiro-flux.com' },
     ],

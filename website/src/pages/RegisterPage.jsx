@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -7,8 +7,15 @@ import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
   const { t, isRTL } = useLanguage();
-  const { register, googleLogin, error: authError, setError } = useAuth();
+  const { register, googleLogin, error: authError, setError, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(isAdmin ? '/admin' : '/templates', { replace: true });
+    }
+  }, [isAuthenticated, isAdmin, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
