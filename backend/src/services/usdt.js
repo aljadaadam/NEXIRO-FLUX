@@ -32,10 +32,10 @@ class USDTProcessor {
   // هذا يساعد في تمييز كل عملية دفع عن الأخرى على البلوكتشين
   _generateUniqueAmount(amount) {
     const base = parseFloat(amount);
-    // إضافة مبلغ عشوائي بين 0.01 و 0.99
-    const randomCents = (Math.floor(Math.random() * 99) + 1) / 100;
-    const uniqueAmount = base + randomCents;
-    return uniqueAmount.toFixed(2);
+    // إضافة مبلغ عشوائي بين 0.001 و 0.099 (أقل من 10 سنتات)
+    const randomMils = (Math.floor(Math.random() * 99) + 1) / 1000;
+    const uniqueAmount = base + randomMils;
+    return uniqueAmount.toFixed(3);
   }
 
   // ─── إنشاء طلب دفع (عرض العنوان والمبلغ الفريد) ───
@@ -119,7 +119,7 @@ class USDTProcessor {
     const matching = data.data.filter(tx => {
       const txAmount = parseFloat(tx.value) / 1e6;
       const toAddr = tx.to === this.walletAddress;
-      return toAddr && Math.abs(txAmount - targetAmount) < 0.01;
+      return toAddr && Math.abs(txAmount - targetAmount) < 0.001;
     });
 
     if (matching.length > 0) {
@@ -165,7 +165,7 @@ class USDTProcessor {
       const txAmount = parseFloat(tx.value) / 1e6; // USDT = 6 decimals
       const toAddr = tx.to.toLowerCase() === this.walletAddress.toLowerCase();
       const afterTime = parseInt(tx.timeStamp) >= minTimestamp;
-      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.01;
+      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.001;
     });
 
     if (matching.length > 0) {
@@ -211,7 +211,7 @@ class USDTProcessor {
       const txAmount = parseFloat(tx.value) / 1e18; // BSC USDT = 18 decimals
       const toAddr = tx.to.toLowerCase() === this.walletAddress.toLowerCase();
       const afterTime = parseInt(tx.timeStamp) >= minTimestamp;
-      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.01;
+      return toAddr && afterTime && Math.abs(txAmount - targetAmount) < 0.001;
     });
 
     if (matching.length > 0) {
