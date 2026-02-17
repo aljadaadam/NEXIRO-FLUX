@@ -790,8 +790,11 @@ async function getPublicProducts(req, res) {
 
     console.log('🔵 getPublicProducts called, siteKey:', siteKey);
 
+    // جلب المنتجات مع استبعاد المصادر التي تعمل بوضع المزامنة فقط (sync_only)
     const [products] = await pool.query(
-      'SELECT * FROM products WHERE site_key = ?',
+      `SELECT p.* FROM products p
+       LEFT JOIN sources s ON p.source_id = s.id
+       WHERE p.site_key = ? AND (p.source_id IS NULL OR s.sync_only = 0 OR s.sync_only IS NULL)`,
       [siteKey]
     );
 

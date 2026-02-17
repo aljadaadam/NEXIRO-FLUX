@@ -122,6 +122,7 @@ export const adminApi = {
   testSource: (id: number) => adminFetch(`/sources/${id}/test`, { method: 'POST' }),
   connectSource: (data: Record<string, unknown>) => adminFetch('/sources', { method: 'POST', body: JSON.stringify(data) }),
   deleteSource: (id: number) => adminFetch(`/sources/${id}`, { method: 'DELETE' }),
+  toggleSyncOnly: (id: number, syncOnly: boolean) => adminFetch(`/sources/${id}/sync-only`, { method: 'PATCH', body: JSON.stringify({ syncOnly }) }),
   getPaymentGateways: () => adminFetch('/payment-gateways'),
   createPaymentGateway: (data: Record<string, unknown>) => adminFetch('/payment-gateways', { method: 'POST', body: JSON.stringify(data) }),
   updatePaymentGateway: (id: number, data: Record<string, unknown>) => adminFetch(`/payment-gateways/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

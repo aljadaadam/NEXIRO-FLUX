@@ -21,6 +21,7 @@ interface ConnectedSource {
   products: number;
   balance: string;
   connectionError: string | null;
+  syncOnly: boolean;
 }
 
 interface AvailableSource {
@@ -264,6 +265,7 @@ export default function ExternalSourcesPage() {
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>(FALLBACK_CONNECTED);
   const [profitInputs, setProfitInputs] = useState<Record<number, string>>({});
   const [applyingProfit, setApplyingProfit] = useState<number | null>(null);
+  const [togglingSync, setTogglingSync] = useState<number | null>(null);
   const [availableSources, setAvailableSources] = useState<AvailableSource[]>(FALLBACK_AVAILABLE);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [stats, setStats] = useState({ connected: 0, balance: '$0.00', imported: 0, lastSync: '--' });
@@ -302,6 +304,7 @@ export default function ExternalSourcesPage() {
           products: Number(s.productsCount || 0),
           balance: s.lastAccountBalance ? `${s.lastAccountBalance} ${s.lastAccountCurrency || ''}`.trim() : '--',
           connectionError: s.lastConnectionError ? String(s.lastConnectionError) : null,
+          syncOnly: Boolean(s.syncOnly),
         };
       });
 
@@ -448,6 +451,20 @@ export default function ExternalSourcesPage() {
     }
   };
 
+  // ─── تبديل وضع المزامنة فقط / مزامنة وتثبيت ───
+  const handleToggleSyncOnly = async (sourceId: number, currentSyncOnly: boolean) => {
+    setTogglingSync(sourceId);
+    try {
+      const newValue = !currentSyncOnly;
+      await adminApi.toggleSyncOnly(sourceId, newValue);
+      await fetchSources();
+    } catch {
+      console.warn('[Sources] فشل تبديل وضع المزامنة');
+    } finally {
+      setTogglingSync(null);
+    }
+  };
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
@@ -573,7 +590,7 @@ export default function ExternalSourcesPage() {
               </div>
 
               {/* إحصائيات + خطأ الاتصال */}
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: src.connectionError || result ? 12 : 0 }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
                 {[
                   { label: 'الخدمات', value: src.products, icon: Package },
                   { label: 'الرصيد', value: src.balance, icon: CreditCard },
@@ -593,6 +610,49 @@ export default function ExternalSourcesPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* وضع المزامنة: مزامنة وتثبيت أو مزامنة فقط */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0.65rem 0.85rem', background: src.syncOnly ? '#fefce8' : '#f0fdf4',
+                borderRadius: 10, marginBottom: 12,
+                border: `1px solid ${src.syncOnly ? '#fde68a' : '#bbf7d0'}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {src.syncOnly ? <EyeOff size={16} color="#ca8a04" /> : <Eye size={16} color="#16a34a" />}
+                  <div>
+                    <p style={{ fontSize: '0.78rem', fontWeight: 700, color: src.syncOnly ? '#a16207' : '#15803d' }}>
+                      {src.syncOnly ? 'مزامنة فقط' : 'مزامنة وتثبيت'}
+                    </p>
+                    <p style={{ fontSize: '0.68rem', color: src.syncOnly ? '#ca8a04' : '#16a34a' }}>
+                      {src.syncOnly ? 'المنتجات مُزامَنة لكن لا تظهر للزبائن' : 'المنتجات مُزامَنة وتظهر للزبائن في المتجر'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleSyncOnly(src.id, src.syncOnly)}
+                  disabled={togglingSync === src.id}
+                  style={{
+                    position: 'relative',
+                    width: 44, height: 24, borderRadius: 12,
+                    border: 'none', cursor: togglingSync === src.id ? 'wait' : 'pointer',
+                    background: src.syncOnly ? '#fbbf24' : '#22c55e',
+                    transition: 'background 0.3s',
+                    flexShrink: 0,
+                    opacity: togglingSync === src.id ? 0.6 : 1,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute',
+                    top: 3, 
+                    left: src.syncOnly ? 3 : 23,
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: '#fff',
+                    transition: 'left 0.3s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </button>
               </div>
 
               <div style={{

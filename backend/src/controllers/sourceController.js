@@ -136,6 +136,7 @@ async function getAllSources(req, res) {
         apiKeyMasked,
         profitPercentage: s.profit_percentage == null ? 0 : Number(s.profit_percentage),
         profitAmount: s.profit_amount == null ? null : Number(s.profit_amount),
+        syncOnly: s.sync_only === 1 || s.sync_only === true,
         productsCount: counts[String(s.id)] || 0,
         connectionStatus,
         lastConnectionOk: lastOk === null || lastOk === undefined ? null : Boolean(Number(lastOk)),
@@ -199,7 +200,8 @@ async function createSource(req, res) {
       apiKey: apiKey ?? null,
       profitPercentage: profitPercentage ?? 0,
       profitAmount: profitAmount ?? null,
-      description: description || ''
+      description: description || '',
+      syncOnly: syncOnly ?? false
     });
 
     const productsCount = await Product.countBySource(site_key, source.id);
@@ -217,6 +219,7 @@ async function createSource(req, res) {
         apiKeyLast4: last4 || null,
         apiKeyMasked,
         profitPercentage: source.profit_percentage == null ? 0 : Number(source.profit_percentage),
+        syncOnly: source.sync_only === 1 || source.sync_only === true,
         productsCount,
         connectionStatus: 'unknown',
         lastConnectionOk: null,
@@ -246,7 +249,8 @@ async function updateSource(req, res) {
       apiKey,
       profitPercentage,
       profitAmount,
-      description
+      description,
+      syncOnly
     } = req.body;
 
     const finalUrl = url || apiUrl;
@@ -266,7 +270,8 @@ async function updateSource(req, res) {
       apiKey,
       profitPercentage,
       profitAmount,
-      description
+      description,
+      syncOnly
     });
 
     if (!source) {
@@ -295,6 +300,7 @@ async function updateSource(req, res) {
         apiKeyLast4: source.api_key_last4 || null,
         apiKeyMasked,
         profitPercentage: source.profit_percentage == null ? 0 : Number(source.profit_percentage),
+        syncOnly: source.sync_only === 1 || source.sync_only === true,
         productsCount,
         connectionStatus,
         lastConnectionOk: lastOk === null || lastOk === undefined ? null : Boolean(Number(lastOk)),
@@ -824,6 +830,38 @@ async function syncSourceProducts(req, res) {
   }
 }
 
+// ─── تبديل وضع المزامنة فقط ───
+async function toggleSyncOnly(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { id } = req.params;
+    const { syncOnly } = req.body;
+
+    const pool = getPool();
+    const syncOnlyVal = syncOnly ? 1 : 0;
+
+    const [result] = await pool.query(
+      'UPDATE sources SET sync_only = ? WHERE id = ? AND site_key = ?',
+      [syncOnlyVal, id, site_key]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'المصدر غير موجود' });
+    }
+
+    res.json({
+      success: true,
+      message: syncOnlyVal
+        ? 'تم تفعيل وضع المزامنة فقط - المنتجات لن تظهر للزبائن'
+        : 'تم تفعيل وضع المزامنة والتثبيت - المنتجات ستظهر للزبائن',
+      syncOnly: Boolean(syncOnlyVal)
+    });
+  } catch (error) {
+    console.error('Error in toggleSyncOnly:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تحديث وضع المزامنة' });
+  }
+}
+
 module.exports = {
   getAllSources,
   createSource,
@@ -832,5 +870,6 @@ module.exports = {
   syncSourceProducts,
   testSourceConnection,
   getSourceStats,
-  applyProfitToSourceProducts
+  applyProfitToSourceProducts,
+  toggleSyncOnly
 };

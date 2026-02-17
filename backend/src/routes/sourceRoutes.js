@@ -8,7 +8,8 @@ const {
   syncSourceProducts,
   testSourceConnection,
   getSourceStats,
-  applyProfitToSourceProducts
+  applyProfitToSourceProducts,
+  toggleSyncOnly
 } = require('../controllers/sourceController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -39,5 +40,8 @@ router.post('/:id/sync', authenticateToken, requireRole('admin', 'user'), syncSo
 
 // تطبيق نسبة ربح جديدة على كل منتجات المصدر (بدون تراكم)
 router.post('/:id/apply-profit', authenticateToken, requireRole('admin', 'user'), applyProfitToSourceProducts);
+
+// تبديل وضع المزامنة فقط (إخفاء/إظهار المنتجات للزبائن)
+router.patch('/:id/sync-only', authenticateToken, requireRole('admin', 'user'), toggleSyncOnly);
 
 module.exports = router;
