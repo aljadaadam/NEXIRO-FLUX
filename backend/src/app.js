@@ -24,6 +24,9 @@ const purchaseCodeRoutes = require('./routes/purchaseCodeRoutes');
 
 const app = express();
 
+// trust proxy (nginx reverse proxy → proper IP for rate limiting)
+app.set('trust proxy', 1);
+
 // ─── Security Headers (helmet) ───
 app.use(helmet({
   contentSecurityPolicy: false, // Next.js يتعامل مع CSP
