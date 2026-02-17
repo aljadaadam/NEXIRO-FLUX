@@ -1,5 +1,6 @@
 const Payment = require('../models/Payment');
 const Customer = require('../models/Customer');
+const Notification = require('../models/Notification');
 const emailService = require('./email');
 
 async function creditWalletOnce({ paymentId, siteKey }) {
@@ -22,11 +23,30 @@ async function creditWalletOnce({ paymentId, siteKey }) {
     wallet_new_balance: after?.wallet_balance,
   });
 
+  // Use customer record directly (meta may not have email for wallet deposits)
+  const customerEmail = meta?.customer_email || before?.email;
+  const customerName = meta?.customer_name || before?.name || 'عميل';
+
+  // ─── In-app Notification ───
   try {
-    if (meta?.customer_email) {
+    await Notification.create({
+      site_key: siteKey,
+      recipient_type: 'customer',
+      recipient_id: payment.customer_id,
+      title: 'تم شحن المحفظة ✅',
+      message: `تم إضافة $${parseFloat(payment.amount).toFixed(2)} إلى محفظتك. رصيدك الحالي: $${parseFloat(after?.wallet_balance || 0).toFixed(2)}`,
+      type: 'payment',
+    });
+  } catch {
+    // ignore
+  }
+
+  // ─── Email Notification ───
+  try {
+    if (customerEmail) {
       await emailService.sendWalletUpdated({
-        to: meta.customer_email,
-        name: meta.customer_name || 'عميل',
+        to: customerEmail,
+        name: customerName,
         oldBalance: Number(before?.wallet_balance || 0),
         newBalance: Number(after?.wallet_balance || 0),
         currency: meta.currency || payment.currency || 'USD',
