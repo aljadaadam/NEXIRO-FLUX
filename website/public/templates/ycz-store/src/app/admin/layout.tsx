@@ -164,12 +164,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     verifySlug();
   }, [isDemo, searchParams]);
 
-  // Check admin JWT auth
+  // Check admin JWT auth — if no token, redirect to login
   useEffect(() => {
     if (isDemo) return;
     if (slugVerified === false) return; // will show 404
+    if (slugVerified === null) return; // still checking
     const key = localStorage.getItem('admin_key');
     if (!key) {
+      // Redirect to login (no need to pass slug, user will login with credentials)
       router.push('/login');
     }
   }, [router, isDemo, slugVerified]);
