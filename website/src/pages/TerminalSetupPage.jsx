@@ -547,7 +547,7 @@ export default function TerminalSetupPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               {result.site?.domain && (
-                <a href={'https://' + result.site.domain + '/login?token=' + (result.token || localStorage.getItem('nf_token') || '')} className="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.goToDashboard}</a>
+                <a href={'https://' + result.site.domain + '/login?token=' + (result.token || localStorage.getItem('nf_token') || '') + (result.admin_slug ? '&slug=' + result.admin_slug : '')} className="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.goToDashboard}</a>
               )}
               <button onClick={() => navigate('/my-dashboard')} className="px-8 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.manageAccount}</button>
             </div>

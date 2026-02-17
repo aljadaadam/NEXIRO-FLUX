@@ -37,6 +37,7 @@ class Customization {
       store_language: data.store_language,
       support_email: data.support_email,
       support_phone: data.support_phone,
+      admin_slug: data.admin_slug,
     };
 
     // تصفية الحقول غير المعرّفة

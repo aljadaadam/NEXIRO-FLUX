@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Mail, DollarSign, Shield, Eye, EyeOff, Globe, Headphones } from 'lucide-react';
+import { Save, Mail, DollarSign, Shield, Eye, EyeOff, Globe, Headphones, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 
@@ -32,6 +32,10 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   const [supportEmail, setSupportEmail] = useState('');
   const [supportPhone, setSupportPhone] = useState('');
 
+  // Admin Slug (unique admin URL)
+  const [adminSlug, setAdminSlug] = useState('');
+  const [slugCopied, setSlugCopied] = useState(false);
+
   // Toast
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
 
@@ -52,6 +56,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
           setStoreLanguage(c.store_language === 'en' ? 'en' : 'ar');
           setSupportEmail(c.support_email || '');
           setSupportPhone(c.support_phone || '');
+          setAdminSlug(c.admin_slug || '');
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -348,6 +353,54 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
             </div>
           )}
         </div>
+
+        {/* ─── رابط لوحة التحكم الفريد ─── */}
+        {adminSlug && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ecfdf5', display: 'grid', placeItems: 'center' }}>
+                <LinkIcon size={18} color="#10b981" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>رابط لوحة التحكم</h3>
+                <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>رابط فريد للوصول إلى لوحة التحكم — لا تشاركه مع أحد</p>
+              </div>
+            </div>
+            <div style={{
+              padding: '0.9rem 1rem', background: '#f8fafc', borderRadius: 12,
+              border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <code dir="ltr" style={{
+                flex: 1, fontSize: '0.78rem', color: '#334155', fontFamily: 'monospace',
+                overflowX: 'auto', whiteSpace: 'nowrap',
+              }}>
+                {typeof window !== 'undefined' ? `${window.location.origin}/admin?key=${adminSlug}` : ''}
+              </code>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/admin?key=${adminSlug}`;
+                  navigator.clipboard.writeText(url);
+                  setSlugCopied(true);
+                  setTimeout(() => setSlugCopied(false), 2000);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '0.4rem 0.8rem', borderRadius: 8, border: 'none',
+                  background: slugCopied ? '#dcfce7' : '#f1f5f9',
+                  color: slugCopied ? '#16a34a' : '#64748b',
+                  fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'Tajawal, sans-serif', transition: 'all 0.2s', flexShrink: 0,
+                }}
+              >
+                {slugCopied ? <Check size={13} /> : <Copy size={13} />}
+                {slugCopied ? 'تم النسخ' : 'نسخ'}
+              </button>
+            </div>
+            <p style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: 8, fontWeight: 600 }}>
+              ⚠️ هذا الرابط هو الطريقة الوحيدة للوصول إلى لوحة التحكم. الدخول من /admin مباشرة لن يعمل.
+            </p>
+          </div>
+        )}
       </div>
     </>
   );

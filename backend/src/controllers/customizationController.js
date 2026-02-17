@@ -60,6 +60,11 @@ async function getPublicCustomization(req, res) {
 
     const customization = await Customization.findBySiteKey(site_key);
 
+    // Strip admin_slug from public response
+    if (customization) {
+      delete customization.admin_slug;
+    }
+
     res.json({
       customization: customization || {
         theme_id: 'purple',
@@ -86,6 +91,11 @@ async function getStoreCustomization(req, res) {
 
     const customization = await Customization.findBySiteKey(siteKey);
 
+    // Strip admin_slug from public response
+    if (customization) {
+      delete customization.admin_slug;
+    }
+
     res.json({
       customization: customization || {
         theme_id: 'purple',
@@ -102,10 +112,30 @@ async function getStoreCustomization(req, res) {
   }
 }
 
+// التحقق من صلاحية مفتاح الأدمن (admin_slug)
+async function verifyAdminSlug(req, res) {
+  try {
+    const siteKey = req.siteKey;
+    const { slug } = req.params;
+    if (!siteKey || !slug) {
+      return res.json({ valid: false });
+    }
+
+    const customization = await Customization.findBySiteKey(siteKey);
+    const valid = customization && customization.admin_slug === slug;
+
+    res.json({ valid: !!valid });
+  } catch (error) {
+    console.error('Error in verifyAdminSlug:', error);
+    res.json({ valid: false });
+  }
+}
+
 module.exports = {
   getCustomization,
   updateCustomization,
   resetCustomization,
   getPublicCustomization,
-  getStoreCustomization
+  getStoreCustomization,
+  verifyAdminSlug
 };

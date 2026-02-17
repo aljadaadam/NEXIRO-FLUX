@@ -5,7 +5,8 @@ const {
   updateCustomization,
   resetCustomization,
   getPublicCustomization,
-  getStoreCustomization
+  getStoreCustomization,
+  verifyAdminSlug
 } = require('../controllers/customizationController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -13,6 +14,7 @@ const { validateSite } = require('../middlewares/siteValidationMiddleware');
 // ===== واجهة عامة (للمتجر بدون مصادقة) =====
 router.get('/public/:site_key', getPublicCustomization);
 router.get('/store', getStoreCustomization);
+router.get('/verify-slug/:slug', verifyAdminSlug);
 
 // ===== واجهة الأدمن =====
 router.use(validateSite);

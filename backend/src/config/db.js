@@ -405,6 +405,23 @@ async function createTables() {
     await ensureColumn('sources', 'last_account_balance', 'last_account_balance VARCHAR(100) NULL');
     await ensureColumn('sources', 'last_account_currency', 'last_account_currency VARCHAR(10) NULL');
 
+    // Admin panel security slug
+    await ensureColumn('customizations', 'admin_slug', "admin_slug VARCHAR(32) NULL COMMENT 'مسار فريد للوحة الأدمن'");
+
+    // Auto-generate admin_slug for existing rows that don't have one
+    try {
+      const [emptySlugRows] = await pool.query(
+        'SELECT id FROM customizations WHERE admin_slug IS NULL OR admin_slug = ""'
+      );
+      for (const row of emptySlugRows) {
+        const slug = require('crypto').randomBytes(6).toString('hex');
+        await pool.query('UPDATE customizations SET admin_slug = ? WHERE id = ?', [slug, row.id]);
+      }
+      if (emptySlugRows.length > 0) {
+        console.log(`✅ Generated admin_slug for ${emptySlugRows.length} customization(s)`);
+      }
+    } catch (e) { /* ignore */ }
+
     // Google OAuth support
     await ensureColumn('users', 'google_id', 'google_id VARCHAR(255) NULL');
 

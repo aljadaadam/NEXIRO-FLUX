@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/providers/ThemeProvider';
 import Sidebar from '@/components/admin/Sidebar';
 import DashHeader from '@/components/admin/DashHeader';
@@ -80,13 +80,123 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import SettingsAdminPage from './pages/SettingsAdminPage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    }>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </Suspense>
+  );
+}
+
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentTheme, logoPreview, storeName } = useTheme();
 
   const [currentPage, setCurrentPage] = useState('overview');
   const [overviewReload, setOverviewReload] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [slugVerified, setSlugVerified] = useState<boolean | null>(null); // null = checking
+
+  // ─── التحقق من مفتاح لوحة الأدمن (admin_slug) ───
+  const isDemo = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('demo') === '1' ||
+    sessionStorage.getItem('demo_mode') === '1'
+  );
+  if (isDemo && typeof window !== 'undefined') {
+    sessionStorage.setItem('demo_mode', '1');
+  }
+
+  useEffect(() => {
+    if (isDemo) {
+      setSlugVerified(true);
+      return;
+    }
+
+    async function verifySlug() {
+      // 1. Check URL param ?key=xxx
+      const urlKey = searchParams.get('key') || '';
+      // 2. Check sessionStorage (already verified in this session)
+      const storedSlug = sessionStorage.getItem('admin_slug');
+
+      const slugToCheck = urlKey || storedSlug;
+      if (!slugToCheck) {
+        setSlugVerified(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/customization/verify-slug/${slugToCheck}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid) {
+            sessionStorage.setItem('admin_slug', slugToCheck);
+            setSlugVerified(true);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
+      // URL slug is invalid
+      if (storedSlug && storedSlug !== urlKey) {
+        // Try stored slug if URL key failed
+        try {
+          const res = await fetch(`/api/customization/verify-slug/${storedSlug}`, { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.valid) {
+              setSlugVerified(true);
+              return;
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
+      sessionStorage.removeItem('admin_slug');
+      setSlugVerified(false);
+    }
+
+    verifySlug();
+  }, [isDemo, searchParams]);
+
+  // Check admin JWT auth
+  useEffect(() => {
+    if (isDemo) return;
+    if (slugVerified === false) return; // will show 404
+    const key = localStorage.getItem('admin_key');
+    if (!key) {
+      router.push('/login');
+    }
+  }, [router, isDemo, slugVerified]);
+
+  // ─── Show 404 if slug not verified ───
+  if (slugVerified === null) {
+    // Loading state
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (slugVerified === false) {
+    // Show 404 page — hide admin existence
+    return (
+      <div dir="rtl" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f8fafc', fontFamily: 'Tajawal, sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '4rem', fontWeight: 900, color: '#cbd5e1', marginBottom: 8 }}>404</h1>
+          <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: 24 }}>الصفحة غير موجودة</p>
+          <a href="/" style={{ padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>العودة للرئيسية</a>
+        </div>
+      </div>
+    );
+  }
 
   const handlePageChange = (id: string) => {
     // إذا ضغط المستخدم على نفس الصفحة الحالية، لا تتجاهل الحدث
@@ -102,22 +212,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setCurrentPage(id);
     setMobileDrawerOpen(false);
   };
-
-  // Check admin auth (skip in demo mode)
-  const isDemo = typeof window !== 'undefined' && (
-    new URLSearchParams(window.location.search).get('demo') === '1' ||
-    sessionStorage.getItem('demo_mode') === '1'
-  );
-  if (isDemo && typeof window !== 'undefined') {
-    sessionStorage.setItem('demo_mode', '1');
-  }
-  useEffect(() => {
-    if (isDemo) return;
-    const key = localStorage.getItem('admin_key');
-    if (!key) {
-      router.push('/login');
-    }
-  }, [router, isDemo]);
 
   useEffect(() => {
     if (mobileDrawerOpen) {

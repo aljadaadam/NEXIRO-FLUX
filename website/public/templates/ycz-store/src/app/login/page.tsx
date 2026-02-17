@@ -14,7 +14,31 @@ function LoginHandler() {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('admin_key', token);
-      router.replace('/admin');
+
+      // Get admin_slug: from URL param first, then fetch via authenticated API
+      (async () => {
+        let slug = searchParams.get('slug') || '';
+
+        if (!slug) {
+          try {
+            const res = await fetch('/api/customization', {
+              headers: { Authorization: `Bearer ${token}` },
+              cache: 'no-store',
+            });
+            if (res.ok) {
+              const data = await res.json();
+              slug = data.admin_slug || data.customization?.admin_slug || '';
+            }
+          } catch { /* ignore */ }
+        }
+
+        if (slug) {
+          sessionStorage.setItem('admin_slug', slug);
+          router.replace(`/admin?key=${slug}`);
+        } else {
+          router.replace('/admin');
+        }
+      })();
     }
   }, [searchParams, router]);
 

@@ -81,12 +81,21 @@ async function registerAdmin(req, res) {
     // إنشاء التوكن
     const token = generateToken(admin.id, admin.role, siteKey);
 
+    // إنشاء admin_slug تلقائياً
+    const Customization = require('../models/Customization');
+    let adminSlug = '';
+    try {
+      adminSlug = require('crypto').randomBytes(6).toString('hex');
+      await Customization.upsert(siteKey, { admin_slug: adminSlug });
+    } catch (e) { /* ignore */ }
+
     // إرسال بريد ترحيبي
     emailService.sendWelcomeAdmin({ to: admin.email, name: admin.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
 
     res.status(201).json({
       message: 'تم إنشاء حساب الأدمن بنجاح',
       token,
+      admin_slug: adminSlug,
       site_key: siteKey,
       user: {
         id: admin.id,
@@ -226,6 +235,20 @@ async function login(req, res) {
     // إنشاء التوكن
     const token = generateToken(user.id, user.role, siteKey);
 
+    // جلب admin_slug
+    const Customization = require('../models/Customization');
+    let adminSlug = '';
+    try {
+      const customization = await Customization.findBySiteKey(siteKey);
+      if (customization && customization.admin_slug) {
+        adminSlug = customization.admin_slug;
+      } else {
+        // Auto-generate if missing
+        adminSlug = require('crypto').randomBytes(6).toString('hex');
+        await Customization.upsert(siteKey, { admin_slug: adminSlug });
+      }
+    } catch (e) { /* ignore */ }
+
     // تنبيه تسجيل الدخول
     emailService.sendLoginAlert({
       to: user.email, name: user.name,
@@ -236,6 +259,7 @@ async function login(req, res) {
     res.json({
       message: 'تم تسجيل الدخول بنجاح',
       token,
+      admin_slug: adminSlug,
       site_key: siteKey,
       user: {
         id: user.id,
