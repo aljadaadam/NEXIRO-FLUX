@@ -55,10 +55,11 @@ export default function SupportPage() {
             style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', textAlign: 'center', border: '1px solid #f1f5f9', cursor: m.desc !== '—' ? 'pointer' : 'default', textDecoration: 'none', display: 'block', transition: 'box-shadow 0.2s' }}
             onMouseEnter={e => { if (m.desc !== '—') (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+            onClick={e => { if (m.desc === '—') e.preventDefault(); }}
           >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}15`, color: m.color, display: 'grid', placeItems: 'center', margin: '0 auto 10px' }}>{m.icon}</div>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 4 }}>{m.title}</h4>
-            <p style={{ fontSize: '0.78rem', color: '#64748b', direction: 'ltr' }}>{m.desc}</p>
+            <p style={{ fontSize: '0.78rem', color: '#64748b', direction: 'ltr', lineHeight: 1.5, overflowWrap: 'anywhere', wordBreak: 'break-word', whiteSpace: 'normal', margin: 0 }}>{m.desc}</p>
           </a>
         ))}
       </div>
