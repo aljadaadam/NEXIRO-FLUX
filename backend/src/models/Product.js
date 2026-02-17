@@ -192,7 +192,7 @@ class Product {
     return this.findById(id);
   }
 
-  static async update(id, site_key, { name, arabic_name, description, price, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority, is_game }) {
+  static async update(id, site_key, { name, arabic_name, description, price, price_yearly, price_lifetime, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority, is_game }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -208,6 +208,8 @@ class Product {
       // Mark as custom price when manually edited
       updates.push('is_custom_price = 1');
     }
+    if (price_yearly !== undefined) { updates.push('price_yearly = ?'); values.push(price_yearly); }
+    if (price_lifetime !== undefined) { updates.push('price_lifetime = ?'); values.push(price_lifetime); }
     if (service_type !== undefined) { updates.push('service_type = ?'); values.push(service_type); }
     if (source_id !== undefined) { updates.push('source_id = ?'); values.push(source_id); }
     if (image !== undefined) { updates.push('image = ?'); values.push(image); }
