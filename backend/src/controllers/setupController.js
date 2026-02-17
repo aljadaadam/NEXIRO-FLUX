@@ -605,9 +605,28 @@ async function updateCustomDomain(req, res) {
     const { clearDomainCache } = require('../middlewares/resolveTenant');
     clearDomainCache(domain);
 
+    // ─── إعداد Nginx + SSL تلقائياً للدومين الجديد ───
+    let infrastructureResult = null;
+    if (domain && !domain.endsWith('.nexiroflux.com')) {
+      try {
+        const { execSync } = require('child_process');
+        const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
+        const output = execSync(`python3 ${scriptPath} ${domain}`, {
+          timeout: 150000,
+          encoding: 'utf-8'
+        });
+        infrastructureResult = JSON.parse(output.trim());
+        console.log(`✅ Infrastructure provisioned for custom domain ${domain}:`, infrastructureResult);
+      } catch (infraErr) {
+        console.error(`⚠️ Infrastructure provisioning failed for custom domain ${domain} (non-blocking):`, infraErr.message);
+        infrastructureResult = { success: false, error: infraErr.message };
+      }
+    }
+
     res.json({ 
       message: 'تم تحديث الدومين المخصص بنجاح',
       site: updated,
+      infrastructure: infrastructureResult,
       dns_instructions: {
         type: 'A',
         name: '@',

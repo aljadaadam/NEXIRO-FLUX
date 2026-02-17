@@ -539,6 +539,16 @@ export default function TerminalSetupPage() {
                 <span className="text-gray-500">{t.status}</span>
                 <span className="text-emerald-400">{t.active}</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">{isRTL ? 'شهادة SSL' : 'SSL Certificate'}</span>
+                {result.infrastructure?.ssl ? (
+                  <span className="text-emerald-400">✅ {isRTL ? 'مفعّلة' : 'Active'}</span>
+                ) : result.infrastructure?.success === false ? (
+                  <span className="text-amber-400">⚠️ {isRTL ? 'تحتاج تفعيل يدوي' : 'Needs manual setup'}</span>
+                ) : (
+                  <span className="text-emerald-400">✅ {isRTL ? 'مفعّلة' : 'Active'}</span>
+                )}
+              </div>
 
               {/* ─── بيانات تسجيل الدخول ─── */}
               <div className="border-t border-gray-800 pt-3 mt-3">
