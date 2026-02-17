@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Globe, Settings, ExternalLink, CreditCard, Clock, CheckCircle2,
-  AlertTriangle, LayoutDashboard, Sparkles, Mail, Key,
-  ChevronRight, LogOut, RefreshCw, Loader2, Store, Shield, Zap, Wrench
+  AlertTriangle, LayoutDashboard, Sparkles, Key, Copy, Check,
+  ChevronRight, LogOut, RefreshCw, Loader2, Store, Shield, Zap, Wrench, Calendar
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -17,18 +17,14 @@ export default function MyDashboardPage() {
   const [siteData, setSiteData] = useState(null);
   const [pendingSetup, setPendingSetup] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // 'store' | 'smtp' | null
+  const [editing, setEditing] = useState(null); // 'store' | null
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [copiedAdminUrl, setCopiedAdminUrl] = useState(false);
 
   const [form, setForm] = useState({
     store_name: '',
     domain_slug: '',
-    smtp_host: '',
-    smtp_port: '587',
-    smtp_user: '',
-    smtp_pass: '',
-    smtp_from: '',
   });
 
   useEffect(() => {
@@ -88,15 +84,9 @@ export default function MyDashboardPage() {
       }
       setPendingSetup(pending);
 
-      let settings = data.site?.settings || {};
       setForm({
         store_name: data.site?.name || '',
         domain_slug: data.site?.domain?.replace('.nexiroflux.com', '') || '',
-        smtp_host: settings.smtp?.host || '',
-        smtp_port: settings.smtp?.port || '587',
-        smtp_user: settings.smtp?.user || '',
-        smtp_pass: settings.smtp?.pass || '',
-        smtp_from: settings.smtp?.from || '',
       });
     } catch (err) {
       console.error('Failed to fetch site:', err);
@@ -109,9 +99,7 @@ export default function MyDashboardPage() {
     setSaving(true);
     setSaveMessage('');
     try {
-      const payload = section === 'store'
-        ? { store_name: form.store_name, domain_slug: form.domain_slug }
-        : { smtp_host: form.smtp_host, smtp_port: form.smtp_port, smtp_user: form.smtp_user, smtp_pass: form.smtp_pass, smtp_from: form.smtp_from };
+      const payload = { store_name: form.store_name, domain_slug: form.domain_slug };
 
       await api.updateSiteSettings(payload);
       setSaveMessage(isRTL ? 'تم الحفظ بنجاح ✓' : 'Saved successfully ✓');
@@ -143,7 +131,8 @@ export default function MyDashboardPage() {
 
   const site = siteData?.site;
   const subscription = siteData?.subscription;
-  const settings = site?.settings || {};
+  const customization = siteData?.customization;
+  const adminSlug = customization?.admin_slug || '';
 
   const isTrialExpired = subscription?.status === 'trial' && subscription?.trial_ends_at && new Date(subscription.trial_ends_at) < new Date();
   const trialDaysLeft = subscription?.trial_ends_at
@@ -422,141 +411,169 @@ export default function MyDashboardPage() {
           </div>
         </div>
 
-        {/* ═══ Email / SMTP Settings ═══ */}
-        <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-white font-bold">{isRTL ? 'إعدادات البريد (SMTP)' : 'Email Settings (SMTP)'}</h2>
-            </div>
-            {editing !== 'smtp' ? (
-              <button onClick={() => setEditing('smtp')} className="text-primary-400 text-xs font-medium hover:underline">
-                {isRTL ? 'تعديل' : 'Edit'}
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button onClick={() => setEditing(null)} className="text-dark-400 text-xs hover:text-white">
-                  {isRTL ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button
-                  onClick={() => handleSave('smtp')}
-                  disabled={saving}
-                  className="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-bold disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : (isRTL ? 'حفظ' : 'Save')}
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="p-6">
-            {editing === 'smtp' ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'سيرفر SMTP' : 'SMTP Host'}</label>
-                    <input value={form.smtp_host} onChange={e => setForm(f => ({ ...f, smtp_host: e.target.value }))} placeholder="smtp.gmail.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30 placeholder:text-dark-500" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'المنفذ' : 'Port'}</label>
-                    <input value={form.smtp_port} onChange={e => setForm(f => ({ ...f, smtp_port: e.target.value }))} placeholder="587" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30 placeholder:text-dark-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'اسم المستخدم' : 'Username'}</label>
-                  <input value={form.smtp_user} onChange={e => setForm(f => ({ ...f, smtp_user: e.target.value }))} placeholder="noreply@store.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30 placeholder:text-dark-500" />
-                </div>
-                <div>
-                  <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'كلمة مرور SMTP' : 'SMTP Password'}</label>
-                  <input type="password" value={form.smtp_pass} onChange={e => setForm(f => ({ ...f, smtp_pass: e.target.value }))} placeholder="••••••••" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30 placeholder:text-dark-500" />
-                </div>
-                <div>
-                  <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'البريد المرسل' : 'From Email'}</label>
-                  <input type="email" value={form.smtp_from} onChange={e => setForm(f => ({ ...f, smtp_from: e.target.value }))} placeholder="noreply@store.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30 placeholder:text-dark-500" />
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-dark-400 mb-1">{isRTL ? 'سيرفر SMTP' : 'SMTP Host'}</p>
-                  <p className="text-white text-sm">{settings.smtp?.host || <span className="text-dark-500">{isRTL ? 'غير مُعد' : 'Not configured'}</span>}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark-400 mb-1">{isRTL ? 'المنفذ' : 'Port'}</p>
-                  <p className="text-white text-sm">{settings.smtp?.port || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark-400 mb-1">{isRTL ? 'المستخدم' : 'Username'}</p>
-                  <p className="text-white text-sm">{settings.smtp?.user || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark-400 mb-1">{isRTL ? 'البريد المرسل' : 'From'}</p>
-                  <p className="text-white text-sm">{settings.smtp?.from || '—'}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* ═══ Quick Links ═══ */}
         <div className="bg-[#111827] rounded-2xl border border-white/5 p-6">
           <h2 className="text-white font-bold mb-4">{isRTL ? 'روابط سريعة' : 'Quick Links'}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              { labelAr: 'لوحة تحكم المتجر', labelEn: 'Store Dashboard', icon: LayoutDashboard, href: site?.domain ? `https://${site.domain}/login?token=${localStorage.getItem('nf_token') || ''}` : '#', color: 'text-primary-400', bg: 'bg-primary-500/5 hover:bg-primary-500/10', external: true },
-              { labelAr: 'زيارة المتجر', labelEn: 'Visit Store', icon: ExternalLink, href: site?.domain ? `https://${site.domain}` : '#', color: 'text-cyan-400', bg: 'bg-cyan-500/5 hover:bg-cyan-500/10', external: true },
-            ].map((link, i) => {
-              const Icon = link.icon;
-              if (link.external) {
-                return (
-                  <a key={i} href={link.href} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 px-4 py-3 rounded-xl ${link.bg} border border-white/5 transition-all`}>
-                    <Icon className={`w-5 h-5 ${link.color}`} />
-                    <span className="text-white text-sm font-medium">{isRTL ? link.labelAr : link.labelEn}</span>
-                    <ChevronRight className={`w-4 h-4 text-dark-500 ${isRTL ? 'mr-auto rotate-180' : 'ml-auto'}`} />
-                  </a>
-                );
-              }
-              return (
-                <Link key={i} to={link.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl ${link.bg} border border-white/5 transition-all`}>
-                  <Icon className={`w-5 h-5 ${link.color}`} />
-                  <span className="text-white text-sm font-medium">{isRTL ? link.labelAr : link.labelEn}</span>
-                  <ChevronRight className={`w-4 h-4 text-dark-500 ${isRTL ? 'mr-auto rotate-180' : 'ml-auto'}`} />
-                </Link>
-              );
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Admin Dashboard Link */}
+            {site?.domain && adminSlug && (
+              <div className="bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-xl border border-primary-500/10 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <LayoutDashboard className="w-4 h-4 text-primary-400" />
+                  <span className="text-white text-sm font-bold">{isRTL ? 'لوحة تحكم المتجر' : 'Store Dashboard'}</span>
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <code dir="ltr" className="flex-1 text-xs text-dark-300 bg-white/5 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
+                    {`https://${site.domain}/admin?key=${adminSlug}`}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://${site.domain}/admin?key=${adminSlug}`);
+                      setCopiedAdminUrl(true);
+                      setTimeout(() => setCopiedAdminUrl(false), 2000);
+                    }}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all flex-shrink-0"
+                  >
+                    {copiedAdminUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-dark-400" />}
+                  </button>
+                </div>
+                <a
+                  href={`https://${site.domain}/admin?key=${adminSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500/10 text-primary-400 text-xs font-bold hover:bg-primary-500/20 transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  {isRTL ? 'فتح لوحة التحكم' : 'Open Dashboard'}
+                </a>
+              </div>
+            )}
+
+            {/* Visit Store */}
+            {site?.domain && (
+              <a
+                href={`https://${site.domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-cyan-500/5 hover:bg-cyan-500/10 border border-white/5 transition-all"
+              >
+                <ExternalLink className="w-5 h-5 text-cyan-400" />
+                <span className="text-white text-sm font-medium">{isRTL ? 'زيارة المتجر' : 'Visit Store'}</span>
+                <ChevronRight className={`w-4 h-4 text-dark-500 ${isRTL ? 'mr-auto rotate-180' : 'ml-auto'}`} />
+              </a>
+            )}
           </div>
         </div>
 
         {/* Subscription Info */}
-        {subscription && (
-          <div className="bg-[#111827] rounded-2xl border border-white/5 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-white font-bold">{isRTL ? 'الاشتراك' : 'Subscription'}</h2>
+        {subscription && (() => {
+          const statusMap = {
+            active: { labelAr: 'نشط', labelEn: 'Active', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: CheckCircle2 },
+            trial: { labelAr: 'تجريبي', labelEn: 'Trial', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', icon: Clock },
+            cancelled: { labelAr: 'ملغي', labelEn: 'Cancelled', color: 'bg-red-500/10 text-red-400 border-red-500/20', icon: AlertTriangle },
+            expired: { labelAr: 'منتهي', labelEn: 'Expired', color: 'bg-red-500/10 text-red-400 border-red-500/20', icon: AlertTriangle },
+          };
+          const cycleMap = {
+            monthly: { labelAr: 'شهري', labelEn: 'Monthly' },
+            yearly: { labelAr: 'سنوي', labelEn: 'Yearly' },
+            lifetime: { labelAr: 'مدى الحياة', labelEn: 'Lifetime' },
+          };
+          const st = statusMap[subscription.status] || statusMap.active;
+          const cy = cycleMap[subscription.billing_cycle] || { labelAr: subscription.billing_cycle, labelEn: subscription.billing_cycle };
+          const StatusIcon = st.icon;
+
+          const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
+          const trialEndsAt = subscription.trial_ends_at ? new Date(subscription.trial_ends_at) : null;
+          const endDate = subscription.status === 'trial' ? trialEndsAt : expiresAt;
+          const isLifetime = subscription.billing_cycle === 'lifetime';
+
+          const formatDate = (d) => d ? d.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+
+          // Days remaining
+          let daysLeft = null;
+          if (endDate && !isLifetime) {
+            daysLeft = Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)));
+          }
+
+          return (
+            <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5">
+                <Shield className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-white font-bold">{isRTL ? 'الاشتراك' : 'Subscription'}</h2>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {/* Status */}
+                  <div>
+                    <p className="text-xs text-dark-400 mb-2">{isRTL ? 'الحالة' : 'Status'}</p>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${st.color}`}>
+                      <StatusIcon className="w-3.5 h-3.5" />
+                      {isRTL ? st.labelAr : st.labelEn}
+                    </span>
+                  </div>
+
+                  {/* Billing Cycle */}
+                  <div>
+                    <p className="text-xs text-dark-400 mb-2">{isRTL ? 'دورة الفوترة' : 'Billing Cycle'}</p>
+                    <p className="text-white text-sm font-bold">{isRTL ? cy.labelAr : cy.labelEn}</p>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <p className="text-xs text-dark-400 mb-2">{isRTL ? 'السعر' : 'Price'}</p>
+                    <p className="text-white text-sm font-bold">
+                      {Number(subscription.price) === 0
+                        ? (isRTL ? 'مجاني' : 'Free')
+                        : `$${Number(subscription.price).toFixed(2)}`
+                      }
+                      {Number(subscription.price) > 0 && !isLifetime && (
+                        <span className="text-dark-500 text-xs font-normal"> / {isRTL ? cy.labelAr : cy.labelEn}</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Expiry / End Date */}
+                  <div>
+                    <p className="text-xs text-dark-400 mb-2">{isRTL ? 'تاريخ الانتهاء' : 'Expires'}</p>
+                    {isLifetime ? (
+                      <span className="inline-flex items-center gap-1.5 text-emerald-400 text-sm font-bold">
+                        <Zap className="w-3.5 h-3.5" />
+                        {isRTL ? 'غير محدود' : 'Never'}
+                      </span>
+                    ) : endDate ? (
+                      <div>
+                        <p className="text-white text-sm font-bold flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-dark-400" />
+                          {formatDate(endDate)}
+                        </p>
+                        {daysLeft !== null && (
+                          <p className={`text-xs mt-1 font-medium ${
+                            daysLeft <= 3 ? 'text-red-400' : daysLeft <= 7 ? 'text-yellow-400' : 'text-dark-400'
+                          }`}>
+                            {daysLeft === 0
+                              ? (isRTL ? 'ينتهي اليوم' : 'Expires today')
+                              : isRTL ? `متبقي ${daysLeft} يوم` : `${daysLeft} days left`
+                            }
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-dark-500 text-sm">—</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Subscription start date if available */}
+                {subscription.starts_at && (
+                  <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-xs text-dark-500">
+                    <Calendar className="w-3 h-3" />
+                    {isRTL ? 'تاريخ البدء:' : 'Started:'} {formatDate(new Date(subscription.starts_at))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-dark-400 mb-1">{isRTL ? 'الحالة' : 'Status'}</p>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  subscription.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
-                  subscription.status === 'trial' ? 'bg-yellow-500/10 text-yellow-400' :
-                  'bg-red-500/10 text-red-400'
-                }`}>
-                  {subscription.status === 'active' && <CheckCircle2 className="w-3 h-3" />}
-                  {subscription.status === 'trial' && <Clock className="w-3 h-3" />}
-                  {subscription.status}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs text-dark-400 mb-1">{isRTL ? 'دورة الفوترة' : 'Billing Cycle'}</p>
-                <p className="text-white text-sm font-medium capitalize">{subscription.billing_cycle}</p>
-              </div>
-              <div>
-                <p className="text-xs text-dark-400 mb-1">{isRTL ? 'السعر' : 'Price'}</p>
-                <p className="text-white text-sm font-bold">${subscription.price}</p>
-              </div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </main>
     </div>
   );
