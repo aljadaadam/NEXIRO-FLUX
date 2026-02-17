@@ -393,12 +393,12 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#26a17b', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>1</div>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: currentTheme.primary, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>1</div>
                       <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 1 ? 700 : 400, color: usdtSubStep === 1 ? '#0b1020' : '#94a3b8' }}>{t('إرسال')}</span>
                     </div>
                     <div style={{ width: 20, height: 1, background: '#e2e8f0' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: usdtSubStep === 2 ? '#3b82f6' : '#e2e8f0', color: usdtSubStep === 2 ? '#fff' : '#94a3b8', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>2</div>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: usdtSubStep === 2 ? currentTheme.primary : '#e2e8f0', color: usdtSubStep === 2 ? '#fff' : '#94a3b8', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>2</div>
                       <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 2 ? 700 : 400, color: usdtSubStep === 2 ? '#0b1020' : '#94a3b8' }}>{t('تحقق')}</span>
                     </div>
                   </div>
@@ -415,7 +415,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   <div>
                     {/* Amount + Network compact header */}
                     <div style={{
-                      background: 'linear-gradient(135deg, #26a17b, #1a8a68)',
+                      background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`,
                       borderRadius: 16,
                       padding: '1.2rem',
                       marginBottom: 14,
@@ -507,7 +507,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       disabled={usdtCountdown <= 0}
                       style={{
                         width: '100%', padding: '0.75rem', borderRadius: btnR,
-                        background: usdtCountdown <= 0 ? '#e2e8f0' : '#26a17b', color: usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                        background: usdtCountdown <= 0 ? '#e2e8f0' : currentTheme.primary, color: usdtCountdown <= 0 ? '#94a3b8' : '#fff',
                         border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtCountdown <= 0 ? 'not-allowed' : 'pointer',
                         fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       }}
@@ -522,8 +522,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   <div>
                     {/* Summary mini card */}
                     <div style={{
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      background: `${currentTheme.primary}08`,
+                      border: `1px solid ${currentTheme.primary}25`,
                       borderRadius: 12,
                       padding: '0.8rem 1rem',
                       marginBottom: 14,
@@ -537,20 +537,20 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('الشبكة')}</p>
-                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#26a17b' }}>{checkoutData.network}</p>
+                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: currentTheme.primary }}>{checkoutData.network}</p>
                       </div>
                     </div>
 
                     {/* TX Hash input for BEP20/ERC20 */}
                     {(checkoutData.network === 'BEP20' || checkoutData.network === 'ERC20') && (
                       <div style={{
-                        background: '#f0f9ff',
-                        border: '1.5px solid #3b82f6',
+                        background: `${currentTheme.primary}0a`,
+                        border: `1.5px solid ${currentTheme.primary}`,
                         borderRadius: 12,
                         padding: '1rem',
                         marginBottom: 14,
                       }}>
-                        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e40af', display: 'block', marginBottom: 6 }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: currentTheme.primary, display: 'block', marginBottom: 6 }}>
                           {t('هاش المعاملة (Transaction Hash)')}
                         </label>
                         <p style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: 8, lineHeight: 1.4 }}>
@@ -566,7 +566,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                             width: '100%',
                             padding: '0.6rem 0.75rem',
                             borderRadius: 8,
-                            border: '1px solid #cbd5e1',
+                            border: `1px solid ${currentTheme.primary}40`,
                             fontSize: '0.82rem',
                             fontFamily: 'monospace',
                             background: '#fff',
@@ -580,8 +580,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
                     {/* TRC20: auto-detection note */}
                     {checkoutData.network === 'TRC20' && (
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '1rem', marginBottom: 14, textAlign: 'center' }}>
-                        <p style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 600 }}>
+                      <div style={{ background: `${currentTheme.primary}0a`, border: `1px solid ${currentTheme.primary}30`, borderRadius: 12, padding: '1rem', marginBottom: 14, textAlign: 'center' }}>
+                        <p style={{ fontSize: '0.82rem', color: currentTheme.primary, fontWeight: 600 }}>
                           {t('سيتم الكشف عن التحويل تلقائياً')}
                         </p>
                         <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 4 }}>
@@ -595,7 +595,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     {/* Verify button */}
                     <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
                       width: '100%', padding: '0.75rem', borderRadius: btnR,
-                      background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : '#3b82f6', color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                      background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : currentTheme.primary, color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
                       border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtChecking ? 'not-allowed' : 'pointer',
                       fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       marginBottom: 10,
