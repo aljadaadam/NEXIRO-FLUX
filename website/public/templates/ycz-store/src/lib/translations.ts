@@ -218,7 +218,6 @@ const en: Record<string, string> = {
   'سيتم الكشف عن التحويل تلقائياً': 'Transfer will be detected automatically',
   'اضغط زر التحقق بعد إتمام التحويل': 'Click verify after completing the transfer',
   '🔍 تحقق من الدفع': '🔍 Verify Payment',
-  'جاري التحقق...': 'Verifying...',
   '← العودة لبيانات التحويل': '→ Back to transfer details',
   'يرجى إدخال هاش المعاملة (Transaction Hash)': 'Please enter the Transaction Hash',
   'البنك': 'Bank',
