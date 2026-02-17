@@ -28,20 +28,24 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   // Language
   const [storeLanguage, setStoreLanguage] = useState<'ar' | 'en'>('ar');
 
+  // Toast
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+
   useEffect(() => {
     async function load() {
       try {
         const res = await adminApi.getSettings();
-        if (res) {
-          setSmtpHost(res.smtp_host || '');
-          setSmtpPort(String(res.smtp_port || '587'));
-          setSmtpUser(res.smtp_user || '');
-          setSmtpPass(res.smtp_pass || '');
-          setSmtpFrom(res.smtp_from || '');
-          setSecondaryCurrency(res.secondary_currency || '');
-          setCurrencyRate(res.currency_rate ? String(res.currency_rate) : '');
-          setOtpEnabled(Boolean(res.otp_enabled));
-          setStoreLanguage(res.store_language === 'en' ? 'en' : 'ar');
+        const c = res?.customization;
+        if (c) {
+          setSmtpHost(c.smtp_host || '');
+          setSmtpPort(String(c.smtp_port || '587'));
+          setSmtpUser(c.smtp_user || '');
+          setSmtpPass(c.smtp_pass || '');
+          setSmtpFrom(c.smtp_from || '');
+          setSecondaryCurrency(c.secondary_currency || '');
+          setCurrencyRate(c.currency_rate ? String(c.currency_rate) : '');
+          setOtpEnabled(Boolean(c.otp_enabled));
+          setStoreLanguage(c.store_language === 'en' ? 'en' : 'ar');
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -65,8 +69,13 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
         store_language: storeLanguage,
       });
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch { /* ignore */ }
+      setToast({ msg: '✅ تم حفظ الإعدادات بنجاح', type: 'ok' });
+      setTimeout(() => { setSaved(false); setToast(null); }, 3000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء الحفظ';
+      setToast({ msg: `❌ ${msg}`, type: 'err' });
+      setTimeout(() => setToast(null), 4000);
+    }
     finally { setSaving(false); }
   }
 
@@ -98,16 +107,54 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
+        {/* ─── تنبيه SMTP ─── */}
+        {!smtpHost && (
+          <div style={{
+            padding: '1rem 1.25rem', borderRadius: 12,
+            background: '#fffbeb', border: '1px solid #fde68a',
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+          }}>
+            <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>⚠️</span>
+            <div>
+              <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#92400e', marginBottom: 4 }}>البريد الإلكتروني غير مُعدّ</p>
+              <p style={{ fontSize: '0.78rem', color: '#a16207', lineHeight: 1.6 }}>
+                لن يتم إرسال أي رسائل بريدية (تأكيد الطلبات، كود التحقق، إشعارات الدفع) حتى تقوم بإعداد SMTP.
+                <br />يمكنك استخدام خدمات مثل Gmail SMTP أو Mailgun أو أي مزود بريد إلكتروني.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ─── toast ─── */}
+        {toast && (
+          <div style={{
+            position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+            padding: '0.7rem 1.5rem', borderRadius: 10, fontSize: '0.85rem', fontWeight: 700,
+            background: toast.type === 'ok' ? '#f0fdf4' : '#fef2f2',
+            color: toast.type === 'ok' ? '#16a34a' : '#dc2626',
+            border: `1px solid ${toast.type === 'ok' ? '#bbf7d0' : '#fecaca'}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            fontFamily: 'Tajawal, sans-serif',
+          }}>
+            {toast.msg}
+          </div>
+        )}
+
         {/* ─── إعدادات البريد الإلكتروني ─── */}
         <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eff6ff', display: 'grid', placeItems: 'center' }}>
               <Mail size={18} color="#3b82f6" />
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>إعدادات البريد الإلكتروني (SMTP)</h3>
               <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>لإرسال رسائل التأكيد والإشعارات للزبائن</p>
             </div>
+            {smtpHost && smtpUser ? (
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', background: '#f0fdf4', padding: '4px 10px', borderRadius: 8, border: '1px solid #bbf7d0' }}>✓ مُعدّ</span>
+            ) : (
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', background: '#fef2f2', padding: '4px 10px', borderRadius: 8, border: '1px solid #fecaca' }}>✗ غير مُعدّ</span>
+            )}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
@@ -177,47 +224,6 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
                 </p>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* ─── إعدادات اللغة ─── */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f9ff', display: 'grid', placeItems: 'center' }}>
-              <Globe size={18} color="#0ea5e9" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>إعدادات اللغة</h3>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>لغة واجهة المتجر للزبائن</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button
-              onClick={() => setStoreLanguage('ar')}
-              style={{
-                flex: 1, padding: '1rem', borderRadius: 12,
-                border: `2px solid ${storeLanguage === 'ar' ? theme.primary : '#e2e8f0'}`,
-                background: storeLanguage === 'ar' ? `${theme.primary}10` : '#f8fafc',
-                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇸🇦</div>
-              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'ar' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة عربية (RTL)</p>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الواجهة الافتراضية</p>
-            </button>
-            <button
-              onClick={() => setStoreLanguage('en')}
-              style={{
-                flex: 1, padding: '1rem', borderRadius: 12,
-                border: `2px solid ${storeLanguage === 'en' ? theme.primary : '#e2e8f0'}`,
-                background: storeLanguage === 'en' ? `${theme.primary}10` : '#f8fafc',
-                cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>🇺🇸</div>
-              <p style={{ fontSize: '0.9rem', fontWeight: 700, color: storeLanguage === 'en' ? theme.primary : '#334155', marginBottom: 2 }}>واجهة إنجليزية (LTR)</p>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>English Interface</p>
-            </button>
           </div>
         </div>
 

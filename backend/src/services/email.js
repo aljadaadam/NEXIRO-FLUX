@@ -66,14 +66,34 @@ class EmailService {
     }
   }
 
-  // ─── Fetch site SMTP settings from Site table ───
+  // ─── Fetch site SMTP settings from Site table or Customization table ───
   async _getSiteSettingsFromDB(siteKey) {
     if (!siteKey) return null;
     try {
+      // 1) Check sites.settings.smtp first
       const Site = require('../models/Site');
       const site = await Site.findBySiteKey(siteKey);
-      if (!site?.settings) return null;
-      return typeof site.settings === 'string' ? JSON.parse(site.settings) : site.settings;
+      if (site?.settings) {
+        const settings = typeof site.settings === 'string' ? JSON.parse(site.settings) : site.settings;
+        if (settings?.smtp?.host && settings?.smtp?.user) return settings;
+      }
+
+      // 2) Fallback: check customizations table for SMTP fields
+      const Customization = require('../models/Customization');
+      const custom = await Customization.findBySiteKey(siteKey);
+      if (custom?.smtp_host && custom?.smtp_user) {
+        return {
+          smtp: {
+            host: custom.smtp_host,
+            port: custom.smtp_port || 587,
+            user: custom.smtp_user,
+            pass: custom.smtp_pass,
+            from: custom.smtp_from || custom.smtp_user,
+          }
+        };
+      }
+
+      return null;
     } catch (err) {
       return null;
     }
