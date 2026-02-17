@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+﻿import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
@@ -52,6 +52,26 @@ export default function TerminalSetupPage() {
   const [dnsResult, setDnsResult] = useState(null);
   const [dnsPartial, setDnsPartial] = useState(null); // { dnsOk }
   const [dnsCheckCount, setDnsCheckCount] = useState(0);
+
+  //  Security: prevent re-use of setup page after site is built
+  useEffect(() => {
+    // If this payment_ref was already used to build a site, redirect to dashboard
+    if (paymentRef) {
+      const completedKey = `nexiro_setup_done_${paymentRef}`;
+      if (localStorage.getItem(completedKey)) {
+        navigate('/my-dashboard', { replace: true });
+        return;
+      }
+    }
+    // If no payment_ref and no pending setup, redirect away
+    if (!paymentRef && !urlPurchaseCode) {
+      const pending = localStorage.getItem('nexiro_pending_setup');
+      if (!pending) {
+        navigate('/', { replace: true });
+        return;
+      }
+    }
+  }, [paymentRef, urlPurchaseCode, navigate]);
 
   //  Translations 
   const t = {
@@ -192,8 +212,11 @@ export default function TerminalSetupPage() {
         localStorage.setItem('nf_token', data.token);
         localStorage.setItem('nf_user', JSON.stringify(data.user));
         localStorage.setItem('nf_site', JSON.stringify(data.site));
-        // مسح بيانات الإعداد المعلق
+        // مسح بيانات الإعداد المعلق + تعليم الدفع كمستخدم
         try { localStorage.removeItem('nexiro_pending_setup'); } catch(e) {}
+        if (paymentRef) {
+          try { localStorage.setItem(`nexiro_setup_done_${paymentRef}`, Date.now().toString()); } catch(e) {}
+        }
       }
       setBuildProgress(prev => [...prev, steps[steps.length - 1].msg]);
       setResult(data);
@@ -203,6 +226,16 @@ export default function TerminalSetupPage() {
       const errorMsg = err.error || err.errorEn || (isRTL ? 'فشل بناء الموقع' : 'Site build failed');
       setBuildProgress(prev => [...prev, '❌ ' + errorMsg]);
       setBuildError(errorMsg);
+      // إذا كان الدفع مستخدم مسبقاً (409) — تعليم + توجيه للوحة
+      if (err.already_provisioned) {
+        if (paymentRef) {
+          try { localStorage.setItem(`nexiro_setup_done_${paymentRef}`, Date.now().toString()); } catch(e) {}
+        }
+        setTimeout(() => {
+          navigate('/my-dashboard', { replace: true });
+        }, 3000);
+        return;
+      }
       // إذا كان خطأ دفع (402) — إرجاع المستخدم لصفحة الشراء
       if (err.payment_status === 'pending' || err.payment_status === 'failed' || err.payment_status === 'cancelled') {
         setTimeout(() => {

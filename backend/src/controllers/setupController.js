@@ -86,6 +86,20 @@ async function provisionSite(req, res) {
             errorEn: 'Invalid payment reference. No matching payment found',
           });
         }
+
+        // ─── ⛔ منع إعادة استخدام مرجع الدفع لإنشاء مواقع متعددة ───
+        if (paymentRecord.meta) {
+          const meta = typeof paymentRecord.meta === 'string' ? JSON.parse(paymentRecord.meta) : paymentRecord.meta;
+          if (meta.provisioned_site_key) {
+            return res.status(409).json({
+              error: 'تم استخدام هذه الدفعة لإنشاء موقع بالفعل. لا يمكن إنشاء موقع آخر بنفس الدفعة',
+              errorEn: 'This payment has already been used to provision a site. Cannot create another site with the same payment',
+              already_provisioned: true,
+              existing_site_key: meta.provisioned_site_key,
+            });
+          }
+        }
+
         if (paymentRecord.status === 'completed') {
           verifiedPayment = paymentRecord;
         } else if (paymentRecord.status === 'pending' && paymentRecord.payment_method === 'bank_transfer') {
