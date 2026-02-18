@@ -928,6 +928,28 @@ async function seedTemplateProducts(req, res) {
         status: 'active',
         service_type: 'TEMPLATE',
       },
+      {
+        name: 'متجر شحن ألعاب',
+        description: 'قالب متجر شحن ألعاب احترافي مع بحث وفلترة، خطط شحن، بوابات دفع متعددة',
+        price: 39,
+        price_yearly: 390,
+        price_lifetime: 975,
+        category: 'game-topup',
+        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
+      {
+        name: 'متجر أدوات صيانة',
+        description: 'قالب متجر أدوات صيانة احترافي مبني بـ Next.js 15 — لبيع الدونجلات والبوكسات وأدوات JTAG واللحام والرقائق مع خدمة توصيل بالمناطق وعملات متعددة',
+        price: 39,
+        price_yearly: 390,
+        price_lifetime: 975,
+        category: 'hardware-tools',
+        image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80',
+        status: 'active',
+        service_type: 'TEMPLATE',
+      },
     ];
 
     // التحقق من وجود منتجات مسبقاً
@@ -947,9 +969,9 @@ async function seedTemplateProducts(req, res) {
     for (const t of templates) {
       try {
         await pool.query(
-          `INSERT INTO products (site_key, name, description, price, image, status, category, service_type)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [siteKey, t.name, t.description, t.price, t.image, t.status, t.category, t.service_type]
+          `INSERT INTO products (site_key, name, description, price, price_yearly, price_lifetime, image, status, category, service_type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [siteKey, t.name, t.description, t.price, t.price_yearly || null, t.price_lifetime || null, t.image, t.status, t.category, t.service_type]
         );
         inserted++;
       } catch (e) {

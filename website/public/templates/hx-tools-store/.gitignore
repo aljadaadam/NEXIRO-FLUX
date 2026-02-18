@@ -1,0 +1,5 @@
+# hx-tools-store
+node_modules
+.next
+out
+.DS_Store

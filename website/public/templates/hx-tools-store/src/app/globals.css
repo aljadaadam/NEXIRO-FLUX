@@ -1,0 +1,477 @@
+/* ─── HX Tools Store - Global Styles ─── */
+
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body.hx-dark {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+.hx-dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+/* ─── Animations ─── */
+@keyframes hxFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hxSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hxSlideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes hxSlideLeft {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes hxScaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes hxPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes hxShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes hxFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes hxGlow {
+  0%, 100% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.6); }
+}
+
+@keyframes hxModalIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes hxOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hxBannerSlide {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.hx-animate-fade { animation: hxFadeIn 0.4s ease-out; }
+.hx-animate-slide-up { animation: hxSlideUp 0.5s ease-out; }
+.hx-animate-scale { animation: hxScaleIn 0.3s ease-out; }
+.hx-animate-modal { animation: hxModalIn 0.3s ease-out; }
+.hx-animate-overlay { animation: hxOverlayIn 0.2s ease-out; }
+.hx-animate-float { animation: hxFloat 3s ease-in-out infinite; }
+.hx-animate-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: hxShimmer 1.5s infinite;
+}
+.hx-dark .hx-animate-shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* ─── Product Card Hover ─── */
+.hx-product-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hx-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+.hx-dark .hx-product-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Banner Carousel ─── */
+.hx-banner-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hx-banner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.hx-banner-dot.active {
+  background: #fff;
+  transform: scale(1.3);
+}
+
+/* ─── Button Styles ─── */
+.hx-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: #fff;
+}
+
+.hx-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.hx-btn-primary:active {
+  transform: translateY(0);
+}
+
+.hx-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  background: transparent;
+}
+
+.hx-btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+/* ─── Input Styles ─── */
+.hx-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+  outline: none;
+  background: #fff;
+  color: #1e293b;
+}
+
+.hx-input:focus {
+  border-color: var(--hx-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.hx-dark .hx-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.hx-dark .hx-input:focus {
+  border-color: var(--hx-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* ─── Select Styles ─── */
+.hx-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+  outline: none;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: left 12px center;
+  background-repeat: no-repeat;
+  background-size: 20px;
+  padding-left: 40px;
+}
+
+[dir="ltr"] .hx-select {
+  background-position: right 12px center;
+  padding-left: 16px;
+  padding-right: 40px;
+}
+
+.hx-select:focus {
+  border-color: var(--hx-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.hx-dark .hx-select {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+/* ─── Badge ─── */
+.hx-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ─── Skeleton Loader ─── */
+.hx-skeleton {
+  border-radius: 8px;
+}
+
+/* ─── Toast Notification ─── */
+.hx-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  animation: hxSlideUp 0.3s ease-out;
+}
+
+/* ─── Modal Overlay ─── */
+.hx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hxOverlayIn 0.2s ease-out;
+}
+
+.hx-modal-content {
+  background: #fff;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 92%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: hxModalIn 0.3s ease-out;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+}
+
+.hx-dark .hx-modal-content {
+  background: #1e293b;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+  .hx-hide-tablet { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  .hx-hide-mobile { display: none !important; }
+  .hx-show-mobile { display: flex !important; }
+  
+  .hx-modal-content {
+    width: 96%;
+    max-height: 85vh;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hx-modal-content {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
+
+/* ─── Grid System ─── */
+.hx-grid-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .hx-grid-products {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hx-grid-products {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Category Pills ─── */
+.hx-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  border: 2px solid transparent;
+}
+
+.hx-category-pill:hover {
+  transform: translateY(-2px);
+}
+
+.hx-category-pill.active {
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Cart Drawer ─── */
+@keyframes hxDrawerSlide {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+[dir="rtl"] .hx-cart-drawer {
+  animation: hxDrawerSlideRTL 0.3s ease-out;
+}
+
+@keyframes hxDrawerSlideRTL {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.hx-cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 100vw;
+  height: 100vh;
+  z-index: 9500;
+  animation: hxDrawerSlide 0.3s ease-out;
+}
+
+[dir="rtl"] .hx-cart-drawer {
+  right: auto;
+  left: 0;
+}
+
+/* ─── Quantity Stepper ─── */
+.hx-qty-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.hx-qty-btn:hover {
+  transform: scale(1.1);
+}
+
+/* ─── Status Tags ─── */
+.hx-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ─── Admin Layout Responsive ─── */
+@media (max-width: 768px) {
+  .hx-sidebar-desktop { display: none !important; }
+  .hx-sidebar-collapse-btn { display: none !important; }
+  .hx-sidebar-close-mobile { display: block !important; }
+  .hx-admin-main { margin-right: 0 !important; margin-left: 0 !important; }
+  .hx-dash-menu-btn { display: flex !important; }
+  .hx-admin-mobile-nav { display: flex !important; }
+  .hx-dash-profile-text { display: none; }
+}
+
+@media (min-width: 769px) {
+  .hx-sidebar-mobile,
+  .hx-sidebar-mobile-overlay { display: none !important; }
+}
+
+/* ─── Skeleton ─── */
+.hx-skeleton {
+  background: linear-gradient(90deg, #e2e8f060 25%, #e2e8f020 50%, #e2e8f060 75%);
+  background-size: 200% 100%;
+  animation: hxShimmer 1.5s infinite;
+}
+
+body.hx-dark .hx-skeleton {
+  background: linear-gradient(90deg, #33415560 25%, #33415520 50%, #33415560 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

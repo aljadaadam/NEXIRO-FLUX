@@ -35,6 +35,23 @@ export const templates = [
     hasLiveDemo: true,
   },
   {
+    id: 'hardware-tools-store',
+    name: 'متجر أدوات صيانة',
+    nameEn: 'Hardware Tools Store',
+    description: 'قالب متجر أدوات صيانة احترافي لبيع الدونجلات والبوكسات وأدوات JTAG واللحام والرقائق مع خدمة توصيل بالمناطق، عملات متعددة، ولوحة تحكم شاملة',
+    descriptionEn: 'Professional hardware maintenance tools store for selling dongles, boxes, JTAG adapters, soldering equipment & chips with regional delivery, multi-currency, and full admin dashboard',
+    category: 'hardware-tools',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80',
+    demoUrl: '/template/hardware-tools-store',
+    features: ['بيع دونجلات وبوكسات', 'أدوات JTAG واللحام', 'خدمة توصيل بالمناطق', 'عملات متعددة', 'لوحة تحكم شاملة', '6 ثيمات احترافية', 'دعم كامل RTL', 'بوابات دفع متعددة', 'API متكامل', 'Next.js 15'],
+    featuresEn: ['Dongles & Boxes Sales', 'JTAG & Soldering Tools', 'Regional Delivery Service', 'Multi-Currency Support', 'Full Admin Dashboard', '6 Professional Themes', 'Full RTL Support', 'Multiple Payment Gateways', 'Full API', 'Next.js 15'],
+    price: { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+    popular: true,
+    color: 'from-blue-500 to-teal-500',
+    badge: '🔧 جديد',
+    hasLiveDemo: true,
+  },
+  {
     id: 'ecommerce-pro',
     name: 'متجر إلكتروني احترافي',
     nameEn: 'E-Commerce Pro',
@@ -148,6 +165,7 @@ export const categories = [
   { id: 'medical', name: 'طبي', nameEn: 'Medical' },
   { id: 'digital-services', name: 'خدمات رقمية', nameEn: 'Digital Services' },
   { id: 'gaming', name: 'شحن ألعاب', nameEn: 'Gaming' },
+  { id: 'hardware-tools', name: 'أدوات صيانة', nameEn: 'Hardware Tools' },
 ];
 
 export const testimonials = [

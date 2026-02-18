@@ -24,6 +24,8 @@ import YCZStoreLiveDemo from './pages/demo/YCZStoreLiveDemo';
 import YCZDashboardLiveDemo from './pages/demo/YCZDashboardLiveDemo';
 import GxVaultStoreLiveDemo from './pages/demo/GxVaultStoreLiveDemo';
 import GxVaultDashboardLiveDemo from './pages/demo/GxVaultDashboardLiveDemo';
+import HxToolsStoreLiveDemo from './pages/demo/HxToolsStoreLiveDemo';
+import HxToolsDashboardLiveDemo from './pages/demo/HxToolsDashboardLiveDemo';
 
 // Admin Dashboard
 import AdminLayout from './pages/admin/AdminLayout';
@@ -54,6 +56,8 @@ function AppContent() {
         <Route path="/demo/ycz-dashboard" element={<YCZDashboardLiveDemo />} />
         <Route path="/demo/gxv-store" element={<GxVaultStoreLiveDemo />} />
         <Route path="/demo/gxv-dashboard" element={<GxVaultDashboardLiveDemo />} />
+        <Route path="/demo/hx-store" element={<HxToolsStoreLiveDemo />} />
+        <Route path="/demo/hx-dashboard" element={<HxToolsDashboardLiveDemo />} />
       </Routes>
     );
   }

@@ -77,23 +77,35 @@ npm install
 npm run build
 echo "✅ الموقع الرئيسي جاهز → website/dist/"
 
-# ─── 3. تثبيت وبناء قالب المتجر ───
+# ─── 3. تثبيت وبناء قالب المتجر ycz-store ───
 echo ""
-echo "🏪 [3/3] تثبيت وبناء قالب المتجر..."
+echo "🏪 [3/5] تثبيت وبناء قالب المتجر (ycz-store)..."
 cd "$ROOT_DIR/website/public/templates/ycz-store"
 npm install
 rm -rf .next
 npm run build
-echo "✅ قالب المتجر جاهز"
+echo "✅ قالب ycz-store جاهز"
 
-# ─── تشغيل الخدمات ───
+# ─── 4. تثبيت وبناء قالب المتجر hx-tools-store ───
 echo ""
-echo "🚀 تشغيل الخدمات..."
+echo "🔧 [4/5] تثبيت وبناء قالب المتجر (hx-tools-store)..."
+cd "$ROOT_DIR/website/public/templates/hx-tools-store"
+npm install
+rm -rf .next
+npm run build
+echo "✅ قالب hx-tools-store جاهز"
+
+# ─── 5. تشغيل الخدمات ───
+echo ""
+echo "🚀 [5/5] تشغيل الخدمات..."
 cd "$ROOT_DIR/backend"
 pm2 start src/app.js --name nexiro-backend
 
 cd "$ROOT_DIR/website/public/templates/ycz-store"
 pm2 start npm --name ycz-store -- start
+
+cd "$ROOT_DIR/website/public/templates/hx-tools-store"
+pm2 start npm --name hx-tools-store -- start
 
 pm2 save
 echo ""
