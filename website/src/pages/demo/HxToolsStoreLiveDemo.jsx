@@ -6,7 +6,8 @@ export default function HxToolsStoreLiveDemo() {
       path="/?demo=1"
       title="متجر أدوات صيانة — العرض التجريبي"
       storeName="HX Tools Store"
-      comingSoon
+      storeUrl="https://demo-hx.nexiroflux.com"
+      templateLink="/template/hardware-tools-store"
     />
   );
 }
