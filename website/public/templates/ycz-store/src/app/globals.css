@@ -67,6 +67,7 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     top: 0 !important;
     height: 100dvh !important;
     box-shadow: -12px 0 30px rgba(2, 6, 23, 0.12);
+    z-index: 55 !important;
   }
   .dash-sidebar-open {
     transform: translateX(0) !important;
@@ -79,6 +80,7 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     display: flex !important;
     flex-direction: row !important;
     padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 48 !important;
   }
   .dash-bottom-nav-inner {
     display: flex !important;
@@ -93,6 +95,10 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .dash-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
   .dash-stats-grid > div { padding: 0.85rem !important; }
   .dash-stats-grid p:first-of-type { font-size: 1.15rem !important; }
+  .dash-overview-grid { grid-template-columns: 1fr !important; }
+  .dash-banner-card { flex-direction: column !important; text-align: center !important; }
+  .dash-banner-card > div:last-child { align-self: center !important; }
+  .dash-toast { bottom: 5.5rem !important; }
 }
 
 @media (max-width: 480px) {

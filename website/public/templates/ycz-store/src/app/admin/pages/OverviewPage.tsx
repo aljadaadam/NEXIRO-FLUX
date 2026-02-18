@@ -93,7 +93,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
   return (
     <>
       {/* Banner Card */}
-      <div style={{
+      <div className="dash-banner-card" style={{
         marginBottom: 16,
         borderRadius: 16,
         padding: '1rem 1.25rem',
@@ -155,7 +155,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
       </div>
 
       {/* Chart + Recent Orders */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
+      <div className="dash-overview-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
         {/* Chart */}
         <div style={{
           background: '#fff', borderRadius: 16, padding: '1.5rem',

@@ -461,7 +461,7 @@ export default function PaymentsPage() {
 
       {/* Toast */}
       {toast && (
-        <div style={{
+        <div className="dash-toast" style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
           zIndex: 2000, padding: '0.7rem 1.5rem', borderRadius: 12,
           background: toast.type === 'success' ? '#dcfce7' : '#fee2e2',
