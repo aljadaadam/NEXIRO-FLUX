@@ -146,26 +146,26 @@ export const hxAdminApi = {
 
 // ─── Store/Customer API ───
 export const hxStoreApi = {
-  getProducts: () => hxCustomerFetch('/products/store'),
-  getProduct: (id: number) => hxCustomerFetch(`/products/${id}`),
+  getProducts: () => hxCustomerFetch('/products/public'),
+  getProduct: (id: number) => hxCustomerFetch(`/products/public/${id}`),
   getCategories: () => hxCustomerFetch('/products/categories'),
 
   login: (email: string, password: string) =>
     hxCustomerFetch('/customers/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   register: (data: Record<string, unknown>) =>
     hxCustomerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
-  getProfile: () => hxCustomerFetch('/customers/profile'),
+  getProfile: () => hxCustomerFetch('/customers/me'),
   updateProfile: (data: Record<string, unknown>) =>
-    hxCustomerFetch('/customers/profile', { method: 'PUT', body: JSON.stringify(data) }),
+    hxCustomerFetch('/customers/me', { method: 'PUT', body: JSON.stringify(data) }),
 
-  getOrders: () => hxCustomerFetch('/orders/my-orders'),
+  getOrders: () => hxCustomerFetch('/customers/orders'),
   createOrder: (data: Record<string, unknown>) =>
     hxCustomerFetch('/checkout', { method: 'POST', body: JSON.stringify(data) }),
 
-  getPaymentGateways: () => hxCustomerFetch('/payment-gateways/active'),
+  getPaymentGateways: () => hxCustomerFetch('/payment-gateways/enabled'),
 
   getCustomization: () => fetch(`${HX_API_BASE}/customization/store`, { cache: 'no-store' }).then(r => r.json()),
-  getAnnouncements: () => hxCustomerFetch('/notifications/active'),
+  getAnnouncements: () => hxCustomerFetch('/notifications'),
 };
 
 // ─── Product mapper ───

@@ -10,6 +10,8 @@ const {
   importFromExternalApi,
   getProductsStats,
   getPublicProducts,
+  getPublicProduct,
+  getProductCategories,
   seedTemplateProducts,
   debugProducts,
   toggleFeatured
@@ -20,6 +22,8 @@ const { checkPermission } = require('../middlewares/permissionMiddleware');
 
 // ─── Public (بدون مصادقة) ───
 router.get('/public', getPublicProducts);
+router.get('/public/:id', getPublicProduct);
+router.get('/categories', getProductCategories);
 
 // ─── تعبئة القوالب الافتراضية (بدون مصادقة — يُنفَّذ مرة واحدة) ───
 router.get('/seed-templates', seedTemplateProducts);

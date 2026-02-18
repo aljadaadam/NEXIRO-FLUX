@@ -816,6 +816,55 @@ async function getPublicProducts(req, res) {
   }
 }
 
+// جلب منتج واحد للمتجر (بدون مصادقة)
+async function getPublicProduct(req, res) {
+  try {
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const siteKey = req.siteKey;
+    const { id } = req.params;
+
+    const [products] = await pool.query(
+      `SELECT p.* FROM products p
+       LEFT JOIN sources s ON p.source_id = s.id
+       WHERE p.id = ? AND p.site_key = ? AND (p.source_id IS NULL OR s.sync_only = 0 OR s.sync_only IS NULL)`,
+      [id, siteKey]
+    );
+
+    if (!products.length) {
+      return res.status(404).json({ error: 'المنتج غير موجود' });
+    }
+
+    res.json({ product: products[0] });
+  } catch (error) {
+    console.error('❌ Error in getPublicProduct:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب المنتج' });
+  }
+}
+
+// جلب التصنيفات (الفئات) للمتجر (بدون مصادقة)
+async function getProductCategories(req, res) {
+  try {
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const siteKey = req.siteKey;
+
+    const [rows] = await pool.query(
+      `SELECT DISTINCT COALESCE(group_name, category, 'عام') AS name, COUNT(*) AS count
+       FROM products
+       WHERE site_key = ?
+       GROUP BY COALESCE(group_name, category, 'عام')
+       ORDER BY count DESC`,
+      [siteKey]
+    );
+
+    res.json({ categories: rows });
+  } catch (error) {
+    console.error('❌ Error in getProductCategories:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب التصنيفات' });
+  }
+}
+
 // ─── تشخيص المنتجات (debug) ───
 async function debugProducts(req, res) {
   try {
@@ -1017,6 +1066,8 @@ module.exports = {
   importFromExternalApi,
   getProductsStats,
   getPublicProducts,
+  getPublicProduct,
+  getProductCategories,
   seedTemplateProducts,
   debugProducts,
   toggleFeatured

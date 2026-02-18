@@ -21,6 +21,8 @@ const paymentGatewayRoutes = require('./routes/paymentGatewayRoutes');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const setupRoutes = require('./routes/setupRoutes');
 const purchaseCodeRoutes = require('./routes/purchaseCodeRoutes');
+const deliveryZoneRoutes = require('./routes/deliveryZoneRoutes');
+const currencyRoutes = require('./routes/currencyRoutes');
 
 const app = express();
 
@@ -127,6 +129,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/payment-gateways', paymentGatewayRoutes);
 app.use('/api/checkout', checkoutRoutes);
+app.use('/api/delivery-zones', deliveryZoneRoutes);
+app.use('/api/currencies', currencyRoutes);
 
 // ─── Compatibility: Binance webhook legacy path ───
 // Some merchants configure webhook as /payments/binance-webhook in Binance dashboard

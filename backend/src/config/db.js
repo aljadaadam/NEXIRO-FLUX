@@ -339,6 +339,72 @@ async function createTables() {
       )
     `;
 
+    // جدول مناطق التوصيل
+    const deliveryZonesTable = `
+      CREATE TABLE IF NOT EXISTS delivery_zones (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        site_key VARCHAR(255) NOT NULL,
+        country_name VARCHAR(100) NOT NULL,
+        country_code VARCHAR(10) NULL,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
+      )
+    `;
+
+    // جدول تفاصيل مناطق التوصيل (المدن/المحافظات)
+    const deliveryRegionsTable = `
+      CREATE TABLE IF NOT EXISTS delivery_regions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        zone_id INT NOT NULL,
+        site_key VARCHAR(255) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        shipping_cost DECIMAL(12, 3) DEFAULT 0,
+        estimated_days INT DEFAULT 3,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (zone_id) REFERENCES delivery_zones(id) ON DELETE CASCADE,
+        FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
+      )
+    `;
+
+    // جدول العملات
+    const currenciesTable = `
+      CREATE TABLE IF NOT EXISTS currencies (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        site_key VARCHAR(255) NOT NULL,
+        code VARCHAR(10) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        symbol VARCHAR(10) NOT NULL DEFAULT '$',
+        exchange_rate DECIMAL(12, 4) DEFAULT 1.0000,
+        is_default TINYINT(1) DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
+      )
+    `;
+
+    // جدول البانرات الإعلانية
+    const bannersTable = `
+      CREATE TABLE IF NOT EXISTS banners (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        site_key VARCHAR(255) NOT NULL,
+        title VARCHAR(255) NULL,
+        subtitle VARCHAR(255) NULL,
+        icon VARCHAR(50) NULL,
+        image_url TEXT NULL,
+        link VARCHAR(500) NULL,
+        is_active TINYINT(1) DEFAULT 1,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
+      )
+    `;
+
     await pool.query(subscriptionsTable);
     await pool.query(customersTable);
     await pool.query(ordersTable);
@@ -348,6 +414,10 @@ async function createTables() {
     await pool.query(customizationsTable);
     await pool.query(notificationsTable);
     await pool.query(activityLogTable);
+    await pool.query(deliveryZonesTable);
+    await pool.query(deliveryRegionsTable);
+    await pool.query(currenciesTable);
+    await pool.query(bannersTable);
 
     // جدول أكواد الشراء
     const PurchaseCode = require('../models/PurchaseCode');
