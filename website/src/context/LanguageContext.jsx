@@ -69,6 +69,53 @@ const translations = {
       title: 'عملاؤنا يتحدثون',
       subtitle: 'لا تأخذ كلامنا فقط — اسمع ممن جرّبوا NEXIRO-FLUX.',
     },
+    tutorials: {
+      badge: '📚 شروحات ودروس تعليمية',
+      title: 'تعلّم وانطلق نحو النجاح',
+      subtitle: 'دليلك الشامل لبناء متجرك الإلكتروني وإدارة أعمالك الرقمية باحترافية. شروحات مفصّلة خطوة بخطوة لتحقيق أفضل النتائج.',
+      readMore: 'اقرأ المزيد',
+      seoTitle: 'كل ما تحتاج لبناء متجرك الإلكتروني الناجح',
+      seoText1: 'نوفّر لك شروحات شاملة حول إنشاء متجر إلكتروني احترافي، تصميم واجهة مستخدم جذابة، تحسين محركات البحث SEO، إدارة المنتجات والطلبات، وربط بوابات الدفع الإلكتروني. سواء كنت مبتدئاً أو محترفاً، ستجد كل ما تحتاجه لإطلاق مشروعك الرقمي الناجح.',
+      seoText2: 'NEXIRO-FLUX يقدم لك أفضل حلول التجارة الإلكترونية مع قوالب جاهزة، لوحة تحكم متكاملة، ودعم فني على مدار الساعة. ابدأ بناء متجرك الإلكتروني اليوم واستفد من أحدث التقنيات في عالم التجارة الرقمية.',
+      items: {
+        ecommerce: {
+          title: 'كيف تنشئ متجرك الإلكتروني من الصفر في 2026',
+          desc: 'دليل شامل لإنشاء متجر إلكتروني احترافي خطوة بخطوة. تعلّم كيف تختار المنصة المناسبة، تضيف المنتجات، وتبدأ البيع أونلاين.',
+          tags: 'متجر إلكتروني,التجارة الإلكترونية,بيع أونلاين',
+          readTime: '8 دقائق قراءة',
+        },
+        seo: {
+          title: 'أسرار تحسين محركات البحث SEO لمتجرك',
+          desc: 'اكتشف أفضل استراتيجيات SEO لتصدّر نتائج بحث جوجل. تعلّم تحسين الكلمات المفتاحية، بناء الروابط، وتسريع موقعك.',
+          tags: 'SEO,تحسين محركات البحث,جوجل',
+          readTime: '6 دقائق قراءة',
+        },
+        design: {
+          title: 'أفضل ممارسات تصميم واجهة المتجر الإلكتروني',
+          desc: 'تعلّم كيف تصمم واجهة متجر جذابة تزيد المبيعات. نصائح احترافية في UI/UX وتجربة المستخدم.',
+          tags: 'تصميم,UI/UX,واجهة المستخدم',
+          readTime: '5 دقائق قراءة',
+        },
+        domain: {
+          title: 'دليل اختيار اسم النطاق والاستضافة المثالية',
+          desc: 'كيف تختار اسم نطاق مميز واستضافة موثوقة لمتجرك؟ مقارنة شاملة بين أفضل مقدمي الخدمات.',
+          tags: 'نطاق,استضافة,دومين',
+          readTime: '4 دقائق قراءة',
+        },
+        manage: {
+          title: 'إدارة الطلبات والمخزون باحترافية',
+          desc: 'تعلّم كيف تدير طلبات العملاء، تتبع الشحنات، وتنظم مخزون منتجاتك بكفاءة عالية من لوحة تحكم واحدة.',
+          tags: 'إدارة الطلبات,المخزون,لوحة التحكم',
+          readTime: '7 دقائق قراءة',
+        },
+        marketing: {
+          title: 'استراتيجيات التسويق الرقمي لزيادة المبيعات',
+          desc: 'اكتشف أقوى طرق التسويق الإلكتروني: إعلانات مدفوعة، تسويق بالمحتوى، إيميل ماركتنج، والتسويق عبر وسائل التواصل.',
+          tags: 'تسويق رقمي,إعلانات,وسائل التواصل',
+          readTime: '9 دقائق قراءة',
+        },
+      },
+    },
     cta: {
       title: 'جاهز تبدأ رحلتك الرقمية؟',
       subtitle: 'انضم لآلاف العملاء السعداء. أول 14 يوم مجاناً، بدون بطاقة ائتمان.',
@@ -175,6 +222,53 @@ const translations = {
     testimonials: {
       title: 'Our Clients Speak',
       subtitle: "Don't just take our word — hear from those who tried NEXIRO-FLUX.",
+    },
+    tutorials: {
+      badge: '📚 Tutorials & Guides',
+      title: 'Learn & Grow Your Business',
+      subtitle: 'Your complete guide to building an online store and managing your digital business like a pro. Step-by-step tutorials to achieve the best results.',
+      readMore: 'Read More',
+      seoTitle: 'Everything You Need to Build a Successful Online Store',
+      seoText1: 'We provide comprehensive tutorials on creating a professional e-commerce store, designing attractive user interfaces, search engine optimization (SEO), product and order management, and integrating payment gateways. Whether you are a beginner or a professional, you will find everything you need to launch your successful digital project.',
+      seoText2: 'NEXIRO-FLUX offers the best e-commerce solutions with ready-made templates, an integrated dashboard, and 24/7 technical support. Start building your online store today and leverage the latest technologies in the digital commerce world.',
+      items: {
+        ecommerce: {
+          title: 'How to Create Your Online Store from Scratch in 2026',
+          desc: 'A complete guide to building a professional online store step by step. Learn how to choose the right platform, add products, and start selling online.',
+          tags: 'Online Store,E-commerce,Sell Online',
+          readTime: '8 min read',
+        },
+        seo: {
+          title: 'SEO Secrets to Boost Your Store Rankings',
+          desc: 'Discover the best SEO strategies to rank on Google. Learn keyword optimization, link building, and website speed improvements.',
+          tags: 'SEO,Search Engine,Google',
+          readTime: '6 min read',
+        },
+        design: {
+          title: 'Best Practices for E-commerce Store Design',
+          desc: 'Learn how to design an attractive storefront that increases sales. Professional tips on UI/UX and user experience.',
+          tags: 'Design,UI/UX,User Interface',
+          readTime: '5 min read',
+        },
+        domain: {
+          title: 'Guide to Choosing the Perfect Domain & Hosting',
+          desc: 'How to pick a memorable domain name and reliable hosting for your store? A comprehensive comparison of top service providers.',
+          tags: 'Domain,Hosting,Web',
+          readTime: '4 min read',
+        },
+        manage: {
+          title: 'Managing Orders & Inventory Like a Pro',
+          desc: 'Learn how to handle customer orders, track shipments, and organize your product inventory efficiently from a single dashboard.',
+          tags: 'Order Management,Inventory,Dashboard',
+          readTime: '7 min read',
+        },
+        marketing: {
+          title: 'Digital Marketing Strategies to Boost Sales',
+          desc: 'Discover powerful marketing methods: paid ads, content marketing, email marketing, and social media marketing techniques.',
+          tags: 'Digital Marketing,Ads,Social Media',
+          readTime: '9 min read',
+        },
+      },
     },
     cta: {
       title: 'Ready to Start Your Digital Journey?',
