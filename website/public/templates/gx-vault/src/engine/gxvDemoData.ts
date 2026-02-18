@@ -100,10 +100,44 @@ export const gxvDemoUsers = [
 
 // ─── بوابات الدفع ───
 export const gxvDemoGateways = [
-  { name: 'PayPal', is_active: true, fees: 2.9 },
-  { name: 'Binance Pay', is_active: true, fees: 0 },
-  { name: 'USDT (TRC20)', is_active: true, fees: 1 },
-  { name: 'تحويل يدوي', is_active: true, fees: 0 },
+  {
+    id: 1, type: 'paypal', name: 'باي بال', name_en: 'PayPal',
+    is_enabled: true, is_default: false, display_order: 0,
+    config: {
+      client_id: 'AQ3WIXrl4dcB6PpFGusYsySz5M1nyR-Demo',
+      secret: 'EPEGYFBC7f7KP9kM0bsl7vShpoXHv-Demo',
+      email: 'payments@gxvault.com',
+      mode: 'sandbox',
+    },
+  },
+  {
+    id: 2, type: 'binance', name: 'بينانس باي', name_en: 'Binance Pay',
+    is_enabled: true, is_default: false, display_order: 1,
+    config: {
+      api_key: '6pwnbdlb4cl32kodoc2genbjfx-demo-key',
+      api_secret: 'msbyut4ttul5cfqd2fa9obujrrz-demo-secret',
+      binance_id: '778732524',
+      binance_email: 'merchant@gxvault.com',
+    },
+  },
+  {
+    id: 3, type: 'usdt', name: 'USDT (TRC20)', name_en: 'USDT',
+    is_enabled: true, is_default: false, display_order: 2,
+    config: {
+      wallet_address: 'TN8Lb4iHzFBVDRDeiwJqcP55sUoVqEbYGT',
+      network: 'TRC20',
+    },
+  },
+  {
+    id: 4, type: 'bank_transfer', name: 'تحويل بنكي', name_en: 'Bank Transfer',
+    is_enabled: false, is_default: false, display_order: 3,
+    config: {
+      bank_name: '',
+      account_holder: '',
+      iban: '',
+      currency: '',
+    },
+  },
 ];
 
 // ─── المصادر الخارجية ───
@@ -140,6 +174,21 @@ export function getGxvDemoResponse(endpoint: string, method: string = 'GET'): un
       };
       return newOrder;
     }
+    // بوابات الدفع — CRUD وهمي
+    if (endpoint.includes('/payment-gateways')) {
+      if (method === 'POST') {
+        return { gateway: { id: Date.now(), type: 'usdt', name: 'بوابة جديدة', is_enabled: false, config: {} }, message: 'تم إنشاء البوابة بنجاح (وضع العرض)' };
+      }
+      if (method === 'PUT') {
+        return { gateway: { id: 1, message: 'تم تحديث البوابة بنجاح (وضع العرض)' }, message: 'تم تحديث البوابة بنجاح (وضع العرض)' };
+      }
+      if (method === 'PATCH') {
+        return { gateway: { id: 1, is_enabled: true }, message: 'تم تغيير الحالة (وضع العرض)' };
+      }
+      if (method === 'DELETE') {
+        return { message: 'تم حذف البوابة (وضع العرض)' };
+      }
+    }
     return { success: true, message: 'تم بنجاح (وضع العرض)' };
   }
 
@@ -149,7 +198,8 @@ export function getGxvDemoResponse(endpoint: string, method: string = 'GET'): un
   if (endpoint.includes('/auth/users')) return gxvDemoUsers;
   if (endpoint.includes('/customers/login') || endpoint.includes('/customers/register') || endpoint.includes('/auth/login') || endpoint.includes('/auth/register')) return { token: 'demo_token_gxv', ...gxvDemoProfile };
   if (endpoint.includes('/customers/me') || endpoint.includes('/profile')) return gxvDemoProfile;
-  if (endpoint.includes('/payment-gateways')) return gxvDemoGateways;
+  if (endpoint.includes('/payment-gateways/enabled')) return { gateways: gxvDemoGateways.filter(g => g.is_enabled) };
+  if (endpoint.includes('/payment-gateways')) return { gateways: gxvDemoGateways };
   if (endpoint.includes('/sources')) return gxvDemoSources;
   if (endpoint.includes('/notifications')) return gxvDemoAnnouncements;
   if (endpoint.includes('/customization')) return { customization: gxvDemoSettings, ...gxvDemoSettings };
