@@ -5,6 +5,8 @@ import { getDemoResponse } from './demoData';
 const API_BASE = '/api';
 
 function isDemoMode(): boolean {
+  // Auto-detect demo subdomain
+  if (typeof window !== 'undefined' && window.location.hostname.startsWith('demo-')) return true;
   if (typeof window === 'undefined') return false;
   if (new URLSearchParams(window.location.search).get('demo') === '1') {
     sessionStorage.setItem('demo_mode', '1');

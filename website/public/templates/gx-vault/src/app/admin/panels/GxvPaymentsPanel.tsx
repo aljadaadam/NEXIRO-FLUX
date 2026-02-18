@@ -256,12 +256,12 @@ export default function GxvPaymentsPanel() {
                       </div>
                     </div>
 
-                    {/* Config status */}
+                    {/* Config status badge */}
                     <div style={{
-                      padding: '10px 14px', borderRadius: 10,
+                      padding: '8px 14px', borderRadius: 10,
                       background: allFilled ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.06)',
                       border: `1px solid ${allFilled ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)'}`,
-                      marginBottom: 16,
+                      marginBottom: 12,
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}>
                       {allFilled ? (
@@ -279,6 +279,59 @@ export default function GxvPaymentsPanel() {
                         }
                       </span>
                     </div>
+
+                    {/* Config details preview */}
+                    <div style={{
+                      padding: '12px 14px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      marginBottom: 14,
+                    }}>
+                      {fields.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {fields.map(f => {
+                            const val = gw.config?.[f.key]?.trim?.() || '';
+                            const isFilled = !!val;
+                            const displayVal = f.type === 'password' ? (isFilled ? '••••••••' : '') : val;
+                            return (
+                              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{
+                                  width: 6, height: 6, borderRadius: '50%',
+                                  background: isFilled ? '#4ade80' : 'rgba(245,158,11,0.5)',
+                                  flexShrink: 0,
+                                }} />
+                                <span style={{ color: '#666688', fontSize: '0.76rem', fontWeight: 600, minWidth: 90, flexShrink: 0 }}>{f.label}:</span>
+                                {isFilled ? (
+                                  <span style={{ color: '#b8b8cc', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr', textAlign: 'left', flex: 1 }}>
+                                    {displayVal}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#f59e0b', fontSize: '0.74rem', fontStyle: 'italic' }}>
+                                    {f.required ? '⚠ مطلوب' : 'غير محدد'}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p style={{ color: '#555577', fontSize: '0.78rem', margin: 0, textAlign: 'center' }}>لا توجد حقول</p>
+                      )}
+                    </div>
+
+                    {/* Quick edit hint if not filled */}
+                    {!allFilled && (
+                      <button onClick={() => openEdit(gw)} style={{
+                        width: '100%', padding: '10px', borderRadius: 10, marginBottom: 12,
+                        background: `linear-gradient(135deg, ${currentTheme.primary}12, ${currentTheme.primary}04)`,
+                        border: `1px dashed ${currentTheme.primary}30`,
+                        color: currentTheme.primary, cursor: 'pointer',
+                        fontSize: '0.82rem', fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      }}>
+                        <Edit3 size={14} /> أدخل بيانات الدفع
+                      </button>
+                    )}
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 8 }}>

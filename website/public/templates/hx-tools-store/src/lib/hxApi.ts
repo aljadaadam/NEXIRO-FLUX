@@ -5,6 +5,8 @@ import { getHxDemoResponse } from './hxDemoData';
 const HX_API_BASE = '/api';
 
 function hxIsDemoMode(): boolean {
+  // Auto-detect demo subdomain
+  if (typeof window !== 'undefined' && window.location.hostname.startsWith('demo-')) return true;
   if (typeof window === 'undefined') return false;
   if (new URLSearchParams(window.location.search).get('demo') === '1') {
     sessionStorage.setItem('hx_demo_mode', '1');

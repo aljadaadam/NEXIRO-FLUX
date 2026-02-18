@@ -4,6 +4,14 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, Re
 import { COLOR_THEMES, ColorTheme, getTheme } from '@/lib/themes';
 import { translate, Language } from '@/lib/translations';
 
+const DEMO_CUSTOM_KEY = 'car_demo_customization';
+function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (window.location.hostname.startsWith('demo-')) return true;
+  if (new URLSearchParams(window.location.search).get('demo') === '1') return true;
+  return sessionStorage.getItem('demo_mode') === '1';
+}
+
 interface ThemeContextType {
   themeId: string;
   setThemeId: (id: string) => void;
@@ -81,9 +89,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
+  const applyCustomization = useCallback((c: Record<string, unknown>) => {
+    if (c.theme_id) setThemeId(c.theme_id as string);
+    if (c.logo_url) setLogoPreview(c.logo_url as string);
+    if (c.font_family) setFontFamily(c.font_family as string);
+    if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
+    if (c.button_radius) setButtonRadius(c.button_radius as string);
+    if (c.header_style) setHeaderStyle(c.header_style as string);
+    if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
+    if (c.store_name) setStoreName(c.store_name as string);
+    if (c.store_language === 'en' || c.store_language === 'ar') setLanguage(c.store_language as Language);
+  }, []);
+
   const fetchFromServer = useCallback(async () => {
     const myId = ++fetchIdRef.current;
     try {
+      // Demo mode: read from sessionStorage
+      if (isDemoMode()) {
+        const saved = sessionStorage.getItem(DEMO_CUSTOM_KEY);
+        if (saved && myId === fetchIdRef.current) {
+          applyCustomization(JSON.parse(saved));
+        }
+        return;
+      }
       const adminToken = localStorage.getItem('admin_key');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
@@ -91,15 +119,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (customRes.ok && myId === fetchIdRef.current) {
         const data = await customRes.json();
         const c = data.customization || data;
-        if (c.theme_id) setThemeId(c.theme_id);
-        if (c.logo_url) setLogoPreview(c.logo_url);
-        if (c.font_family) setFontFamily(c.font_family);
-        if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
-        if (c.button_radius) setButtonRadius(c.button_radius);
-        if (c.header_style) setHeaderStyle(c.header_style);
-        if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
-        if (c.store_name) setStoreName(c.store_name);
-        if (c.store_language === 'en' || c.store_language === 'ar') setLanguage(c.store_language);
+        applyCustomization(c);
       }
     } catch {
       console.warn('[ThemeProvider] فشل جلب التخصيص من الخادم');
@@ -129,17 +149,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, mounted]);
 
   const saveToServer = useCallback(async () => {
+    const payload = {
+      theme_id: themeId, logo_url: logoPreview, store_name: storeName,
+      dark_mode: darkMode, button_radius: buttonRadius, header_style: headerStyle,
+      show_banner: showBanner, font_family: fontFamily, store_language: language,
+    };
+    // Demo mode: save to sessionStorage only
+    if (isDemoMode()) {
+      try { sessionStorage.setItem(DEMO_CUSTOM_KEY, JSON.stringify(payload)); } catch { /* ignore */ }
+      return;
+    }
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_key') : null;
     if (!token) return;
     try {
       await fetch('/api/customization', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          theme_id: themeId, logo_url: logoPreview, store_name: storeName,
-          dark_mode: darkMode, button_radius: buttonRadius, header_style: headerStyle,
-          show_banner: showBanner, font_family: fontFamily, store_language: language,
-        }),
+        body: JSON.stringify(payload),
       });
     } catch { /* ignore */ }
   }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language]);
@@ -147,7 +173,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!mounted || !loaded) return;
     const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin_key') : null;
-    if (!adminKey) return;
+    if (!adminKey && !isDemoMode()) return;
     const timer = setTimeout(() => saveToServer(), 600);
     return () => clearTimeout(timer);
   }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, mounted, loaded, saveToServer]);

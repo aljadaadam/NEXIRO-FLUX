@@ -100,9 +100,9 @@ export function getHxDemoResponse(endpoint: string, method: string): unknown | n
   if (ep === '/dashboard/stats') return HX_DEMO_STATS;
 
   // Products
-  if (ep === '/products' && method === 'GET') return { products: HX_DEMO_PRODUCTS };
+  if ((ep === '/products' || ep === '/products/public') && method === 'GET') return { products: HX_DEMO_PRODUCTS };
   if (ep === '/products/store' && method === 'GET') return { products: HX_DEMO_PRODUCTS.filter(p => p.status === 'active') };
-  if (ep.match(/^\/products\/\d+$/) && method === 'GET') {
+  if (ep.match(/^\/products\/(public\/)?\d+$/) && method === 'GET') {
     const id = Number(ep.split('/')[2]);
     return { product: HX_DEMO_PRODUCTS.find(p => p.id === id) || HX_DEMO_PRODUCTS[0] };
   }

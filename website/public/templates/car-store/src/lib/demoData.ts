@@ -1,6 +1,41 @@
 // ─── بيانات تجريبية — متجر سيارات ───
 import { Car, Branch, Order, DashboardStats } from './types';
 
+// ─── Demo Customization (sessionStorage) ───
+const DEMO_CUSTOM_KEY = 'car_demo_customization';
+const DEFAULT_DEMO_CUSTOMIZATION = {
+  theme_id: 'midnight',
+  store_name: 'أوتو زون',
+  store_name_en: 'Auto Zone',
+  logo_url: null,
+  dark_mode: true,
+  button_radius: '12',
+  header_style: 'default',
+  show_banner: true,
+  font_family: 'Tajawal',
+  store_language: 'ar',
+  support_whatsapp: '+966500000000',
+  support_email: 'support@autozone.com',
+};
+
+function getDemoCustomization(): Record<string, unknown> {
+  if (typeof window === 'undefined') return DEFAULT_DEMO_CUSTOMIZATION;
+  try {
+    const saved = sessionStorage.getItem(DEMO_CUSTOM_KEY);
+    if (saved) return { ...DEFAULT_DEMO_CUSTOMIZATION, ...JSON.parse(saved) };
+  } catch { /* ignore */ }
+  return DEFAULT_DEMO_CUSTOMIZATION;
+}
+
+function saveDemoCustomization(data: Record<string, unknown>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getDemoCustomization();
+    const merged = { ...current, ...data };
+    sessionStorage.setItem(DEMO_CUSTOM_KEY, JSON.stringify(merged));
+  } catch { /* ignore */ }
+}
+
 const demoCars: Car[] = [
   // ───────────── سيارات جديدة (16) ─────────────
   {
@@ -300,7 +335,7 @@ export function getDemoResponse(endpoint: string, method: string): any {
     if (e === '/orders' || e === '/orders/' || e === '/customers/orders') return { orders: demoOrders };
     if (e === '/dashboard/stats') return demoStats;
     if (e === '/customers') return { customers: demoCustomers };
-    if (e === '/customization/store' || e === '/customization') return { customization: {} };
+    if (e === '/customization/store' || e === '/customization') return { customization: getDemoCustomization() };
     if (e === '/settings' || e === '/setup/my-site') return { settings: {} };
   }
   if (method === 'POST') {
@@ -312,6 +347,13 @@ export function getDemoResponse(endpoint: string, method: string): any {
     if (e === '/customers/register') return { token: 'demo-customer-token' };
   }
   if (method === 'PUT') {
+    if (e === '/customization') {
+      try {
+        const body = typeof arguments !== 'undefined' ? arguments : {};
+        saveDemoCustomization(body as Record<string, unknown>);
+      } catch { /* ignore */ }
+      return { message: 'تم حفظ التخصيص بنجاح' };
+    }
     return { message: 'تم التحديث بنجاح' };
   }
   if (method === 'PATCH') {
