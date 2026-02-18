@@ -39,6 +39,8 @@ const PLATFORM_HOSTS = [
   'api.nexiroflux.com',
   'nexiro-flux.com',
   'www.nexiro-flux.com',
+  'demo.nexiroflux.com',
+  'demo-hx.nexiroflux.com',
 ];
 
 function isPlatformHost(host) {
