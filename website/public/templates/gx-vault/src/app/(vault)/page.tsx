@@ -104,11 +104,8 @@ export default function GxvHomePage() {
             }}>
               اشحن ألعابك المفضلة
               <br />
-              <span style={{
+              <span className="gxv-gradient-text" style={{
                 background: currentTheme.gradient,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
               }}>
                 بأسرع وقت وأفضل سعر
               </span>

@@ -42,6 +42,14 @@ body {
 ::-webkit-scrollbar-thumb { background: #333355; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #444466; }
 
+/* ──── Gradient Text ──── */
+.gxv-gradient-text {
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
 /* ──── Animations ──── */
 @keyframes gxvPulseGlow {
   0%, 100% { opacity: 0.6; }
