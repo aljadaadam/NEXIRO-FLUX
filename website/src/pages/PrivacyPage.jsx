@@ -61,6 +61,9 @@ export default function PrivacyPage() {
         canonicalPath="/privacy"
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back */}
+        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group">
+          <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
         </Link>
 
