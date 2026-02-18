@@ -148,9 +148,9 @@ export default function HomePage() {
           }}>
             {[
               { num: `${cars.length || 150}+`, label: t('سيارة متاحة'), icon: Zap },
-              { num: '3', label: t('فرع'), icon: Star },
-              { num: '2000+', label: t('عميل سعيد'), icon: Users },
-              { num: '15+', label: t('سنة خبرة'), icon: Award },
+              { num: '6', label: t('فرع'), icon: Star },
+              { num: '5000+', label: t('عميل سعيد'), icon: Users },
+              { num: '18+', label: t('سنة خبرة'), icon: Award },
             ].map((stat, i) => (
               <div key={i} className="car-stat-item glass-light" style={{ borderRadius: 20, padding: 16 }}>
                 <stat.icon size={22} color={accent} style={{ marginBottom: 8 }} />
@@ -168,7 +168,7 @@ export default function HomePage() {
       <section style={{ padding: '40px 0', overflow: 'hidden', borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}` }}>
         <div style={{ overflow: 'hidden' }}>
           <div className="car-marquee-track">
-            {['Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Toyota', 'Lexus', 'Land Rover', 'Hyundai', 'Nissan', 'Kia', 'Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Toyota', 'Lexus', 'Land Rover', 'Hyundai', 'Nissan', 'Kia'].map((brand, i) => (
+            {['Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Toyota', 'Lexus', 'Land Rover', 'Hyundai', 'Nissan', 'Kia', 'Genesis', 'Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Toyota', 'Lexus', 'Land Rover', 'Hyundai', 'Nissan', 'Kia', 'Genesis'].map((brand, i) => (
               <span key={i} style={{ fontSize: 20, fontWeight: 800, color: mutedColor, opacity: 0.4, whiteSpace: 'nowrap', letterSpacing: 2 }}>
                 {brand}
               </span>
@@ -192,7 +192,7 @@ export default function HomePage() {
             { icon: Shield, title: t('ضمان شامل'), desc: t('نوفر ضمان شامل على جميع السيارات الجديدة والمستعملة') },
             { icon: Wrench, title: t('فحص شامل'), desc: t('كل سيارة تمر بفحص دقيق من 200 نقطة قبل العرض') },
             { icon: TrendingUp, title: t('أسعار منافسة'), desc: t('أفضل الأسعار في السوق مع خيارات تمويل مرنة') },
-            { icon: Award, title: t('خبرة طويلة'), desc: t('أكثر من 15 سنة خبرة في مجال السيارات والخدمة المتميزة') },
+            { icon: Award, title: t('خبرة طويلة'), desc: t('أكثر من 18 سنة خبرة في مجال السيارات والخدمة المتميزة') },
           ].map((item, i) => (
             <div key={i} className={`anim-fade-up anim-delay-${i + 1}`} style={{
               padding: 32,

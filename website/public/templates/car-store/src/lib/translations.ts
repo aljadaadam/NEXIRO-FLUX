@@ -113,6 +113,7 @@ const translations: Record<string, string> = {
   'معلق': 'Pending',
 
   // ─── عام ───
+  'أكثر من 18 سنة خبرة في مجال السيارات والخدمة المتميزة': 'Over 18 years of experience in the automotive industry and distinguished service',
   'لا توجد نتائج': 'No results found',
   'جاري التحميل...': 'Loading...',
   'خطأ في التحميل': 'Loading Error',
