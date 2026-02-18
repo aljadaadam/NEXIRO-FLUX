@@ -14,6 +14,7 @@ BACKEND_DIR="$ROOT_DIR/backend"
 WEBSITE_DIR="$ROOT_DIR/website"
 TEMPLATE_DIR="$WEBSITE_DIR/public/templates/ycz-store"
 HX_TEMPLATE_DIR="$WEBSITE_DIR/public/templates/hx-tools-store"
+CAR_TEMPLATE_DIR="$WEBSITE_DIR/public/templates/car-store"
 
 echo "══════════════════════════════════════"
 echo "  NEXIRO-FLUX — تحديث وبناء كامل"
@@ -75,6 +76,20 @@ else
 fi
 echo ""
 
+# ─── 6. بناء قالب المتجر car-store ───
+echo "🚗 [6/7] بناء قالب المتجر car-store (Next.js)..."
+cd "$CAR_TEMPLATE_DIR"
+npm install
+rm -rf .next
+npm run build
+if command -v pm2 &> /dev/null; then
+  pm2 restart car-store 2>/dev/null || pm2 start npm --name car-store -- start
+  echo "✅ قالب car-store يعمل على المنفذ 4003 (pm2)"
+else
+  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd website/public/templates/car-store && npm start"
+fi
+echo ""
+
 # ─── 6. التحقق ───
 echo "🔍 [6/6] التحقق من الحالة..."
 if command -v pm2 &> /dev/null; then
@@ -88,5 +103,4 @@ echo "════════════════════════�
 echo ""
 echo "  Backend API:     http://localhost:3000"
 echo "  YCZ Store:       http://localhost:4000"
-echo "  HX Tools Store:  http://localhost:4002"
-echo ""
+echo "  HX Tools Store:  http://localhost:4002"  echo "  Car Store:       http://localhost:4003"echo ""

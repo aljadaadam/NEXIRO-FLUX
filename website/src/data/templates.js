@@ -52,6 +52,23 @@ export const templates = [
     hasLiveDemo: true,
   },
   {
+    id: 'car-dealership-store',
+    name: 'معرض سيارات',
+    nameEn: 'Car Dealership Store',
+    description: 'قالب معرض سيارات احترافي لبيع السيارات الجديدة والمستعملة مع عرض الموديلات والأسعار والفروع، لوحة تحكم إدارية شاملة، وتصميم فريد مع أنيميشن قوي',
+    descriptionEn: 'Professional car dealership template for selling new & used cars with models, prices, branches, full admin dashboard, and unique animated design',
+    category: 'car-dealership',
+    image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80',
+    demoUrl: '/template/car-dealership-store',
+    features: ['سيارات جديدة ومستعملة', 'موديلات وأسعار', 'فروع ومواقع', 'لوحة تحكم إدارية', 'نظام حجز سيارات', '6 ثيمات سيارات', 'دعم كامل RTL', '20+ أنيميشن', 'API متكامل', 'Next.js 15'],
+    featuresEn: ['New & Used Cars', 'Models & Prices', 'Branches & Locations', 'Admin Dashboard', 'Car Booking System', '6 Car Themes', 'Full RTL Support', '20+ Animations', 'Full API', 'Next.js 15'],
+    price: { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+    popular: true,
+    color: 'from-red-500 to-amber-500',
+    badge: '🚗 جديد',
+    hasLiveDemo: true,
+  },
+  {
     id: 'ecommerce-pro',
     name: 'متجر إلكتروني احترافي',
     nameEn: 'E-Commerce Pro',
@@ -166,6 +183,7 @@ export const categories = [
   { id: 'digital-services', name: 'خدمات رقمية', nameEn: 'Digital Services' },
   { id: 'gaming', name: 'شحن ألعاب', nameEn: 'Gaming' },
   { id: 'hardware-tools', name: 'أدوات صيانة', nameEn: 'Hardware Tools' },
+  { id: 'car-dealership', name: 'معارض سيارات', nameEn: 'Car Dealership' },
 ];
 
 export const testimonials = [

@@ -95,7 +95,16 @@ rm -rf .next
 npm run build
 echo "✅ قالب hx-tools-store جاهز"
 
-# ─── 5. تشغيل الخدمات ───
+# ─── 5. تثبيت وبناء قالب المتجر car-store ───
+echo ""
+echo "🚗 [5/6] تثبيت وبناء قالب المتجر (car-store)..."
+cd "$ROOT_DIR/website/public/templates/car-store"
+npm install
+rm -rf .next
+npm run build
+echo "✅ قالب car-store جاهز"
+
+# ─── 6. تشغيل الخدمات ───
 echo ""
 echo "🚀 [5/5] تشغيل الخدمات..."
 cd "$ROOT_DIR/backend"
@@ -106,6 +115,9 @@ pm2 start npm --name ycz-store -- start
 
 cd "$ROOT_DIR/website/public/templates/hx-tools-store"
 pm2 start npm --name hx-tools-store -- start
+
+cd "$ROOT_DIR/website/public/templates/car-store"
+pm2 start npm --name car-store -- start
 
 pm2 save
 echo ""

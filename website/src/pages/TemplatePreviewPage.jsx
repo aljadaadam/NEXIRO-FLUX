@@ -7,12 +7,14 @@ import api from '../services/api';
 import YCZStoreDemo from '../components/templates/YCZStoreDemo';
 import GxVaultDemo from '../components/templates/GxVaultDemo';
 import HxToolsDemo from '../components/templates/HxToolsDemo';
+import CarStoreDemo from '../components/templates/CarStoreDemo';
 
 // Map of template IDs to their custom demo components
 const customDemos = {
   'digital-services-store': YCZStoreDemo,
   'game-topup-store': GxVaultDemo,
   'hardware-tools-store': HxToolsDemo,
+  'car-dealership-store': CarStoreDemo,
 };
 
 export default function TemplatePreviewPage() {

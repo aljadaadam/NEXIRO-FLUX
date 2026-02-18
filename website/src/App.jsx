@@ -26,6 +26,8 @@ import GxVaultStoreLiveDemo from './pages/demo/GxVaultStoreLiveDemo';
 import GxVaultDashboardLiveDemo from './pages/demo/GxVaultDashboardLiveDemo';
 import HxToolsStoreLiveDemo from './pages/demo/HxToolsStoreLiveDemo';
 import HxToolsDashboardLiveDemo from './pages/demo/HxToolsDashboardLiveDemo';
+import CarStoreLiveDemo from './pages/demo/CarStoreLiveDemo';
+import CarDashboardLiveDemo from './pages/demo/CarDashboardLiveDemo';
 
 // Admin Dashboard
 import AdminLayout from './pages/admin/AdminLayout';
@@ -58,6 +60,8 @@ function AppContent() {
         <Route path="/demo/gxv-dashboard" element={<GxVaultDashboardLiveDemo />} />
         <Route path="/demo/hx-store" element={<HxToolsStoreLiveDemo />} />
         <Route path="/demo/hx-dashboard" element={<HxToolsDashboardLiveDemo />} />
+        <Route path="/demo/car-store" element={<CarStoreLiveDemo />} />
+        <Route path="/demo/car-dashboard" element={<CarDashboardLiveDemo />} />
       </Routes>
     );
   }

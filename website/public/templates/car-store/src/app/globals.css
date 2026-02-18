@@ -1,0 +1,827 @@
+/* ══════════════════════════════════════════════════
+   أوتو زون — متجر سيارات — الأنماط العامة والأنيميشن
+   ══════════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; outline: none; font-family: inherit; }
+input, select, textarea { font-family: inherit; outline: none; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ══════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ══════════════════════════════════════════════════ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-50px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-15px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rotateIn {
+  from { opacity: 0; transform: rotate(-10deg) scale(0.9); }
+  to   { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(233, 69, 96, 0.3); }
+  50%      { box-shadow: 0 0 40px rgba(233, 69, 96, 0.6); }
+}
+
+@keyframes speedLine {
+  0%   { width: 0; opacity: 1; }
+  50%  { width: 120px; opacity: 0.7; }
+  100% { width: 0; opacity: 0; }
+}
+
+@keyframes revealFromLeft {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes revealFromRight {
+  from { clip-path: inset(0 0 0 100%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes counterUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes borderLoop {
+  0%   { border-image-source: linear-gradient(0deg, #e94560, #0f3460); }
+  50%  { border-image-source: linear-gradient(180deg, #e94560, #0f3460); }
+  100% { border-image-source: linear-gradient(360deg, #e94560, #0f3460); }
+}
+
+@keyframes carDrive {
+  0%   { transform: translateX(100vw) scaleX(-1); }
+  100% { transform: translateX(-100vw) scaleX(-1); }
+}
+
+@keyframes tireRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes dashboardSlide {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes neonFlicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.6; }
+}
+
+@keyframes textReveal {
+  from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+  to   { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ══════════════════════════════════════════════════
+   ANIMATION UTILITY CLASSES
+   ══════════════════════════════════════════════════ */
+
+.anim-fade-up     { animation: fadeInUp 0.7s ease-out both; }
+.anim-fade-down   { animation: fadeInDown 0.6s ease-out both; }
+.anim-fade-left   { animation: fadeInLeft 0.7s ease-out both; }
+.anim-fade-right  { animation: fadeInRight 0.7s ease-out both; }
+.anim-scale-in    { animation: scaleIn 0.6s ease-out both; }
+.anim-slide-up    { animation: slideInFromBottom 0.8s ease-out both; }
+.anim-float       { animation: floatY 3s ease-in-out infinite; }
+.anim-pulse       { animation: pulse 2s ease-in-out infinite; }
+.anim-glow        { animation: glowPulse 2s ease-in-out infinite; }
+.anim-rotate-in   { animation: rotateIn 0.6s ease-out both; }
+.anim-reveal-l    { animation: revealFromLeft 0.8s ease-out both; }
+.anim-reveal-r    { animation: revealFromRight 0.8s ease-out both; }
+.anim-text-reveal { animation: textReveal 1s ease-out both; }
+.anim-neon        { animation: neonFlicker 2s ease-in-out infinite; }
+.anim-dashboard   { animation: dashboardSlide 0.4s ease-out both; }
+
+.anim-delay-1 { animation-delay: 0.1s; }
+.anim-delay-2 { animation-delay: 0.2s; }
+.anim-delay-3 { animation-delay: 0.3s; }
+.anim-delay-4 { animation-delay: 0.4s; }
+.anim-delay-5 { animation-delay: 0.5s; }
+.anim-delay-6 { animation-delay: 0.6s; }
+.anim-delay-7 { animation-delay: 0.7s; }
+.anim-delay-8 { animation-delay: 0.8s; }
+
+/* ══════════════════════════════════════════════════
+   HERO SECTION
+   ══════════════════════════════════════════════════ */
+
+.car-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.car-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(233, 69, 96, 0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(15, 52, 96, 0.2) 0%, transparent 50%);
+  z-index: 1;
+}
+
+.car-hero-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(233, 69, 96, 0.5);
+  border-radius: 50%;
+  animation: floatY 4s ease-in-out infinite;
+}
+
+.car-hero-speed-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.6), transparent);
+  animation: speedLine 3s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════
+   CAR CARDS
+   ══════════════════════════════════════════════════ */
+
+.car-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.car-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+.car-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  transition: border-color 0.3s;
+  pointer-events: none;
+}
+
+.car-card:hover::after {
+  border-color: rgba(233, 69, 96, 0.4);
+}
+
+.car-card-image {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.car-card:hover .car-card-image {
+  transform: scale(1.1);
+}
+
+.car-card-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 2;
+  animation: scaleIn 0.4s ease-out both;
+}
+
+.car-card-featured {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  z-index: 2;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.car-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════
+   HEADER
+   ══════════════════════════════════════════════════ */
+
+.car-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: all 0.35s ease;
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.car-header.scrolled {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.car-header-nav-link {
+  position: relative;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 0.3s;
+  cursor: pointer;
+}
+
+.car-header-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.car-header-nav-link:hover::after {
+  width: 80%;
+}
+
+/* ══════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════ */
+
+.car-btn-primary {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 36px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.car-btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.car-btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.car-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(233, 69, 96, 0.4);
+}
+
+.car-btn-outline {
+  padding: 14px 36px;
+  font-size: 16px;
+  font-weight: 700;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.car-btn-outline:hover {
+  border-color: #e94560;
+  color: #e94560;
+  transform: translateY(-3px);
+}
+
+/* ══════════════════════════════════════════════════
+   STATS BAR
+   ══════════════════════════════════════════════════ */
+
+.car-stat-item {
+  text-align: center;
+  padding: 20px;
+  position: relative;
+}
+
+.car-stat-number {
+  font-size: 36px;
+  font-weight: 900;
+  animation: counterUp 0.8s ease-out both;
+}
+
+/* ══════════════════════════════════════════════════
+   FILTER BAR
+   ══════════════════════════════════════════════════ */
+
+.car-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 20px;
+  border-radius: 16px;
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.car-filter-input {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.1);
+  min-width: 160px;
+}
+
+.car-filter-input:focus {
+  border-color: #e94560;
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15);
+}
+
+.car-filter-chip {
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.car-filter-chip:hover, .car-filter-chip.active {
+  transform: scale(1.05);
+}
+
+/* ══════════════════════════════════════════════════
+   BRANCH CARDS
+   ══════════════════════════════════════════════════ */
+
+.branch-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.branch-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.branch-card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.branch-card:hover .branch-card-image {
+  transform: scale(1.08);
+}
+
+.branch-main-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #e94560, #c7243a);
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  animation: pulse 2s ease-in-out infinite;
+  z-index: 2;
+}
+
+/* ══════════════════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════════════════ */
+
+.car-footer {
+  position: relative;
+  overflow: hidden;
+}
+
+.car-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.5), transparent);
+}
+
+/* ══════════════════════════════════════════════════
+   MODAL / BOOKING FORM
+   ══════════════════════════════════════════════════ */
+
+.car-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.car-modal-content {
+  width: 90%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 24px;
+  padding: 36px;
+  animation: scaleIn 0.4s ease-out;
+}
+
+.car-form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.3s;
+  margin-bottom: 16px;
+}
+
+.car-form-input:focus {
+  border-color: #e94560;
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15);
+}
+
+/* ══════════════════════════════════════════════════
+   ADMIN DASHBOARD
+   ══════════════════════════════════════════════════ */
+
+.dash-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100vh;
+  z-index: 900;
+  overflow-y: auto;
+  transition: transform 0.35s ease;
+  animation: fadeInRight 0.5s ease-out;
+}
+
+.dash-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  margin: 4px 12px;
+}
+
+.dash-sidebar-link:hover {
+  transform: translateX(-4px);
+}
+
+.dash-main {
+  margin-right: 260px;
+  min-height: 100vh;
+  padding: 24px;
+  transition: margin 0.35s ease;
+}
+
+.dash-stat-card {
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.dash-stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.dash-table th {
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: right;
+}
+
+.dash-table td {
+  padding: 14px 18px;
+  font-size: 14px;
+}
+
+.dash-table tbody tr {
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.dash-table tbody tr:hover {
+  transform: scale(1.01);
+}
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  animation: fadeInDown 0.5s ease-out;
+}
+
+/* ══════════════════════════════════════════════════
+   MOBILE BOTTOM NAV
+   ══════════════════════════════════════════════════ */
+
+.car-mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: none;
+  padding: 8px 0 12px;
+  animation: slideInFromBottom 0.4s ease-out;
+}
+
+.car-mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex: 1;
+}
+
+.car-mobile-nav-item:hover, .car-mobile-nav-item.active {
+  transform: translateY(-2px);
+}
+
+/* ══════════════════════════════════════════════════
+   MARQUEE (Car brands ticker)
+   ══════════════════════════════════════════════════ */
+
+.car-marquee-track {
+  display: flex;
+  gap: 60px;
+  animation: marquee 30s linear infinite;
+  white-space: nowrap;
+}
+
+.car-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ══════════════════════════════════════════════════
+   IMAGE GALLERY DOT INDICATORS
+   ══════════════════════════════════════════════════ */
+
+.gallery-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gallery-dot.active {
+  width: 28px;
+  border-radius: 5px;
+}
+
+/* ══════════════════════════════════════════════════
+   SECTION TITLE
+   ══════════════════════════════════════════════════ */
+
+.section-title {
+  position: relative;
+  display: inline-block;
+  font-size: 36px;
+  font-weight: 900;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 12px;
+  animation: revealFromLeft 0.8s ease-out both;
+}
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .dash-sidebar { transform: translateX(100%); }
+  .dash-sidebar.open { transform: translateX(0); }
+  .dash-main { margin-right: 0; }
+}
+
+@media (max-width: 768px) {
+  .car-mobile-nav { display: flex; }
+  .car-hero { min-height: 85vh; }
+  .section-title { font-size: 28px; }
+  .car-stat-number { font-size: 28px; }
+  .car-btn-primary, .car-btn-outline { padding: 12px 24px; font-size: 14px; }
+  .car-card-image { height: 180px; }
+  .car-filter-bar { flex-direction: column; }
+  .car-filter-input { width: 100%; min-width: auto; }
+  .car-header-desktop-nav { display: none !important; }
+  .car-modal-content { padding: 24px; width: 95%; }
+  .dash-stat-card { padding: 16px; }
+}
+
+@media (min-width: 769px) {
+  .car-header-mobile-toggle { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   LOADING SKELETON
+   ══════════════════════════════════════════════════ */
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+/* ══════════════════════════════════════════════════
+   CUSTOM SCROLLBAR FOR MODALS
+   ══════════════════════════════════════════════════ */
+
+.car-modal-content::-webkit-scrollbar { width: 4px; }
+.car-modal-content::-webkit-scrollbar-track { background: transparent; }
+.car-modal-content::-webkit-scrollbar-thumb { background: rgba(233, 69, 96, 0.3); border-radius: 2px; }
+
+/* ══════════════════════════════════════════════════
+   GRADIENT TEXT
+   ══════════════════════════════════════════════════ */
+
+.gradient-text {
+  background: linear-gradient(135deg, #e94560, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ══════════════════════════════════════════════════
+   GLASS EFFECT
+   ══════════════════════════════════════════════════ */
+
+.glass-dark {
+  background: rgba(15, 15, 25, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ══════════════════════════════════════════════════
+   STATUS BADGES
+   ══════════════════════════════════════════════════ */
+
+.status-pending   { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.status-confirmed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.status-completed { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* ══════════════════════════════════════════════════
+   TOOLTIP
+   ══════════════════════════════════════════════════ */
+
+.car-tooltip {
+  position: relative;
+}
+
+.car-tooltip::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.car-tooltip:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
