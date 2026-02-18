@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Gamepad2, Search, User, ShoppingCart, Menu, X, LogIn } from 'lucide-react';
 import { useGxvTheme } from '@/core/GxvThemeCore';
+import { gxvIsDemoMode } from '@/engine/gxvApi';
 
 export default function GxvNavbar() {
   const { currentTheme, storeName, logoPreview } = useGxvTheme();
@@ -11,7 +12,8 @@ export default function GxvNavbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('auth_token'));
+    // في وضع الديمو نعتبر المستخدم مسجل دخول دائماً
+    setIsLoggedIn(gxvIsDemoMode() || !!localStorage.getItem('auth_token'));
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);

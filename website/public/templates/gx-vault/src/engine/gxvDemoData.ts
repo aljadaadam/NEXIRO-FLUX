@@ -38,23 +38,41 @@ export const gxvDemoStats = {
   ],
 };
 
-// ─── المنتجات ───
+// ─── المنتجات (مع حقول مخصصة لتجربة الطلب) ───
 export const gxvDemoProducts = [
-  { id: 1, name: 'PUBG Mobile 660 UC', arabic_name: 'شحن 660 UC ببجي موبايل', price: 9.99, group_name: 'ببجي موبايل', description: 'شحن 660 UC مباشرة لحسابك في ببجي موبايل', status: 'active', service_type: 'SERVER' },
-  { id: 2, name: 'Fortnite 1000 V-Bucks', arabic_name: '1000 V-Bucks فورتنايت', price: 7.99, group_name: 'فورتنايت', description: 'شحن 1000 V-Bucks لحسابك في فورتنايت', status: 'active', service_type: 'CODE' },
-  { id: 3, name: 'Free Fire 520 Diamonds', arabic_name: '520 جوهرة فري فاير', price: 5.99, group_name: 'فري فاير', description: 'شحن 520 جوهرة فري فاير مباشرة', status: 'active', service_type: 'SERVER' },
-  { id: 4, name: 'Roblox 800 Robux', arabic_name: 'شحن 800 Robux روبلوكس', price: 9.99, group_name: 'روبلوكس', description: 'شحن 800 Robux لحسابك في روبلوكس', status: 'active', service_type: 'CODE' },
-  { id: 5, name: 'COD Mobile 1080 CP', arabic_name: 'شحن 1080 CP كول أوف ديوتي', price: 12.99, group_name: 'كول أوف ديوتي', description: 'شحن 1080 CP لكول أوف ديوتي موبايل', status: 'active', service_type: 'SERVER' },
-  { id: 6, name: 'Valorant 1000 VP', arabic_name: '1000 VP فالورانت', price: 10.99, group_name: 'فالورانت', description: 'شحن 1000 VP لحسابك في فالورانت', status: 'active', service_type: 'CODE' },
+  { id: 1, name: 'PUBG Mobile 660 UC', arabic_name: 'شحن 660 UC ببجي موبايل', price: 9.99, group_name: 'ببجي موبايل', description: 'شحن 660 UC مباشرة لحسابك في ببجي موبايل', status: 'active', service_type: 'SERVER', requires_custom_json: [{ key: 'player_id', label: 'معرّف اللاعب (ID)', placeholder: 'أدخل Player ID', required: true }] },
+  { id: 2, name: 'Fortnite 1000 V-Bucks', arabic_name: '1000 V-Bucks فورتنايت', price: 7.99, group_name: 'فورتنايت', description: 'شحن 1000 V-Bucks لحسابك في فورتنايت', status: 'active', service_type: 'CODE', requires_custom_json: [{ key: 'epic_username', label: 'اسم حساب Epic Games', placeholder: 'أدخل اسم المستخدم', required: true }] },
+  { id: 3, name: 'Free Fire 520 Diamonds', arabic_name: '520 جوهرة فري فاير', price: 5.99, group_name: 'فري فاير', description: 'شحن 520 جوهرة فري فاير مباشرة', status: 'active', service_type: 'SERVER', requires_custom_json: [{ key: 'player_id', label: 'معرّف اللاعب (ID)', placeholder: 'أدخل Player ID', required: true }] },
+  { id: 4, name: 'Roblox 800 Robux', arabic_name: 'شحن 800 Robux روبلوكس', price: 9.99, group_name: 'روبلوكس', description: 'شحن 800 Robux لحسابك في روبلوكس', status: 'active', service_type: 'CODE', requires_custom_json: [{ key: 'roblox_username', label: 'اسم مستخدم Roblox', placeholder: 'أدخل اسم المستخدم', required: true }] },
+  { id: 5, name: 'COD Mobile 1080 CP', arabic_name: 'شحن 1080 CP كول أوف ديوتي', price: 12.99, group_name: 'كول أوف ديوتي', description: 'شحن 1080 CP لكول أوف ديوتي موبايل', status: 'active', service_type: 'SERVER', requires_custom_json: [{ key: 'player_id', label: 'معرّف اللاعب (UID)', placeholder: 'أدخل UID', required: true }] },
+  { id: 6, name: 'Valorant 1000 VP', arabic_name: '1000 VP فالورانت', price: 10.99, group_name: 'فالورانت', description: 'شحن 1000 VP لحسابك في فالورانت', status: 'active', service_type: 'CODE', requires_custom_json: [{ key: 'riot_id', label: 'Riot ID', placeholder: 'مثال: Player#1234', required: true }] },
   { id: 7, name: 'Google Play $50', arabic_name: 'بطاقة Google Play $50', price: 52.50, group_name: 'بطاقات رقمية', description: 'بطاقة Google Play بقيمة 50 دولار أمريكي', status: 'active', service_type: 'CODE' },
   { id: 8, name: 'PlayStation $25', arabic_name: 'بطاقة PlayStation $25', price: 26.99, group_name: 'بطاقات رقمية', description: 'بطاقة PlayStation Store بقيمة 25 دولار', status: 'active', service_type: 'CODE' },
   { id: 9, name: 'iTunes $100', arabic_name: 'بطاقة iTunes $100', price: 105.00, group_name: 'بطاقات رقمية', description: 'بطاقة iTunes بقيمة 100 دولار أمريكي', status: 'active', service_type: 'CODE' },
-  { id: 10, name: 'PUBG Mobile 1800 UC', arabic_name: 'شحن 1800 UC ببجي موبايل', price: 24.99, group_name: 'ببجي موبايل', description: 'شحن 1800 UC مباشرة لحسابك في ببجي موبايل', status: 'active', service_type: 'SERVER' },
+  { id: 10, name: 'PUBG Mobile 1800 UC', arabic_name: 'شحن 1800 UC ببجي موبايل', price: 24.99, group_name: 'ببجي موبايل', description: 'شحن 1800 UC مباشرة لحسابك في ببجي موبايل', status: 'active', service_type: 'SERVER', requires_custom_json: [{ key: 'player_id', label: 'معرّف اللاعب (ID)', placeholder: 'أدخل Player ID', required: true }] },
   { id: 11, name: 'Steam Wallet $20', arabic_name: 'محفظة Steam $20', price: 21.50, group_name: 'بطاقات رقمية', description: 'بطاقة Steam Wallet بقيمة 20 دولار', status: 'active', service_type: 'CODE' },
-  { id: 12, name: 'Fortnite 2800 V-Bucks', arabic_name: '2800 V-Bucks فورتنايت', price: 19.99, group_name: 'فورتنايت', description: 'شحن 2800 V-Bucks لحسابك في فورتنايت', status: 'active', service_type: 'CODE' },
+  { id: 12, name: 'Fortnite 2800 V-Bucks', arabic_name: '2800 V-Bucks فورتنايت', price: 19.99, group_name: 'فورتنايت', description: 'شحن 2800 V-Bucks لحسابك في فورتنايت', status: 'active', service_type: 'CODE', requires_custom_json: [{ key: 'epic_username', label: 'اسم حساب Epic Games', placeholder: 'أدخل اسم المستخدم', required: true }] },
 ];
 
-// ─── الطلبات ───
+// ─── الملف الشخصي للعميل في الديمو (مع رصيد) ───
+export const gxvDemoProfile = {
+  id: 99,
+  name: 'زائر الديمو',
+  email: 'demo@gxvault.com',
+  balance: 250.00,
+  created_at: '2026-01-01T00:00:00Z',
+};
+
+// ─── طلبات العميل في الديمو (الطلبات المعروضة في صفحة "طلباتي") ───
+export const gxvDemoCustomerOrders = [
+  { id: 'ORD-D1A23B', product_name: 'شحن 660 UC ببجي موبايل', icon: '🎮', created_at: '2026-02-18T14:30:00Z', total_price: 9.99, status: 'completed' },
+  { id: 'ORD-D2B34C', product_name: '1000 V-Bucks فورتنايت', icon: '🔑', created_at: '2026-02-17T10:20:00Z', total_price: 7.99, status: 'completed' },
+  { id: 'ORD-D3C45D', product_name: 'بطاقة Google Play $50', icon: '🔑', created_at: '2026-02-16T18:15:00Z', total_price: 52.50, status: 'processing' },
+  { id: 'ORD-D4D56E', product_name: 'شحن 1080 CP كول أوف ديوتي', icon: '🎮', created_at: '2026-02-15T22:00:00Z', total_price: 12.99, status: 'completed' },
+  { id: 'ORD-D5E67F', product_name: '520 جوهرة فري فاير', icon: '🎮', created_at: '2026-02-14T11:45:00Z', total_price: 5.99, status: 'completed' },
+];
+
+// ─── الطلبات (لوحة التحكم) ───
 export const gxvDemoOrders = [
   { id: 'ORD-8A7F3C', product_name: 'شحن 660 UC ببجي موبايل', customer_name: 'أحمد محمد', customer_email: 'ahmed@example.com', created_at: '2026-02-18T14:30:00Z', total_price: 9.99, status: 'completed' },
   { id: 'ORD-5B2D1E', product_name: '1000 V-Bucks فورتنايت', customer_name: 'سارة علي', customer_email: 'sara@example.com', created_at: '2026-02-18T13:15:00Z', total_price: 7.99, status: 'completed' },
@@ -112,17 +130,30 @@ export const gxvDemoSettings = {
 export function getGxvDemoResponse(endpoint: string, method: string = 'GET'): unknown {
   // إذا كان طلب كتابة (POST/PUT/DELETE) نرجع نجاح وهمي
   if (method !== 'GET') {
+    // طلب إنشاء طلب جديد — نرجع طلب وهمي ناجح
+    if (endpoint.includes('/orders') && method === 'POST') {
+      const newOrder = {
+        id: `ORD-DEMO-${Date.now().toString(36).toUpperCase()}`,
+        status: 'processing',
+        message: 'تم إنشاء الطلب بنجاح! (وضع العرض)',
+        success: true,
+      };
+      return newOrder;
+    }
     return { success: true, message: 'تم بنجاح (وضع العرض)' };
   }
 
   if (endpoint.includes('/dashboard/stats')) return gxvDemoStats;
-  if (endpoint.includes('/products')) return gxvDemoProducts;
-  if (endpoint.includes('/orders')) return gxvDemoOrders;
+  if (endpoint.includes('/products/public') || endpoint.includes('/products')) return gxvDemoProducts;
+  if (endpoint.includes('/orders')) return gxvDemoCustomerOrders;
   if (endpoint.includes('/auth/users')) return gxvDemoUsers;
+  if (endpoint.includes('/auth/login') || endpoint.includes('/auth/register')) return { token: 'demo_token_gxv', ...gxvDemoProfile };
+  if (endpoint.includes('/profile')) return gxvDemoProfile;
   if (endpoint.includes('/payment-gateways')) return gxvDemoGateways;
   if (endpoint.includes('/sources')) return gxvDemoSources;
   if (endpoint.includes('/notifications')) return gxvDemoAnnouncements;
   if (endpoint.includes('/customization')) return { customization: gxvDemoSettings, ...gxvDemoSettings };
+  if (endpoint.includes('/store/info')) return { name: gxvDemoSettings.store_name, description: gxvDemoSettings.store_description };
 
   return {};
 }

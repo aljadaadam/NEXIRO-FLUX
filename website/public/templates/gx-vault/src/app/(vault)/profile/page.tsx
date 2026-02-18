@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Lock, Save, LogIn, UserPlus, Wallet, LogOut } from 'lucide-react';
 import { useGxvTheme } from '@/core/GxvThemeCore';
-import { gxvStoreApi } from '@/engine/gxvApi';
+import { gxvStoreApi, gxvIsDemoMode } from '@/engine/gxvApi';
 
 export default function GxvProfilePage() {
   const { currentTheme } = useGxvTheme();
@@ -13,8 +13,18 @@ export default function GxvProfilePage() {
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const isDemo = gxvIsDemoMode();
 
   useEffect(() => {
+    // في وضع الديمو — تسجيل دخول تلقائي بحساب افتراضي
+    if (isDemo) {
+      setIsLoggedIn(true);
+      gxvStoreApi.getProfile().then(data => {
+        if (data?.name) setProfile(data);
+      });
+      return;
+    }
+
     const token = localStorage.getItem('auth_token');
     if (token) {
       setIsLoggedIn(true);
@@ -22,7 +32,7 @@ export default function GxvProfilePage() {
         if (data?.name) setProfile(data);
       });
     }
-  }, []);
+  }, [isDemo]);
 
   const handleAuth = async () => {
     setLoading(true); setMsg(null);
@@ -43,6 +53,7 @@ export default function GxvProfilePage() {
   };
 
   const handleLogout = () => {
+    if (isDemo) return; // في الديمو لا يمكن تسجيل الخروج
     localStorage.removeItem('auth_token');
     setIsLoggedIn(false);
     setProfile(null);

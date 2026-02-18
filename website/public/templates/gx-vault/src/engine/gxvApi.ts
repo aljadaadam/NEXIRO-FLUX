@@ -56,6 +56,12 @@ async function gxvAdminFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 async function gxvCustomerFetch(endpoint: string, options: RequestInit = {}) {
+  // في وضع الديمو نرجع بيانات وهمية للمتجر أيضاً
+  if (gxvIsDemoMode()) {
+    const method = (options.method || 'GET').toUpperCase();
+    return getGxvDemoResponse(endpoint, method);
+  }
+
   const token = gxvGetAuthToken();
   const res = await fetch(`${GXV_API_BASE}${endpoint}`, {
     ...options,
@@ -179,6 +185,12 @@ function gxvMapProduct(p: Record<string, unknown>): Record<string, unknown> {
 export const gxvStoreApi = {
   getProducts: async () => {
     try {
+      // في وضع الديمو نرجع المنتجات الوهمية مباشرة
+      if (gxvIsDemoMode()) {
+        const { gxvDemoProducts } = await import('./gxvDemoData');
+        return gxvDemoProducts.map(gxvMapProduct);
+      }
+
       const res = await fetch(`${GXV_API_BASE}/products/public`, {
         headers: { 'Content-Type': 'application/json' },
       });
