@@ -233,19 +233,6 @@ export default function GxvProfilePage() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '30px 24px 80px' }}>
 
-      {/* Demo Banner */}
-      {isDemo && (
-        <div style={{
-          padding: '10px 16px', borderRadius: 12, marginBottom: 20,
-          background: `linear-gradient(135deg, ${currentTheme.primary}15, ${currentTheme.primary}05)`,
-          border: `1px solid ${currentTheme.primary}25`,
-          display: 'flex', alignItems: 'center', gap: 8,
-          color: currentTheme.primary, fontSize: '0.82rem', fontWeight: 600,
-        }}>
-          <Sparkles size={14} /> هذا حساب تجريبي — جميع البيانات والأرصدة وهمية للعرض فقط
-        </div>
-      )}
-
       {/* Profile Header Card */}
       <div style={{
         borderRadius: 24, overflow: 'hidden', marginBottom: 20,
@@ -293,10 +280,7 @@ export default function GxvProfilePage() {
           </div>
 
           {/* Stats Row */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: 12,
-          }}>
+          <div className="gxv-grid-stats" style={{ gap: 12 }}>
             {/* Wallet Balance */}
             <div className="gxv-card-hover" style={{
               padding: '18px', borderRadius: 18,
