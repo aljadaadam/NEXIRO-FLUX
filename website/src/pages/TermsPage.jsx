@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, FileText, Shield, AlertTriangle, Scale, Clock, Globe } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import SEO from '../components/SEO';
 
 export default function TermsPage() {
   const { isRTL } = useLanguage();
@@ -52,10 +53,14 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-20">
+      <SEO
+        title="Terms of Service"
+        titleAr="الشروط والأحكام"
+        description="Read NEXIRO-FLUX terms of service. Learn about our policies, user rights, and service agreements."
+        descriptionAr="اقرأ شروط وأحكام NEXIRO-FLUX. تعرّف على سياساتنا وحقوق المستخدمين واتفاقيات الخدمة."
+        canonicalPath="/terms"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back */}
-        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group">
-          <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
         </Link>
 

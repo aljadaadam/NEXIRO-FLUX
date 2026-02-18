@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowLeft, ArrowRight, Loader2, Aler
 import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 import api from '../services/api';
 
 export default function LoginPage() {
@@ -142,6 +143,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
+      <SEO
+        title="Login"
+        titleAr="تسجيل الدخول"
+        description="Sign in to your NEXIRO-FLUX account to manage your online store and dashboard."
+        descriptionAr="سجّل دخولك إلى حسابك في NEXIRO-FLUX لإدارة متجرك ولوحة التحكم."
+        canonicalPath="/login"
+        noindex={true}
+      />
       <div className="absolute inset-0 bg-mesh" />
       <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl" />

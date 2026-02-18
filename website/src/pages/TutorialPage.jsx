@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { BookOpen, ShoppingCart, Palette, Globe, TrendingUp, Settings, ArrowRight, ArrowLeft, Clock, Tag, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import SEO from '../components/SEO';
 
 const tutorialSlugs = ['ecommerce', 'seo', 'design', 'domain', 'manage', 'marketing'];
 
@@ -68,6 +69,19 @@ export default function TutorialPage() {
 
   return (
     <div className="min-h-screen bg-dark-950">
+      <SEO
+        title={title}
+        description={desc}
+        type="article"
+        keywords={(tags || '').replace(/,/g, ', ')}
+        canonicalPath={`/tutorials/${slug}`}
+        article={{
+          title,
+          description: desc,
+          datePublished: '2026-01-15',
+          dateModified: '2026-02-18',
+        }}
+      />
       {/* Hero */}
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-dark-900/80 to-dark-950" />

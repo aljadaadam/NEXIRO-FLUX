@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, Shield, Eye, Database, Lock, Share2, UserCheck, Bell } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import SEO from '../components/SEO';
 
 export default function PrivacyPage() {
   const { isRTL } = useLanguage();
@@ -52,10 +53,14 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-20">
+      <SEO
+        title="Privacy Policy"
+        titleAr="سياسة الخصوصية"
+        description="Learn how NEXIRO-FLUX protects your data. Our privacy policy explains what data we collect, how we use it, and how we keep it safe."
+        descriptionAr="تعرّف كيف تحمي NEXIRO-FLUX بياناتك. سياسة الخصوصية توضح البيانات التي نجمعها وكيف نستخدمها ونحميها."
+        canonicalPath="/privacy"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back */}
-        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group">
-          <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
         </Link>
 

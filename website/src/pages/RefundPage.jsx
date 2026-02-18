@@ -1,16 +1,21 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, Ban, AlertTriangle, ShieldX, Eye, MessageCircle, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import SEO from '../components/SEO';
 
 export default function RefundPage() {
   const { isRTL } = useLanguage();
 
   return (
     <div className="min-h-screen pt-24 pb-20">
+      <SEO
+        title="Refund Policy"
+        titleAr="سياسة الاسترجاع"
+        description="Read NEXIRO-FLUX refund policy. Understand our refund terms, conditions, and how to request support."
+        descriptionAr="اقرأ سياسة الاسترجاع في NEXIRO-FLUX. تعرّف على شروط الاسترجاع وكيفية طلب الدعم."
+        canonicalPath="/refund"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back */}
-        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group">
-          <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
         </Link>
 

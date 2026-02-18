@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, User, Sparkles, Loader2, AlertCircle } from 'l
 import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 
 export default function RegisterPage() {
   const { t, isRTL } = useLanguage();
@@ -81,6 +82,15 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-24 relative">
+      <SEO
+        title="Create Free Account"
+        titleAr="أنشئ حسابك المجاني"
+        description="Create your free NEXIRO-FLUX account and start building your professional online store in minutes."
+        descriptionAr="أنشئ حسابك المجاني في NEXIRO-FLUX وابدأ ببناء متجرك الإلكتروني الاحترافي في دقائق."
+        canonicalPath="/register"
+        keywords="create account, register, sign up, free store builder account"
+        keywordsAr="إنشاء حساب, تسجيل, حساب مجاني, بناء متجر"
+      />
       <div className="absolute inset-0 bg-mesh" />
       <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/3 left-1/4 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl" />
