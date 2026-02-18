@@ -9,6 +9,19 @@ function GxvLoginHandler() {
   const router = useRouter();
 
   useEffect(() => {
+    // في وضع الديمو نتخطى شاشة الدخول ونذهب مباشرة للوحة التحكم
+    const isDemo = searchParams.get('demo') === '1' ||
+      (typeof window !== 'undefined' && window.location.hostname.startsWith('demo-')) ||
+      (typeof window !== 'undefined' && sessionStorage.getItem('gxv_demo_mode') === '1');
+
+    if (isDemo) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('gxv_demo_mode', '1');
+      }
+      router.replace('/admin?demo=1');
+      return;
+    }
+
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('admin_key', token);

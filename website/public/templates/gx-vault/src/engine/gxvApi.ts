@@ -1,7 +1,20 @@
 // ─── GX-VAULT API Layer ───
 // طبقة اتصال الـ API لقالب شحن الألعاب
 
+import { getGxvDemoResponse } from './gxvDemoData';
+
 const GXV_API_BASE = '/api';
+
+// ─── كشف وضع العرض التجريبي ───
+export function gxvIsDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (window.location.hostname.startsWith('demo-')) return true;
+  if (new URLSearchParams(window.location.search).get('demo') === '1') {
+    sessionStorage.setItem('gxv_demo_mode', '1');
+    return true;
+  }
+  return sessionStorage.getItem('gxv_demo_mode') === '1';
+}
 
 function gxvGetAdminKey(): string | null {
   if (typeof window === 'undefined') return null;
@@ -14,6 +27,12 @@ function gxvGetAuthToken(): string | null {
 }
 
 async function gxvAdminFetch(endpoint: string, options: RequestInit = {}) {
+  // في وضع الديمو نرجع بيانات وهمية بدلاً من استدعاء API حقيقي
+  if (gxvIsDemoMode()) {
+    const method = (options.method || 'GET').toUpperCase();
+    return getGxvDemoResponse(endpoint, method);
+  }
+
   const token = gxvGetAdminKey() || gxvGetAuthToken();
   const res = await fetch(`${GXV_API_BASE}${endpoint}`, {
     ...options,
@@ -25,8 +44,11 @@ async function gxvAdminFetch(endpoint: string, options: RequestInit = {}) {
   });
   if (res.status === 401 || res.status === 403) {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_key');
-      window.location.href = '/login';
+      const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
+      if (!isDemoMode) {
+        localStorage.removeItem('admin_key');
+        window.location.href = '/login';
+      }
     }
     throw new Error('Unauthorized');
   }
@@ -161,7 +183,8 @@ export const gxvStoreApi = {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
-      const raw = Array.isArray(data) ? data : data?.products || [];
+      const raw = (Array.isArray(data) ? data : data?.products || [])
+        .filter((p: Record<string, unknown>) => p.service_type !== 'TEMPLATE' && p.group_name);
       return raw.map(gxvMapProduct);
     } catch {
       return [];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { gxvIsDemoMode } from '@/engine/gxvApi';
 import GxvCockpitHeader from '@/elements/cockpit/GxvCockpitHeader';
 import GxvCockpitSidebar from '@/elements/cockpit/GxvCockpitSidebar';
 import GxvOverviewPanel from './panels/GxvOverviewPanel';
@@ -42,6 +43,13 @@ export default function GxvAdminLayout({ children }: { children: React.ReactNode
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
+    // في وضع الديمو نتخطى التحقق من تسجيل الدخول
+    if (gxvIsDemoMode()) {
+      sessionStorage.setItem('gxv_demo_mode', '1');
+      setAuthorized(true);
+      return;
+    }
+
     const token = localStorage.getItem('admin_key');
     if (!token) {
       window.location.href = '/login';

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GXV_COLOR_THEMES, GxvColorTheme, gxvGetTheme } from '@/engine/gxvThemes';
+import { gxvIsDemoMode } from '@/engine/gxvApi';
 
 interface GxvThemeCoreType {
   themeId: string;
@@ -61,6 +62,13 @@ export function GxvThemeCore({ children }: { children: ReactNode }) {
   // ─── 2. جلب التخصيص من الباك اند ───
   useEffect(() => {
     if (!mounted || serverFetched) return;
+    // في وضع الديمو نتخطى جلب التخصيص من السيرفر
+    if (gxvIsDemoMode()) {
+      setStoreName('GX-Vault Gaming');
+      setLoaded(true);
+      setServerFetched(true);
+      return;
+    }
     async function fetchConfig() {
       try {
         const token = localStorage.getItem('admin_key') || localStorage.getItem('auth_token');
@@ -107,6 +115,8 @@ export function GxvThemeCore({ children }: { children: ReactNode }) {
 
   // ─── 4. حفظ في الباكند ───
   const saveToServer = useCallback(async () => {
+    // في وضع الديمو لا نحفظ في السيرفر
+    if (gxvIsDemoMode()) return;
     const token = typeof window !== 'undefined'
       ? (localStorage.getItem('admin_key') || localStorage.getItem('auth_token'))
       : null;
