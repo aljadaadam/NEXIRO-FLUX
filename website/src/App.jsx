@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
@@ -43,6 +44,12 @@ import AdminTickets from './pages/admin/AdminTickets';
 
 function AppContent() {
   const location = useLocation();
+
+  // Scroll to top on every route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const isDemoPage = location.pathname.startsWith('/demo/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const isSetupPage = location.pathname === '/setup';
