@@ -96,6 +96,10 @@ export const gxvAdminApi = {
   connectSource: (data: Record<string, unknown>) => gxvAdminFetch('/sources', { method: 'POST', body: JSON.stringify(data) }),
   deleteSource: (id: number) => gxvAdminFetch(`/sources/${id}`, { method: 'DELETE' }),
   getPaymentGateways: () => gxvAdminFetch('/payment-gateways'),
+  createPaymentGateway: (data: Record<string, unknown>) => gxvAdminFetch('/payment-gateways', { method: 'POST', body: JSON.stringify(data) }),
+  updatePaymentGateway: (id: number, data: Record<string, unknown>) => gxvAdminFetch(`/payment-gateways/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePaymentGateway: (id: number) => gxvAdminFetch(`/payment-gateways/${id}`, { method: 'DELETE' }),
+  togglePaymentGateway: (id: number) => gxvAdminFetch(`/payment-gateways/${id}/toggle`, { method: 'PATCH' }),
   getCustomize: () => gxvAdminFetch('/customization'),
   updateCustomize: (data: Record<string, unknown>) => gxvAdminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
 };

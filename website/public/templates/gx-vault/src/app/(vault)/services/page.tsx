@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gamepad2, ShoppingCart, Search, Filter, Zap } from 'lucide-react';
+import { Gamepad2, ShoppingCart, Search, Filter, Zap, CreditCard } from 'lucide-react';
 import { useGxvTheme } from '@/core/GxvThemeCore';
-import { gxvStoreApi } from '@/engine/gxvApi';
+import { gxvStoreApi, gxvIsDemoMode } from '@/engine/gxvApi';
 import { GXV_GAMES } from '@/engine/gxvData';
 
 export default function GxvServicesPage() {
@@ -15,6 +15,10 @@ export default function GxvServicesPage() {
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderResult, setOrderResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [gateways, setGateways] = useState<Record<string, unknown>[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<number | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<'fields' | 'payment'>('fields');
+  const isDemo = gxvIsDemoMode();
 
   useEffect(() => { gxvStoreApi.getProducts().then(setProducts); }, []);
 
@@ -24,17 +28,52 @@ export default function GxvServicesPage() {
     return matchSearch && matchGame;
   });
 
+  const openOrderModal = (product: Record<string, unknown>) => {
+    setOrderModal(product);
+    setCustomValues({});
+    setOrderResult(null);
+    setCheckoutStep('fields');
+    setSelectedGateway(null);
+    if (gateways.length === 0) {
+      gxvStoreApi.getEnabledGateways().then(data => {
+        const list = Array.isArray(data) ? data : data?.gateways || [];
+        setGateways(list);
+        if (list.length === 1) setSelectedGateway(list[0].id as number);
+      }).catch(() => {});
+    }
+  };
+
   const handleOrder = async (product: Record<string, unknown>) => {
+    if (checkoutStep === 'fields' && !isDemo && gateways.length > 0) {
+      setCheckoutStep('payment');
+      return;
+    }
+    if (!isDemo && !selectedGateway && gateways.length > 0) {
+      setOrderResult({ ok: false, msg: 'اختر طريقة الدفع أولاً' });
+      return;
+    }
     setOrderLoading(true);
     setOrderResult(null);
     try {
       const fields = (product.customFields as Array<{ key: string }>) || [];
       const customData: Record<string, string> = {};
       fields.forEach(f => { customData[f.key] = customValues[f.key] || ''; });
-      const res = await gxvStoreApi.createOrder({ product_id: product.id, quantity: 1, custom_fields: customData });
+      const res = await gxvStoreApi.createOrder({
+        product_id: product.id, quantity: 1, custom_fields: customData,
+        ...(selectedGateway ? { gateway_id: selectedGateway } : {}),
+      });
       if (res.error) throw new Error(res.error);
-      setOrderResult({ ok: true, msg: 'تم إنشاء الطلب بنجاح! ✅' });
-      setTimeout(() => { setOrderModal(null); setOrderResult(null); setCustomValues({}); }, 2000);
+      if (res.redirectUrl) { window.location.href = res.redirectUrl; return; }
+      if (res.checkoutUrl) { window.location.href = res.checkoutUrl; return; }
+      if (res.method === 'manual_crypto') {
+        setOrderResult({ ok: true, msg: `تم إنشاء الطلب! أرسل ${res.amount} USDT إلى: ${res.walletAddress} (${res.network})` });
+      } else if (res.method === 'manual_bank') {
+        const bank = res.bankDetails as Record<string, string>;
+        setOrderResult({ ok: true, msg: `تم إنشاء الطلب! حوّل إلى: ${bank?.bank_name} - ${bank?.iban} (المرجع: ${res.referenceId})` });
+      } else {
+        setOrderResult({ ok: true, msg: 'تم إنشاء الطلب بنجاح! ✅' });
+        setTimeout(() => { setOrderModal(null); setOrderResult(null); setCustomValues({}); setCheckoutStep('fields'); }, 2000);
+      }
     } catch (err: unknown) {
       setOrderResult({ ok: false, msg: (err as Error).message || 'حدث خطأ' });
     } finally { setOrderLoading(false); }
@@ -148,7 +187,7 @@ export default function GxvServicesPage() {
                 }}>
                   <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff' }}>{product.price as string}</span>
                   <button
-                    onClick={() => { setOrderModal(product); setCustomValues({}); setOrderResult(null); }}
+                    onClick={() => openOrderModal(product)}
                     style={{
                       padding: '8px 18px', borderRadius: 10,
                       background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
@@ -197,7 +236,8 @@ export default function GxvServicesPage() {
               </div>
             </div>
             <div style={{ padding: '20px 24px' }}>
-              {((orderModal.customFields as Array<{ key: string; label: string; placeholder: string; required: boolean }>) || []).map(field => (
+              {/* Step 1: Custom fields */}
+              {checkoutStep === 'fields' && ((orderModal.customFields as Array<{ key: string; label: string; placeholder: string; required: boolean }>) || []).map(field => (
                 <div key={field.key} style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', color: '#b8b8cc', fontSize: '0.82rem', fontWeight: 600, marginBottom: 6 }}>
                     {field.label} {field.required && <span style={{ color: '#ef4444' }}>*</span>}
@@ -212,6 +252,39 @@ export default function GxvServicesPage() {
                   />
                 </div>
               ))}
+
+              {/* Step 2: Payment gateway selection */}
+              {checkoutStep === 'payment' && gateways.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ color: '#b8b8cc', fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CreditCard size={16} style={{ color: currentTheme.primary }} /> اختر طريقة الدفع
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: gateways.length <= 3 ? `repeat(${gateways.length}, 1fr)` : 'repeat(2, 1fr)', gap: 8 }}>
+                    {gateways.map(gw => {
+                      const gwId = gw.id as number;
+                      const gwType = String(gw.type || '');
+                      const icons: Record<string, string> = { paypal: '💳', binance: '🪙', usdt: '💲', bank_transfer: '🏦', wallet: '📱' };
+                      return (
+                        <button key={gwId} onClick={() => setSelectedGateway(gwId)} style={{
+                          padding: '16px 12px', borderRadius: 14,
+                          background: selectedGateway === gwId
+                            ? `linear-gradient(135deg, ${currentTheme.primary}20, ${currentTheme.primary}08)`
+                            : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${selectedGateway === gwId ? `${currentTheme.primary}40` : 'rgba(255,255,255,0.06)'}`,
+                          color: selectedGateway === gwId ? currentTheme.primary : '#b8b8cc',
+                          cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                          transition: 'all 0.2s',
+                        }}>
+                          <span style={{ fontSize: '1.5rem' }}>{icons[gwType] || '💰'}</span>
+                          {String(gw.name || gwType)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {orderResult && (
                 <div style={{
                   padding: '12px 16px', borderRadius: 12, marginBottom: 16, textAlign: 'center',
@@ -227,12 +300,15 @@ export default function GxvServicesPage() {
                   fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   boxShadow: currentTheme.glow, opacity: orderLoading ? 0.7 : 1,
                 }}>
-                  {orderLoading ? <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'gxvSpin 0.6s linear infinite' }} /> : <><Zap size={16} /> تأكيد الشحن</>}
+                  {orderLoading ? <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'gxvSpin 0.6s linear infinite' }} /> : <><Zap size={16} /> {checkoutStep === 'fields' && !isDemo && gateways.length > 0 ? 'التالي — اختر الدفع' : 'تأكيد الشحن'}</>}
                 </button>
-                <button onClick={() => { setOrderModal(null); setOrderResult(null); }} style={{
+                <button onClick={() => {
+                  if (checkoutStep === 'payment') { setCheckoutStep('fields'); setOrderResult(null); }
+                  else { setOrderModal(null); setOrderResult(null); setCheckoutStep('fields'); }
+                }} style={{
                   padding: '14px 24px', borderRadius: 14, background: 'rgba(255,255,255,0.04)',
                   border: '1px solid rgba(255,255,255,0.08)', color: '#8888aa', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
-                }}>إلغاء</button>
+                }}>{checkoutStep === 'payment' ? 'رجوع' : 'إلغاء'}</button>
               </div>
             </div>
           </div>
