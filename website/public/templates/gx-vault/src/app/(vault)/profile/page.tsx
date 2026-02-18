@@ -24,6 +24,8 @@ export default function GxvProfilePage() {
   const [rechargeLoading, setRechargeLoading] = useState(false);
   const [rechargeMsg, setRechargeMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+  const [gateways, setGateways] = useState<Record<string, unknown>[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<number | null>(null);
   const isDemo = gxvIsDemoMode();
 
   useEffect(() => {
@@ -80,19 +82,56 @@ export default function GxvProfilePage() {
   const handleRecharge = async () => {
     const amount = parseFloat(rechargeAmount);
     if (!amount || amount <= 0) { setRechargeMsg({ ok: false, text: 'أدخل مبلغ صحيح' }); return; }
+    if (!selectedGateway) { setRechargeMsg({ ok: false, text: 'اختر طريقة الدفع' }); return; }
     setRechargeLoading(true); setRechargeMsg(null);
     try {
-      const res = await gxvStoreApi.chargeWallet({ amount });
+      if (isDemo) {
+        // في وضع الديمو - شحن فوري
+        setRechargeMsg({ ok: true, text: `تم شحن $${amount.toFixed(2)} بنجاح! ✨` });
+        if (profile) setProfile({ ...profile, balance: Number(profile.balance || 0) + amount });
+        setTimeout(() => { setShowRecharge(false); setRechargeMsg(null); setRechargeAmount(''); setSelectedGateway(null); }, 2000);
+        return;
+      }
+      const res = await gxvStoreApi.chargeWallet({ amount, gateway_id: selectedGateway, type: 'deposit' });
       if (res.error) throw new Error(res.error);
-      setRechargeMsg({ ok: true, text: `تم شحن $${amount.toFixed(2)} بنجاح! ✨` });
-      if (profile) setProfile({ ...profile, balance: Number(profile.balance || 0) + amount });
-      setTimeout(() => { setShowRecharge(false); setRechargeMsg(null); setRechargeAmount(''); }, 2000);
+      // Handle different payment methods
+      if (res.redirectUrl) {
+        window.location.href = res.redirectUrl;
+        return;
+      }
+      if (res.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+      // Manual payment (USDT/bank) - show instructions
+      if (res.method === 'manual_crypto') {
+        setRechargeMsg({ ok: true, text: `أرسل ${res.amount} USDT إلى العنوان: ${res.walletAddress} (شبكة ${res.network})` });
+      } else if (res.method === 'manual_bank') {
+        const bank = res.bankDetails as Record<string, string>;
+        setRechargeMsg({ ok: true, text: `حوّل $${amount} إلى: ${bank?.bank_name || ''} - ${bank?.iban || bank?.account_number || ''} (المرجع: ${res.referenceId})` });
+      } else {
+        setRechargeMsg({ ok: true, text: 'تم إنشاء طلب الدفع بنجاح' });
+      }
     } catch (err: unknown) {
       setRechargeMsg({ ok: false, text: (err as Error).message || 'حدث خطأ' });
     } finally { setRechargeLoading(false); }
   };
 
   const completedOrders = orders.filter(o => o.status === 'completed').length;
+
+  const openRechargeModal = () => {
+    setShowRecharge(true);
+    setRechargeMsg(null);
+    setSelectedGateway(null);
+    if (gateways.length === 0) {
+      gxvStoreApi.getEnabledGateways().then(data => {
+        const list = Array.isArray(data) ? data : data?.gateways || [];
+        setGateways(list);
+        if (list.length === 1) setSelectedGateway(list[0].id as number);
+      }).catch(() => {});
+    }
+  };
+
   const memberSince = profile?.created_at
     ? new Date(String(profile.created_at)).toLocaleDateString('ar', { year: 'numeric', month: 'long' })
     : '';
@@ -287,7 +326,7 @@ export default function GxvProfilePage() {
               background: `linear-gradient(135deg, ${currentTheme.primary}12, ${currentTheme.primary}05)`,
               border: `1px solid ${currentTheme.primary}20`,
               cursor: 'pointer',
-            }} onClick={() => setShowRecharge(true)}>
+            }} onClick={() => openRechargeModal()}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 12,
@@ -379,7 +418,7 @@ export default function GxvProfilePage() {
         gap: 12, marginBottom: 20,
       }}>
         {[
-          { label: 'شحن رصيد', icon: <Plus size={20} />, color: currentTheme.primary, action: () => setShowRecharge(true) },
+          { label: 'شحن رصيد', icon: <Plus size={20} />, color: currentTheme.primary, action: () => openRechargeModal() },
           { label: 'طلباتي', icon: <Package size={20} />, color: '#3b82f6', href: '/orders' },
           { label: 'ابدأ الشحن', icon: <ShoppingCart size={20} />, color: '#22c55e', href: '/services' },
           { label: 'الدعم الفني', icon: <Headphones size={20} />, color: '#f59e0b', href: '/support' },
@@ -623,7 +662,36 @@ export default function GxvProfilePage() {
                 />
               </div>
 
-              {/* Recharge message */}
+              {/* Payment gateway selection */}
+              {gateways.length > 0 && (
+                <>
+                  <p style={{ color: '#888', fontSize: '0.8rem', fontWeight: 600, marginBottom: 10 }}>طريقة الدفع</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: gateways.length <= 3 ? `repeat(${gateways.length}, 1fr)` : 'repeat(2, 1fr)', gap: 8, marginBottom: 20 }}>
+                    {gateways.map((gw) => {
+                      const gwId = gw.id as number;
+                      const gwName = String(gw.name || gw.type || '');
+                      const gwType = String(gw.type || '');
+                      const icons: Record<string, string> = { paypal: '💳', binance: '🟡', usdt: '💲', bank_transfer: '🏦' };
+                      return (
+                        <button key={gwId} onClick={() => setSelectedGateway(gwId)} style={{
+                          padding: '14px 10px', borderRadius: 12,
+                          background: selectedGateway === gwId
+                            ? `linear-gradient(135deg, ${currentTheme.primary}25, ${currentTheme.primary}10)`
+                            : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${selectedGateway === gwId ? `${currentTheme.primary}40` : 'rgba(255,255,255,0.06)'}`,
+                          color: selectedGateway === gwId ? currentTheme.primary : '#b8b8cc',
+                          cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700,
+                          transition: 'all 0.2s',
+                          display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4,
+                        }}>
+                          <span style={{ fontSize: '1.3rem' }}>{icons[gwType] || '💰'}</span>
+                          {gwName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
               {rechargeMsg && (
                 <div style={{
                   padding: '12px 16px', borderRadius: 12, marginBottom: 16, textAlign: 'center',

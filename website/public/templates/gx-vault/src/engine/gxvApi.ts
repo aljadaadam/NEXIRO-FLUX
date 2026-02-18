@@ -210,5 +210,10 @@ export const gxvStoreApi = {
   login: (data: { email: string; password: string }) => gxvCustomerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data: { name: string; email: string; password: string }) => gxvCustomerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
   chargeWallet: (data: Record<string, unknown>) => gxvCustomerFetch('/checkout/init', { method: 'POST', body: JSON.stringify(data) }),
+  getEnabledGateways: async () => {
+    if (gxvIsDemoMode()) return [{ id: 1, name: 'PayPal', type: 'paypal', is_enabled: true }, { id: 2, name: 'Binance Pay', type: 'binance', is_enabled: true }, { id: 3, name: 'USDT (TRC20)', type: 'usdt', is_enabled: true }];
+    const res = await fetch(`${GXV_API_BASE}/payment-gateways/enabled`, { headers: { 'Content-Type': 'application/json' } });
+    return res.json();
+  },
   getStoreInfo: () => fetch(`${GXV_API_BASE}/customization/store`).then(r => r.json()),
 };
