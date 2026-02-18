@@ -71,14 +71,14 @@ export default function GxVaultDemo() {
         {/* Back */}
         <Link
           to="/templates"
-          className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group"
+          className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group tpl-entrance tpl-d1"
         >
           <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للقوالب' : 'Back to Templates'}
         </Link>
 
         {/* Hero */}
-        <div className="mb-12">
+        <div className="mb-12 tpl-entrance tpl-d2">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="px-3 py-1 rounded-full bg-violet-500/10 text-violet-400 text-xs font-bold border border-violet-500/20">
               🎮 {isRTL ? 'جديد' : 'New'}
@@ -106,7 +106,7 @@ export default function GxVaultDemo() {
           <div className="lg:col-span-2 space-y-8">
 
             {/* Supported Games */}
-            <div className="glass p-8 rounded-2xl">
+            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d3">
               <h3 className="text-xl font-bold text-white mb-4">
                 {isRTL ? '🎮 الألعاب المدعومة' : '🎮 Supported Games'}
               </h3>
@@ -125,7 +125,7 @@ export default function GxVaultDemo() {
             </div>
 
             {/* Live Demo Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 tpl-entrance tpl-d4">
               {/* Store Demo Card */}
               <a
                 href="/demo/gxv-store"
@@ -184,7 +184,7 @@ export default function GxVaultDemo() {
             </div>
 
             {/* What's Included */}
-            <div className="glass p-8 rounded-2xl">
+            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d5">
               <h3 className="text-xl font-bold text-white mb-2">
                 {isRTL ? 'ماذا يتضمن القالب؟' : "What's Included?"}
               </h3>
@@ -215,7 +215,7 @@ export default function GxVaultDemo() {
             </div>
 
             {/* Tech Stack */}
-            <div className="glass p-8 rounded-2xl">
+            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d6">
               <h3 className="text-xl font-bold text-white mb-4">
                 {isRTL ? 'التقنيات المستخدمة' : 'Tech Stack'}
               </h3>
@@ -229,7 +229,7 @@ export default function GxVaultDemo() {
             </div>
 
             {/* Description */}
-            <div className="glass p-8 rounded-2xl">
+            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d7">
               <h3 className="text-xl font-bold text-white mb-4">
                 {isRTL ? 'وصف القالب' : 'Template Description'}
               </h3>
@@ -243,7 +243,7 @@ export default function GxVaultDemo() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 tpl-entrance tpl-d4">
             <div className="sticky top-28 space-y-6">
               {/* Pricing Card */}
               <div className="glass p-6 rounded-2xl border border-white/10">

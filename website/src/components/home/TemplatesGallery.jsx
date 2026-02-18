@@ -124,10 +124,10 @@ export default function TemplatesGallery() {
           {filtered.map((template, i) => (
             <div
               key={template.id}
-              className={`group glass-dark overflow-hidden card-hover transition-all duration-700 ${
+              className={`group glass-dark overflow-hidden card-hover transition-all duration-500 ${
                 visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
-              style={{ transitionDelay: `${(i + 3) * 100}ms` }}
+              style={{ transitionDelay: visible ? '300ms' : '0ms' }}
             >
               {/* Image */}
               <div className="relative overflow-hidden h-52">
