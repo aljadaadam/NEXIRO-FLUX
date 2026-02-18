@@ -145,10 +145,10 @@ export function getGxvDemoResponse(endpoint: string, method: string = 'GET'): un
 
   if (endpoint.includes('/dashboard/stats')) return gxvDemoStats;
   if (endpoint.includes('/products/public') || endpoint.includes('/products')) return gxvDemoProducts;
-  if (endpoint.includes('/orders')) return gxvDemoCustomerOrders;
+  if (endpoint.includes('/customers/orders') || endpoint.includes('/orders')) return gxvDemoCustomerOrders;
   if (endpoint.includes('/auth/users')) return gxvDemoUsers;
-  if (endpoint.includes('/auth/login') || endpoint.includes('/auth/register')) return { token: 'demo_token_gxv', ...gxvDemoProfile };
-  if (endpoint.includes('/profile')) return gxvDemoProfile;
+  if (endpoint.includes('/customers/login') || endpoint.includes('/customers/register') || endpoint.includes('/auth/login') || endpoint.includes('/auth/register')) return { token: 'demo_token_gxv', ...gxvDemoProfile };
+  if (endpoint.includes('/customers/me') || endpoint.includes('/profile')) return gxvDemoProfile;
   if (endpoint.includes('/payment-gateways')) return gxvDemoGateways;
   if (endpoint.includes('/sources')) return gxvDemoSources;
   if (endpoint.includes('/notifications')) return gxvDemoAnnouncements;
