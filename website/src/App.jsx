@@ -1,47 +1,65 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import TemplatesPage from './pages/TemplatesPage';
-import PricingPage from './pages/PricingPage';
-import TemplatePreviewPage from './pages/TemplatePreviewPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import SetupWizardPage from './pages/SetupWizardPage';
-import MyDashboardPage from './pages/MyDashboardPage';
-import TermsPage from './pages/TermsPage';
-import PrivacyPage from './pages/PrivacyPage';
-import RefundPage from './pages/RefundPage';
-import NotFoundPage from './pages/NotFoundPage';
-import TutorialPage from './pages/TutorialPage';
-import CheckoutPage from './pages/CheckoutPage';
-import CheckoutResultPage from './pages/CheckoutResultPage';
-import TerminalSetupPage from './pages/TerminalSetupPage';
-import TemplateBuyPage from './pages/TemplateBuyPage';
-import YCZStoreLiveDemo from './pages/demo/YCZStoreLiveDemo';
-import YCZDashboardLiveDemo from './pages/demo/YCZDashboardLiveDemo';
-import GxVaultStoreLiveDemo from './pages/demo/GxVaultStoreLiveDemo';
-import GxVaultDashboardLiveDemo from './pages/demo/GxVaultDashboardLiveDemo';
-import HxToolsStoreLiveDemo from './pages/demo/HxToolsStoreLiveDemo';
-import HxToolsDashboardLiveDemo from './pages/demo/HxToolsDashboardLiveDemo';
-import CarStoreLiveDemo from './pages/demo/CarStoreLiveDemo';
-import CarDashboardLiveDemo from './pages/demo/CarDashboardLiveDemo';
 
-// Admin Dashboard
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminOverview from './pages/admin/AdminOverview';
-import AdminTemplates from './pages/admin/AdminTemplates';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminAnnouncements from './pages/admin/AdminAnnouncements';
-import AdminSettings from './pages/admin/AdminSettings';
-import AdminPayments from './pages/admin/AdminPayments';
-import AdminPaymentGateways from './pages/admin/AdminPaymentGateways';
-import AdminPurchaseCodes from './pages/admin/AdminPurchaseCodes';
-import AdminTickets from './pages/admin/AdminTickets';
+// Critical page - loaded eagerly
+import HomePage from './pages/HomePage';
+
+// Lazy-loaded pages for code splitting
+const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const TemplatePreviewPage = lazy(() => import('./pages/TemplatePreviewPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const SetupWizardPage = lazy(() => import('./pages/SetupWizardPage'));
+const MyDashboardPage = lazy(() => import('./pages/MyDashboardPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const RefundPage = lazy(() => import('./pages/RefundPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const TutorialPage = lazy(() => import('./pages/TutorialPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const CheckoutResultPage = lazy(() => import('./pages/CheckoutResultPage'));
+const TerminalSetupPage = lazy(() => import('./pages/TerminalSetupPage'));
+const TemplateBuyPage = lazy(() => import('./pages/TemplateBuyPage'));
+
+// Demo pages - lazy loaded
+const YCZStoreLiveDemo = lazy(() => import('./pages/demo/YCZStoreLiveDemo'));
+const YCZDashboardLiveDemo = lazy(() => import('./pages/demo/YCZDashboardLiveDemo'));
+const GxVaultStoreLiveDemo = lazy(() => import('./pages/demo/GxVaultStoreLiveDemo'));
+const GxVaultDashboardLiveDemo = lazy(() => import('./pages/demo/GxVaultDashboardLiveDemo'));
+const HxToolsStoreLiveDemo = lazy(() => import('./pages/demo/HxToolsStoreLiveDemo'));
+const HxToolsDashboardLiveDemo = lazy(() => import('./pages/demo/HxToolsDashboardLiveDemo'));
+const CarStoreLiveDemo = lazy(() => import('./pages/demo/CarStoreLiveDemo'));
+const CarDashboardLiveDemo = lazy(() => import('./pages/demo/CarDashboardLiveDemo'));
+
+// Admin Dashboard - lazy loaded
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
+const AdminTemplates = lazy(() => import('./pages/admin/AdminTemplates'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
+const AdminPaymentGateways = lazy(() => import('./pages/admin/AdminPaymentGateways'));
+const AdminPurchaseCodes = lazy(() => import('./pages/admin/AdminPurchaseCodes'));
+const AdminTickets = lazy(() => import('./pages/admin/AdminTickets'));
+
+// Loading fallback
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+        <p className="text-gray-400 text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
   const location = useLocation();
@@ -61,78 +79,90 @@ function AppContent() {
 
   if (isDemoPage) {
     return (
-      <Routes>
-        <Route path="/demo/ycz-store" element={<YCZStoreLiveDemo />} />
-        <Route path="/demo/ycz-dashboard" element={<YCZDashboardLiveDemo />} />
-        <Route path="/demo/gxv-store" element={<GxVaultStoreLiveDemo />} />
-        <Route path="/demo/gxv-dashboard" element={<GxVaultDashboardLiveDemo />} />
-        <Route path="/demo/hx-store" element={<HxToolsStoreLiveDemo />} />
-        <Route path="/demo/hx-dashboard" element={<HxToolsDashboardLiveDemo />} />
-        <Route path="/demo/car-store" element={<CarStoreLiveDemo />} />
-        <Route path="/demo/car-dashboard" element={<CarDashboardLiveDemo />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/demo/ycz-store" element={<YCZStoreLiveDemo />} />
+          <Route path="/demo/ycz-dashboard" element={<YCZDashboardLiveDemo />} />
+          <Route path="/demo/gxv-store" element={<GxVaultStoreLiveDemo />} />
+          <Route path="/demo/gxv-dashboard" element={<GxVaultDashboardLiveDemo />} />
+          <Route path="/demo/hx-store" element={<HxToolsStoreLiveDemo />} />
+          <Route path="/demo/hx-dashboard" element={<HxToolsDashboardLiveDemo />} />
+          <Route path="/demo/car-store" element={<CarStoreLiveDemo />} />
+          <Route path="/demo/car-dashboard" element={<CarDashboardLiveDemo />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isBuyPage) {
     return (
-      <Routes>
-        <Route path="/buy" element={<TemplateBuyPage />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/buy" element={<TemplateBuyPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isSetupPage || isTerminalSetup) {
     return (
-      <Routes>
-        <Route path="/setup" element={<TerminalSetupPage />} />
-        <Route path="/terminal-setup" element={<TerminalSetupPage />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/setup" element={<TerminalSetupPage />} />
+          <Route path="/terminal-setup" element={<TerminalSetupPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isCheckoutPage) {
     return (
-      <Routes>
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/checkout/success" element={<CheckoutResultPage type="success" />} />
-        <Route path="/checkout/failed" element={<CheckoutResultPage type="failed" />} />
-        <Route path="/checkout/cancelled" element={<CheckoutResultPage type="cancelled" />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutResultPage type="success" />} />
+          <Route path="/checkout/failed" element={<CheckoutResultPage type="failed" />} />
+          <Route path="/checkout/cancelled" element={<CheckoutResultPage type="cancelled" />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isMyDashboard) {
     return (
-      <Routes>
-        <Route path="/my-dashboard" element={
-          <ProtectedRoute>
-            <MyDashboardPage />
-          </ProtectedRoute>
-        } />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/my-dashboard" element={
+            <ProtectedRoute>
+              <MyDashboardPage />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isAdminPage) {
     return (
-      <Routes>
-        <Route path="/admin" element={
-          <ProtectedRoute requireAdmin>
-            <AdminLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<AdminOverview />} />
-          <Route path="tickets" element={<AdminTickets />} />
-          <Route path="templates" element={<AdminTemplates />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="announcements" element={<AdminAnnouncements />} />
-          <Route path="payments" element={<AdminPayments />} />
-          <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
-          <Route path="payment-gateways" element={<AdminPaymentGateways />} />
-          <Route path="settings" element={<AdminSettings />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/admin" element={
+            <ProtectedRoute requireAdmin>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<AdminOverview />} />
+            <Route path="tickets" element={<AdminTickets />} />
+            <Route path="templates" element={<AdminTemplates />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
+            <Route path="payment-gateways" element={<AdminPaymentGateways />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -140,19 +170,21 @@ function AppContent() {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
       <main>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/templates" element={<TemplatesPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/template/:id" element={<TemplatePreviewPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/refund" element={<RefundPage />} />
-          <Route path="/tutorials/:slug" element={<TutorialPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/template/:id" element={<TemplatePreviewPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/refund" element={<RefundPage />} />
+            <Route path="/tutorials/:slug" element={<TutorialPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>
