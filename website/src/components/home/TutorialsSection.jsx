@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { BookOpen, ShoppingCart, Palette, Globe, TrendingUp, Settings, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -19,6 +20,7 @@ export default function TutorialsSection() {
 
   const tutorials = [
     {
+      slug: 'ecommerce',
       icon: ShoppingCart,
       title: t('tutorials.items.ecommerce.title'),
       desc: t('tutorials.items.ecommerce.desc'),
@@ -30,6 +32,7 @@ export default function TutorialsSection() {
       readTime: t('tutorials.items.ecommerce.readTime'),
     },
     {
+      slug: 'seo',
       icon: TrendingUp,
       title: t('tutorials.items.seo.title'),
       desc: t('tutorials.items.seo.desc'),
@@ -41,6 +44,7 @@ export default function TutorialsSection() {
       readTime: t('tutorials.items.seo.readTime'),
     },
     {
+      slug: 'design',
       icon: Palette,
       title: t('tutorials.items.design.title'),
       desc: t('tutorials.items.design.desc'),
@@ -52,6 +56,7 @@ export default function TutorialsSection() {
       readTime: t('tutorials.items.design.readTime'),
     },
     {
+      slug: 'domain',
       icon: Globe,
       title: t('tutorials.items.domain.title'),
       desc: t('tutorials.items.domain.desc'),
@@ -63,6 +68,7 @@ export default function TutorialsSection() {
       readTime: t('tutorials.items.domain.readTime'),
     },
     {
+      slug: 'manage',
       icon: Settings,
       title: t('tutorials.items.manage.title'),
       desc: t('tutorials.items.manage.desc'),
@@ -74,6 +80,7 @@ export default function TutorialsSection() {
       readTime: t('tutorials.items.manage.readTime'),
     },
     {
+      slug: 'marketing',
       icon: BookOpen,
       title: t('tutorials.items.marketing.title'),
       desc: t('tutorials.items.marketing.desc'),
@@ -114,9 +121,10 @@ export default function TutorialsSection() {
           {tutorials.map((tutorial, i) => {
             const Icon = tutorial.icon;
             return (
-              <article
+              <Link
+                to={`/tutorials/${tutorial.slug}`}
                 key={i}
-                className={`group relative glass p-8 card-hover transition-all duration-700 cursor-pointer ${
+                className={`group relative glass p-8 card-hover transition-all duration-700 cursor-pointer block ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
                 style={{ transitionDelay: `${(i + 2) * 120}ms` }}
@@ -163,7 +171,7 @@ export default function TutorialsSection() {
                     <Arrow className="w-4 h-4" />
                   </div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>

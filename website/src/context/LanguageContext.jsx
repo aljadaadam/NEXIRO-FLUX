@@ -116,6 +116,194 @@ const translations = {
         },
       },
     },
+    tutorialContent: {
+      ecommerce: {
+        s1: {
+          heading: 'لماذا تحتاج متجراً إلكترونياً في 2026؟',
+          body: 'التجارة الإلكترونية أصبحت العمود الفقري للاقتصاد الرقمي. في 2026، تجاوز حجم التجارة الإلكترونية عالمياً 7 تريليون دولار. امتلاك متجر إلكتروني يعني الوصول لعملاء في كل مكان، بدون حدود جغرافية، وبتكاليف تشغيل أقل بكثير من المتاجر التقليدية. سواء كنت تبيع منتجات رقمية مثل الألعاب والبرمجيات، أو منتجات مادية مثل الإلكترونيات والملابس، فإن المتجر الإلكتروني هو بوابتك نحو النجاح.',
+        },
+        s2: {
+          heading: 'اختيار المنصة المناسبة لبناء متجرك',
+          body: 'اختيار المنصة هو أول وأهم قرار ستتخذه. تحتاج منصة سهلة الاستخدام، قابلة للتخصيص، وتدعم بوابات الدفع المتعددة. NEXIRO-FLUX يوفر لك كل ذلك مع قوالب احترافية جاهزة تناسب كافة المجالات — من بيع الأكواد الرقمية وبطاقات الشحن إلى المتاجر الكاملة. لا تحتاج خبرة برمجية، فقط اختر القالب وابدأ التخصيص.',
+        },
+        s3: {
+          heading: 'إضافة المنتجات وتنظيم الأقسام',
+          body: 'نظّم منتجاتك في أقسام وفئات واضحة تسهّل على العملاء التصفح والشراء. أضف صوراً عالية الجودة، أوصاف مفصّلة تتضمن الكلمات المفتاحية، والأسعار بعملات متعددة. استخدم نظام التاغات لتسهيل البحث داخل المتجر. تأكد من كتابة عناوين منتجات جذابة تحتوي على الكلمات التي يبحث عنها عملاؤك.',
+        },
+        s4: {
+          heading: 'ربط بوابات الدفع الإلكتروني',
+          body: 'وفّر لعملائك خيارات دفع متعددة وآمنة. من PayPal وStripe إلى بوابات الدفع المحلية مثل STC Pay وTap وFawry. NEXIRO-FLUX يدعم ربط بوابات الدفع بسهولة من لوحة التحكم بدون أي كود. التنوع في خيارات الدفع يزيد معدل إتمام الطلبات ويقلل نسبة التخلي عن سلة المشتريات.',
+        },
+        s5: {
+          heading: 'تأمين متجرك وحماية بيانات العملاء',
+          body: 'الأمان أولوية قصوى في التجارة الإلكترونية. تأكد من استخدام شهادة SSL لتشفير البيانات، تفعيل المصادقة الثنائية، وعمل نسخ احتياطية دورية. NEXIRO-FLUX يوفر حماية DDoS مدمجة وشهادة SSL مجانية مع كل متجر، بالإضافة لنسخ احتياطي يومي تلقائي حتى لا تفقد أي بيانات.',
+        },
+        s6: {
+          heading: 'إطلاق المتجر والبدء بالبيع',
+          body: 'بعد إعداد المنتجات وربط الدفع وتخصيص التصميم، حان وقت الإطلاق! شارك متجرك على وسائل التواصل الاجتماعي، أرسل إيميلات للعملاء المحتملين، واستخدم الإعلانات المدفوعة للوصول لجمهور أوسع. راقب أداء متجرك من لوحة التحكم وتتبع المبيعات والزوار لتحسين استراتيجيتك باستمرار.',
+        },
+        tips: {
+          t1: 'ابدأ بمنتجات قليلة وركّز على الجودة بدلاً من الكمية في البداية.',
+          t2: 'استخدم صوراً احترافية — الصورة الجيدة تساوي ألف كلمة في التجارة الإلكترونية.',
+          t3: 'اكتب أوصاف منتجات فريدة ولا تنسخها من مواقع أخرى لتحسين SEO.',
+          t4: 'فعّل إشعارات الطلبات الجديدة حتى لا تفوّت أي عملية بيع.',
+          t5: 'قدّم خدمة عملاء ممتازة — العميل الراضي يجلب عملاء جدد.',
+        },
+        conclusion: 'إنشاء متجر إلكتروني ناجح ليس بالأمر المعقد مع الأدوات الصحيحة. NEXIRO-FLUX يوفر لك كل ما تحتاجه لبناء متجر احترافي من الصفر خلال دقائق. ابدأ اليوم واستفد من القوالب الجاهزة والدعم الفني المتواصل لتحقيق أهدافك التجارية.',
+      },
+      seo: {
+        s1: {
+          heading: 'ما هو SEO ولماذا هو مهم لمتجرك؟',
+          body: 'تحسين محركات البحث (SEO) هو عملية تحسين موقعك ليظهر في النتائج الأولى لمحركات البحث مثل جوجل. أكثر من 68% من التجارب الرقمية تبدأ بمحرك بحث، و75% من المستخدمين لا يتجاوزون الصفحة الأولى. إذا لم يكن متجرك في الصفحة الأولى، فأنت تخسر عملاء كثيرين. SEO الجيد يجلب لك زوار مجانيين بشكل مستمر بدون إعلانات مدفوعة.',
+        },
+        s2: {
+          heading: 'البحث عن الكلمات المفتاحية المناسبة',
+          body: 'الكلمات المفتاحية هي الأساس. استخدم أدوات مثل Google Keyword Planner و Ubersuggest لاكتشاف الكلمات التي يبحث عنها عملاؤك المستهدفون. ركّز على الكلمات الطويلة (Long-tail keywords) مثل "أفضل متجر إلكتروني لبيع الأكواد الرقمية" بدلاً من كلمات عامة مثل "متجر إلكتروني". الكلمات الطويلة أقل منافسة وأعلى تحويلاً.',
+        },
+        s3: {
+          heading: 'تحسين بنية الموقع والروابط الداخلية',
+          body: 'بنية الموقع الجيدة تساعد محركات البحث على فهم محتواك وفهرسته. استخدم عناوين URL واضحة وقصيرة، أنشئ خريطة موقع (Sitemap)، وربط الصفحات ببعضها بروابط داخلية منطقية. تأكد أن كل صفحة منتج لها عنوان فريد (Title Tag) ووصف ميتا (Meta Description) يتضمن الكلمات المفتاحية المستهدفة.',
+        },
+        s4: {
+          heading: 'تحسين سرعة الموقع وتجربة المستخدم',
+          body: 'سرعة الموقع عامل ترتيب مهم في جوجل. الموقع البطيء يخسر زوار ويؤثر سلباً على ترتيبك. اضغط الصور، استخدم التخزين المؤقت (Cache)، وقلل ملفات CSS و JavaScript غير الضرورية. NEXIRO-FLUX يبني مواقع محسّنة للسرعة تلقائياً مع تحميل كسول للصور وتقنية CDN لتوصيل المحتوى بأسرع وقت.',
+        },
+        s5: {
+          heading: 'بناء الروابط الخارجية (Backlinks)',
+          body: 'الروابط الخارجية من مواقع موثوقة تعزز سلطة موقعك في نظر جوجل. أنشئ محتوى قيّم يستحق المشاركة، تواصل مع مدونين في مجالك، وشارك في المنتديات المتخصصة. تجنب شراء الروابط أو استخدام طرق ملتوية لأن جوجل يعاقب على ذلك. الجودة أهم من الكمية — رابط واحد من موقع موثوق أفضل من مئة رابط عشوائي.',
+        },
+        s6: {
+          heading: 'تحسين SEO للمتاجر بالعربية',
+          body: 'المحتوى العربي له فرص كبيرة في SEO بسبب قلة المنافسة مقارنة بالمحتوى الإنجليزي. اكتب محتوى أصلي وغني بالكلمات المفتاحية العربية، استخدم علامات الترقيم الصحيحة، وتأكد من دعم RTL في موقعك. لا تنسَ تحسين الصور بإضافة نص بديل (Alt Text) بالعربية لكل صورة في متجرك.',
+        },
+        tips: {
+          t1: 'حدّث محتواك باستمرار — جوجل يفضّل المواقع النشطة والمتجددة.',
+          t2: 'استخدم Google Search Console لمراقبة أداء موقعك واكتشاف المشاكل.',
+          t3: 'حسّن موقعك للبحث المحلي إذا كنت تستهدف منطقة جغرافية محددة.',
+          t4: 'أضف Schema Markup لمنتجاتك لتظهر بشكل مميز في نتائج البحث.',
+          t5: 'ركّز على تجربة المستخدم على الجوال — أكثر من 60% من عمليات البحث تتم من الهاتف.',
+        },
+        conclusion: 'SEO ليس عملية لمرة واحدة — إنه استثمار طويل المدى يحقق نتائج مذهلة مع الوقت. ابدأ بتطبيق هذه الاستراتيجيات اليوم وراقب تحسّن ترتيب متجرك في نتائج البحث. مع NEXIRO-FLUX، لديك أدوات SEO مدمجة تسهّل عليك العمل وتسرّع النتائج.',
+      },
+      design: {
+        s1: {
+          heading: 'أهمية التصميم الاحترافي في التجارة الإلكترونية',
+          body: 'الانطباع الأول يتكوّن خلال 0.05 ثانية فقط! تصميم متجرك هو أول ما يراه الزائر ويحدد إن كان سيبقى أو يغادر. 94% من الانطباعات الأولى مرتبطة بالتصميم، و75% من المستخدمين يحكمون على مصداقية الشركة من خلال تصميم موقعها. الاستثمار في تصميم احترافي يعني زيادة الثقة والمبيعات.',
+        },
+        s2: {
+          heading: 'اختيار الألوان والهوية البصرية',
+          body: 'الألوان تؤثر على قرارات الشراء بنسبة 85%. اختر لوحة ألوان متناسقة تعكس هوية علامتك التجارية. استخدم 2-3 ألوان رئيسية كحد أقصى مع لون مميز للأزرار والعناصر التفاعلية. تأكد من وجود تباين كافٍ بين النص والخلفية لسهولة القراءة. الألوان الدافئة مثل البرتقالي تحفّز على الشراء، بينما الأزرق يوحي بالثقة والأمان.',
+        },
+        s3: {
+          heading: 'تصميم تجربة مستخدم سلسة (UX)',
+          body: 'تجربة المستخدم تعني أن يجد العميل ما يبحث عنه بأقل جهد ممكن. صمّم قائمة تنقل واضحة، أضف شريط بحث بارز، واجعل عملية الشراء لا تتجاوز 3 خطوات. استخدم مبدأ "الأقل هو الأكثر" — لا تكدّس العناصر وأعطِ مساحة بيضاء كافية. كل نقرة إضافية يحتاجها العميل تعني خسارة محتملة لعملية بيع.',
+        },
+        s4: {
+          heading: 'التصميم المتجاوب للجوال',
+          body: 'أكثر من 70% من مشتريات التجارة الإلكترونية تتم عبر الجوال. متجرك يجب أن يعمل بشكل مثالي على جميع أحجام الشاشات. استخدم تصميم Mobile-First حيث تبدأ بالتصميم للجوال ثم توسّع للشاشات الأكبر. تأكد من أن الأزرار كبيرة بما يكفي للنقر بالإصبع وأن النصوص واضحة بدون تكبير.',
+        },
+        s5: {
+          heading: 'تصميم صفحة المنتج المثالية',
+          body: 'صفحة المنتج هي حيث يتّخذ العميل قرار الشراء. يجب أن تتضمن: صور عالية الجودة من زوايا متعددة، عنوان واضح ووصف مفصّل، السعر بارز مع أي عروض أو خصومات، زر "أضف للسلة" واضح ومميز بلون مختلف، تقييمات العملاء السابقين، ومعلومات الشحن والإرجاع.',
+        },
+        tips: {
+          t1: 'اختبر تصميمك مع مستخدمين حقيقيين قبل الإطلاق واستمع لملاحظاتهم.',
+          t2: 'استخدم خطوط واضحة وحجم خط لا يقل عن 16px للنصوص الأساسية.',
+          t3: 'أضف مؤشرات ثقة مثل شعارات بوابات الدفع وشهادات الأمان.',
+          t4: 'استخدم صور حقيقية بدلاً من الصور الجاهزة كلما أمكن ذلك.',
+        },
+        conclusion: 'التصميم الاحترافي ليس رفاهية — إنه ضرورة لنجاح متجرك الإلكتروني. مع قوالب NEXIRO-FLUX المصمّمة بمعايير عالمية، تحصل على تصميم احترافي جاهز يمكنك تخصيصه بسهولة ليعكس هوية علامتك التجارية.',
+      },
+      domain: {
+        s1: {
+          heading: 'لماذا اسم النطاق مهم لمتجرك؟',
+          body: 'اسم النطاق (Domain) هو عنوان متجرك على الإنترنت وهوية علامتك التجارية الرقمية. اسم نطاق جيد يكون سهل التذكر، قصير، وذو صلة بنشاطك التجاري. تجنب الأسماء الطويلة أو المعقدة أو التي تحتوي أرقاماً وشرطات. اسم النطاق يبقى معك طوال عمر مشروعك، لذا اختره بعناية.',
+        },
+        s2: {
+          heading: 'نصائح لاختيار اسم نطاق مميز',
+          body: 'اختر اسماً يعكس نشاطك التجاري ويسهل تهجئته. تأكد أنه غير مشابه لعلامات تجارية أخرى لتجنب المشاكل القانونية. استخدم امتداد .com لأنه الأكثر شهرة وثقة، أو .store للمتاجر. تحقق من توفر الاسم على وسائل التواصل الاجتماعي أيضاً للحفاظ على هوية موحدة. يمكنك استخدام أدوات مثل Namecheap أو GoDaddy للبحث عن النطاقات المتاحة.',
+        },
+        s3: {
+          heading: 'أنواع الاستضافة: مشتركة، VPS، وسحابية',
+          body: 'الاستضافة المشتركة مناسبة للمبتدئين بتكلفة منخفضة لكن أداءها محدود. VPS (الخادم الافتراضي) يوفر موارد مخصصة وأداء أفضل للمتاجر المتوسطة. الاستضافة السحابية (Cloud) هي الأفضل للمتاجر الكبيرة لأنها تتوسع تلقائياً مع زيادة الزوار. NEXIRO-FLUX يوفر استضافة سحابية محسّنة تناسب جميع أحجام المتاجر.',
+        },
+        s4: {
+          heading: 'ما الذي تبحث عنه في مقدم الاستضافة',
+          body: 'عند اختيار مقدم استضافة، تحقق من: ضمان التشغيل (99.9%+ uptime)، سرعة الخوادم والموقع الجغرافي، الدعم الفني المتوفر 24/7، شهادة SSL مجانية، النسخ الاحتياطي التلقائي، وسهولة الترقية. لا تختر أرخص خيار — وقت التوقف وبطء الموقع يكلّفك أكثر من فرق السعر.',
+        },
+        tips: {
+          t1: 'سجّل نطاقك لعدة سنوات مقدماً لتجنب فقدانه عند انتهاء الصلاحية.',
+          t2: 'فعّل حماية خصوصية النطاق (WHOIS Privacy) لحماية بياناتك الشخصية.',
+          t3: 'اختر استضافة قريبة جغرافياً من جمهورك المستهدف لتحسين السرعة.',
+          t4: 'تأكد من وجود خطة نسخ احتياطي يومية تلقائية.',
+        },
+        conclusion: 'اسم النطاق والاستضافة هما أساس تواجدك الرقمي. اختيارهما بعناية يوفر عليك مشاكل كثيرة في المستقبل. مع NEXIRO-FLUX، لا تحتاج للقلق بشأن هذه التفاصيل التقنية — نحن نوفر استضافة سحابية موثوقة وسريعة مع كل خطة.',
+      },
+      manage: {
+        s1: {
+          heading: 'أهمية نظام إدارة الطلبات الفعّال',
+          body: 'نظام إدارة الطلبات الجيد هو العمود الفقري لأي متجر إلكتروني ناجح. يضمن تجربة سلسة للعملاء من لحظة الشراء حتى التسليم. نظام فعّال يقلل الأخطاء، يسرّع المعالجة، ويزيد رضا العملاء. بدون نظام جيد، ستغرق في الفوضى مع زيادة عدد الطلبات.',
+        },
+        s2: {
+          heading: 'تتبع الطلبات من الشراء حتى التسليم',
+          body: 'كل طلب يمر بمراحل: استلام، تأكيد، تجهيز، شحن، وتسليم. من لوحة تحكم NEXIRO-FLUX، يمكنك رؤية جميع الطلبات وحالاتها بنظرة واحدة. أرسل تحديثات تلقائية للعملاء عند كل مرحلة لزيادة الثقة. وفّر للعملاء رابط تتبع مباشر لمتابعة شحناتهم.',
+        },
+        s3: {
+          heading: 'إدارة المخزون بذكاء',
+          body: 'راقب مستويات المخزون بشكل مستمر لتجنب نفاد المنتجات أو تكدّسها. فعّل التنبيهات التلقائية عند انخفاض المخزون، واستخدم تقارير المبيعات لتوقع الطلب القادم. صنّف منتجاتك حسب الأكثر مبيعاً والأقل حركة لتحسين قرارات الشراء والتخزين.',
+        },
+        s4: {
+          heading: 'التعامل مع المرتجعات والاستبدال',
+          body: 'سياسة إرجاع واضحة وسهلة تزيد ثقة العملاء في متجرك. حدّد شروط الإرجاع بوضوح (المدة، الحالة، الاستثناءات) واعرضها في مكان بارز. اجعل عملية الإرجاع بسيطة قدر الإمكان — العميل الذي يعود منتجاً بسهولة سيشتري مرة أخرى.',
+        },
+        s5: {
+          heading: 'استخدام التقارير والتحليلات',
+          body: 'البيانات هي أفضل صديق لصاحب المتجر. راقب تقارير المبيعات اليومية، أكثر المنتجات مبيعاً، متوسط قيمة الطلب، ومعدل التحويل. استخدم هذه البيانات لاتخاذ قرارات مبنية على أرقام حقيقية. لوحة تحكم NEXIRO-FLUX توفر لك تقارير مفصّلة وسهلة الفهم.',
+        },
+        tips: {
+          t1: 'خصص وقتاً يومياً ثابتاً لمراجعة الطلبات الجديدة ومعالجتها.',
+          t2: 'استخدم أكواد المنتجات (SKU) لتسهيل تتبع المخزون.',
+          t3: 'أتمت العمليات المتكررة مثل رسائل تأكيد الطلب وتحديثات الشحن.',
+          t4: 'راجع تقارير المبيعات أسبوعياً لاكتشاف الأنماط والفرص.',
+          t5: 'درّب فريقك على النظام لضمان سرعة ودقة المعالجة.',
+        },
+        conclusion: 'إدارة الطلبات والمخزون باحترافية هي مفتاح نمو متجرك الإلكتروني. مع لوحة تحكم NEXIRO-FLUX، لديك كل الأدوات التي تحتاجها لإدارة عملك بكفاءة من مكان واحد. ابدأ بتنظيم عملياتك اليوم وشاهد الفرق في رضا عملائك.',
+      },
+      marketing: {
+        s1: {
+          heading: 'لماذا التسويق الرقمي ضروري لمتجرك؟',
+          body: 'بناء متجر إلكتروني ممتاز بدون تسويق كمن يفتح مطعماً رائعاً في شارع مهجور. التسويق الرقمي يجلب الزوار ويحوّلهم لعملاء ثم عملاء متكررين. في 2026، الإنفاق على الإعلانات الرقمية تجاوز 700 مليار دولار عالمياً — هذا يدل على أهمية التسويق في نجاح أي مشروع إلكتروني.',
+        },
+        s2: {
+          heading: 'التسويق عبر وسائل التواصل الاجتماعي',
+          body: 'وسائل التواصل الاجتماعي هي أقوى أدوات التسويق المجاني. أنشئ حسابات احترافية على إنستجرام وتويتر وتيك توك وفيسبوك. انشر محتوى قيّم ومتنوع: صور المنتجات، فيديوهات مراجعات، قصص العملاء، وعروض حصرية. التفاعل مع المتابعين يبني مجتمعاً حول علامتك التجارية ويزيد الولاء.',
+        },
+        s3: {
+          heading: 'الإعلانات المدفوعة: جوجل وفيسبوك',
+          body: 'الإعلانات المدفوعة تعطيك نتائج سريعة ومستهدفة. إعلانات جوجل (Google Ads) ممتازة للوصول لمن يبحث عن منتجاتك. إعلانات فيسبوك وإنستجرام تستهدف جمهوراً بناءً على الاهتمامات والسلوك. ابدأ بميزانية صغيرة واختبر عدة إعلانات لمعرفة ما يعمل بشكل أفضل، ثم زد الميزانية على الإعلانات الناجحة.',
+        },
+        s4: {
+          heading: 'التسويق بالمحتوى وبناء السلطة',
+          body: 'المحتوى القيّم يجذب العملاء بشكل طبيعي ويبني ثقتهم بك. أنشئ مدونة على متجرك تشارك نصائح ومقالات مفيدة في مجالك. صوّر فيديوهات تعليمية وأنشر على يوتيوب. المحتوى الجيد يحسّن SEO ويجلب زوار مجانيين لشهور وسنوات بعد نشره.',
+        },
+        s5: {
+          heading: 'البريد الإلكتروني: القناة الأعلى عائداً',
+          body: 'التسويق بالبريد الإلكتروني يحقق أعلى عائد استثمار — 36$ لكل 1$ يُنفق! اجمع قائمة بريدية من زوار متجرك بتقديم عروض حصرية أو محتوى مجاني. أرسل نشرات بريدية أسبوعية بالمنتجات الجديدة والعروض. لا تنسَ رسائل سلة المشتريات المتروكة — تسترجع 10-15% من المبيعات المفقودة.',
+        },
+        s6: {
+          heading: 'التسويق بالمؤثرين والتعاونات',
+          body: 'التعاون مع المؤثرين (Influencers) في مجالك يعرّض منتجاتك لجمهور جديد ومستهدف. لا يشترط العمل مع مؤثرين كبار — المؤثرون الصغار (Micro-influencers) بـ 5,000-50,000 متابع غالباً يحققون تفاعلاً أعلى وتكلفة أقل. قدّم لهم منتجات مجانية أو عمولة على كل بيع عبر كود خصم خاص بهم.',
+        },
+        tips: {
+          t1: 'خصص 10-20% من إيراداتك للتسويق لضمان نمو مستدام.',
+          t2: 'اختبر قنوات تسويق مختلفة واعرف أين يتواجد جمهورك.',
+          t3: 'استخدم أكواد خصم حصرية لمتابعي كل قناة لقياس الأداء.',
+          t4: 'أنشئ تقويم محتوى شهري لضمان الانتظام في النشر.',
+          t5: 'راقب مقاييس الأداء (ROI, ROAS, CPA) لتحسين حملاتك.',
+        },
+        conclusion: 'التسويق الرقمي الفعّال هو الفرق بين متجر ناجح وآخر غير معروف. لا تعتمد على قناة واحدة — نوّع استراتيجياتك وقِس النتائج باستمرار. مع NEXIRO-FLUX والأدوات التي يوفرها، لديك الأساس التقني القوي لبناء حملات تسويقية ناجحة تنمّي مبيعاتك.',
+      },
+    },
     cta: {
       title: 'جاهز تبدأ رحلتك الرقمية؟',
       subtitle: 'انضم لآلاف العملاء السعداء. أول 14 يوم مجاناً، بدون بطاقة ائتمان.',
@@ -270,8 +458,195 @@ const translations = {
         },
       },
     },
+    tutorialContent: {
+      ecommerce: {
+        s1: {
+          heading: 'Why You Need an Online Store in 2026',
+          body: 'E-commerce has become the backbone of the digital economy. In 2026, global e-commerce surpassed $7 trillion. Owning an online store means reaching customers everywhere, without geographical limits, and with much lower operating costs than traditional stores. Whether you sell digital products like game codes and software, or physical products like electronics and clothing, an online store is your gateway to success.',
+        },
+        s2: {
+          heading: 'Choosing the Right Platform for Your Store',
+          body: 'Choosing the right platform is the first and most critical decision. You need a platform that is easy to use, customizable, and supports multiple payment gateways. NEXIRO-FLUX provides all of this with professional ready-made templates suitable for all fields — from selling digital codes and gift cards to full-featured stores. No coding experience needed — just pick a template and start customizing.',
+        },
+        s3: {
+          heading: 'Adding Products and Organizing Categories',
+          body: 'Organize your products into clear categories that make it easy for customers to browse and buy. Add high-quality images, detailed descriptions with keywords, and prices in multiple currencies. Use a tagging system to make in-store search easier. Make sure to write catchy product titles that contain the words your customers search for.',
+        },
+        s4: {
+          heading: 'Integrating Payment Gateways',
+          body: 'Offer your customers multiple secure payment options. From PayPal and Stripe to local payment gateways like STC Pay, Tap, and Fawry. NEXIRO-FLUX supports easy payment gateway integration from the dashboard without any code. Diversity in payment options increases checkout completion rates and reduces cart abandonment.',
+        },
+        s5: {
+          heading: 'Securing Your Store and Protecting Customer Data',
+          body: 'Security is a top priority in e-commerce. Ensure you use an SSL certificate for data encryption, enable two-factor authentication, and make regular backups. NEXIRO-FLUX provides built-in DDoS protection and a free SSL certificate with every store, plus automatic daily backups so you never lose any data.',
+        },
+        s6: {
+          heading: 'Launching Your Store and Starting to Sell',
+          body: 'After setting up products, integrating payments, and customizing the design, it\'s time to launch! Share your store on social media, send emails to potential customers, and use paid ads to reach a wider audience. Monitor your store\'s performance from the dashboard and track sales and visitors to continuously improve your strategy.',
+        },
+        tips: {
+          t1: 'Start with few products and focus on quality over quantity in the beginning.',
+          t2: 'Use professional images — a good photo is worth a thousand words in e-commerce.',
+          t3: 'Write unique product descriptions and don\'t copy from other sites to improve SEO.',
+          t4: 'Enable new order notifications so you never miss a sale.',
+          t5: 'Provide excellent customer service — a happy customer brings new customers.',
+        },
+        conclusion: 'Creating a successful online store isn\'t complicated with the right tools. NEXIRO-FLUX provides everything you need to build a professional store from scratch in minutes. Start today and take advantage of ready-made templates and continuous technical support to achieve your business goals.',
+      },
+      seo: {
+        s1: {
+          heading: 'What is SEO and Why Does It Matter for Your Store?',
+          body: 'Search Engine Optimization (SEO) is the process of improving your website to rank in the top results of search engines like Google. Over 68% of online experiences begin with a search engine, and 75% of users never scroll past the first page. If your store isn\'t on page one, you\'re losing many potential customers. Good SEO brings you free, continuous traffic without paid ads.',
+        },
+        s2: {
+          heading: 'Finding the Right Keywords',
+          body: 'Keywords are the foundation. Use tools like Google Keyword Planner and Ubersuggest to discover what your target customers are searching for. Focus on long-tail keywords like "best online store for digital game codes" instead of generic terms like "online store". Long-tail keywords have less competition and higher conversion rates.',
+        },
+        s3: {
+          heading: 'Optimizing Site Structure and Internal Links',
+          body: 'A good site structure helps search engines understand and index your content. Use clear, short URLs, create a Sitemap, and link pages together with logical internal links. Ensure every product page has a unique Title Tag and Meta Description that includes your target keywords.',
+        },
+        s4: {
+          heading: 'Improving Site Speed and User Experience',
+          body: 'Site speed is an important ranking factor on Google. A slow site loses visitors and negatively affects your ranking. Compress images, use caching, and minimize unnecessary CSS and JavaScript files. NEXIRO-FLUX builds speed-optimized sites automatically with lazy image loading and CDN technology for the fastest content delivery.',
+        },
+        s5: {
+          heading: 'Building Quality Backlinks',
+          body: 'External links from trusted websites boost your site\'s authority in Google\'s eyes. Create valuable shareable content, connect with bloggers in your niche, and participate in specialized forums. Avoid buying links or using black-hat techniques as Google penalizes that. Quality over quantity — one link from a trusted site is better than a hundred random ones.',
+        },
+        s6: {
+          heading: 'SEO Optimization for Arabic Content',
+          body: 'Arabic content has great SEO opportunities due to less competition compared to English content. Write original, keyword-rich Arabic content, use proper punctuation, and ensure your site supports RTL. Don\'t forget to optimize images by adding Arabic Alt Text to every image in your store.',
+        },
+        tips: {
+          t1: 'Update your content regularly — Google prefers active and fresh websites.',
+          t2: 'Use Google Search Console to monitor your site\'s performance and discover issues.',
+          t3: 'Optimize for local search if you target a specific geographic area.',
+          t4: 'Add Schema Markup to your products to stand out in search results.',
+          t5: 'Focus on mobile UX — over 60% of searches happen on phones.',
+        },
+        conclusion: 'SEO is not a one-time task — it\'s a long-term investment that delivers amazing results over time. Start applying these strategies today and watch your store\'s ranking improve. With NEXIRO-FLUX, you have built-in SEO tools that make the job easier and speed up results.',
+      },
+      design: {
+        s1: {
+          heading: 'The Importance of Professional Design in E-commerce',
+          body: 'First impressions form in just 0.05 seconds! Your store\'s design is the first thing visitors see and determines whether they stay or leave. 94% of first impressions are design-related, and 75% of users judge a company\'s credibility by its website design. Investing in professional design means more trust and more sales.',
+        },
+        s2: {
+          heading: 'Choosing Colors and Visual Identity',
+          body: 'Colors influence 85% of purchasing decisions. Choose a consistent color palette that reflects your brand identity. Use a maximum of 2-3 main colors with one accent color for buttons and interactive elements. Ensure sufficient contrast between text and background for readability. Warm colors like orange encourage buying, while blue conveys trust and security.',
+        },
+        s3: {
+          heading: 'Designing a Smooth User Experience (UX)',
+          body: 'User experience means the customer finds what they\'re looking for with minimal effort. Design clear navigation menus, add a prominent search bar, and keep the checkout process under 3 steps. Follow the "less is more" principle — don\'t clutter elements and provide sufficient white space. Every extra click a customer needs means a potential lost sale.',
+        },
+        s4: {
+          heading: 'Responsive Mobile Design',
+          body: 'Over 70% of e-commerce purchases happen on mobile. Your store must work perfectly on all screen sizes. Use a Mobile-First design approach where you start designing for mobile then expand to larger screens. Ensure buttons are large enough for finger tapping and text is readable without zooming.',
+        },
+        s5: {
+          heading: 'Designing the Perfect Product Page',
+          body: 'The product page is where customers make their buying decision. It should include: high-quality images from multiple angles, a clear title and detailed description, a prominent price with any offers or discounts, a clear "Add to Cart" button in a distinctive color, previous customer reviews, and shipping and return information.',
+        },
+        tips: {
+          t1: 'Test your design with real users before launch and listen to their feedback.',
+          t2: 'Use clear fonts and a minimum font size of 16px for body text.',
+          t3: 'Add trust indicators like payment gateway logos and security certificates.',
+          t4: 'Use real photos instead of stock images whenever possible.',
+        },
+        conclusion: 'Professional design isn\'t a luxury — it\'s a necessity for your online store\'s success. With NEXIRO-FLUX templates designed to global standards, you get a professional, ready-made design that you can easily customize to reflect your brand identity.',
+      },
+      domain: {
+        s1: {
+          heading: 'Why Your Domain Name Matters',
+          body: 'Your domain name is your store\'s address on the internet and your digital brand identity. A good domain name is easy to remember, short, and relevant to your business. Avoid long, complex names or ones with numbers and hyphens. Your domain stays with you for the life of your project, so choose wisely.',
+        },
+        s2: {
+          heading: 'Tips for Choosing a Great Domain Name',
+          body: 'Pick a name that reflects your business and is easy to spell. Make sure it\'s not similar to other trademarks to avoid legal issues. Use the .com extension as it\'s the most recognized and trusted, or .store for shops. Check name availability on social media too for a unified identity. You can use tools like Namecheap or GoDaddy to search for available domains.',
+        },
+        s3: {
+          heading: 'Hosting Types: Shared, VPS, and Cloud',
+          body: 'Shared hosting is suitable for beginners at low cost but with limited performance. VPS (Virtual Private Server) provides dedicated resources and better performance for medium stores. Cloud hosting is best for large stores as it scales automatically with traffic increases. NEXIRO-FLUX provides optimized cloud hosting suitable for all store sizes.',
+        },
+        s4: {
+          heading: 'What to Look for in a Hosting Provider',
+          body: 'When choosing a hosting provider, check: uptime guarantee (99.9%+), server speed and geographic location, 24/7 technical support, free SSL certificate, automatic backups, and easy upgrades. Don\'t choose the cheapest option — downtime and slow sites cost more than the price difference.',
+        },
+        tips: {
+          t1: 'Register your domain for several years in advance to avoid losing it at expiration.',
+          t2: 'Enable WHOIS Privacy protection to safeguard your personal information.',
+          t3: 'Choose hosting geographically close to your target audience for better speed.',
+          t4: 'Ensure there\'s an automatic daily backup plan.',
+        },
+        conclusion: 'Your domain name and hosting are the foundation of your digital presence. Choosing them carefully saves you many problems in the future. With NEXIRO-FLUX, you don\'t need to worry about these technical details — we provide reliable, fast cloud hosting with every plan.',
+      },
+      manage: {
+        s1: {
+          heading: 'The Importance of an Efficient Order Management System',
+          body: 'A good order management system is the backbone of any successful online store. It ensures a smooth customer experience from purchase to delivery. An efficient system reduces errors, speeds up processing, and increases customer satisfaction. Without a good system, you\'ll drown in chaos as order volume grows.',
+        },
+        s2: {
+          heading: 'Tracking Orders from Purchase to Delivery',
+          body: 'Every order goes through stages: received, confirmed, prepared, shipped, and delivered. From the NEXIRO-FLUX dashboard, you can see all orders and their statuses at a glance. Send automatic updates to customers at each stage to build trust. Provide customers with a direct tracking link to follow their shipments.',
+        },
+        s3: {
+          heading: 'Smart Inventory Management',
+          body: 'Monitor inventory levels continuously to avoid stockouts or overstocking. Enable automatic alerts when stock is low, and use sales reports to forecast future demand. Categorize your products by best-sellers and slow-movers to improve purchasing and storage decisions.',
+        },
+        s4: {
+          heading: 'Handling Returns and Exchanges',
+          body: 'A clear and easy return policy increases customer trust in your store. Define return conditions clearly (duration, condition, exceptions) and display them prominently. Make the return process as simple as possible — a customer who returns a product easily will buy again.',
+        },
+        s5: {
+          heading: 'Using Reports and Analytics',
+          body: 'Data is a store owner\'s best friend. Monitor daily sales reports, best-selling products, average order value, and conversion rate. Use this data to make decisions based on real numbers. The NEXIRO-FLUX dashboard provides you with detailed, easy-to-understand reports.',
+        },
+        tips: {
+          t1: 'Set a fixed daily time to review and process new orders.',
+          t2: 'Use product SKU codes to make inventory tracking easier.',
+          t3: 'Automate repetitive tasks like order confirmation emails and shipping updates.',
+          t4: 'Review sales reports weekly to discover patterns and opportunities.',
+          t5: 'Train your team on the system to ensure speed and accuracy in processing.',
+        },
+        conclusion: 'Professional order and inventory management is the key to growing your online store. With the NEXIRO-FLUX dashboard, you have all the tools you need to run your business efficiently from one place. Start organizing your operations today and see the difference in customer satisfaction.',
+      },
+      marketing: {
+        s1: {
+          heading: 'Why Digital Marketing Is Essential for Your Store',
+          body: 'Building an excellent online store without marketing is like opening a great restaurant on a deserted street. Digital marketing brings visitors and converts them into customers, then repeat customers. In 2026, digital ad spending exceeded $700 billion globally — this shows how important marketing is for any online business\'s success.',
+        },
+        s2: {
+          heading: 'Social Media Marketing',
+          body: 'Social media is the most powerful free marketing tool. Create professional accounts on Instagram, Twitter, TikTok, and Facebook. Post valuable, varied content: product photos, review videos, customer stories, and exclusive offers. Engaging with followers builds a community around your brand and increases loyalty.',
+        },
+        s3: {
+          heading: 'Paid Advertising: Google and Facebook',
+          body: 'Paid ads give you fast, targeted results. Google Ads are excellent for reaching people searching for your products. Facebook and Instagram ads target audiences based on interests and behavior. Start with a small budget, test multiple ads to find what works best, then increase budget on successful ones.',
+        },
+        s4: {
+          heading: 'Content Marketing and Building Authority',
+          body: 'Valuable content attracts customers naturally and builds their trust in you. Create a blog on your store sharing helpful tips and articles in your field. Record educational videos and publish on YouTube. Good content improves SEO and brings free visitors for months and years after publication.',
+        },
+        s5: {
+          heading: 'Email Marketing: The Highest ROI Channel',
+          body: 'Email marketing delivers the highest return on investment — $36 for every $1 spent! Build an email list from store visitors by offering exclusive deals or free content. Send weekly newsletters about new products and promotions. Don\'t forget abandoned cart emails — they recover 10-15% of lost sales.',
+        },
+        s6: {
+          heading: 'Influencer Marketing and Collaborations',
+          body: 'Collaborating with influencers in your niche exposes your products to a new, targeted audience. You don\'t need to work with big influencers — micro-influencers with 5,000-50,000 followers often achieve higher engagement at lower cost. Offer them free products or a commission on each sale through a unique discount code.',
+        },
+        tips: {
+          t1: 'Allocate 10-20% of your revenue to marketing for sustainable growth.',
+          t2: 'Test different marketing channels and find where your audience is.',
+          t3: 'Use exclusive discount codes for each channel\'s followers to measure performance.',
+          t4: 'Create a monthly content calendar to ensure consistent publishing.',
+          t5: 'Monitor performance metrics (ROI, ROAS, CPA) to optimize your campaigns.',
+        },
+        conclusion: 'Effective digital marketing is the difference between a successful store and an unknown one. Don\'t rely on one channel — diversify your strategies and measure results continuously. With NEXIRO-FLUX and the tools it provides, you have the strong technical foundation to build successful marketing campaigns that grow your sales.',
+      },
+    },
     cta: {
-      title: 'Ready to Start Your Digital Journey?',
       subtitle: 'Join thousands of happy clients. First 14 days free, no credit card required.',
       button: 'Start Free Now',
     },
