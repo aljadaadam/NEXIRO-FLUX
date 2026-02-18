@@ -93,7 +93,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
 
       // جلب التخصيص (ألوان، خط، تخطيط) — بدون كاش
-      const customRes = await fetch(`/api/customization?_t=${Date.now()}`, { headers, cache: 'no-store' });
+      // نستخدم /store (بدون مصادقة) حتى يعمل للعملاء والأدمن معاً
+      const customRes = await fetch(`/api/customization/store?_t=${Date.now()}`, { headers, cache: 'no-store' });
       if (customRes.ok && myId === fetchIdRef.current) {
         const data = await customRes.json();
         const c = data.customization || data;

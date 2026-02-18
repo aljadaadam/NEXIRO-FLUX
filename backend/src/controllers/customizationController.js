@@ -94,6 +94,11 @@ async function getStoreCustomization(req, res) {
     // Strip admin_slug from public response
     if (customization) {
       delete customization.admin_slug;
+
+      // إذا store_name فارغ — نجلبه من جدول sites
+      if (!customization.store_name && req.site && req.site.name) {
+        customization.store_name = req.site.name;
+      }
     }
 
     res.json({
