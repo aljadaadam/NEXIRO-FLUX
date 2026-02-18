@@ -67,7 +67,6 @@ const translations: Record<string, string> = {
   // ─── الفروع ───
   'فروعنا': 'Our Branches',
   'الفرع الرئيسي': 'Main Branch',
-  'فرع': 'Branch',
   'ساعات العمل': 'Working Hours',
   'العنوان': 'Address',
   'الهاتف': 'Phone',
@@ -97,8 +96,8 @@ const translations: Record<string, string> = {
   'التخصيص': 'Customize',
   'الإعدادات': 'Settings',
   'إجمالي السيارات': 'Total Cars',
-  'سيارات جديدة': 'New Cars',
-  'سيارات مستعملة': 'Used Cars',
+  'السيارات الجديدة': 'New Cars',
+  'السيارات المستعملة': 'Used Cars',
   'إجمالي الطلبات': 'Total Orders',
   'طلبات معلقة': 'Pending Orders',
   'إجمالي العملاء': 'Total Customers',
