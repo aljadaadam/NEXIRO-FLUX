@@ -83,7 +83,7 @@ const translations: Record<string, string> = {
   'سنتواصل معك قريباً': 'We will contact you soon',
 
   // ─── فوتر ───
-  'جميع الحقوق محفوظة': 'All Rights Reserved',
+  'جميع الحقوق محفوظة — قالب من': 'All Rights Reserved — Template by',
   'سياسة الخصوصية': 'Privacy Policy',
   'الشروط والأحكام': 'Terms & Conditions',
 

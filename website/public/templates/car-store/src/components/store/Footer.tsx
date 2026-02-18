@@ -79,11 +79,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{ borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`, paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <p style={{ color: mutedColor, fontSize: 13 }}>
-            © {new Date().getFullYear()} {storeName}. {t('جميع الحقوق محفوظة')}
-          </p>
-          <div style={{ display: 'flex', gap: 20 }}>
+        <div style={{ borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`, paddingTop: 20, textAlign: 'center' }}>
+          <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
             <a href="/privacy" style={{ color: mutedColor, fontSize: 13, transition: 'color 0.3s' }}
               onMouseEnter={e => (e.currentTarget.style.color = accent)}
               onMouseLeave={e => (e.currentTarget.style.color = mutedColor)}>
@@ -95,6 +92,15 @@ export default function Footer() {
               {t('الشروط والأحكام')}
             </a>
           </div>
+          <p style={{ color: mutedColor, fontSize: 12 }}>
+            © {new Date().getFullYear()} {storeName}. {t('جميع الحقوق محفوظة — قالب من')}{' '}
+            <a href="https://www.nexiroflux.com/" target="_blank" rel="noopener noreferrer"
+              style={{ color: mutedColor, textDecoration: 'underline', transition: 'color 0.3s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = accent)}
+              onMouseLeave={e => (e.currentTarget.style.color = mutedColor)}>
+              NEXIRO-FLUX
+            </a>
+          </p>
         </div>
       </div>
     </footer>
