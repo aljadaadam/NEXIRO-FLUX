@@ -42,6 +42,7 @@ const PLATFORM_HOSTS = [
   'demo.nexiroflux.com',
   'demo-hx.nexiroflux.com',
   'demo-car.nexiroflux.com',
+  'demo-gxv.nexiroflux.com',
 ];
 
 function isPlatformHost(host) {

@@ -3,10 +3,11 @@ import LiveDemoFrame from '../../components/demo/LiveDemoFrame';
 export default function GxVaultStoreLiveDemo() {
   return (
     <LiveDemoFrame
-      path="/"
-      title="GxVault Store — المعاينة الحية"
+      path="/?demo=1"
+      title="GxVault Store — العرض التجريبي"
       storeName="GxVault Store"
-      comingSoon
+      storeUrl="https://demo-gxv.nexiroflux.com"
+      templateLink="/template/game-topup-store"
     />
   );
 }
