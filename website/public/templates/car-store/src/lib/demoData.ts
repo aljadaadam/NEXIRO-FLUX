@@ -287,31 +287,34 @@ const demoStats: DashboardStats = {
 export function getDemoResponse(endpoint: string, method: string): any {
   const e = endpoint.replace(/\?.*$/, '');
   if (method === 'GET') {
-    if (e === '/products' || e === '/products/') return { products: demoCars };
-    if (e.match(/^\/products\/\d+$/)) {
+    if (e === '/products' || e === '/products/' || e === '/products/public' || e === '/products/public/') return { products: demoCars };
+    if (e.match(/^\/products\/(public\/)?\d+$/)) {
       const id = parseInt(e.split('/').pop()!);
       return { product: demoCars.find(c => c.id === id) || demoCars[0] };
     }
-    if (e === '/branches' || e === '/branches/') return { branches: demoBranches };
-    if (e.match(/^\/branches\/\d+$/)) {
+    if (e === '/branches' || e === '/branches/' || e === '/branches/public' || e === '/branches/public/') return { branches: demoBranches };
+    if (e.match(/^\/branches\/(public\/)?\d+$/)) {
       const id = parseInt(e.split('/').pop()!);
       return { branch: demoBranches.find(b => b.id === id) || demoBranches[0] };
     }
-    if (e === '/orders' || e === '/orders/') return { orders: demoOrders };
+    if (e === '/orders' || e === '/orders/' || e === '/customers/orders') return { orders: demoOrders };
     if (e === '/dashboard/stats') return demoStats;
     if (e === '/customers') return { customers: demoCustomers };
     if (e === '/customization/store' || e === '/customization') return { customization: {} };
-    if (e === '/settings') return { settings: {} };
+    if (e === '/settings' || e === '/setup/my-site') return { settings: {} };
   }
   if (method === 'POST') {
-    if (e === '/orders') return { order: { id: 99, status: 'pending' }, message: 'تم إرسال الطلب بنجاح! سيتم التواصل معك خلال 24 ساعة.' };
+    if (e === '/orders' || e === '/customers/orders') return { order: { id: 99, status: 'pending' }, message: 'تم إرسال الطلب بنجاح! سيتم التواصل معك خلال 24 ساعة.' };
     if (e === '/products') return { product: { id: 99 }, message: 'تم إضافة السيارة بنجاح' };
     if (e === '/branches') return { branch: { id: 99 }, message: 'تم إضافة الفرع بنجاح' };
     if (e === '/auth/login') return { token: 'demo-admin-token', user: { id: 1, username: 'admin', role: 'admin' } };
-    if (e === '/auth/customer/login') return { token: 'demo-customer-token' };
-    if (e === '/auth/customer/register') return { token: 'demo-customer-token' };
+    if (e === '/customers/login') return { token: 'demo-customer-token' };
+    if (e === '/customers/register') return { token: 'demo-customer-token' };
   }
   if (method === 'PUT') {
+    return { message: 'تم التحديث بنجاح' };
+  }
+  if (method === 'PATCH') {
     return { message: 'تم التحديث بنجاح' };
   }
   if (method === 'DELETE') {

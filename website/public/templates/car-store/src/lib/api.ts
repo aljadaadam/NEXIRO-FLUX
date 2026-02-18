@@ -86,14 +86,14 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
 
 // ─── API المتجر (للعملاء) ───
 export const storeApi = {
-  getCars: (params?: string) => customerFetch(`/products${params ? `?${params}` : ''}`),
-  getCar: (id: number) => customerFetch(`/products/${id}`),
-  getBranches: () => customerFetch('/branches'),
-  getBranch: (id: number) => customerFetch(`/branches/${id}`),
-  createOrder: (data: Record<string, unknown>) => customerFetch('/orders', { method: 'POST', body: JSON.stringify(data) }),
-  getOrders: () => customerFetch('/orders'),
-  login: (data: Record<string, unknown>) => customerFetch('/auth/customer/login', { method: 'POST', body: JSON.stringify(data) }),
-  register: (data: Record<string, unknown>) => customerFetch('/auth/customer/register', { method: 'POST', body: JSON.stringify(data) }),
+  getCars: (params?: string) => customerFetch(`/products/public${params ? `?${params}` : ''}`),
+  getCar: (id: number) => customerFetch(`/products/public/${id}`),
+  getBranches: () => customerFetch('/branches/public'),
+  getBranch: (id: number) => customerFetch(`/branches/public/${id}`),
+  createOrder: (data: Record<string, unknown>) => customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
+  getOrders: () => customerFetch('/customers/orders'),
+  login: (data: Record<string, unknown>) => customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
+  register: (data: Record<string, unknown>) => customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
   getCustomization: () => fetch(`${API_BASE}/customization/store?_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()),
 };
 
@@ -109,7 +109,7 @@ export const adminApi = {
   deleteCar: (id: number) => adminFetch(`/products/${id}`, { method: 'DELETE' }),
   // طلبات
   getOrders: (params?: string) => adminFetch(`/orders${params ? `?${params}` : ''}`),
-  updateOrder: (id: number, data: Record<string, unknown>) => adminFetch(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  updateOrder: (id: number, data: Record<string, unknown>) => adminFetch(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
   // عملاء
   getCustomers: () => adminFetch('/customers'),
   // فروع
@@ -121,6 +121,6 @@ export const adminApi = {
   getCustomization: () => adminFetch('/customization'),
   updateCustomization: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
   // إعدادات
-  getSettings: () => adminFetch('/settings'),
-  updateSettings: (data: Record<string, unknown>) => adminFetch('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  getSettings: () => adminFetch('/setup/my-site'),
+  updateSettings: (data: Record<string, unknown>) => adminFetch('/setup/my-site', { method: 'PUT', body: JSON.stringify(data) }),
 };
