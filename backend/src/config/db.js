@@ -501,6 +501,16 @@ async function createTables() {
       }
     } catch (e) { /* ignore */ }
 
+    // Flash popup
+    await ensureColumn('customizations', 'flash_enabled', "flash_enabled TINYINT(1) DEFAULT 0 COMMENT 'تفعيل فلاش الإعلان'");
+    await ensureColumn('customizations', 'flash_title', "flash_title VARCHAR(255) NULL COMMENT 'عنوان الفلاش'");
+    await ensureColumn('customizations', 'flash_body', "flash_body TEXT NULL COMMENT 'محتوى الفلاش'");
+    await ensureColumn('customizations', 'flash_image', "flash_image TEXT NULL COMMENT 'صورة أو GIF للفلاش'");
+    await ensureColumn('customizations', 'flash_bg_color', "flash_bg_color VARCHAR(20) DEFAULT '#7c5cff' COMMENT 'لون خلفية الفلاش'");
+    await ensureColumn('customizations', 'flash_text_color', "flash_text_color VARCHAR(20) DEFAULT '#ffffff' COMMENT 'لون نص الفلاش'");
+    await ensureColumn('customizations', 'flash_btn_text', "flash_btn_text VARCHAR(100) DEFAULT 'حسناً' COMMENT 'نص زر الإغلاق'");
+    await ensureColumn('customizations', 'flash_btn_url', "flash_btn_url TEXT NULL COMMENT 'رابط زر الفلاش (اختياري)'");
+
     // Google OAuth support
     await ensureColumn('users', 'google_id', 'google_id VARCHAR(255) NULL');
 

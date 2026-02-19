@@ -146,6 +146,9 @@ export const adminApi = {
   getChatMessages: (convId: string, after?: number) => adminFetch(`/chat/${convId}/messages${after ? `?after=${after}` : ''}`),
   sendChatReply: (convId: string, message: string) => adminFetch(`/chat/${convId}/send`, { method: 'POST', body: JSON.stringify({ message }) }),
   closeChatConversation: (convId: string) => adminFetch(`/chat/${convId}/close`, { method: 'PATCH' }),
+  // فلاش
+  getFlashSettings: () => adminFetch('/customization'),
+  updateFlashSettings: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
@@ -357,6 +360,15 @@ export const storeApi = {
       if (demo) return Promise.resolve(demo);
     }
     return fetch(`${API_BASE}/store/info`).then(r => r.json());
+  },
+  getFlashPopup: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/customization/store`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
+      const data = await res.json();
+      const c = data?.customization;
+      if (c && c.flash_enabled) return c;
+      return null;
+    } catch { return null; }
   },
 
   // ─── Checkout API (بوابات الدفع الحقيقية) ───

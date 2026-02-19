@@ -38,6 +38,14 @@ class Customization {
       support_email: data.support_email,
       support_phone: data.support_phone,
       admin_slug: data.admin_slug,
+      flash_enabled: data.flash_enabled != null ? (data.flash_enabled ? 1 : 0) : undefined,
+      flash_title: data.flash_title,
+      flash_body: data.flash_body,
+      flash_image: data.flash_image,
+      flash_bg_color: data.flash_bg_color,
+      flash_text_color: data.flash_text_color,
+      flash_btn_text: data.flash_btn_text,
+      flash_btn_url: data.flash_btn_url,
     };
 
     // تصفية الحقول غير المعرّفة

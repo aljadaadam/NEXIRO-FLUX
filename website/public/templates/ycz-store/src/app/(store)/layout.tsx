@@ -2,6 +2,7 @@ import Header from '@/components/store/Header';
 import Footer from '@/components/store/Footer';
 import MobileBottomNav from '@/components/store/MobileBottomNav';
 import ChatWidget from '@/components/store/ChatWidget';
+import FlashPopup from '@/components/store/FlashPopup';
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <Footer />
       <MobileBottomNav />
       <ChatWidget />
+      <FlashPopup />
     </div>
   );
 }

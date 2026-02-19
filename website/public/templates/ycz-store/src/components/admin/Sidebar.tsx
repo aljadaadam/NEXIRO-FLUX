@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
-  Link2, Paintbrush, Megaphone, BookOpen, MessageCircle, Settings, ChevronRight, ChevronLeft,
+  Link2, Paintbrush, Megaphone, BookOpen, MessageCircle, Zap as ZapIcon, Settings, ChevronRight, ChevronLeft,
   Zap, LogOut, X,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
@@ -33,6 +33,7 @@ const menuItems = [
   { id: 'announcements', icon: Megaphone, label: 'الإعلانات' },
   { id: 'blog', icon: BookOpen, label: 'المدونة' },
   { id: 'chat', icon: MessageCircle, label: 'الدردشة' },
+  { id: 'flash', icon: ZapIcon, label: 'فلاش إعلان' },
   { id: 'settings', icon: Settings, label: 'الإعدادات' },
 ];
 

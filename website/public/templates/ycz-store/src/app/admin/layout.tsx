@@ -79,6 +79,7 @@ import CustomizePage from './pages/CustomizePage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import BlogAdminPage from './pages/BlogAdminPage';
 import ChatAdminPage from './pages/ChatAdminPage';
+import FlashPopupPage from './pages/FlashPopupPage';
 import SettingsAdminPage from './pages/SettingsAdminPage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -411,6 +412,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     announcements: <AnnouncementsPage />,
     blog: <BlogAdminPage />,
     chat: <ChatAdminPage />,
+    flash: <FlashPopupPage />,
     settings: <SettingsAdminPage theme={currentTheme} />,
   };
 
