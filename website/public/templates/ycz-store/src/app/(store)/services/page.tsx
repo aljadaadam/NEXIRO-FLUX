@@ -261,10 +261,26 @@ export default function ServicesPage() {
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   useEffect(() => {
+    // 1. تحميل فوري من الكاش المحلي
+    try {
+      const cached = localStorage.getItem('ycz_products_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProducts(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
+    // 2. جلب البيانات الحديثة من السيرفر في الخلفية
     async function load() {
       try {
         const res = await storeApi.getProducts();
-        if (Array.isArray(res) && res.length > 0) setProducts(res as Product[]);
+        if (Array.isArray(res) && res.length > 0) {
+          setProducts(res as Product[]);
+          try { localStorage.setItem('ycz_products_cache', JSON.stringify(res)); } catch {}
+        }
       } catch { /* keep fallback */ }
       finally { setLoading(false); }
     }
@@ -448,7 +464,7 @@ export default function ServicesPage() {
         ))}
       </div>
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && !loading && (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
           <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔍</p>
           <p>{t('لا توجد نتائج مطابقة')}</p>

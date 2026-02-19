@@ -1,5 +1,33 @@
 const Product = require('../models/Product');
 
+// ─── كاش المنتجات العامة (per site_key) ───
+// يخزّن نتائج getPublicProducts لمدة 30 ثانية لتسريع التحميل
+const _publicProductsCache = new Map(); // key: siteKey → { data, ts }
+const CACHE_TTL = 30_000; // 30 ثانية
+
+function getCachedPublicProducts(siteKey) {
+  const entry = _publicProductsCache.get(siteKey);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) {
+    _publicProductsCache.delete(siteKey);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedPublicProducts(siteKey, data) {
+  _publicProductsCache.set(siteKey, { data, ts: Date.now() });
+}
+
+/** حذف الكاش عند تغيير المنتجات (sync, create, update, delete) */
+function invalidatePublicProductsCache(siteKey) {
+  if (siteKey) {
+    _publicProductsCache.delete(siteKey);
+  } else {
+    _publicProductsCache.clear();
+  }
+}
+
 // جلب جميع منتجات الموقع
 async function getAllProducts(req, res) {
   try {
@@ -123,6 +151,7 @@ async function createProduct(req, res) {
       is_game,
     });
 
+    invalidatePublicProductsCache(site_key);
     res.status(201).json({
       message: 'تم إنشاء المنتج بنجاح',
       product
@@ -224,6 +253,7 @@ async function updateProduct(req, res) {
       });
     }
 
+    invalidatePublicProductsCache(site_key);
     res.json({
       message: 'تم تحديث المنتج بنجاح',
       product
@@ -250,6 +280,7 @@ async function deleteProduct(req, res) {
       });
     }
 
+    invalidatePublicProductsCache(site_key);
     res.json({ 
       message: 'تم حذف المنتج بنجاح' 
     });
@@ -326,6 +357,7 @@ async function importProducts(req, res) {
       }
     }
 
+    invalidatePublicProductsCache(site_key);
     res.status(201).json({
       message: `تم استيراد ${results.success.length} من ${results.total} منتج بنجاح`,
       results: {
@@ -547,6 +579,7 @@ async function syncProducts(req, res) {
       .map(([group, count]) => `${group}: ${count}`)
       .join(', ');
 
+    invalidatePublicProductsCache(site_key);
     res.json({
       message: `تمت مزامنة ${results.synced.length} من ${results.total} منتج بنجاح`,
       results: {
@@ -732,6 +765,7 @@ async function importFromExternalApi(req, res) {
 
     console.log(`✅ Import completed: ${results.imported.length}/${results.total} successful`);
 
+    invalidatePublicProductsCache(site_key);
     res.json({
       message: `تم استيراد ${results.imported.length} من ${results.total} منتج بنجاح`,
       results: {
@@ -784,11 +818,16 @@ async function getProductsStats(req, res) {
 // جلب المنتجات العامة (بدون مصادقة - للواجهة الأمامية)
 async function getPublicProducts(req, res) {
   try {
-    const { getPool } = require('../config/db');
-    const pool = getPool();
     const siteKey = req.siteKey;
 
-    console.log('🔵 getPublicProducts called, siteKey:', siteKey);
+    // ─── فحص الكاش أولاً ───
+    const cached = getCachedPublicProducts(siteKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
+    const { getPool } = require('../config/db');
+    const pool = getPool();
 
     // جلب المنتجات مع استبعاد المصادر التي تعمل بوضع المزامنة فقط (sync_only)
     const [products] = await pool.query(
@@ -798,14 +837,17 @@ async function getPublicProducts(req, res) {
       [siteKey]
     );
 
-    console.log('🔵 getPublicProducts found:', products.length, 'products');
-
-    res.json({ 
+    const responseData = { 
       products, 
       site_key: siteKey, 
       count: products.length,
       version: 'v3'
-    });
+    };
+
+    // ─── حفظ في الكاش ───
+    setCachedPublicProducts(siteKey, responseData);
+
+    res.json(responseData);
   } catch (error) {
     console.error('❌ Error in getPublicProducts:', error);
     res.status(500).json({ 
@@ -1028,6 +1070,7 @@ async function seedTemplateProducts(req, res) {
       }
     }
 
+    invalidatePublicProductsCache(siteKey);
     res.json({
       message: `✅ تم تعبئة ${inserted} قالب بنجاح في قاعدة البيانات!`,
       inserted,
@@ -1049,6 +1092,7 @@ async function toggleFeatured(req, res) {
     if (!product) {
       return res.status(404).json({ error: 'المنتج غير موجود' });
     }
+    invalidatePublicProductsCache(site_key);
     res.json({ message: product.is_featured ? 'تم تمييز المنتج' : 'تم إلغاء تمييز المنتج', product });
   } catch (error) {
     console.error('Error in toggleFeatured:', error);
@@ -1070,5 +1114,6 @@ module.exports = {
   getProductCategories,
   seedTemplateProducts,
   debugProducts,
-  toggleFeatured
+  toggleFeatured,
+  invalidatePublicProductsCache
 };

@@ -53,28 +53,8 @@ export default function TemplatesGallery() {
             return st;
           });
 
-          // Add API-only products (not matched to any static template)
-          apiProducts.forEach(p => {
-            if (!matchedApiNames.has(p.name?.trim())) {
-              const price = parseFloat(p.price) || 0;
-              const py = p.price_yearly != null ? parseFloat(p.price_yearly) : price * 10;
-              const pl = p.price_lifetime != null ? parseFloat(p.price_lifetime) : price * 25;
-              merged.push({
-                id: p.id,
-                name: p.name,
-                nameEn: p.name,
-                description: p.description || '',
-                descriptionEn: p.description || '',
-                category: p.category || 'digital-services',
-                image: p.image || 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
-                price: { monthly: price, yearly: py, lifetime: pl },
-                features: [], featuresEn: [],
-                color: 'from-purple-500 to-indigo-600',
-                badge: null,
-                comingSoon: false,
-              });
-            }
-          });
+          // Only show static templates (with live API data merged if matched)
+          // API-only products are excluded from the main website
           setTemplates(merged);
         }
       })

@@ -330,10 +330,26 @@ export default function HomePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
+    // 1. تحميل فوري من الكاش المحلي
+    try {
+      const cached = localStorage.getItem('ycz_products_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProducts(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
+    // 2. جلب البيانات الحديثة من السيرفر في الخلفية
     async function load() {
       try {
         const res = await storeApi.getProducts();
-        if (Array.isArray(res) && res.length > 0) setProducts(res as Product[]);
+        if (Array.isArray(res) && res.length > 0) {
+          setProducts(res as Product[]);
+          try { localStorage.setItem('ycz_products_cache', JSON.stringify(res)); } catch {}
+        }
       } catch { /* keep fallback */ }
       finally { setLoading(false); }
     }

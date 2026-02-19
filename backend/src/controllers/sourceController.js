@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const { decryptApiKey, apiKeyLast4, apiKeyMaskedHyphenated } = require('../utils/apiKeyCrypto');
 const { getPool } = require('../config/db');
 const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
+const { invalidatePublicProductsCache } = require('./productController');
 
 function isPrivateOrLocalHostname(hostname) {
   const host = String(hostname || '').trim().toLowerCase();
@@ -248,7 +249,8 @@ async function createSource(req, res) {
       apiKey,
       profitPercentage,
       profitAmount,
-      description
+      description,
+      syncOnly
     } = req.body;
 
     let finalUrl = url || apiUrl;
@@ -276,6 +278,55 @@ async function createSource(req, res) {
       console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
     }
 
+    // ─── التحقق من صحة بيانات الاتصال قبل إنشاء المصدر ───
+    if (apiKey) {
+      try {
+        const client = new DhruFusionClient({
+          baseUrl: finalUrl,
+          username: username || '',
+          apiAccessKey: apiKey,
+        });
+        await client.getAccountInfo();
+        console.log(`✅ Connection test passed for: ${finalUrl}`);
+      } catch (connErr) {
+        console.error('❌ Connection validation failed:', connErr.message);
+        // ─── ترجمة أخطاء DHRU FUSION إلى رسائل عربية واضحة ───
+        let userError = 'فشل الاتصال بالمصدر';
+        const errMsg = String(connErr.message || '').toLowerCase();
+        const errFull = String(connErr.fullDescription || '').toLowerCase();
+        const combined = errMsg + ' ' + errFull;
+
+        if (combined.includes('invalid api') || combined.includes('invalid key') || combined.includes('api access key') || combined.includes('apiaccesskey')) {
+          userError = 'مفتاح الـ API غير صحيح — تأكد من نسخه بالكامل من لوحة تحكم المصدر';
+        } else if (combined.includes('invalid username') || combined.includes('incorrect username') || combined.includes('wrong username') || combined.includes('user not found') || combined.includes('username')) {
+          userError = 'اسم المستخدم غير صحيح — تأكد من إدخال اسم المستخدم الصحيح في لوحة المصدر';
+        } else if (combined.includes('ip') && (combined.includes('not allowed') || combined.includes('whitelist') || combined.includes('blocked') || combined.includes('not whitelisted') || combined.includes('not authorized'))) {
+          userError = 'عنوان IP السيرفر غير مسموح — أضف عنوان IP الخاص بالسيرفر في إعدادات API بلوحة تحكم المصدر';
+        } else if (combined.includes('suspended') || combined.includes('disabled') || combined.includes('banned')) {
+          userError = 'الحساب معطّل أو موقوف في المصدر — تواصل مع دعم المصدر';
+        } else if (combined.includes('insufficient') || combined.includes('no credit') || combined.includes('balance')) {
+          userError = 'رصيد الحساب غير كافٍ في المصدر';
+        } else if (combined.includes('timeout') || combined.includes('مهلة') || combined.includes('timed out') || combined.includes('aborted')) {
+          userError = 'انتهت مهلة الاتصال — تأكد من أن رابط المصدر صحيح ويعمل';
+        } else if (combined.includes('enotfound') || combined.includes('econnrefused') || combined.includes('dns') || combined.includes('getaddrinfo')) {
+          userError = 'لا يمكن الوصول إلى المصدر — تأكد من صحة الرابط';
+        } else if (combined.includes('non-json') || combined.includes('غير json')) {
+          userError = 'المصدر لا يرد بصيغة JSON — تأكد من صحة رابط الـ API';
+        } else if (connErr.name === 'DhruFusionError') {
+          // رسالة الخطأ الأصلية من المصدر
+          userError = `خطأ من المصدر: ${connErr.message}`;
+          if (connErr.fullDescription) {
+            userError += ` — ${connErr.fullDescription}`;
+          }
+        }
+
+        return res.status(400).json({
+          error: userError,
+          detail: connErr.message,
+        });
+      }
+    }
+
     const source = await Source.create({
       site_key,
       name,
@@ -288,6 +339,15 @@ async function createSource(req, res) {
       description: description || '',
       syncOnly: syncOnly ?? false
     });
+
+    // تحديث حالة الاتصال بعد الإنشاء الناجح
+    if (apiKey) {
+      await Source.updateConnectionStatus(source.id, site_key, {
+        ok: true,
+        checkedAt: new Date(),
+        error: null,
+      });
+    }
 
     const productsCount = await Product.countBySource(site_key, source.id);
     const last4 = source.api_key_last4 || (apiKey ? apiKeyLast4(apiKey) : null);
@@ -306,9 +366,9 @@ async function createSource(req, res) {
         profitPercentage: source.profit_percentage == null ? 0 : Number(source.profit_percentage),
         syncOnly: source.sync_only === 1 || source.sync_only === true,
         productsCount,
-        connectionStatus: 'unknown',
-        lastConnectionOk: null,
-        lastConnectionCheckedAt: null,
+        connectionStatus: apiKey ? 'connected' : 'unknown',
+        lastConnectionOk: apiKey ? true : null,
+        lastConnectionCheckedAt: apiKey ? new Date().toISOString() : null,
         lastConnectionError: null
       }
     });
@@ -523,6 +583,16 @@ async function testSourceConnection(req, res) {
 
     if (!response.ok) {
       const err = `${response.status} ${response.statusText}`;
+      let userError = 'فشل الاتصال بالمصدر';
+      if (response.status === 403) {
+        userError = 'المصدر رفض الاتصال — قد يكون عنوان IP السيرفر غير مسموح';
+      } else if (response.status === 401) {
+        userError = 'بيانات الدخول غير صحيحة — تأكد من اسم المستخدم ومفتاح API';
+      } else if (response.status === 404) {
+        userError = 'رابط الـ API غير صحيح — المسار غير موجود في المصدر';
+      } else if (response.status >= 500) {
+        userError = 'المصدر يعاني من مشكلة داخلية — جرّب لاحقاً';
+      }
       await Source.updateConnectionStatus(source.id, site_key, {
         ok: false,
         checkedAt,
@@ -536,7 +606,7 @@ async function testSourceConnection(req, res) {
         connectionOk: false,
         sourceBalance: lastSource?.last_account_balance || null,
         sourceCurrency: lastSource?.last_account_currency || null,
-        error: 'فشل الاتصال بالمصدر',
+        error: userError,
         lastChecked: checkedAt.toISOString()
       });
     }
@@ -567,8 +637,50 @@ async function testSourceConnection(req, res) {
     }
 
     // Minimal validation: allow SUCCESS to be array OR object
-    const success = payload?.SUCCESS;
+    const root = payload?.DHRUFUSION || payload;
+    const errorBlock = root?.ERROR || payload?.ERROR;
+    const success = root?.SUCCESS || payload?.SUCCESS;
     const successOk = Array.isArray(success) || (success && typeof success === 'object');
+
+    // ─── فحص أخطاء DHRU FUSION المفصّلة ───
+    if (errorBlock) {
+      const err = Array.isArray(errorBlock) ? errorBlock[0] : errorBlock;
+      const errMessage = err?.MESSAGE || err?.message || JSON.stringify(err);
+      const errFull = err?.FULL_DESCRIPTION || err?.full_description || '';
+      const combined = (errMessage + ' ' + errFull).toLowerCase();
+
+      let userError = 'فشل الاتصال بالمصدر';
+      if (combined.includes('invalid api') || combined.includes('invalid key') || combined.includes('apiaccesskey')) {
+        userError = 'مفتاح الـ API غير صحيح — تأكد من نسخه بالكامل من لوحة تحكم المصدر';
+      } else if (combined.includes('invalid username') || combined.includes('incorrect username') || combined.includes('wrong username') || combined.includes('user not found')) {
+        userError = 'اسم المستخدم غير صحيح — تأكد من إدخال اسم المستخدم الصحيح في لوحة المصدر';
+      } else if (combined.includes('ip') && (combined.includes('not allowed') || combined.includes('whitelist') || combined.includes('blocked') || combined.includes('not whitelisted') || combined.includes('not authorized'))) {
+        userError = 'عنوان IP السيرفر غير مسموح — أضف عنوان IP الخاص بالسيرفر في إعدادات API بلوحة تحكم المصدر';
+      } else if (combined.includes('suspended') || combined.includes('disabled') || combined.includes('banned')) {
+        userError = 'الحساب معطّل أو موقوف في المصدر — تواصل مع دعم المصدر';
+      } else if (errMessage && errMessage.length > 0 && errMessage !== '{}') {
+        userError = `خطأ من المصدر: ${errMessage}`;
+        if (errFull) userError += ` — ${errFull}`;
+      }
+
+      await Source.updateConnectionStatus(source.id, site_key, {
+        ok: false,
+        checkedAt,
+        error: errMessage
+      });
+
+      const lastSource = await Source.findById(id);
+      return res.json({
+        success: true,
+        connectionOk: false,
+        sourceBalance: lastSource?.last_account_balance || null,
+        sourceCurrency: lastSource?.last_account_currency || null,
+        error: userError,
+        detail: errMessage,
+        lastChecked: checkedAt.toISOString()
+      });
+    }
+
     if (!successOk) {
       await Source.updateConnectionStatus(source.id, site_key, {
         ok: false,
@@ -614,6 +726,20 @@ async function testSourceConnection(req, res) {
     });
   } catch (error) {
     console.error('Error in testSourceConnection:', error);
+    // ─── ترجمة الأخطاء إلى رسائل واضحة ───
+    let userError = 'فشل الاتصال بالمصدر';
+    const errMsg = String(error.message || '').toLowerCase();
+    if (errMsg.includes('enotfound') || errMsg.includes('getaddrinfo') || errMsg.includes('dns')) {
+      userError = 'لا يمكن الوصول إلى المصدر — تأكد من صحة الرابط';
+    } else if (errMsg.includes('econnrefused')) {
+      userError = 'تم رفض الاتصال — المصدر لا يستجيب أو الرابط خطأ';
+    } else if (errMsg.includes('timeout') || errMsg.includes('aborted') || errMsg.includes('مهلة')) {
+      userError = 'انتهت مهلة الاتصال بالمصدر — جرّب مرة أخرى';
+    } else if (errMsg.includes('certificate') || errMsg.includes('ssl') || errMsg.includes('tls')) {
+      userError = 'مشكلة في شهادة SSL للمصدر';
+    } else if (error.name === 'DhruFusionError') {
+      userError = `خطأ من المصدر: ${error.message}`;
+    }
     try {
       const { site_key } = req.user;
       const { id } = req.params;
@@ -625,7 +751,7 @@ async function testSourceConnection(req, res) {
     } catch {
       // ignore
     }
-    return res.status(500).json({ success: false, connectionOk: false });
+    return res.status(500).json({ success: false, connectionOk: false, error: userError });
   }
 }
 
@@ -679,6 +805,7 @@ async function applyProfitToSourceProducts(req, res) {
     }
 
     const productsCount = await Product.countBySource(site_key, id);
+    invalidatePublicProductsCache(site_key);
     return res.json({ success: true, productsCount, profitPercentage: newProfitPct, profitAmount: newProfitAmt });
   } catch (error) {
     console.error('Error in applyProfitToSourceProducts:', error);
@@ -899,6 +1026,9 @@ async function syncSourceProducts(req, res) {
       balance: account.creditraw || account.credits || null,
       currency: account.currency || null
     });
+
+    // حذف كاش المنتجات العامة فوراً بعد المزامنة
+    invalidatePublicProductsCache(site_key);
 
     return res.json({
       success: true,
