@@ -92,6 +92,24 @@ export interface Announcement {
   active: boolean;
 }
 
+export interface BlogPost {
+  id: number;
+  title: string;
+  title_en: string;
+  excerpt: string;
+  excerpt_en: string;
+  content: string[];
+  category: string;
+  category_color: string;
+  image: string;
+  read_time: number;
+  views: number;
+  is_published: boolean;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PaymentGateway {
   id: number;
   site_key: string;

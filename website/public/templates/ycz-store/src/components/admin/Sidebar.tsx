@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
-  Link2, Paintbrush, Megaphone, Settings, ChevronRight, ChevronLeft,
+  Link2, Paintbrush, Megaphone, BookOpen, Settings, ChevronRight, ChevronLeft,
   Zap, LogOut, X,
 } from 'lucide-react';
 import type { ColorTheme } from '@/lib/themes';
@@ -29,6 +29,7 @@ const menuItems = [
   { id: 'sources', icon: Link2, label: 'المصادر' },
   { id: 'customize', icon: Paintbrush, label: 'التخصيص' },
   { id: 'announcements', icon: Megaphone, label: 'الإعلانات' },
+  { id: 'blog', icon: BookOpen, label: 'المدونة' },
   { id: 'settings', icon: Settings, label: 'الإعدادات' },
 ];
 

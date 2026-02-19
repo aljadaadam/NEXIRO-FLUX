@@ -419,6 +419,10 @@ async function createTables() {
     await pool.query(currenciesTable);
     await pool.query(bannersTable);
 
+    // جدول المدونة
+    const BlogPost = require('../models/BlogPost');
+    await pool.query(BlogPost.getCreateTableSQL());
+
     // جدول أكواد الشراء
     const PurchaseCode = require('../models/PurchaseCode');
     await pool.query(PurchaseCode.getCreateTableSQL());

@@ -133,6 +133,13 @@ export const adminApi = {
   getCustomize: () => adminFetch('/customization'),
   updateCustomize: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
   updateCustomerWallet: (id: number, amount: number) => adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount }) }),
+  // مدونة
+  getBlogPosts: () => adminFetch('/blogs'),
+  getBlogPost: (id: number) => adminFetch(`/blogs/${id}`),
+  createBlogPost: (data: Record<string, unknown>) => adminFetch('/blogs', { method: 'POST', body: JSON.stringify(data) }),
+  updateBlogPost: (id: number, data: Record<string, unknown>) => adminFetch(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteBlogPost: (id: number) => adminFetch(`/blogs/${id}`, { method: 'DELETE' }),
+  toggleBlogPublish: (id: number) => adminFetch(`/blogs/${id}/toggle-publish`, { method: 'PATCH' }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
@@ -297,6 +304,30 @@ export const storeApi = {
     }
   },
   getProduct: (id: number) => customerFetch(`/products/${id}`),
+  // ─── مدونة (عرض عام) ───
+  getBlogPosts: async () => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/blogs/public', 'GET');
+      if (demo) return demo;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/blogs/public`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
+      return res.json();
+    } catch { return { posts: [] }; }
+  },
+  getBlogPost: async (id: number) => {
+    if (isDemoMode()) {
+      const demo = getDemoResponse('/blogs/public', 'GET');
+      if (demo) {
+        const post = (demo as { posts: Array<{ id: number }> }).posts?.find((p: { id: number }) => p.id === id);
+        return post ? { post } : { post: null };
+      }
+    }
+    try {
+      const res = await fetch(`${API_BASE}/blogs/public/${id}`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
+      return res.json();
+    } catch { return { post: null }; }
+  },
   // ─── مسارات فريدة للزبائن (تحت /api/customers/*) ───
   getOrders: () => customerFetch('/customers/orders'),
   getPayments: () => customerFetch('/customers/payments'),

@@ -324,6 +324,35 @@ export const demoSources = [
 ];
 
 // ─── الإعدادات / التخصيص ───
+
+// ─── مقالات المدونة (تجريبي) ───
+export const demoBlogPosts = [
+  {
+    id: 1, title: 'ما هو iCloud Lock؟ وكيف يمكن إزالته بأمان', title_en: 'What is iCloud Lock? How to Remove It Safely',
+    excerpt: 'تعرّف على قفل iCloud Activation Lock في أجهزة Apple، أسباب ظهوره، والطرق الآمنة لإزالته.',
+    excerpt_en: 'Learn about iCloud Activation Lock on Apple devices and safe methods to remove it.',
+    content: ['قفل iCloud Activation Lock هو ميزة أمان من Apple.', 'يظهر عند شراء جهاز مستعمل لم يقم المالك بتسجيل الخروج.', 'نقدّم خدمة إزالة iCloud لجميع موديلات iPhone.'],
+    category: 'iCloud', category_color: '#3b82f6', image: '🍎', read_time: 5, views: 1240,
+    is_published: true, published_at: daysAgo(4), created_at: daysAgo(4), updated_at: daysAgo(4),
+  },
+  {
+    id: 2, title: 'دليل فتح شبكة Samsung: كل ما تحتاج معرفته', title_en: 'Samsung Network Unlock Guide',
+    excerpt: 'دليل شامل لفتح شبكة أجهزة Samsung Galaxy من جميع الشبكات العالمية.',
+    excerpt_en: 'A comprehensive guide to unlocking Samsung Galaxy devices.',
+    content: ['فتح الشبكة يعني إزالة القيد الذي تفرضه شركة الاتصالات.', 'نوفر فتح شبكة لجميع موديلات Samsung.', 'فتح الشبكة قانوني تماماً.'],
+    category: 'فتح شبكات', category_color: '#8b5cf6', image: '📱', read_time: 7, views: 980,
+    is_published: true, published_at: daysAgo(7), created_at: daysAgo(7), updated_at: daysAgo(7),
+  },
+  {
+    id: 3, title: 'أفضل أدوات السوفتوير لعام 2026', title_en: 'Best Software Tools for 2026',
+    excerpt: 'مقارنة بين أشهر أدوات السوفتوير مثل Unlocktool و Z3X و Chimera.',
+    excerpt_en: 'Comparison of popular software tools like Unlocktool, Z3X, Chimera.',
+    content: ['أدوات السوفتوير هي برامج متخصصة يستخدمها فنيو الصيانة.', 'Unlocktool — الأداة الأكثر شمولاً.', 'Z3X — متخصصة بأجهزة Samsung.'],
+    category: 'أدوات سوفتوير', category_color: '#f59e0b', image: '🔧', read_time: 10, views: 2150,
+    is_published: true, published_at: daysAgo(11), created_at: daysAgo(11), updated_at: daysAgo(11),
+  },
+];
+
 export const demoSettings = {
   theme_id: 'purple',
   logo_url: '',
@@ -543,6 +572,14 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
   // Mutations that shouldn't actually do anything
   if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
     return { success: true, message: 'عرض تجريبي — لا يمكن تعديل البيانات' };
+  }
+
+  // Blog demo
+  if (ep === 'blogs' && method === 'GET') {
+    return { posts: demoBlogPosts };
+  }
+  if (ep.match(/^blogs\/public$/) && method === 'GET') {
+    return { posts: demoBlogPosts.filter(p => p.is_published) };
   }
 
   return null;

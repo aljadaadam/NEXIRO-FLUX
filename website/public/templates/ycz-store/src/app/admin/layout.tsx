@@ -77,6 +77,7 @@ import PaymentsPage from './pages/PaymentsPage';
 import ExternalSourcesPage from './pages/ExternalSourcesPage';
 import CustomizePage from './pages/CustomizePage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
+import BlogAdminPage from './pages/BlogAdminPage';
 import SettingsAdminPage from './pages/SettingsAdminPage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -407,6 +408,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     sources: <ExternalSourcesPage />,
     customize: <CustomizePage />,
     announcements: <AnnouncementsPage />,
+    blog: <BlogAdminPage />,
     settings: <SettingsAdminPage theme={currentTheme} />,
   };
 
