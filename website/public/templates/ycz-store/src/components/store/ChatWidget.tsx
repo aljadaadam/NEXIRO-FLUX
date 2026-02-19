@@ -130,7 +130,7 @@ export default function ChatWidget() {
         .nxr-msg-customer .nxr-msg-time{text-align:left}
         .nxr-msg-admin .nxr-msg-time{text-align:right}
         .nxr-chat-input-area{padding:12px 16px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:center;background:#fff;flex-shrink:0}
-        .nxr-chat-input{flex:1;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;font-size:.82rem;outline:none;font-family:Tajawal,sans-serif;transition:border-color .15s}
+        .nxr-chat-input{flex:1;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;font-size:16px;outline:none;font-family:Tajawal,sans-serif;transition:border-color .15s}
         .nxr-chat-input:focus{border-color:#7c5cff}
         .nxr-chat-send{width:38px;height:38px;border-radius:50%;border:none;background:linear-gradient(135deg,#7c5cff,#6366f1);color:#fff;cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:opacity .15s}
         .nxr-chat-send:disabled{opacity:.4;cursor:default}
@@ -138,7 +138,7 @@ export default function ChatWidget() {
         .nxr-chat-welcome{text-align:center;padding:28px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;justify-content:center}
         .nxr-chat-welcome h3{font-size:1rem;font-weight:700;color:#0b1020;margin:0}
         .nxr-chat-welcome p{font-size:.78rem;color:#94a3b8;margin:0;line-height:1.6}
-        .nxr-chat-name-input{width:100%;max-width:260px;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 16px;font-size:.85rem;outline:none;text-align:center;font-family:Tajawal,sans-serif;transition:border-color .15s}
+        .nxr-chat-name-input{width:100%;max-width:260px;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 16px;font-size:16px;outline:none;text-align:center;font-family:Tajawal,sans-serif;transition:border-color .15s}
         .nxr-chat-name-input:focus{border-color:#7c5cff}
         .nxr-chat-name-btn{padding:10px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#7c5cff,#6366f1);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:Tajawal,sans-serif;transition:transform .15s}
         .nxr-chat-name-btn:hover{transform:scale(1.03)}
