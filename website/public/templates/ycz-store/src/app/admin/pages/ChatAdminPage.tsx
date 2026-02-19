@@ -5,6 +5,23 @@ import { MessageCircle, Send, X, Clock, User, ChevronLeft, RefreshCw } from 'luc
 import { adminApi } from '@/lib/api';
 import type { ChatConversation, ChatMsg } from '@/lib/types';
 
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(1046, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch { /* silent */ }
+}
+
 export default function ChatAdminPage() {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
@@ -14,6 +31,7 @@ export default function ChatAdminPage() {
   const [msgLoading, setMsgLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
+  const prevUnreadRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMsgId = useRef(0);
   const pollConvRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -24,8 +42,11 @@ export default function ChatAdminPage() {
   const loadConversations = useCallback(async () => {
     try {
       const res = await adminApi.getChatConversations() as { conversations?: ChatConversation[]; totalUnread?: number };
+      const newUnread = res?.totalUnread || 0;
       setConversations(res?.conversations || []);
-      setTotalUnread(res?.totalUnread || 0);
+      if (newUnread > 0 && newUnread > prevUnreadRef.current) playNotifSound();
+      prevUnreadRef.current = newUnread;
+      setTotalUnread(newUnread);
     } catch { /* silent */ }
     finally { setLoading(false); }
   }, []);
@@ -45,10 +66,12 @@ export default function ChatAdminPage() {
       const msgs = res?.messages || [];
       if (isPolling && afterId > 0) {
         if (msgs.length) {
+          const customerMsgs = msgs.filter(m => m.sender_type === 'customer');
           setMessages(prev => {
             const real = prev.filter(m => m.id > 0);
             const ids = new Set(real.map(m => m.id));
             const fresh = msgs.filter(m => !ids.has(m.id));
+            if (fresh.length && customerMsgs.length) playNotifSound();
             return fresh.length ? [...real, ...fresh] : real.length !== prev.length ? real : prev;
           });
         }

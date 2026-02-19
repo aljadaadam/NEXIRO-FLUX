@@ -12,6 +12,22 @@ function generateId() {
   return 'cx_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1046, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch { /* silent */ }
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -54,7 +70,11 @@ export default function ChatWidget() {
           return fresh.length ? [...real, ...fresh] : real.length !== prev.length ? real : prev;
         });
         lastMsgId.current = msgs[msgs.length - 1].id;
-        if (!open) setUnread(u => u + msgs.filter(m => m.sender_type === 'admin').length);
+        const adminMsgs = msgs.filter(m => m.sender_type === 'admin');
+        if (!open && adminMsgs.length) {
+          setUnread(u => u + adminMsgs.length);
+          playNotifSound();
+        }
         scrollBottom();
       }
     } catch { /* silent */ }
