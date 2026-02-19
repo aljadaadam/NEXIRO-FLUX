@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
@@ -63,6 +63,7 @@ function PageLoader() {
 
 function AppContent() {
   const location = useLocation();
+  const { isRTL } = useLanguage();
 
   // Scroll to top on every route change
   useEffect(() => {
@@ -167,7 +168,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-dark-950">
       <Navbar />
       <main>
         <Suspense fallback={<PageLoader />}>
