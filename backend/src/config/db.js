@@ -510,6 +510,7 @@ async function createTables() {
     await ensureColumn('customizations', 'flash_text_color', "flash_text_color VARCHAR(20) DEFAULT '#ffffff' COMMENT 'لون نص الفلاش'");
     await ensureColumn('customizations', 'flash_btn_text', "flash_btn_text VARCHAR(100) DEFAULT 'حسناً' COMMENT 'نص زر الإغلاق'");
     await ensureColumn('customizations', 'flash_btn_url', "flash_btn_url TEXT NULL COMMENT 'رابط زر الفلاش (اختياري)'");
+    await ensureColumn('customizations', 'flash_font_style', "flash_font_style VARCHAR(20) DEFAULT 'normal' COMMENT 'نمط الخط: normal, block, outlined, shadow, neon, italic'");
 
     // Google OAuth support
     await ensureColumn('users', 'google_id', 'google_id VARCHAR(255) NULL');

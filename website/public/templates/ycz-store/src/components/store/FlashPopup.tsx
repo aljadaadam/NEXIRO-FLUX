@@ -48,6 +48,18 @@ export default function FlashPopup() {
   const body = (data.flash_body as string) || '';
   const image = (data.flash_image as string) || '';
   const btnText = (data.flash_btn_text as string) || 'حسناً';
+  const fontStyle = (data.flash_font_style as string) || 'normal';
+
+  const fontStyleCSS = (() => {
+    switch (fontStyle) {
+      case 'block': return { fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase' as const };
+      case 'outlined': return { fontWeight: 800, WebkitTextStroke: '1px currentColor', color: 'transparent' };
+      case 'shadow': return { fontWeight: 800, textShadow: '2px 2px 4px rgba(0,0,0,.4)' };
+      case 'neon': return { fontWeight: 700, textShadow: '0 0 8px currentColor, 0 0 16px currentColor' };
+      case 'italic': return { fontWeight: 700, fontStyle: 'italic' as const };
+      default: return {};
+    }
+  })();
 
   return (
     <>
@@ -82,8 +94,8 @@ export default function FlashPopup() {
 
           {/* Content */}
           <div className="nxr-flash-body" style={{ background: bgColor, color: textColor }}>
-            {title && <h3 className="nxr-flash-title" style={{ color: textColor }}>{title}</h3>}
-            {body && <p className="nxr-flash-text" style={{ color: textColor }}>{body}</p>}
+            {title && <h3 className="nxr-flash-title" style={{ color: textColor, ...fontStyleCSS }}>{title}</h3>}
+            {body && <p className="nxr-flash-text" style={{ color: textColor, ...fontStyleCSS }}>{body}</p>}
             <button className="nxr-flash-btn" onClick={handleBtnClick}
               style={{
                 background: `${textColor}20`,

@@ -4,6 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Zap, Save, Eye, Image, Type, Palette, Link2, Loader2, X, CheckCircle } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 
+function getFontStyleCSS(style: string): Record<string, string | number> {
+  switch (style) {
+    case 'block': return { fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase' };
+    case 'outlined': return { fontWeight: 800, WebkitTextStroke: '1px currentColor', color: 'transparent' };
+    case 'shadow': return { fontWeight: 800, textShadow: '2px 2px 4px rgba(0,0,0,.4)' };
+    case 'neon': return { fontWeight: 700, textShadow: '0 0 8px currentColor, 0 0 16px currentColor' };
+    case 'italic': return { fontWeight: 700, fontStyle: 'italic' };
+    default: return {};
+  }
+}
+
 export default function FlashPopupPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -18,6 +29,7 @@ export default function FlashPopupPage() {
   const [textColor, setTextColor] = useState('#ffffff');
   const [btnText, setBtnText] = useState('حسناً');
   const [btnUrl, setBtnUrl] = useState('');
+  const [fontStyle, setFontStyle] = useState('normal');
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +50,7 @@ export default function FlashPopupPage() {
         setTextColor((c.flash_text_color as string) || '#ffffff');
         setBtnText((c.flash_btn_text as string) || 'حسناً');
         setBtnUrl((c.flash_btn_url as string) || '');
+        setFontStyle((c.flash_font_style as string) || 'normal');
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -55,6 +68,7 @@ export default function FlashPopupPage() {
         flash_text_color: textColor,
         flash_btn_text: btnText,
         flash_btn_url: btnUrl,
+        flash_font_style: fontStyle,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -234,7 +248,7 @@ export default function FlashPopupPage() {
         </div>
 
         {/* Button */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
               نص الزر
@@ -248,6 +262,35 @@ export default function FlashPopupPage() {
             </label>
             <input value={btnUrl} onChange={e => setBtnUrl(e.target.value)} placeholder="https://..."
               style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.82rem', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
+          </div>
+        </div>
+
+        {/* Font Style */}
+        <div style={{ marginBottom: 0 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 8 }}>
+            <Type size={14} color="#7c5cff" /> تصميم الخط
+          </label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { id: 'normal', name: 'عادي', preview: { fontWeight: 400 } },
+              { id: 'block', name: 'Block', preview: { fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase' as const } },
+              { id: 'outlined', name: 'مخطط', preview: { fontWeight: 800, WebkitTextStroke: '1px currentColor', color: 'transparent' } },
+              { id: 'shadow', name: 'ظل', preview: { fontWeight: 800, textShadow: '2px 2px 4px rgba(0,0,0,.4)' } },
+              { id: 'neon', name: 'نيون', preview: { fontWeight: 700, textShadow: '0 0 8px currentColor, 0 0 16px currentColor' } },
+              { id: 'italic', name: 'مائل', preview: { fontWeight: 700, fontStyle: 'italic' as const } },
+            ].map(s => (
+              <button key={s.id} onClick={() => setFontStyle(s.id)}
+                style={{
+                  padding: '10px 18px', borderRadius: 10,
+                  border: fontStyle === s.id ? '2px solid #7c5cff' : '1.5px solid #e5e7eb',
+                  background: fontStyle === s.id ? '#f8f6ff' : '#fff',
+                  color: '#374151', fontSize: '.82rem', cursor: 'pointer',
+                  fontFamily: 'Tajawal, sans-serif', minWidth: 70, textAlign: 'center' as const,
+                  ...s.preview,
+                }}>
+                {s.name}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -272,8 +315,8 @@ export default function FlashPopupPage() {
                   <img src={image} alt="" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 12, objectFit: 'contain' }} />
                 </div>
               )}
-              {title && <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 8px', color: textColor }}>{title}</h3>}
-              {body && <p style={{ fontSize: '.88rem', lineHeight: 1.7, margin: '0 0 20px', opacity: .9, whiteSpace: 'pre-wrap', color: textColor }}>{body}</p>}
+              {title && <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 8px', color: textColor, ...getFontStyleCSS(fontStyle) }}>{title}</h3>}
+              {body && <p style={{ fontSize: '.88rem', lineHeight: 1.7, margin: '0 0 20px', opacity: .9, whiteSpace: 'pre-wrap', color: textColor, ...getFontStyleCSS(fontStyle) }}>{body}</p>}
               <button onClick={() => setPreview(false)} style={{
                 padding: '10px 36px', borderRadius: 12, border: `2px solid ${textColor}40`,
                 background: `${textColor}20`, color: textColor, fontSize: '.88rem', fontWeight: 700,
