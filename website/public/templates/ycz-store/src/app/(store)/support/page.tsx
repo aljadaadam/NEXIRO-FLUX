@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Mail, Phone, Send, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { FAQ_DATA } from '@/lib/mockData';
+import SeoHead from '@/components/seo/SeoHead';
+import JsonLd from '@/components/seo/JsonLd';
 
 export default function SupportPage() {
   const { currentTheme, buttonRadius, t } = useTheme();
@@ -36,8 +38,23 @@ export default function SupportPage() {
   const mailLink = supportEmail ? `mailto:${supportEmail}` : '#';
   const phoneLink = supportPhone ? `tel:${supportPhone}` : '#';
 
+  const supportJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: 'مركز الدعم الفني',
+    description: 'تواصل معنا عبر واتساب أو البريد الإلكتروني للحصول على دعم فني سريع',
+    url: typeof window !== 'undefined' ? `${window.location.origin}/support` : '/support',
+  };
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="الدعم الفني — تواصل معنا للمساعدة"
+        description="مركز الدعم الفني — تواصل معنا عبر واتساب أو البريد الإلكتروني أو الهاتف. نحن هنا لمساعدتك في جميع استفساراتك حول خدمات فتح الشبكات وإزالة iCloud وأدوات السوفتوير وشحن الألعاب."
+        keywords="دعم فني, تواصل معنا, واتساب, بريد إلكتروني, مساعدة, support, contact us"
+        canonical="/support"
+      />
+      <JsonLd data={supportJsonLd} />
       {/* Banner */}
       <div style={{ borderRadius: 20, background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.secondary})`, padding: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{t('مركز الدعم')}</h2>

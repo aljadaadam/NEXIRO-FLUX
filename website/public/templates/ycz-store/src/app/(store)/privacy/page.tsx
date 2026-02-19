@@ -3,6 +3,7 @@
 import { useTheme } from '@/providers/ThemeProvider';
 import Link from 'next/link';
 import { ArrowRight, Shield, Eye, Database, Lock, UserCheck, Mail } from 'lucide-react';
+import SeoHead from '@/components/seo/SeoHead';
 
 export default function PrivacyPage() {
   const { currentTheme, storeName, t, isRTL } = useTheme();
@@ -37,6 +38,12 @@ export default function PrivacyPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="سياسة الخصوصية"
+        description="سياسة الخصوصية — نلتزم بحماية بياناتك الشخصية وعدم مشاركتها مع أطراف ثالثة. اقرأ كيف نجمع ونستخدم ونحمي معلوماتك."
+        keywords="سياسة الخصوصية, privacy policy, حماية البيانات, data protection, خصوصية المستخدم"
+        canonical="/privacy"
+      />
       {/* Back */}
       <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
         <ArrowRight size={16} /> {t('العودة للرئيسية')}

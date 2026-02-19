@@ -3,12 +3,19 @@
 import { useTheme } from '@/providers/ThemeProvider';
 import Link from 'next/link';
 import { ArrowRight, Ban, AlertTriangle, ShieldX, Eye, Wallet, Mail } from 'lucide-react';
+import SeoHead from '@/components/seo/SeoHead';
 
 export default function RefundPage() {
   const { currentTheme, storeName, t, isRTL } = useTheme();
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="سياسة الاسترجاع والاستبدال"
+        description="سياسة الاسترجاع — تعرّف على شروط استرجاع الأموال واستبدال الخدمات. جميع الخدمات الرقمية غير قابلة للاسترجاع بعد التنفيذ."
+        keywords="سياسة الاسترجاع, refund policy, استرجاع الأموال, استبدال, إلغاء الطلب"
+        canonical="/refund"
+      />
       {/* Back */}
       <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
         <ArrowRight size={16} /> {t('العودة للرئيسية')}

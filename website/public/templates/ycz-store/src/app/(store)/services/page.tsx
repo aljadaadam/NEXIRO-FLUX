@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, X, CheckCircle, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
+import SeoHead from '@/components/seo/SeoHead';
+import JsonLd from '@/components/seo/JsonLd';
 
 // ─── OrderModal (Demo-style: IMEI input → success) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
@@ -345,8 +347,38 @@ export default function ServicesPage() {
     return matchCat && matchGroup && matchSearch;
   });
 
+  const servicesJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'خدمات المتجر',
+    description: 'جميع خدمات فتح الشبكات وإزالة iCloud وأدوات السوفتوير وشحن الألعاب',
+    numberOfItems: filtered.length,
+    itemListElement: filtered.slice(0, 30).map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Product',
+        name: p.name,
+        description: p.category || 'خدمة رقمية',
+        offers: {
+          '@type': 'Offer',
+          price: String(p.price || '').replace(/[^0-9.]/g, ''),
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+        },
+      },
+    })),
+  };
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="جميع الخدمات — فتح شبكات، إزالة iCloud، أدوات سوفتوير، شحن ألعاب"
+        description="تصفّح جميع خدماتنا: إزالة iCloud لجميع أجهزة iPhone و iPad، فتح شبكات Samsung و Xiaomi و Motorola، أدوات سوفتوير مثل Unlocktool و Z3X و Chimera و Octoplus و Sigma Plus و NCK، إزالة FRP، فحص IMEI، شحن PUBG و Free Fire، بطاقات Google Play و PlayStation و Xbox و TikTok Coins."
+        keywords="iCloud remove, iPhone unlock, Samsung unlock, Samsung FRP remove, Xiaomi Mi Account remove, Unlocktool, Z3X, EFT Pro, Chimera Tool, Octoplus, Sigma Plus, NCK Box, UMT Box, Hydra Tool, Griffin Unlocker, Borneo Schematics, DC Unlocker, HCU, Cheetah Tool, DFT Pro, Halabtech, iRemoval Pro, TSM Tool, PUBG UC, Free Fire diamonds, AT&T unlock, T-Mobile unlock, Verizon unlock, Google Play gift card, PlayStation card, Xbox card, TikTok coins, Telegram Premium, فتح شبكات, إزالة iCloud, أدوات صيانة, شحن ألعاب, فحص IMEI, إزالة FRP, بطاقات هدايا, أدوات سوفتوير"
+        canonical="/services"
+      />
+      <JsonLd data={servicesJsonLd} />
       {/* Banner */}
       <div style={{ borderRadius: 20, overflow: 'hidden', background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, padding: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{t('تصفّح جميع خدماتنا')}</h2>

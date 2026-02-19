@@ -7,6 +7,8 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { STEPS_DATA } from '@/lib/mockData';
 import { storeApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
+import SeoHead from '@/components/seo/SeoHead';
+import JsonLd from '@/components/seo/JsonLd';
 
 // ─── HeroBanner (Demo-style: contained, left-aligned, auto-rotate) ───
 function HeroBanner() {
@@ -356,8 +358,30 @@ export default function HomePage() {
     load();
   }, []);
 
+  const jsonLdData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'متجر خدمات رقمية',
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://magicdesign3.com',
+    description: 'متجر خدمات رقمية متكامل — إزالة iCloud، فتح شبكات iPhone و Samsung، أدوات سوفتوير، شحن ألعاب، بطاقات هدايا، وخدمات IMEI.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: (typeof window !== 'undefined' ? window.location.origin : 'https://magicdesign3.com') + '/services?q={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="الرئيسية — متجر خدمات رقمية"
+        description="متجر خدمات رقمية متكامل — إزالة iCloud، فتح شبكات iPhone و Samsung، أدوات سوفتوير مثل Unlocktool و Z3X و Chimera، شحن PUBG و Free Fire، بطاقات Google Play و PlayStation، خدمات IMEI وفحص الأجهزة."
+        keywords="iCloud remove, iPhone unlock, Samsung unlock, FRP bypass, IMEI check, Unlocktool, Z3X, Chimera Tool, Octoplus, PUBG UC, Free Fire diamonds, Google Play gift card, PlayStation card, فتح شبكات, إزالة iCloud, أدوات صيانة, شحن ألعاب"
+      />
+      <JsonLd data={jsonLdData} />
       <HeroBanner />
 
       {/* المنتجات المميزة */}

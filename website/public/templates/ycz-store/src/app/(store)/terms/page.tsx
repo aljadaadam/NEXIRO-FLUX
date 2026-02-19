@@ -3,6 +3,7 @@
 import { useTheme } from '@/providers/ThemeProvider';
 import Link from 'next/link';
 import { ArrowRight, FileText, AlertTriangle, Scale, ShieldCheck, Ban, Mail } from 'lucide-react';
+import SeoHead from '@/components/seo/SeoHead';
 
 export default function TermsPage() {
   const { currentTheme, storeName, t, isRTL } = useTheme();
@@ -39,6 +40,12 @@ export default function TermsPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <SeoHead
+        title="الشروط والأحكام"
+        description="الشروط والأحكام الخاصة باستخدام المتجر. يُرجى قراءة الشروط بعناية قبل استخدام خدماتنا لفتح الشبكات وإزالة iCloud وأدوات السوفتوير."
+        keywords="شروط وأحكام, terms and conditions, سياسة الاستخدام, قوانين المتجر"
+        canonical="/terms"
+      />
       {/* Back */}
       <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
         <ArrowRight size={16} /> {t('العودة للرئيسية')}
