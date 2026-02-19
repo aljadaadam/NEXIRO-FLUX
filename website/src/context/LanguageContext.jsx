@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const LanguageContext = createContext();
 
@@ -691,6 +691,12 @@ const translations = {
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState('ar');
 
+  // Set initial direction on mount
+  useEffect(() => {
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const t = useCallback((key) => {
     const keys = key.split('.');
     let value = translations[lang];
@@ -702,9 +708,7 @@ export function LanguageProvider({ children }) {
 
   const toggleLang = useCallback(() => {
     setLang(prev => prev === 'ar' ? 'en' : 'ar');
-    document.documentElement.dir = lang === 'ar' ? 'ltr' : 'rtl';
-    document.documentElement.lang = lang === 'ar' ? 'en' : 'ar';
-  }, [lang]);
+  }, []);
 
   const isRTL = lang === 'ar';
 
