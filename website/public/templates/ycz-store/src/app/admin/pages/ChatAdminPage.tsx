@@ -5,20 +5,25 @@ import { MessageCircle, Send, X, Clock, User, ChevronLeft, RefreshCw } from 'luc
 import { adminApi } from '@/lib/api';
 import type { ChatConversation, ChatMsg } from '@/lib/types';
 
+let _adminAudioCtx: AudioContext | null = null;
+function getAudioCtx() {
+  if (!_adminAudioCtx) _adminAudioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+  if (_adminAudioCtx.state === 'suspended') _adminAudioCtx.resume();
+  return _adminAudioCtx;
+}
 function playNotifSound() {
   try {
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(660, ctx.currentTime);
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
-    osc.frequency.setValueAtTime(1046, ctx.currentTime + 0.2);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.4);
+    const ctx = getAudioCtx();
+    // 3 نغمات تنبيه مميزة
+    [0, 0.15, 0.30].forEach((delay, i) => {
+      const freq = [600, 900, 1200][i];
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.5, ctx.currentTime + delay);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.13);
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.14);
+    });
   } catch { /* silent */ }
 }
 
