@@ -423,6 +423,11 @@ async function createTables() {
     const BlogPost = require('../models/BlogPost');
     await pool.query(BlogPost.getCreateTableSQL());
 
+    // جداول الدردشة
+    const ChatMessage = require('../models/ChatMessage');
+    await pool.query(ChatMessage.getCreateConversationsSQL());
+    await pool.query(ChatMessage.getCreateMessagesSQL());
+
     // جدول أكواد الشراء
     const PurchaseCode = require('../models/PurchaseCode');
     await pool.query(PurchaseCode.getCreateTableSQL());

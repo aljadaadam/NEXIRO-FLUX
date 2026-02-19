@@ -138,6 +138,28 @@ export interface ExternalSource {
   balance: string;
 }
 
+export interface ChatConversation {
+  id: number;
+  conversation_id: string;
+  customer_name: string;
+  customer_email?: string;
+  status: 'active' | 'closed';
+  last_message?: string;
+  last_message_at?: string;
+  unread_admin: number;
+  unread_customer: number;
+  created_at: string;
+}
+
+export interface ChatMsg {
+  id: number;
+  conversation_id: string;
+  sender_type: 'customer' | 'admin';
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export interface CustomizeState {
   themeId: string;
   setThemeId: (id: string) => void;

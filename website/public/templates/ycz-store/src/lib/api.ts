@@ -140,6 +140,12 @@ export const adminApi = {
   updateBlogPost: (id: number, data: Record<string, unknown>) => adminFetch(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteBlogPost: (id: number) => adminFetch(`/blogs/${id}`, { method: 'DELETE' }),
   toggleBlogPublish: (id: number) => adminFetch(`/blogs/${id}/toggle-publish`, { method: 'PATCH' }),
+  // دردشة
+  getChatConversations: () => adminFetch('/chat'),
+  getChatUnread: () => adminFetch('/chat/unread'),
+  getChatMessages: (convId: string, after?: number) => adminFetch(`/chat/${convId}/messages${after ? `?after=${after}` : ''}`),
+  sendChatReply: (convId: string, message: string) => adminFetch(`/chat/${convId}/send`, { method: 'POST', body: JSON.stringify({ message }) }),
+  closeChatConversation: (convId: string) => adminFetch(`/chat/${convId}/close`, { method: 'PATCH' }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
@@ -428,6 +434,33 @@ export const storeApi = {
       const err = await res.json().catch(() => ({}));
       throw new Error(err?.error || `HTTP ${res.status}`);
     }
+    return res.json();
+  },
+
+  // ─── دردشة العملاء ───
+  chatStart: async (conversation_id: string, customer_name?: string, customer_email?: string) => {
+    if (isDemoMode()) return { conversation: { id: 1, conversation_id, customer_name: customer_name || 'زائر', status: 'active', unread_customer: 0 } };
+    const res = await fetch(`${API_BASE}/chat/public/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversation_id, customer_name, customer_email }),
+    });
+    return res.json();
+  },
+  chatSend: async (conversation_id: string, message: string, customer_name?: string) => {
+    if (isDemoMode()) return { success: true, messageId: Date.now() };
+    const res = await fetch(`${API_BASE}/chat/public/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversation_id, message, customer_name }),
+    });
+    return res.json();
+  },
+  chatMessages: async (conversation_id: string, after?: number) => {
+    if (isDemoMode()) return { messages: [] };
+    const res = await fetch(`${API_BASE}/chat/public/messages?conversation_id=${conversation_id}${after ? `&after=${after}` : ''}`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
     return res.json();
   },
 };
