@@ -22,9 +22,9 @@ export default function ChatWidget() {
   const [unread, setUnread] = useState(0);
   const [convId, setConvId] = useState('');
   const lastMsgId = useRef(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // تهيئة معرّف المحادثة
   useEffect(() => {

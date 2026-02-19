@@ -16,9 +16,9 @@ export default function ChatAdminPage() {
   const [totalUnread, setTotalUnread] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMsgId = useRef(0);
-  const pollConvRef = useRef<ReturnType<typeof setInterval>>();
-  const pollMsgRef = useRef<ReturnType<typeof setInterval>>();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const pollConvRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollMsgRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   /* ─── جلب المحادثات ─── */
   const loadConversations = useCallback(async () => {
