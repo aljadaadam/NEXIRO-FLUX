@@ -271,6 +271,48 @@ python3 /var/www/nexiro-flux/backend/scripts/provision-site.py example.com
 
 ---
 
+## 🌍 الدومينات والروابط
+
+### دومينات المنصة
+
+| الدومين | الوصف |
+|---------|-------|
+| `nexiroflux.com` | الموقع الرئيسي (React/Vite) — الصفحة الرئيسية، القوالب، الأسعار |
+| `dash.nexiroflux.com` | لوحة تحكم المنصة فقط — يحوّل مباشرة إلى `/admin` |
+| `api.nexiroflux.com` | الـ API Backend — Express.js على المنفذ 3000 |
+
+### ⚠️ `dash.nexiroflux.com` مخصص فقط لإدارة المنصة
+
+`dash.nexiroflux.com` يقدم نفس ملفات `dist/` لكنه مخصص فقط لصفحة `/admin`.
+**لا تستخدمه** لروابط الديمو أو صفحات القوالب — استخدم `nexiroflux.com` دائماً.
+
+### روابط الديمو (جميعها على `nexiroflux.com`)
+
+| القالب | ديمو المتجر | ديمو لوحة التحكم |
+|--------|------------|------------------|
+| YCZ Store | `nexiroflux.com/demo/ycz-store` | `nexiroflux.com/demo/ycz-dashboard` |
+| GxVault | `nexiroflux.com/demo/gxv-store` | `nexiroflux.com/demo/gxv-dashboard` |
+| HX Tools | `nexiroflux.com/demo/hx-store` | `nexiroflux.com/demo/hx-dashboard` |
+| Car Store | `nexiroflux.com/demo/car-store` | `nexiroflux.com/demo/car-dashboard` |
+
+### دومينات ديمو المتاجر (subdomain يعرض الديمو مباشرة)
+
+| الدومين | القالب |
+|---------|--------|
+| `demo.nexiroflux.com` | YCZ Store (ديمو حي) |
+| `demo-gxv.nexiroflux.com` | GxVault Store (ديمو حي) |
+| `demo-hx.nexiroflux.com` | HX Tools Store (ديمو حي) |
+| `demo-car.nexiroflux.com` | Car Store (ديمو حي) |
+
+### كيف يعمل الديمو؟
+
+1. صفحة معاينة القالب على `nexiroflux.com/template/{id}` تعرض وصف القالب + سعره
+2. زر "تصفّح المتجر" يفتح `nexiroflux.com/demo/{template}-store` الذي يحتوي iframe يحمل `demo-{x}.nexiroflux.com`
+3. الـ subdomain (`demo-*.nexiroflux.com`) يعرض القالب Next.js مباشرة مع وضع Demo Mode (`?demo=1` أو كشف تلقائي من اسم الدومين)
+4. في وضع الديمو — البيانات وهمية من `demoData.ts` ولا يتصل بالسيرفر
+
+---
+
 ## 🔍 مراقبة وتشخيص
 
 ```bash
