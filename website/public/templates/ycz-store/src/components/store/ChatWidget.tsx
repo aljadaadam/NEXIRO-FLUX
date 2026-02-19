@@ -168,7 +168,7 @@ export default function ChatWidget() {
         .nxr-typing span:nth-child(2){animation-delay:.15s}
         .nxr-typing span:nth-child(3){animation-delay:.3s}
         @keyframes nxrBounce{to{transform:translateY(-4px);opacity:.4}}
-        @media(max-width:480px){.nxr-chat-panel{width:calc(100vw - 16px);left:8px;bottom:80px;height:calc(100vh - 100px);border-radius:16px}.nxr-chat-fab{bottom:80px;left:14px;width:50px;height:50px}}
+        @media(max-width:480px){.nxr-chat-panel{width:100%;left:0;right:0;bottom:0;top:0;height:100%;height:100dvh;max-height:none;border-radius:0}.nxr-chat-fab{bottom:80px;left:14px;width:50px;height:50px}}
       `}</style>
 
       {/* ─── FAB Button ─── */}
