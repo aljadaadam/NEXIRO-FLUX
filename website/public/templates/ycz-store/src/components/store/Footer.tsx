@@ -7,6 +7,7 @@ export default function Footer() {
   const { storeName, t } = useTheme();
 
   const legalLinks = [
+    { label: t('المدونة'), href: '/blog' },
     { label: t('سياسة الخصوصية'), href: '/privacy' },
     { label: t('الشروط والأحكام'), href: '/terms' },
     { label: t('سياسة الاسترجاع'), href: '/refund' },
