@@ -215,6 +215,43 @@ server {
 certbot --nginx -d example.com -d www.example.com
 ```
 
+### ⚠️ مشكلة شائعة بعد Certbot — HTTP لا يحوّل إلى HTTPS
+
+عند تشغيل `certbot --nginx`، يضيف Certbot تلقائياً server block لـ HTTP (port 80) بهذا الشكل:
+
+```nginx
+server {
+    if ($host = www.example.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name example.com www.example.com;
+    return 404; # managed by Certbot   ← ❌ هذا السطر يسبب المشكلة!
+}
+```
+
+**المشكلة:** Certbot يتحقق فقط من `www.example.com`، بينما `example.com` بدون www يرجع `404 Not Found` بدلاً من التحويل إلى HTTPS.
+
+**الحل:** بعد كل تشغيل لـ Certbot، يجب تعديل `return 404` إلى `return 301`:
+
+```nginx
+server {
+    if ($host = www.example.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name example.com www.example.com;
+    return 301 https://$host$request_uri; # ← ✅ الإصلاح
+}
+```
+
+```bash
+# للتحقق والتطبيق:
+nginx -t && systemctl reload nginx
+```
+
 ### إضافة دومين جديد تلقائياً:
 ```bash
 python3 /var/www/nexiro-flux/backend/scripts/provision-site.py example.com
@@ -262,6 +299,7 @@ pm2 restart all
 3. **Website الرئيسي:** `npm run build` ينتج ملفات ثابتة في `dist/`
 4. **لا تستخدم `output: standalone`** في Next.js — يسبب فقدان CSS و JS
 5. **قاعدة البيانات مشتركة:** جميع المتاجر تستخدم `nexiro_flux_central` مع فصل بـ `site_key`
+6. **بعد كل Certbot:** تأكد أن block الـ HTTP (port 80) يحوّل جميع الدومينات إلى HTTPS وليس فقط `www` — راجع قسم "مشكلة شائعة بعد Certbot" أعلاه
 
 ---
 
