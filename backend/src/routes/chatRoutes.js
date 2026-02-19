@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { validateSite, authenticateToken, requireRole } = require('../middlewares/authMiddleware');
+const { validateSite } = require('../middlewares/siteValidationMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const chatController = require('../controllers/chatController');
 
 /* ─── نقاط عامة (الزبون) ─── */
