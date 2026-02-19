@@ -45,8 +45,8 @@ export default function Sidebar({
 
   const fetchUnread = useCallback(async () => {
     try {
-      const res = await adminApi.getChatUnread() as { totalUnread?: number };
-      setChatUnread(res?.totalUnread || 0);
+      const res = await adminApi.getChatUnread() as { unread?: number; totalUnread?: number };
+      setChatUnread(res?.unread || res?.totalUnread || 0);
     } catch { /* silent */ }
   }, []);
 
