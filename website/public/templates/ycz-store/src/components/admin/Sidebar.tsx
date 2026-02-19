@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
   Link2, Paintbrush, Megaphone, BookOpen, MessageCircle, Settings, ChevronRight, ChevronLeft,
   Zap, LogOut, X,
 } from 'lucide-react';
+import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 
 interface SidebarProps {
@@ -38,6 +40,22 @@ export default function Sidebar({
   currentPage, setCurrentPage, collapsed, setCollapsed,
   mobileOpen, onCloseMobile, theme, logoPreview, storeName, onLogout,
 }: SidebarProps) {
+  const [chatUnread, setChatUnread] = useState(0);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const res = await adminApi.getChatUnread() as { totalUnread?: number };
+      setChatUnread(res?.totalUnread || 0);
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => {
+    fetchUnread();
+    pollRef.current = setInterval(fetchUnread, 8000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [fetchUnread]);
+
   return (
     <aside
       className={`dash-sidebar ${mobileOpen ? 'dash-sidebar-open' : ''}`}
@@ -123,9 +141,21 @@ export default function Sidebar({
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 width: '100%',
                 textAlign: 'right',
+                position: 'relative',
               }}>
                 <Icon size={18} />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span style={{flex:1,textAlign:'right'}}>{item.label}</span>}
+                {item.id === 'chat' && chatUnread > 0 && (
+                  <span style={{
+                    minWidth: collapsed ? 16 : 20, height: collapsed ? 16 : 20,
+                    borderRadius: 10, background: '#ef4444', color: '#fff',
+                    fontSize: collapsed ? '.55rem' : '.65rem', fontWeight: 700,
+                    display: 'grid', placeItems: 'center', padding: '0 4px',
+                    fontFamily: 'system-ui', lineHeight: 1,
+                    position: collapsed ? 'absolute' as const : 'static' as const,
+                    top: collapsed ? 4 : undefined, left: collapsed ? 4 : undefined,
+                  }}>{chatUnread}</span>
+                )}
               </button>
             );
           })}
