@@ -451,7 +451,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           logoPreview={logoPreview}
         />
         <main style={{ padding: '1rem' }}>
-          {pages[currentPage]}
+          {Object.entries(pages).map(([key, element]) => (
+            <div key={key} style={{ display: key === currentPage ? 'block' : 'none' }}>
+              {element}
+            </div>
+          ))}
         </main>
       </div>
 

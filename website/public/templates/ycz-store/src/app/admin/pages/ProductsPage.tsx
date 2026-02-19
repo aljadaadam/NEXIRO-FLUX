@@ -255,6 +255,26 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     return searchMatch && statusMatch && typeMatch && groupMatch;
   });
 
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ width: 120, height: 24, borderRadius: 8, background: '#e2e8f0', animation: 'pulse 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 140, height: 36, borderRadius: 10, background: '#e2e8f0', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} style={{ height: 70, borderRadius: 14, background: '#fff', border: '1px solid #f1f5f9', animation: 'pulse 1.5s ease-in-out infinite' }} />
+          ))}
+        </div>
+        {[1,2,3,4,5].map(i => (
+          <div key={i} style={{ height: 56, borderRadius: 10, background: '#fff', border: '1px solid #f1f5f9', marginBottom: 8, animation: 'pulse 1.5s ease-in-out infinite' }} />
+        ))}
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
