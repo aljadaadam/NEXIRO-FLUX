@@ -432,6 +432,12 @@ export const demoGateways = [
     config: { merchant_id: 'BN-demo...', api_key: '••••••••' },
     display_order: 4,
   },
+  {
+    id: 5, type: 'bankak', name: 'بنكك', name_en: 'Bankak',
+    is_enabled: true, is_default: false,
+    config: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '1480', local_currency: 'IQD' },
+    display_order: 5,
+  },
 ];
 
 // ─── الإعلانات ───
@@ -698,6 +704,8 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
       case 'bank_transfer':
       default:
         return { success: true, paymentId: demoPaymentId, gatewayType: 'bank_transfer', method: 'manual_bank', bankDetails: { bank_name: 'البنك الأهلي', account_holder: 'متجر YCZ للخدمات', iban: 'SA02 8000 0000 6080 1016 7519', swift: 'NCBKSAJE', currency: 'USD' }, referenceId: `NF${demoPaymentId}T${Date.now()}`, instructions: { ar: `حوّل المبلغ ${amt} USD إلى الحساب أعلاه. بعد التحويل ارفع إيصال الدفع.`, en: `Transfer ${amt} USD to the account above, then upload your receipt.` } };
+      case 'bankak':
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'bankak', method: 'manual_bankak', bankakDetails: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '1480', local_currency: 'IQD' }, localAmount: Math.round(amt * 1480), referenceId: `BK${demoPaymentId}T${Date.now()}` };
     }
   }
   if (ep.match(/^checkout\/status\/\d+$/) && method === 'GET') {

@@ -8,7 +8,7 @@ class PaymentGateway {
       CREATE TABLE IF NOT EXISTS payment_gateways (
         id INT AUTO_INCREMENT PRIMARY KEY,
         site_key VARCHAR(100) NOT NULL,
-        type ENUM('paypal','bank_transfer','usdt','binance','wallet') NOT NULL,
+        type ENUM('paypal','bank_transfer','usdt','binance','wallet','bankak') NOT NULL,
         name VARCHAR(255) NOT NULL,
         name_en VARCHAR(255) DEFAULT NULL,
         is_enabled TINYINT(1) DEFAULT 1,

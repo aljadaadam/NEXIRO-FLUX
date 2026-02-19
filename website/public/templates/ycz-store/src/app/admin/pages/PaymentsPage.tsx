@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/lib/api';
 
-type GatewayType = 'paypal' | 'bank_transfer' | 'usdt' | 'binance' | 'wallet';
+type GatewayType = 'paypal' | 'bank_transfer' | 'usdt' | 'binance' | 'wallet' | 'bankak';
 
 interface Gateway {
   id: number;
@@ -22,6 +22,7 @@ const GATEWAY_META: Record<GatewayType, { icon: string; label: string; labelEn: 
   bank_transfer: { icon: '🏦', label: 'التحويل البنكي', labelEn: 'Bank Transfer', desc: 'تحويل بنكي مباشر' },
   usdt: { icon: '💚', label: 'USDT', labelEn: 'USDT Crypto', desc: 'تيثر على شبكة Tron/ERC20/BEP20' },
   wallet: { icon: '📱', label: 'محفظة إلكترونية', labelEn: 'E-Wallet', desc: 'شحن عبر محافظ إلكترونية (تعليمات فقط)' },
+  bankak: { icon: '🏛️', label: 'بنكك', labelEn: 'Bankak', desc: 'دفع عبر بنكك — تحويل محلي بسعر الصرف' },
 };
 
 const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: string; placeholder: string; required?: boolean; options?: { value: string; label: string }[] }[]> = {
@@ -53,9 +54,15 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
     { key: 'contact_numbers', label: 'أرقام التواصل للشحن', placeholder: 'مثال: 07701234567' },
     { key: 'image_url', label: 'رابط صورة/لوغو المحفظة', placeholder: 'https://example.com/logo.png' },
   ],
+  bankak: [
+    { key: 'account_number', label: 'رقم الحساب', placeholder: 'أدخل رقم الحساب البنكي', required: true },
+    { key: 'full_name', label: 'الاسم الكامل (صاحب الحساب)', placeholder: 'مثال: أحمد محمد علي', required: true },
+    { key: 'exchange_rate', label: 'سعر الصرف (1 دولار = ؟ عملة محلية)', placeholder: 'مثال: 1480', required: true },
+    { key: 'local_currency', label: 'رمز العملة المحلية', placeholder: 'مثال: IQD', required: true, options: [{ value: 'IQD', label: 'IQD (د.ع)' }, { value: 'SYP', label: 'SYP (ل.س)' }, { value: 'EGP', label: 'EGP (ج.م)' }, { value: 'LBP', label: 'LBP (ل.ل)' }, { value: 'YER', label: 'YER (ر.ي)' }, { value: 'SDG', label: 'SDG (ج.س)' }] },
+  ],
 };
 
-const AVAILABLE_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer', 'wallet'];
+const AVAILABLE_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer', 'wallet', 'bankak'];
 
 export default function PaymentsPage() {
   const [gateways, setGateways] = useState<Gateway[]>([]);
@@ -297,6 +304,13 @@ export default function PaymentsPage() {
                         <img src={gw.config.image_url} alt="" style={{ maxWidth: 80, maxHeight: 40, borderRadius: 6, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
                       </div>
                     )}
+                  </>
+                )}
+                {gw.type === 'bankak' && (
+                  <>
+                    {gw.config?.full_name && <ConfigRow label="صاحب الحساب" value={gw.config.full_name} />}
+                    {gw.config?.account_number && <ConfigRow label="رقم الحساب" value={maskString(gw.config.account_number)} />}
+                    {gw.config?.exchange_rate && <ConfigRow label="سعر الصرف" value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || ''}`} />}
                   </>
                 )}
               </div>

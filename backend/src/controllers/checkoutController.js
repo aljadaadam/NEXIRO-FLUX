@@ -218,6 +218,31 @@ async function initCheckout(req, res) {
         break;
       }
 
+      // ━━━━━ بنكك ━━━━━
+      case 'bankak': {
+        const bConfig = gateway.config;
+        const exchangeRate = parseFloat(bConfig.exchange_rate) || 0;
+        const localAmount = exchangeRate > 0 ? Math.round(parseFloat(amount) * exchangeRate) : 0;
+        await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
+        await Payment.updateMeta(payment.id, getSiteKey(req), {
+          bankak_exchange_rate: bConfig.exchange_rate,
+          bankak_local_currency: bConfig.local_currency,
+          bankak_local_amount: localAmount,
+        });
+        result = {
+          method: 'manual_bankak',
+          bankakDetails: {
+            account_number: bConfig.account_number,
+            full_name: bConfig.full_name,
+            exchange_rate: bConfig.exchange_rate,
+            local_currency: bConfig.local_currency || '',
+          },
+          localAmount,
+          referenceId,
+        };
+        break;
+      }
+
       default:
         return res.status(400).json({ error: `نوع بوابة غير مدعوم: ${gateway.type}` });
     }

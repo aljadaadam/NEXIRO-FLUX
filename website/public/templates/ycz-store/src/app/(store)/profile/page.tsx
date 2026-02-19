@@ -19,6 +19,7 @@ const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string 
   bank_transfer: { icon: '🏦', color: '#059669', desc: 'حوالة بنكية مباشرة' },
   usdt:    { icon: '💚', color: '#26a17b', desc: 'USDT — تيثر' },
   wallet:  { icon: '📱', color: '#8b5cf6', desc: 'شحن عبر محفظة إلكترونية' },
+  bankak:  { icon: '🏛️', color: '#0891b2', desc: 'دفع عبر بنكك — تحويل محلي' },
 };
 
 // ─── Types for checkout response ───
@@ -59,6 +60,14 @@ type CheckoutResult = {
     contact_numbers?: string;
     image_url?: string;
   };
+  // Bankak
+  bankakDetails?: {
+    account_number?: string;
+    full_name?: string;
+    exchange_rate?: string;
+    local_currency?: string;
+  };
+  localAmount?: number;
 };
 
 function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
@@ -122,6 +131,34 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
         paymentId: 0,
         gatewayType: 'wallet',
         walletConfig: selectedGw.config,
+      } as CheckoutResult);
+      setStep(2);
+      return;
+    }
+
+    // ─── Bankak type: show bank info + receipt upload ───
+    // In demo mode, handle locally; otherwise let it go through backend checkout
+    if (selectedGw.type === 'bankak' && typeof window !== 'undefined' && (
+      new URLSearchParams(window.location.search).get('demo') === '1' ||
+      sessionStorage.getItem('demo_mode') === '1' ||
+      window.location.hostname.startsWith('demo-')
+    )) {
+      const rate = Number(selectedGw.config?.exchange_rate || 0);
+      const localAmt = rate > 0 ? Math.round(Number(amount) * rate) : 0;
+      setCheckoutData({
+        success: true,
+        method: 'manual_bankak',
+        paymentId: 0,
+        gatewayType: 'bankak',
+        bankakDetails: {
+          account_number: selectedGw.config?.account_number || '',
+          full_name: selectedGw.config?.full_name || '',
+          exchange_rate: selectedGw.config?.exchange_rate || '',
+          local_currency: selectedGw.config?.local_currency || '',
+        },
+        localAmount: localAmt,
+        amount: Number(amount),
+        referenceId: `BK${Date.now()}`,
       } as CheckoutResult);
       setStep(2);
       return;
@@ -703,8 +740,72 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
+            {/* ── Bankak: local bank transfer with exchange rate ── */}
+            {checkoutData.method === 'manual_bankak' && checkoutData.bankakDetails && (
+              <div>
+                {/* Amount banner with exchange rate */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #0891b2, #06b6d4)',
+                  borderRadius: 16, padding: '1.25rem', marginBottom: 16, color: '#fff', textAlign: 'center',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+                  <p style={{ fontSize: '0.75rem', opacity: 0.85, marginBottom: 4 }}>{t('المبلغ المطلوب')}</p>
+                  <p style={{ fontSize: '2rem', fontWeight: 800 }}>${amount}</p>
+                  {checkoutData.localAmount && checkoutData.localAmount > 0 && (
+                    <div style={{ marginTop: 8, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.15)', display: 'inline-block' }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+                        = {checkoutData.localAmount.toLocaleString()} {checkoutData.bankakDetails.local_currency}
+                      </p>
+                    </div>
+                  )}
+                  {checkoutData.bankakDetails.exchange_rate && (
+                    <p style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 6 }}>
+                      {t('سعر الصرف')}: 1$ = {checkoutData.bankakDetails.exchange_rate} {checkoutData.bankakDetails.local_currency}
+                    </p>
+                  )}
+                </div>
+
+                {/* Account details */}
+                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    🏛️ {t('بيانات الحساب')}
+                  </h4>
+                  {[
+                    { label: t('صاحب الحساب'), value: checkoutData.bankakDetails.full_name || '' },
+                    { label: t('رقم الحساب'), value: checkoutData.bankakDetails.account_number || '' },
+                    ...(checkoutData.referenceId ? [{ label: t('رقم المرجع'), value: checkoutData.referenceId }] : []),
+                  ].map((item, i, arr) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr' }}>{item.value}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(item.value); }} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#64748b' }}>📋</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Warning note */}
+                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                  <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
+                    {t('حوّل المبلغ بالعملة المحلية إلى الحساب أعلاه. بعد التحويل ارفع صورة الإشعار للتأكيد.')}
+                  </p>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
+                  <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: '#0891b2', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Upload size={14} /> {t('رفع إشعار التحويل')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
-            {checkoutData.method !== 'manual_bank' && checkoutData.method !== 'info_wallet' && (
+            {checkoutData.method !== 'manual_bank' && checkoutData.method !== 'info_wallet' && checkoutData.method !== 'manual_bankak' && (
               <button onClick={() => { setStep(1); setCheckoutData(null); setSubmitError(''); }} style={{
                 width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: '#f1f5f9',
                 color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
@@ -713,14 +814,14 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
           </div>
         )}
 
-        {/* Step 3: Upload Receipt (bank_transfer only) */}
+        {/* Step 3: Upload Receipt (bank_transfer / bankak) */}
         {step === 3 && (
           <div>
             <div style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receipt ? '#f0fdf4' : '#fafafa' }} onClick={() => setReceipt(true)}>
               {receipt ? (
                 <>
                   <CheckCircle size={40} color="#16a34a" style={{ margin: '0 auto 12px', display: 'block' }} />
-                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#16a34a' }}>{t('تم رفع الإيصال بنجاح')}</p>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#16a34a' }}>{checkoutData?.method === 'manual_bankak' ? t('تم رفع إشعار التحويل بنجاح') : t('تم رفع الإيصال بنجاح')}</p>
                   <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 4 }}>receipt_2026.jpg</p>
                 </>
               ) : (

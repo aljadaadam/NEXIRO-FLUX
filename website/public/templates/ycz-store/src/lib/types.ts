@@ -113,7 +113,7 @@ export interface BlogPost {
 export interface PaymentGateway {
   id: number;
   site_key: string;
-  type: 'paypal' | 'bank_transfer' | 'usdt' | 'binance';
+  type: 'paypal' | 'bank_transfer' | 'usdt' | 'binance' | 'bankak';
   name: string;
   name_en?: string;
   is_enabled: boolean;

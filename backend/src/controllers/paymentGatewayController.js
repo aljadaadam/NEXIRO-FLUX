@@ -54,6 +54,13 @@ async function getEnabledGateways(req, res) {
           contact_numbers: gw.config.contact_numbers,
           image_url: gw.config.image_url,
         } : {}),
+        // Bankak - عرض رقم الحساب والاسم وسعر الصرف
+        ...(gw.type === 'bankak' ? {
+          account_number: gw.config.account_number,
+          full_name: gw.config.full_name,
+          exchange_rate: gw.config.exchange_rate,
+          local_currency: gw.config.local_currency,
+        } : {}),
       } : null,
     }));
 
@@ -73,7 +80,7 @@ async function createGateway(req, res) {
       return res.status(400).json({ error: 'النوع والاسم مطلوبان' });
     }
 
-    const validTypes = ['paypal', 'bank_transfer', 'usdt', 'binance', 'wallet'];
+    const validTypes = ['paypal', 'bank_transfer', 'usdt', 'binance', 'wallet', 'bankak'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ error: `نوع غير صالح. الأنواع المتاحة: ${validTypes.join(', ')}` });
     }
