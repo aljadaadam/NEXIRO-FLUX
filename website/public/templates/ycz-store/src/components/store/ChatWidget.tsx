@@ -48,9 +48,10 @@ export default function ChatWidget() {
       const msgs = res?.messages || [];
       if (msgs.length) {
         setMessages(prev => {
-          const ids = new Set(prev.map(m => m.id));
+          const real = prev.filter(m => m.id > 0);
+          const ids = new Set(real.map(m => m.id));
           const fresh = msgs.filter(m => !ids.has(m.id));
-          return fresh.length ? [...prev, ...fresh] : prev;
+          return fresh.length ? [...real, ...fresh] : real.length !== prev.length ? real : prev;
         });
         lastMsgId.current = msgs[msgs.length - 1].id;
         if (!open) setUnread(u => u + msgs.filter(m => m.sender_type === 'admin').length);
@@ -88,7 +89,7 @@ export default function ChatWidget() {
     setInput('');
     setSending(true);
     // إضافة مؤقتة
-    const temp: ChatMsg = { id: Date.now(), conversation_id: convId, sender_type: 'customer', message: msg, is_read: false, created_at: new Date().toISOString() };
+    const temp: ChatMsg = { id: -Date.now(), conversation_id: convId, sender_type: 'customer', message: msg, is_read: false, created_at: new Date().toISOString() };
     setMessages(prev => [...prev, temp]);
     scrollBottom();
     try {

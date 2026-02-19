@@ -46,9 +46,10 @@ export default function ChatAdminPage() {
       if (isPolling && afterId > 0) {
         if (msgs.length) {
           setMessages(prev => {
-            const ids = new Set(prev.map(m => m.id));
+            const real = prev.filter(m => m.id > 0);
+            const ids = new Set(real.map(m => m.id));
             const fresh = msgs.filter(m => !ids.has(m.id));
-            return fresh.length ? [...prev, ...fresh] : prev;
+            return fresh.length ? [...real, ...fresh] : real.length !== prev.length ? real : prev;
           });
         }
       } else {
@@ -80,7 +81,7 @@ export default function ChatAdminPage() {
     setReply('');
     setSending(true);
     // إضافة مؤقتة
-    const temp: ChatMsg = { id: Date.now(), conversation_id: selectedConv, sender_type: 'admin', message: msg, is_read: false, created_at: new Date().toISOString() };
+    const temp: ChatMsg = { id: -Date.now(), conversation_id: selectedConv, sender_type: 'admin', message: msg, is_read: false, created_at: new Date().toISOString() };
     setMessages(prev => [...prev, temp]);
     setTimeout(scrollBottom, 60);
     try {
