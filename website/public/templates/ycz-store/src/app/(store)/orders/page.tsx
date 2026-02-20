@@ -109,7 +109,7 @@ export default function OrdersPage() {
               <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: `${si.color}18`, color: si.color }}>{si.label}</span>
             </div>
             <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</p>
-            {/* حقول الطلب المقدمة */}
+            {/* حقول الطلب المقدمة — مدمجة في البطاقة */}
             {(order.imei || order.notes) && (() => {
               const fields: { label: string; value: string }[] = [];
               if (order.imei) fields.push({ label: 'IMEI', value: order.imei });
@@ -128,13 +128,12 @@ export default function OrdersPage() {
                 }
               }
               return fields.length > 0 ? (
-                <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: 8 }}>
-                  <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, marginBottom: 4 }}>{t('بيانات الطلب:')}</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', marginBottom: 8 }}>
                   {fields.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 6, fontSize: '0.78rem', marginBottom: 2 }}>
-                      <span style={{ color: '#94a3b8', fontWeight: 600, minWidth: 'fit-content' }}>{f.label}:</span>
-                      <span style={{ color: '#334155', wordBreak: 'break-all', direction: 'ltr', textAlign: 'left' }}>{f.value}</span>
-                    </div>
+                    <span key={i} style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                      <span style={{ fontWeight: 600 }}>{f.label}: </span>
+                      <span style={{ color: '#334155', direction: 'ltr', unicodeBidi: 'embed' }}>{f.value}</span>
+                    </span>
                   ))}
                 </div>
               ) : null;
