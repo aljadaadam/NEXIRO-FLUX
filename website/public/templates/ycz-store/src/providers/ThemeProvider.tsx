@@ -25,6 +25,9 @@ interface ThemeContextType {
   colorThemes: ColorTheme[];
   loaded: boolean;
   refetch: () => Promise<void>;
+  // ─── Social links ───
+  socialLinks: { whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string };
+  setSocialLinks: (v: { whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }) => void;
   // ─── Language support ───
   language: Language;
   isRTL: boolean;
@@ -47,6 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [headerStyle, setHeaderStyle] = useState('default');
   const [showBanner, setShowBanner] = useState(true);
   const [fontFamily, setFontFamily] = useState('Tajawal');
+  const [socialLinks, setSocialLinks] = useState<{ whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }>({});
   const [language, setLanguage] = useState<Language>('ar');
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -106,6 +110,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (c.header_style) setHeaderStyle(c.header_style);
         if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
         if (c.store_name) setStoreName(c.store_name);
+        if (c.social_links) {
+          const sl = typeof c.social_links === 'string' ? JSON.parse(c.social_links) : c.social_links;
+          setSocialLinks(sl);
+        }
         if (c.store_language === 'en' || c.store_language === 'ar') setLanguage(c.store_language);
         // حفظ في localStorage كـ cache
         try {
@@ -177,6 +185,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       headerStyle, setHeaderStyle,
       showBanner, setShowBanner,
       fontFamily, setFontFamily,
+      socialLinks, setSocialLinks,
       colorThemes: COLOR_THEMES,
       loaded,
       refetch: fetchFromServer,
