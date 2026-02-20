@@ -533,23 +533,6 @@ export default function PaymentsPage() {
             </h3>
             <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>جميع عمليات الشحن والدفع — يمكنك الموافقة على المعلقة</p>
           </div>
-          {/* Stats Cards */}
-          {txStats && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ background: '#f0fdf4', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
-                <p style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600 }}>الإيرادات</p>
-                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#166534' }}>${txStats.totalRevenue.toLocaleString()}</p>
-              </div>
-              <div style={{ background: '#eff6ff', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
-                <p style={{ fontSize: '0.65rem', color: '#2563eb', fontWeight: 600 }}>اليوم</p>
-                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#1d4ed8' }}>${txStats.todayRevenue.toLocaleString()}</p>
-              </div>
-              <div style={{ background: '#f5f3ff', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
-                <p style={{ fontSize: '0.65rem', color: '#7c3aed', fontWeight: 600 }}>الإيداعات</p>
-                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>${txStats.totalDeposits.toLocaleString()}</p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Filter Tabs */}
@@ -672,15 +655,15 @@ export default function PaymentsPage() {
 
                       {/* Actions */}
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {hasReceipt && (
+                          <button onClick={() => setReceiptModal(tx)} style={{
+                            padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0',
+                            background: '#fff', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 600,
+                            fontFamily: 'Tajawal, sans-serif', color: '#2563eb',
+                          }}>🧾 إيصال</button>
+                        )}
                         {isPending && (
                           <>
-                            {hasReceipt && (
-                              <button onClick={() => setReceiptModal(tx)} style={{
-                                padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0',
-                                background: '#fff', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 600,
-                                fontFamily: 'Tajawal, sans-serif', color: '#2563eb',
-                              }}>🧾 إيصال</button>
-                            )}
                             <button
                               onClick={() => handleApprove(tx)}
                               disabled={approvingId === tx.id}
@@ -703,7 +686,7 @@ export default function PaymentsPage() {
                             >✗ رفض</button>
                           </>
                         )}
-                        {!isPending && (
+                        {!isPending && !hasReceipt && (
                           <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>—</span>
                         )}
                       </div>
