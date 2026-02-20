@@ -57,8 +57,9 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
   bankak: [
     { key: 'account_number', label: 'رقم الحساب', placeholder: 'أدخل رقم الحساب البنكي', required: true },
     { key: 'full_name', label: 'الاسم الكامل (صاحب الحساب)', placeholder: 'مثال: أحمد محمد علي', required: true },
-    { key: 'exchange_rate', label: 'سعر الصرف (1 دولار = ؟ عملة محلية)', placeholder: 'مثال: 1480', required: true },
-    { key: 'local_currency', label: 'رمز العملة المحلية', placeholder: 'مثال: IQD', required: true, options: [{ value: 'IQD', label: 'IQD (د.ع)' }, { value: 'SYP', label: 'SYP (ل.س)' }, { value: 'EGP', label: 'EGP (ج.م)' }, { value: 'LBP', label: 'LBP (ل.ل)' }, { value: 'YER', label: 'YER (ر.ي)' }, { value: 'SDG', label: 'SDG (ج.س)' }] },
+    { key: 'exchange_rate', label: 'سعر الصرف (1 دولار = ؟ جنيه سوداني)', placeholder: 'مثال: 600', required: true },
+    { key: 'local_currency', label: 'رمز العملة المحلية', placeholder: 'SDG', required: true, options: [{ value: 'SDG', label: 'SDG (ج.س)' }] },
+    { key: 'image_url', label: 'رابط صورة/لوغو بنكك', placeholder: 'https://example.com/bankak-logo.png' },
   ],
 };
 
@@ -310,7 +311,12 @@ export default function PaymentsPage() {
                   <>
                     {gw.config?.full_name && <ConfigRow label="صاحب الحساب" value={gw.config.full_name} />}
                     {gw.config?.account_number && <ConfigRow label="رقم الحساب" value={maskString(gw.config.account_number)} />}
-                    {gw.config?.exchange_rate && <ConfigRow label="سعر الصرف" value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || ''}`} />}
+                    {gw.config?.exchange_rate && <ConfigRow label="سعر الصرف" value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || 'SDG'}`} />}
+                    {gw.config?.image_url && (
+                      <div style={{ textAlign: 'center', marginTop: 4 }}>
+                        <img src={gw.config.image_url} alt="بنكك" style={{ maxWidth: 80, maxHeight: 40, borderRadius: 6, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
