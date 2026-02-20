@@ -51,7 +51,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [showBanner, setShowBanner] = useState(true);
   const [fontFamily, setFontFamily] = useState('Tajawal');
   const [socialLinks, setSocialLinks] = useState<{ whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }>({});
-  const [language, setLanguage] = useState<Language>('ar');
+  const [language, setLanguage] = useState<Language>(() => {
+    // تحديد اللغة تلقائياً من المتصفح
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('ycz_language');
+        if (cached === 'en' || cached === 'ar') return cached;
+      } catch { /* ignore */ }
+      const browserLang = navigator.language || (navigator as unknown as { userLanguage?: string }).userLanguage || '';
+      if (browserLang.startsWith('ar')) return 'ar';
+      return 'en';
+    }
+    return 'ar';
+  });
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const fetchIdRef = useRef(0);
@@ -82,8 +94,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setHeaderStyle(safeGet('ycz_headerStyle', 'default'));
     setShowBanner(safeGet('ycz_showBanner', 'true') !== 'false');
     setFontFamily(safeGet('ycz_fontFamily', 'Tajawal'));
-    const cachedLang = safeGet('ycz_language', 'ar');
-    if (cachedLang === 'en' || cachedLang === 'ar') setLanguage(cachedLang);
+    const cachedLang = safeGet('ycz_language', '');
+    if (cachedLang === 'en' || cachedLang === 'ar') {
+      setLanguage(cachedLang);
+    } else {
+      // لا يوجد كاش — كشف من المتصفح
+      const bl = navigator.language || '';
+      setLanguage(bl.startsWith('ar') ? 'ar' : 'en');
+    }
     setMounted(true);
   }, []);
 
