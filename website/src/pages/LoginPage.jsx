@@ -53,7 +53,10 @@ export default function LoginPage() {
       clearMessages();
       try {
         const data = await googleLogin({ access_token: tokenResponse.access_token });
-        if (data.user?.role === 'admin') {
+        const redirectParam = searchParams.get('redirect');
+        if (data.user?.role === 'admin' && redirectParam) {
+          window.location.href = `https://dash.nexiroflux.com${redirectParam}`;
+        } else if (data.user?.role === 'admin') {
           navigate('/admin');
         } else {
           navigate('/my-dashboard');
@@ -81,7 +84,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(email, password);
-      if (data.user?.role === 'admin') {
+      const redirectParam = searchParams.get('redirect');
+      if (data.user?.role === 'admin' && redirectParam) {
+        window.location.href = `https://dash.nexiroflux.com${redirectParam}`;
+      } else if (data.user?.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/my-dashboard');

@@ -17,6 +17,19 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (!isAuthenticated) {
+    // On dash.nexiroflux.com, redirect to main site login instead of local /login
+    const isDashSubdomain = typeof window !== 'undefined' && window.location.hostname === 'dash.nexiroflux.com';
+    if (isDashSubdomain) {
+      window.location.href = `https://nexiroflux.com/login?redirect=${encodeURIComponent(location.pathname)}`;
+      return (
+        <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-dark-400 text-sm">Redirecting...</p>
+          </div>
+        </div>
+      );
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

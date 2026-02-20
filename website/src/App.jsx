@@ -78,6 +78,19 @@ function AppContent() {
   const isMyDashboard = location.pathname === '/my-dashboard';
   const isCheckoutPage = location.pathname.startsWith('/checkout');
 
+  // dash.nexiroflux.com should ONLY show /admin routes
+  // Redirect any non-admin route on dash subdomain to nexiroflux.com
+  const isDashSubdomain = typeof window !== 'undefined' && window.location.hostname === 'dash.nexiroflux.com';
+  useEffect(() => {
+    if (isDashSubdomain && !isAdminPage) {
+      window.location.href = `https://nexiroflux.com${location.pathname}${location.search}`;
+    }
+  }, [isDashSubdomain, isAdminPage, location.pathname, location.search]);
+
+  if (isDashSubdomain && !isAdminPage) {
+    return <PageLoader />;
+  }
+
   if (isDemoPage) {
     return (
       <Suspense fallback={<PageLoader />}>
