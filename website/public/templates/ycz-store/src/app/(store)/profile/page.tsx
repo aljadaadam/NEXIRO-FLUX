@@ -360,7 +360,10 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       border: method === gw.type ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
                       background: method === gw.type ? `${currentTheme.primary}08` : '#fff',
                     }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${meta.color}15`, color: meta.color, display: 'grid', placeItems: 'center', fontSize: '1.2rem', fontWeight: 800, flexShrink: 0 }}>{meta.icon}</div>
+                      {gw.config?.image_url ? (
+                        <img src={gw.config.image_url} alt={gw.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain', flexShrink: 0, background: '#f8fafc' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid'); }} />
+                      ) : null}
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${meta.color}15`, color: meta.color, display: gw.config?.image_url ? 'none' : 'grid', placeItems: 'center', fontSize: '1.2rem', fontWeight: 800, flexShrink: 0 }}>{meta.icon}</div>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020' }}>{gw.name}</p>
                         <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t(meta.desc)}</p>
