@@ -29,6 +29,8 @@ async function getEnabledGateways(req, res) {
       is_default: gw.is_default,
       // عرض فقط الحقول الآمنة من config
       config: gw.config ? {
+        // image_url مشتركة لجميع البوابات
+        ...(gw.config.image_url ? { image_url: gw.config.image_url } : {}),
         // PayPal - عرض الإيميل فقط
         ...(gw.type === 'paypal' && gw.config.email ? { email: gw.config.email } : {}),
         // Bank - عرض اسم البنك و IBAN فقط
@@ -52,7 +54,6 @@ async function getEnabledGateways(req, res) {
         ...(gw.type === 'wallet' ? {
           instructions: gw.config.instructions,
           contact_numbers: gw.config.contact_numbers,
-          image_url: gw.config.image_url,
         } : {}),
         // Bankak - عرض رقم الحساب والاسم وسعر الصرف
         ...(gw.type === 'bankak' ? {
