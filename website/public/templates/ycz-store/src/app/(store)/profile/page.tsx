@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User, CreditCard, Shield, Wallet, Lock, Mail, Phone,
@@ -77,6 +77,10 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
   const [method, setMethod] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [receipt, setReceipt] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptNotes, setReceiptNotes] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
@@ -256,15 +260,39 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
     }
   };
 
+  // ─── Handle File Selection ───
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError(t('حجم الملف يتجاوز 5MB'));
+      setTimeout(() => setSubmitError(''), 3000);
+      return;
+    }
+    setReceiptFile(file);
+    setReceipt(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReceiptPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // ─── Submit Bank Receipt ───
   const handleSubmitReceipt = async () => {
-    if (!receipt || !paymentId) return;
+    if (!receiptPreview) {
+      setSubmitError(t('يرجى رفع صورة الإيصال أولاً'));
+      setTimeout(() => setSubmitError(''), 3000);
+      return;
+    }
+    // In demo mode paymentId may be 0/null — use demo api path
+    const effectiveId = paymentId || 0;
     setSubmitting(true);
     setSubmitError('');
     try {
-      await storeApi.uploadReceipt(paymentId, {
-        receipt_url: 'receipt_uploaded',
-        notes: `شحن محفظة — $${amount}`,
+      await storeApi.uploadReceipt(effectiveId, {
+        receipt_url: receiptPreview,
+        notes: receiptNotes || `شحن محفظة — $${amount}`,
       });
       setStep(4);
       onSubmitted?.();
@@ -817,32 +845,51 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
         {/* Step 3: Upload Receipt (bank_transfer / bankak) */}
         {step === 3 && (
           <div>
-            <div style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receipt ? '#f0fdf4' : '#fafafa' }} onClick={() => setReceipt(true)}>
-              {receipt ? (
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+            <div
+              style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: receiptPreview ? '1rem' : '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receiptPreview ? '#f0fdf4' : '#fafafa', overflow: 'hidden' }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {receiptPreview ? (
                 <>
-                  <CheckCircle size={40} color="#16a34a" style={{ margin: '0 auto 12px', display: 'block' }} />
-                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#16a34a' }}>{checkoutData?.method === 'manual_bankak' ? t('تم رفع إشعار التحويل بنجاح') : t('تم رفع الإيصال بنجاح')}</p>
-                  <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 4 }}>receipt_2026.jpg</p>
+                  <img src={receiptPreview} alt="receipt" style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 10, objectFit: 'contain', marginBottom: 8 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}>
+                    <CheckCircle size={16} color="#16a34a" />
+                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#16a34a' }}>{checkoutData?.method === 'manual_bankak' ? t('تم رفع إشعار التحويل بنجاح') : t('تم رفع الإيصال بنجاح')}</p>
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>{receiptFile?.name || 'receipt.jpg'} — {t('اضغط لتغيير الصورة')}</p>
                 </>
               ) : (
                 <>
                   <Upload size={36} color="#94a3b8" style={{ margin: '0 auto 12px', display: 'block' }} />
                   <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>{t('اضغط لرفع صورة الإيصال')}</p>
-                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 6 }}>JPG, PNG — حد أقصى 5MB</p>
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 6 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
                 </>
               )}
             </div>
 
-            <input placeholder={t('ملاحظات إضافية (اختياري)')} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }} />
+            <input
+              placeholder={t('ملاحظات إضافية (اختياري)')}
+              value={receiptNotes}
+              onChange={(e) => setReceiptNotes(e.target.value)}
+              style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+            />
 
             {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginBottom: 10 }}>{submitError}</p>}
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setStep(2)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
-              <button onClick={handleSubmitReceipt} disabled={!receipt || submitting} style={{
+              <button onClick={handleSubmitReceipt} disabled={!receiptPreview || submitting} style={{
                 flex: 2, padding: '0.7rem', borderRadius: btnR,
-                background: receipt && !submitting ? currentTheme.primary : '#e2e8f0', color: receipt && !submitting ? '#fff' : '#94a3b8',
-                border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: receipt ? 'pointer' : 'not-allowed',
+                background: receiptPreview && !submitting ? currentTheme.primary : '#e2e8f0', color: receiptPreview && !submitting ? '#fff' : '#94a3b8',
+                border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: receiptPreview ? 'pointer' : 'not-allowed',
                 fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}><Send size={14} /> {submitting ? t('جاري الإرسال...') : t('إرسال للمراجعة')}</button>
             </div>
