@@ -29,7 +29,11 @@ class Payment {
   static async findById(id) {
     const pool = getPool();
     const [rows] = await pool.query('SELECT * FROM payments WHERE id = ?', [id]);
-    return rows[0] || null;
+    const row = rows[0] || null;
+    if (row && row.meta && typeof row.meta === 'string') {
+      try { row.meta = JSON.parse(row.meta); } catch (e) { /* ignore */ }
+    }
+    return row;
   }
 
   // جلب مدفوعات موقع
@@ -47,7 +51,13 @@ class Payment {
     params.push(limit, offset);
 
     const [rows] = await pool.query(query, params);
-    return rows;
+    // Parse meta JSON string from MariaDB
+    return rows.map(row => {
+      if (row.meta && typeof row.meta === 'string') {
+        try { row.meta = JSON.parse(row.meta); } catch (e) { /* ignore */ }
+      }
+      return row;
+    });
   }
 
   // تحديث حالة الدفع
