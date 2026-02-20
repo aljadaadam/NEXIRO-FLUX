@@ -181,12 +181,14 @@ export default function ChatWidget() {
         .nxr-chat-name-btn:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(124,92,255,.4)}
         .nxr-chat-name-btn:disabled{opacity:.5;cursor:default;transform:none}
         .nxr-chat-empty{text-align:center;padding:20px;color:#9ca3af;font-size:.8rem}
-        @media(max-width:640px){
-          .nxr-chat-panel{width:100%;left:0;right:0;bottom:0;top:0;height:100dvh;max-height:100dvh;border-radius:0;animation:nxrChatInMobile .25s ease-out}
+        @media(max-width:768px){
+          .nxr-chat-panel{width:100vw!important;max-width:100vw!important;left:0!important;right:0!important;bottom:0!important;top:0!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;animation:nxrChatInMobile .25s ease-out}
           .nxr-chat-header{padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top))}
           .nxr-chat-close{padding:10px;border-radius:12px;background:rgba(255,255,255,.2)}
-          .nxr-chat-input-area{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
-          .nxr-chat-fab{bottom:24px;left:16px;width:54px;height:54px}
+          .nxr-chat-body{padding:14px 12px}
+          .nxr-chat-input-area{padding:10px 12px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+          .nxr-chat-input{font-size:16px}
+          .nxr-chat-fab{bottom:20px;left:16px;width:54px;height:54px}
         }
         @keyframes nxrChatInMobile{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
       `}</style>
