@@ -93,6 +93,8 @@ const en: Record<string, string> = {
   'معلقة': 'Pending',
   'مرفوضة': 'Failed',
   'نتيجة الخدمة:': 'Service Result:',
+  'بيانات الطلب:': 'Order Details:',
+  'ملاحظات': 'Notes',
   'سبب الرفض:': 'Rejection Reason:',
   'لا توجد طلبات': 'No orders',
 

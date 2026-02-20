@@ -36,6 +36,8 @@ export default function OrdersPage() {
       payment_status: String(raw.payment_status || ''),
       created_at: raw.created_at ? String(raw.created_at) : undefined,
       server_response: raw.server_response ? parseServerResponse(String(raw.server_response)) : undefined,
+      imei: raw.imei ? String(raw.imei) : undefined,
+      notes: raw.notes ? String(raw.notes) : undefined,
     };
   }
 
@@ -107,6 +109,36 @@ export default function OrdersPage() {
               <span style={{ padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: `${si.color}18`, color: si.color }}>{si.label}</span>
             </div>
             <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</p>
+            {/* حقول الطلب المقدمة */}
+            {(order.imei || order.notes) && (() => {
+              const fields: { label: string; value: string }[] = [];
+              if (order.imei) fields.push({ label: 'IMEI', value: order.imei });
+              if (order.notes) {
+                try {
+                  const parsed = JSON.parse(order.notes);
+                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    Object.entries(parsed).forEach(([k, v]) => {
+                      if (v && String(v).trim()) fields.push({ label: k, value: String(v) });
+                    });
+                  } else {
+                    fields.push({ label: t('ملاحظات'), value: order.notes });
+                  }
+                } catch {
+                  fields.push({ label: t('ملاحظات'), value: order.notes });
+                }
+              }
+              return fields.length > 0 ? (
+                <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: 8 }}>
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, marginBottom: 4 }}>{t('بيانات الطلب:')}</p>
+                  {fields.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 6, fontSize: '0.78rem', marginBottom: 2 }}>
+                      <span style={{ color: '#94a3b8', fontWeight: 600, minWidth: 'fit-content' }}>{f.label}:</span>
+                      <span style={{ color: '#334155', wordBreak: 'break-all', direction: 'ltr', textAlign: 'left' }}>{f.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null;
+            })()}
             {order.server_response && order.status === 'completed' && (
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: 8 }}>
                 <p style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 600, marginBottom: 2 }}>{t('نتيجة الخدمة:')}</p>
