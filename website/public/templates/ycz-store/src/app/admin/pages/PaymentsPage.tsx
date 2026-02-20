@@ -16,6 +16,22 @@ interface Gateway {
   display_order: number;
 }
 
+interface PaymentTx {
+  id: number;
+  customer_id: number;
+  customer_name?: string;
+  type: 'deposit' | 'purchase' | 'refund';
+  amount: number;
+  currency: string;
+  payment_method: string;
+  payment_gateway_id?: number;
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+  description?: string;
+  external_id?: string;
+  meta?: Record<string, string>;
+  created_at: string;
+}
+
 /* ─── SVG Icons ─── */
 const GatewayIcons: Record<GatewayType, ReactNode> = {
   paypal: (
@@ -128,6 +144,15 @@ export default function PaymentsPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
+  // Transaction log state
+  const [transactions, setTransactions] = useState<PaymentTx[]>([]);
+  const [txLoading, setTxLoading] = useState(true);
+  const [txFilter, setTxFilter] = useState<'all' | 'pending' | 'completed' | 'failed'>('all');
+  const [txPage, setTxPage] = useState(1);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [receiptModal, setReceiptModal] = useState<PaymentTx | null>(null);
+  const [txStats, setTxStats] = useState<{ totalRevenue: number; todayRevenue: number; totalDeposits: number } | null>(null);
+
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -146,6 +171,53 @@ export default function PaymentsPage() {
   }, []);
 
   useEffect(() => { fetchGateways(); }, [fetchGateways]);
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const [txRes, statsRes] = await Promise.all([
+        adminApi.getPayments(1, 100),
+        adminApi.getPaymentStats(),
+      ]);
+      setTransactions(txRes.payments || []);
+      setTxStats(statsRes.stats || null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTxLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+
+  const handleApprove = async (tx: PaymentTx) => {
+    setApprovingId(tx.id);
+    try {
+      await adminApi.updatePaymentStatus(tx.id, 'completed');
+      setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: 'completed' } : t));
+      showToast(`تمت الموافقة على الدفعة #${tx.id} وتم إضافة الرصيد`);
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      showToast('فشل في الموافقة على الدفعة', 'error');
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleReject = async (tx: PaymentTx) => {
+    setApprovingId(tx.id);
+    try {
+      await adminApi.updatePaymentStatus(tx.id, 'failed');
+      setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: 'failed' } : t));
+      showToast('تم رفض الدفعة');
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      showToast('فشل في رفض الدفعة', 'error');
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
   const openConfigModal = (type: GatewayType, gw?: Gateway) => {
     if (gw) {
@@ -448,6 +520,291 @@ export default function PaymentsPage() {
           );
         })}
       </div>
+      {/* ═══════════════ Transaction Log ═══════════════ */}
+      <div style={{ marginTop: 36 }}>
+        {/* Section Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #059669, #10b981)', display: 'grid', placeItems: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 14l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              سجل عمليات الدفع
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>جميع عمليات الشحن والدفع — يمكنك الموافقة على المعلقة</p>
+          </div>
+          {/* Stats Cards */}
+          {txStats && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ background: '#f0fdf4', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
+                <p style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600 }}>الإيرادات</p>
+                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#166534' }}>${txStats.totalRevenue.toLocaleString()}</p>
+              </div>
+              <div style={{ background: '#eff6ff', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
+                <p style={{ fontSize: '0.65rem', color: '#2563eb', fontWeight: 600 }}>اليوم</p>
+                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#1d4ed8' }}>${txStats.todayRevenue.toLocaleString()}</p>
+              </div>
+              <div style={{ background: '#f5f3ff', padding: '0.5rem 0.85rem', borderRadius: 10, textAlign: 'center' }}>
+                <p style={{ fontSize: '0.65rem', color: '#7c3aed', fontWeight: 600 }}>الإيداعات</p>
+                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>${txStats.totalDeposits.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Filter Tabs */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+          {([['all', 'الكل'], ['pending', 'معلّقة'], ['completed', 'مكتملة'], ['failed', 'مرفوضة']] as const).map(([key, label]) => {
+            const count = key === 'all' ? transactions.length : transactions.filter(t => t.status === key).length;
+            const isActive = txFilter === key;
+            return (
+              <button key={key} onClick={() => { setTxFilter(key); setTxPage(1); }} style={{
+                padding: '0.4rem 0.85rem', borderRadius: 8, border: 'none',
+                background: isActive ? (key === 'pending' ? '#fef3c7' : key === 'completed' ? '#dcfce7' : key === 'failed' ? '#fee2e2' : '#f1f5f9') : '#fff',
+                color: isActive ? (key === 'pending' ? '#92400e' : key === 'completed' ? '#166534' : key === 'failed' ? '#b91c1c' : '#334155') : '#94a3b8',
+                fontSize: '0.78rem', fontWeight: isActive ? 700 : 500, cursor: 'pointer',
+                fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s',
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+              }}>
+                {label} {count > 0 && <span style={{ marginRight: 4, opacity: 0.7 }}>({count})</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Transactions Table */}
+        {txLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          </div>
+        ) : (() => {
+          const filtered = txFilter === 'all' ? transactions : transactions.filter(t => t.status === txFilter);
+          const perPage = 10;
+          const totalPages = Math.ceil(filtered.length / perPage);
+          const paginated = filtered.slice((txPage - 1) * perPage, txPage * perPage);
+
+          if (filtered.length === 0) {
+            return (
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: 14 }}>
+                <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>لا توجد عمليات دفع {txFilter !== 'all' ? 'بهذا التصنيف' : 'بعد'}</p>
+              </div>
+            );
+          }
+
+          return (
+            <>
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+                {/* Table Header */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
+                  padding: '0.65rem 1rem', background: '#f8fafc', borderBottom: '1px solid #f1f5f9',
+                  fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
+                }}>
+                  <span>#</span>
+                  <span>العميل</span>
+                  <span>المبلغ</span>
+                  <span>البوابة</span>
+                  <span>الحالة</span>
+                  <span>الإجراء</span>
+                </div>
+
+                {/* Rows */}
+                {paginated.map(tx => {
+                  const isPending = tx.status === 'pending';
+                  const hasReceipt = !!tx.meta?.receipt_url;
+                  const methodLabel = GATEWAY_META[tx.payment_method as GatewayType]?.label || tx.payment_method;
+                  const methodColor = GATEWAY_META[tx.payment_method as GatewayType]?.color || '#64748b';
+                  const statusConfig = {
+                    pending: { label: 'معلّقة', bg: '#fef3c7', color: '#92400e', icon: '⏳' },
+                    completed: { label: 'مكتملة', bg: '#dcfce7', color: '#166534', icon: '✅' },
+                    failed: { label: 'مرفوضة', bg: '#fee2e2', color: '#b91c1c', icon: '❌' },
+                    refunded: { label: 'مستردة', bg: '#e0e7ff', color: '#4338ca', icon: '↩️' },
+                    cancelled: { label: 'ملغاة', bg: '#f1f5f9', color: '#64748b', icon: '🚫' },
+                  }[tx.status] || { label: tx.status, bg: '#f1f5f9', color: '#64748b', icon: '•' };
+
+                  return (
+                    <div key={tx.id} style={{
+                      display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
+                      padding: '0.7rem 1rem', borderBottom: '1px solid #f8fafc',
+                      alignItems: 'center', fontSize: '0.8rem',
+                      background: isPending ? '#fffbeb05' : 'transparent',
+                    }}>
+                      {/* ID + Date */}
+                      <div>
+                        <span style={{ fontWeight: 700, color: '#0b1020' }}>#{tx.id}</span>
+                        <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 2 }}>
+                          {new Date(tx.created_at).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })}
+                          {' '}
+                          {new Date(tx.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+
+                      {/* Customer */}
+                      <div>
+                        <span style={{ fontWeight: 600, color: '#334155' }}>{tx.customer_name || `عميل #${tx.customer_id}`}</span>
+                        <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 1 }}>
+                          {tx.type === 'deposit' ? 'شحن رصيد' : tx.type === 'purchase' ? 'شراء' : 'استرداد'}
+                        </p>
+                      </div>
+
+                      {/* Amount */}
+                      <span style={{ fontWeight: 700, color: tx.type === 'refund' ? '#dc2626' : '#059669', direction: 'ltr' as const }}>
+                        {tx.type === 'refund' ? '-' : '+'}${tx.amount}
+                      </span>
+
+                      {/* Gateway */}
+                      <span style={{
+                        fontSize: '0.7rem', fontWeight: 600, color: methodColor,
+                        background: `${methodColor}10`, padding: '0.2rem 0.5rem', borderRadius: 6,
+                        display: 'inline-block', width: 'fit-content',
+                      }}>
+                        {methodLabel}
+                      </span>
+
+                      {/* Status */}
+                      <span style={{
+                        fontSize: '0.68rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: 6,
+                        background: statusConfig.bg, color: statusConfig.color,
+                        display: 'inline-flex', alignItems: 'center', gap: 3, width: 'fit-content',
+                      }}>
+                        {statusConfig.icon} {statusConfig.label}
+                      </span>
+
+                      {/* Actions */}
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {isPending && (
+                          <>
+                            {hasReceipt && (
+                              <button onClick={() => setReceiptModal(tx)} style={{
+                                padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0',
+                                background: '#fff', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 600,
+                                fontFamily: 'Tajawal, sans-serif', color: '#2563eb',
+                              }}>🧾 إيصال</button>
+                            )}
+                            <button
+                              onClick={() => handleApprove(tx)}
+                              disabled={approvingId === tx.id}
+                              style={{
+                                padding: '0.3rem 0.55rem', borderRadius: 6, border: 'none',
+                                background: '#059669', cursor: approvingId === tx.id ? 'not-allowed' : 'pointer',
+                                fontSize: '0.68rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
+                                color: '#fff', opacity: approvingId === tx.id ? 0.6 : 1,
+                              }}
+                            >{approvingId === tx.id ? '...' : '✓ موافقة'}</button>
+                            <button
+                              onClick={() => handleReject(tx)}
+                              disabled={approvingId === tx.id}
+                              style={{
+                                padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #fecaca',
+                                background: '#fff', cursor: approvingId === tx.id ? 'not-allowed' : 'pointer',
+                                fontSize: '0.68rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
+                                color: '#dc2626', opacity: approvingId === tx.id ? 0.6 : 1,
+                              }}
+                            >✗ رفض</button>
+                          </>
+                        )}
+                        {!isPending && (
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>—</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+                  <button disabled={txPage <= 1} onClick={() => setTxPage(p => p - 1)} style={{
+                    padding: '0.35rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0',
+                    background: '#fff', cursor: txPage <= 1 ? 'not-allowed' : 'pointer',
+                    fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: txPage <= 1 ? 0.4 : 1,
+                  }}>← السابق</button>
+                  <span style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', color: '#64748b' }}>{txPage} / {totalPages}</span>
+                  <button disabled={txPage >= totalPages} onClick={() => setTxPage(p => p + 1)} style={{
+                    padding: '0.35rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0',
+                    background: '#fff', cursor: txPage >= totalPages ? 'not-allowed' : 'pointer',
+                    fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: txPage >= totalPages ? 0.4 : 1,
+                  }}>التالي →</button>
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </div>
+
+      {/* Receipt Preview Modal */}
+      {receiptModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setReceiptModal(null)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#fff', borderRadius: 20, padding: '1.5rem', width: '92%', maxWidth: 480,
+            boxShadow: '0 25px 50px rgba(0,0,0,0.2)', maxHeight: '88vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>🧾 إيصال الدفع — #{receiptModal.id}</h3>
+              <button onClick={() => setReceiptModal(null)} style={{ background: '#f1f5f9', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: '0.9rem', display: 'grid', placeItems: 'center' }}>✕</button>
+            </div>
+
+            {/* Payment Info */}
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
+                <span style={{ color: '#64748b' }}>العميل</span>
+                <span style={{ fontWeight: 600, color: '#0b1020' }}>{receiptModal.customer_name || `#${receiptModal.customer_id}`}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
+                <span style={{ color: '#64748b' }}>المبلغ</span>
+                <span style={{ fontWeight: 700, color: '#059669', direction: 'ltr' as const }}>${receiptModal.amount}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
+                <span style={{ color: '#64748b' }}>البوابة</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{GATEWAY_META[receiptModal.payment_method as GatewayType]?.label || receiptModal.payment_method}</span>
+              </div>
+              {receiptModal.meta?.receipt_uploaded_at && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: '#64748b' }}>تاريخ الرفع</span>
+                  <span style={{ fontWeight: 500, color: '#334155', fontSize: '0.78rem' }}>{new Date(receiptModal.meta.receipt_uploaded_at).toLocaleString('ar-SA')}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Receipt Image */}
+            {receiptModal.meta?.receipt_url && (
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <img
+                  src={receiptModal.meta.receipt_url}
+                  alt="إيصال الدفع"
+                  style={{ maxWidth: '100%', maxHeight: 400, borderRadius: 12, border: '1px solid #e2e8f0' }}
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
+                />
+              </div>
+            )}
+
+            {/* Receipt Notes */}
+            {receiptModal.meta?.receipt_notes && (
+              <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16 }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#92400e' }}>ملاحظات العميل:</p>
+                <p style={{ fontSize: '0.82rem', color: '#78350f', marginTop: 4 }}>{receiptModal.meta.receipt_notes}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            {receiptModal.status === 'pending' && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { handleReject(receiptModal); setReceiptModal(null); }} style={{
+                  flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #fecaca',
+                  background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                  fontFamily: 'Tajawal, sans-serif', color: '#dc2626',
+                }}>✗ رفض</button>
+                <button onClick={() => { handleApprove(receiptModal); setReceiptModal(null); }} style={{
+                  flex: 2, padding: '0.65rem', borderRadius: 10, border: 'none',
+                  background: '#059669', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+                  fontFamily: 'Tajawal, sans-serif', color: '#fff',
+                }}>✓ موافقة وإضافة الرصيد</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Config Modal */}
       {showModal && (

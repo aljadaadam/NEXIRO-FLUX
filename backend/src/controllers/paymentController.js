@@ -1,4 +1,5 @@
 const Payment = require('../models/Payment');
+const { creditWalletOnce } = require('../services/walletCredit');
 
 // جلب جميع المدفوعات
 async function getAllPayments(req, res) {
@@ -89,6 +90,15 @@ async function updatePaymentStatus(req, res) {
     const updated = await Payment.updateStatus(parseInt(id), siteKey, status);
     if (!updated) {
       return res.status(500).json({ error: 'فشل في تحديث حالة الدفع' });
+    }
+
+    // إذا تمت الموافقة على إيداع معلّق، أضف الرصيد للعميل
+    if (status === 'completed' && payment.status === 'pending' && payment.type === 'deposit') {
+      try {
+        await creditWalletOnce({ paymentId: payment.id, siteKey });
+      } catch (e) {
+        console.error('خطأ في إضافة الرصيد للمحفظة:', e);
+      }
     }
 
     const updatedPayment = await Payment.findById(parseInt(id));

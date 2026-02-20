@@ -637,6 +637,25 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
     return { success: true };
   }
 
+  // Admin payments (transactions)
+  if (ep.startsWith('payments') && !ep.includes('gateway') && method === 'GET') {
+    if (ep === 'payments/stats') {
+      return { stats: { totalRevenue: 1250.00, todayRevenue: 85.00, totalDeposits: 980.00 } };
+    }
+    return { payments: [
+      { id: 1, customer_id: 1, customer_name: 'أحمد محمد', type: 'deposit', amount: 50, currency: 'USD', payment_method: 'bankak', status: 'pending', description: 'شحن رصيد', created_at: '2026-02-20T10:30:00Z', meta: { receipt_url: 'https://example.com/receipt1.jpg', receipt_uploaded_at: '2026-02-20T10:35:00Z' } },
+      { id: 2, customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 100, currency: 'USD', payment_method: 'bank_transfer', status: 'pending', description: 'شحن رصيد', created_at: '2026-02-20T09:15:00Z', meta: { receipt_url: 'https://example.com/receipt2.jpg' } },
+      { id: 3, customer_id: 3, customer_name: 'خالد عبدالله', type: 'deposit', amount: 25, currency: 'USD', payment_method: 'paypal', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-19T14:00:00Z' },
+      { id: 4, customer_id: 1, customer_name: 'أحمد محمد', type: 'purchase', amount: 15, currency: 'USD', payment_method: 'wallet', status: 'completed', description: 'شراء خدمة', created_at: '2026-02-19T11:20:00Z' },
+      { id: 5, customer_id: 4, customer_name: 'فاطمة حسن', type: 'deposit', amount: 200, currency: 'USD', payment_method: 'binance', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T16:45:00Z' },
+      { id: 6, customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 75, currency: 'USD', payment_method: 'usdt', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T08:30:00Z' },
+      { id: 7, customer_id: 5, customer_name: 'عمر يوسف', type: 'deposit', amount: 30, currency: 'USD', payment_method: 'bankak', status: 'failed', description: 'شحن رصيد', created_at: '2026-02-17T13:10:00Z' },
+    ]};
+  }
+  if (ep.match(/^payments\/\d+\/status$/) && method === 'PATCH') {
+    return { success: true, message: 'تم تحديث الحالة (عرض تجريبي)' };
+  }
+
   if (ep === 'payment-gateways' && method === 'GET') {
     return { gateways: demoGateways };
   }
