@@ -365,8 +365,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
         {/* Step 2: Payment Details (from real checkout API) */}
         {step === 2 && checkoutData && (
           <div>
-            {/* Amount banner (hide for USDT - it has its own) */}
-            {checkoutData.method !== 'manual_crypto' && (
+            {/* Amount banner (hide for USDT & Bankak - they have their own) */}
+            {checkoutData.method !== 'manual_crypto' && checkoutData.method !== 'manual_bankak' && (
             <div style={{ background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, borderRadius: 14, padding: '1.25rem', marginBottom: 20, color: '#fff', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: 4 }}>{t('المبلغ المطلوب')}</p>
               <p style={{ fontSize: '2rem', fontWeight: 800 }}>${amount}</p>
