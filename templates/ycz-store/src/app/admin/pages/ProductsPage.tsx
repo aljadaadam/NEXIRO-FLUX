@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Palette, Save } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -822,137 +822,215 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
       {/* Edit Product Modal */}
       {showEdit && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={closeEdit}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '95%', maxWidth: 820, maxHeight: '92vh', overflow: 'auto', padding: '1rem 1.15rem', border: '1px solid #e2e8f0' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={closeEdit}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '95%', maxWidth: 780, maxHeight: '92vh', overflow: 'auto', padding: 0, border: '1px solid #e2e8f0', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>
-              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><Edit size={16} color="#64748b" /> تعديل المنتج</h3>
-              <button type="button" onClick={closeEdit} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                <X size={12} color="#64748b" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#fafbfc', borderRadius: '16px 16px 0 0', position: 'sticky', top: 0, zIndex: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: `${theme.primary}15`, display: 'grid', placeItems: 'center' }}>
+                  <Edit size={16} color={theme.primary} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020', margin: 0 }}>تعديل المنتج</h3>
+                  <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>تعديل بيانات وإعدادات المنتج</p>
+                </div>
+              </div>
+              <button type="button" onClick={closeEdit} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', transition: 'background 0.15s' }} onMouseOver={e => (e.currentTarget.style.background = '#f1f5f9')} onMouseOut={e => (e.currentTarget.style.background = '#fff')}>
+                <X size={14} color="#64748b" />
               </button>
             </div>
 
-            {/* ─── معلومات أساسية ─── */}
-            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>معلومات أساسية</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
-              <input placeholder="الاسم (إنجليزي)" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-              <input placeholder="الاسم (عربي)" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-              <input placeholder="السعر ($)" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* ─── Section 1: معلومات أساسية ─── */}
+            <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: '#dbeafe', display: 'grid', placeItems: 'center' }}>
+                  <Type size={14} color="#2563eb" />
+                </div>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>معلومات أساسية</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> الاسم (إنجليزي)</label>
+                  <input placeholder="Product Name" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Type size={10} /> الاسم (عربي)</label>
+                  <input placeholder="اسم المنتج" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><DollarSign size={10} /> السعر</label>
+                  <input placeholder="0.00" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s', textAlign: 'center' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                </div>
+              </div>
             </div>
 
-            {/* ─── إعدادات ─── */}
-            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>إعدادات</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 10 }}>
-              <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                <option value="SERVER">SERVER</option>
-                <option value="IMEI">IMEI</option>
-                <option value="REMOTE">REMOTE</option>
-              </select>
-              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                <option value="active">نشط</option>
-                <option value="inactive">غير نشط</option>
-              </select>
-              <input placeholder="أيقونة" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} />
-              <select value={editNamePriority} onChange={(e) => setEditNamePriority(e.target.value as 'ar' | 'en')} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                <option value="ar">🔤 عربي أولاً</option>
-                <option value="en">🔤 English أولاً</option>
-              </select>
+            {/* ─── Section 2: إعدادات المنتج ─── */}
+            <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fef3c7', display: 'grid', placeItems: 'center' }}>
+                  <Settings2 size={14} color="#d97706" />
+                </div>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>إعدادات المنتج</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Package size={10} /> النوع</label>
+                  <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
+                    <option value="SERVER">SERVER</option>
+                    <option value="IMEI">IMEI</option>
+                    <option value="REMOTE">REMOTE</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><ToggleLeft size={10} /> الحالة</label>
+                  <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Palette size={10} /> الأيقونة</label>
+                  <input placeholder="🔓" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> أولوية اللغة</label>
+                  <select value={editNamePriority} onChange={(e) => setEditNamePriority(e.target.value as 'ar' | 'en')} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
+                    <option value="ar">عربي أولاً</option>
+                    <option value="en">English أولاً</option>
+                  </select>
+                </div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', width: 'fit-content' }}>
+                <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 15, height: 15, accentColor: theme.primary }} />
+                <Gamepad2 size={13} color="#64748b" />
+                تصنيف كـ لعبة
+              </label>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: '0.76rem', fontWeight: 800, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>
-              <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 16, height: 16 }} />
-              تصنيف كـ لعبة (isGame)
-            </label>
+            {/* ─── Section 3: القروب والوصف ─── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              {/* القروب */}
+              <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: '#e0e7ff', display: 'grid', placeItems: 'center' }}>
+                    <FolderOpen size={14} color="#6366f1" />
+                  </div>
+                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>القروب</p>
+                </div>
+                <select value={editGroup === '__new__' ? '__new__' : editGroup} onChange={e => { setEditGroup(e.target.value); if (e.target.value !== '__new__') setEditCustomGroup(''); }} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer', marginBottom: editGroup === '__new__' ? 8 : 0 }}>
+                  <option value="">— بدون قروب —</option>
+                  {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                  <option value="__new__">+ قروب جديد...</option>
+                </select>
+                {editGroup === '__new__' && (
+                  <input placeholder="اسم القروب الجديد" value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                )}
+              </div>
 
-            {/* ─── القروب ─── */}
-            <div style={{ display: 'grid', gridTemplateColumns: editGroup === '__new__' ? '1fr 1fr' : '1fr', gap: 8, marginBottom: 10 }}>
-              <select value={editGroup === '__new__' ? '__new__' : editGroup} onChange={e => { setEditGroup(e.target.value); if (e.target.value !== '__new__') setEditCustomGroup(''); }} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                <option value="">— بدون قروب —</option>
-                {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                <option value="__new__">➕ قروب جديد...</option>
-              </select>
-              {editGroup === '__new__' && (
-                <input placeholder="اسم القروب الجديد" value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-              )}
+              {/* الوصف */}
+              <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: '#dcfce7', display: 'grid', placeItems: 'center' }}>
+                    <FileText size={14} color="#16a34a" />
+                  </div>
+                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>الوصف</p>
+                </div>
+                <textarea rows={3} placeholder="أضف وصف للمنتج..." value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+              </div>
             </div>
 
-            {/* ─── الوصف ─── */}
-            <textarea rows={2} placeholder="وصف المنتج" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
-
-            {/* ─── إعدادات الاتصال بالمصدر ─── */}
-            <div style={{ padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9', marginBottom: 10 }}>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}><Link2 size={13} color="#334155" /> اتصال المصدر</p>
+            {/* ─── Section 4: اتصال المصدر ─── */}
+            <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fce7f3', display: 'grid', placeItems: 'center' }}>
+                  <Link2 size={14} color="#db2777" />
+                </div>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>اتصال المصدر</p>
+              </div>
 
               {editOriginalSourceId && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 8 }}>
-                  <div>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020' }}>
-                      {editSourceConnected ? <><CheckCircle size={12} color="#16a34a" style={{ display: 'inline', verticalAlign: 'middle' }} /> متصل</> : <><AlertCircle size={12} color="#dc2626" style={{ display: 'inline', verticalAlign: 'middle' }} /> مفصول</>}
-                    </p>
-                    <p style={{ fontSize: '0.62rem', color: '#94a3b8' }}>
-                      {editSourceConnected ? 'يرسل الطلبات تلقائياً' : 'الطلبات تبقى معلقة'}
-                    </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: editSourceConnected ? '#dcfce7' : '#fee2e2', display: 'grid', placeItems: 'center' }}>
+                      {editSourceConnected ? <CheckCircle size={16} color="#16a34a" /> : <AlertCircle size={16} color="#dc2626" />}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.76rem', fontWeight: 700, color: editSourceConnected ? '#16a34a' : '#dc2626', margin: 0 }}>
+                        {editSourceConnected ? 'متصل' : 'مفصول'}
+                      </p>
+                      <p style={{ fontSize: '0.62rem', color: '#94a3b8', margin: 0 }}>
+                        {editSourceConnected ? 'يرسل الطلبات تلقائياً' : 'الطلبات تبقى معلقة'}
+                      </p>
+                    </div>
                   </div>
                   <button onClick={() => setEditSourceConnected(!editSourceConnected)} type="button" style={{
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    padding: '0.3rem 0.65rem', borderRadius: 6,
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '0.35rem 0.75rem', borderRadius: 8,
                     background: editSourceConnected ? '#fee2e2' : '#dcfce7',
                     color: editSourceConnected ? '#dc2626' : '#16a34a',
-                    border: 'none', fontSize: '0.68rem', fontWeight: 700,
+                    border: '1px solid ' + (editSourceConnected ? '#fecaca' : '#bbf7d0'),
+                    fontSize: '0.72rem', fontWeight: 700,
                     cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+                    transition: 'all 0.15s',
                   }}>
-                    {editSourceConnected ? <><Unlink size={11} /> فصل</> : <><Link2 size={11} /> ربط</>}
+                    {editSourceConnected ? <><Unlink size={12} /> فصل</> : <><Link2 size={12} /> ربط</>}
                   </button>
                 </div>
               )}
 
               {/* تحويل لمنتج آخر */}
-              <div style={{ padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 4 }}><RefreshCw size={12} color="#64748b" /> تحويل لمنتج آخر</p>
+              <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <RefreshCw size={12} color="#64748b" />
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>تحويل لمنتج آخر</p>
+                  </div>
                   {editLinkedProductId && (
-                    <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ padding: '0.15rem 0.45rem', borderRadius: 4, border: 'none', background: '#fee2e2', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif' }}>
+                    <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ padding: '0.2rem 0.55rem', borderRadius: 6, border: '1px solid #fecaca', background: '#fee2e2', cursor: 'pointer', fontSize: '0.62rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif' }}>
                       إلغاء التحويل
                     </button>
                   )}
                 </div>
 
                 {editLinkedProductId && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.55rem', background: '#eff6ff', borderRadius: 6, border: '1px solid #bfdbfe', marginBottom: 6 }}>
-                    <Link2 size={11} color="#2563eb" />
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.4rem 0.65rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', marginBottom: 8 }}>
+                    <Link2 size={12} color="#2563eb" />
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
                       {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) + ` (#${lp.id})` : `#${editLinkedProductId}`; })()}
                     </span>
                   </div>
                 )}
 
                 <div style={{ position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 6, padding: '0.35rem 0.55rem', background: '#fff' }}>
-                    <Search size={11} color="#94a3b8" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.4rem 0.65rem', background: '#fafbfc' }}>
+                    <Search size={12} color="#94a3b8" />
                     <input
                       value={linkSearch}
                       onChange={e => { setLinkSearch(e.target.value); setShowLinkDropdown(true); }}
                       onFocus={() => setShowLinkDropdown(true)}
                       placeholder="ابحث عن منتج..."
-                      style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                      style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.72rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
                     />
                   </div>
 
                   {showLinkDropdown && filteredLinkable.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 180, overflow: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 4, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 180, overflow: 'auto' }}>
                       {filteredLinkable.map(p => (
                         <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
-                          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                          padding: '0.4rem 0.65rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                          display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                          padding: '0.45rem 0.75rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
                           border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
                           fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
-                        }}>
+                          transition: 'background 0.1s',
+                        }} onMouseOver={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
                           <span style={{ fontSize: '0.85rem' }}>{p.icon}</span>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020' }}>{p.arabic_name || p.name}</p>
-                            {p.arabic_name && <p style={{ fontSize: '0.58rem', color: '#94a3b8' }}>{p.name}</p>}
+                            <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020', margin: 0 }}>{p.arabic_name || p.name}</p>
+                            {p.arabic_name && <p style={{ fontSize: '0.58rem', color: '#94a3b8', margin: 0 }}>{p.name}</p>}
                           </div>
-                          <span style={{ fontSize: '0.6rem', color: '#64748b', background: '#f1f5f9', padding: '0.1rem 0.3rem', borderRadius: 3 }}>#{p.id}</span>
+                          <span style={{ fontSize: '0.6rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: 4, fontWeight: 600 }}>#{p.id}</span>
                         </button>
                       ))}
                     </div>
@@ -961,12 +1039,16 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               </div>
             </div>
 
+            </div>{/* end padding wrapper */}
+
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 8, paddingTop: 6, borderTop: '1px solid #f1f5f9' }}>
-              <button type="button" onClick={handleUpdateProduct} disabled={updating} style={{ padding: '0.5rem 1.3rem', borderRadius: 8, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1 }}>
+            <div style={{ display: 'flex', gap: 10, padding: '0.85rem 1.25rem', borderTop: '1px solid #e2e8f0', background: '#fafbfc', borderRadius: '0 0 16px 16px', position: 'sticky', bottom: 0, zIndex: 10 }}>
+              <button type="button" onClick={handleUpdateProduct} disabled={updating} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.55rem 1.5rem', borderRadius: 10, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.8rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.15s' }}>
+                <Save size={14} />
                 {updating ? 'جاري الحفظ...' : 'حفظ التعديل'}
               </button>
-              <button type="button" onClick={closeEdit} style={{ padding: '0.5rem 1.3rem', borderRadius: 8, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
+              <button type="button" onClick={closeEdit} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.55rem 1.5rem', borderRadius: 10, background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#fff'}>
+                <X size={14} />
                 إلغاء
               </button>
             </div>
