@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, Shield, Eye, Database, Lock, Share2, UserCheck, Bell } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 
 export default function PrivacyPage() {
   const { isRTL } = useLanguage();

@@ -1,53 +1,31 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 
 // Critical page - loaded eagerly
 import HomePage from './pages/HomePage';
 
-// Lazy-loaded pages for code splitting
-const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
-const PricingPage = lazy(() => import('./pages/PricingPage'));
-const TemplatePreviewPage = lazy(() => import('./pages/TemplatePreviewPage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
-const SetupWizardPage = lazy(() => import('./pages/SetupWizardPage'));
-const MyDashboardPage = lazy(() => import('./pages/MyDashboardPage'));
-const TermsPage = lazy(() => import('./pages/TermsPage'));
-const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
-const RefundPage = lazy(() => import('./pages/RefundPage'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
-const TutorialPage = lazy(() => import('./pages/TutorialPage'));
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
-const CheckoutResultPage = lazy(() => import('./pages/CheckoutResultPage'));
-const TerminalSetupPage = lazy(() => import('./pages/TerminalSetupPage'));
-const TemplateBuyPage = lazy(() => import('./pages/TemplateBuyPage'));
-
-// Demo pages - lazy loaded
-const YCZStoreLiveDemo = lazy(() => import('./pages/demo/YCZStoreLiveDemo'));
-const YCZDashboardLiveDemo = lazy(() => import('./pages/demo/YCZDashboardLiveDemo'));
-const GxVaultStoreLiveDemo = lazy(() => import('./pages/demo/GxVaultStoreLiveDemo'));
-const GxVaultDashboardLiveDemo = lazy(() => import('./pages/demo/GxVaultDashboardLiveDemo'));
-const HxToolsStoreLiveDemo = lazy(() => import('./pages/demo/HxToolsStoreLiveDemo'));
-const HxToolsDashboardLiveDemo = lazy(() => import('./pages/demo/HxToolsDashboardLiveDemo'));
-const CarStoreLiveDemo = lazy(() => import('./pages/demo/CarStoreLiveDemo'));
-const CarDashboardLiveDemo = lazy(() => import('./pages/demo/CarDashboardLiveDemo'));
-
-// Admin Dashboard - lazy loaded
-const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
-const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
-const AdminTemplates = lazy(() => import('./pages/admin/AdminTemplates'));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
-const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
-const AdminPaymentGateways = lazy(() => import('./pages/admin/AdminPaymentGateways'));
-const AdminPurchaseCodes = lazy(() => import('./pages/admin/AdminPurchaseCodes'));
-const AdminTickets = lazy(() => import('./pages/admin/AdminTickets'));
+// Lazy-loaded pages from route config
+import {
+  TemplatesPage, PricingPage, TemplatePreviewPage,
+  LoginPage, RegisterPage, MyDashboardPage,
+  TermsPage, PrivacyPage, RefundPage, NotFoundPage,
+  TutorialPage, CheckoutPage, CheckoutResultPage,
+  TerminalSetupPage, TemplateBuyPage,
+  // Demo pages
+  YCZStoreLiveDemo, YCZDashboardLiveDemo,
+  GxVaultStoreLiveDemo, GxVaultDashboardLiveDemo,
+  HxToolsStoreLiveDemo, HxToolsDashboardLiveDemo,
+  CarStoreLiveDemo, CarDashboardLiveDemo,
+  // Admin
+  AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
+  AdminAnnouncements, AdminSettings, AdminPayments,
+  AdminPaymentGateways, AdminPurchaseCodes, AdminTickets,
+} from './routes';
 
 // Loading fallback
 function PageLoader() {

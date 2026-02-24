@@ -4,7 +4,7 @@ import { Mail, Lock, Eye, EyeOff, User, Sparkles, Loader2, AlertCircle } from 'l
 import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 
 export default function RegisterPage() {
   const { t, isRTL } = useLanguage();

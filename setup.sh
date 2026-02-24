@@ -80,7 +80,7 @@ echo "✅ الموقع الرئيسي جاهز → website/dist/"
 # ─── 3. تثبيت وبناء قالب المتجر ycz-store ───
 echo ""
 echo "🏪 [3/5] تثبيت وبناء قالب المتجر (ycz-store)..."
-cd "$ROOT_DIR/website/public/templates/ycz-store"
+cd "$ROOT_DIR/templates/ycz-store"
 npm install
 rm -rf .next
 npm run build
@@ -89,7 +89,7 @@ echo "✅ قالب ycz-store جاهز"
 # ─── 4. تثبيت وبناء قالب المتجر hx-tools-store ───
 echo ""
 echo "🔧 [4/5] تثبيت وبناء قالب المتجر (hx-tools-store)..."
-cd "$ROOT_DIR/website/public/templates/hx-tools-store"
+cd "$ROOT_DIR/templates/hx-tools-store"
 npm install
 rm -rf .next
 npm run build
@@ -98,7 +98,7 @@ echo "✅ قالب hx-tools-store جاهز"
 # ─── 5. تثبيت وبناء قالب المتجر car-store ───
 echo ""
 echo "🚗 [5/6] تثبيت وبناء قالب المتجر (car-store)..."
-cd "$ROOT_DIR/website/public/templates/car-store"
+cd "$ROOT_DIR/templates/car-store"
 npm install
 rm -rf .next
 npm run build
@@ -110,13 +110,13 @@ echo "🚀 [5/5] تشغيل الخدمات..."
 cd "$ROOT_DIR/backend"
 pm2 start src/app.js --name nexiro-backend
 
-cd "$ROOT_DIR/website/public/templates/ycz-store"
+cd "$ROOT_DIR/templates/ycz-store"
 pm2 start npm --name ycz-store -- start
 
-cd "$ROOT_DIR/website/public/templates/hx-tools-store"
+cd "$ROOT_DIR/templates/hx-tools-store"
 pm2 start npm --name hx-tools-store -- start
 
-cd "$ROOT_DIR/website/public/templates/car-store"
+cd "$ROOT_DIR/templates/car-store"
 pm2 start npm --name car-store -- start
 
 pm2 save

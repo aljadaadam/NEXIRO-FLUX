@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:template": "npm --prefix public/templates/ycz-store run dev -- -p 3333",
+    "dev:template": "npm --prefix ../templates/ycz-store run dev -- -p 3333",
     "build": "vite build",
     "preview": "vite preview"
   },

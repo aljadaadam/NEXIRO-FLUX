@@ -1,4 +1,4 @@
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 import HeroSection from '../components/home/HeroSection';
 import TemplatesGallery from '../components/home/TemplatesGallery';
 import FeaturesSection from '../components/home/FeaturesSection';

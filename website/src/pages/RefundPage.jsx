@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, Ban, AlertTriangle, ShieldX, Eye, MessageCircle, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 
 export default function RefundPage() {
   const { isRTL } = useLanguage();

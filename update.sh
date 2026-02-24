@@ -12,9 +12,9 @@ set -e
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 WEBSITE_DIR="$ROOT_DIR/website"
-TEMPLATE_DIR="$WEBSITE_DIR/public/templates/ycz-store"
-HX_TEMPLATE_DIR="$WEBSITE_DIR/public/templates/hx-tools-store"
-CAR_TEMPLATE_DIR="$WEBSITE_DIR/public/templates/car-store"
+TEMPLATE_DIR="$ROOT_DIR/templates/ycz-store"
+HX_TEMPLATE_DIR="$ROOT_DIR/templates/hx-tools-store"
+CAR_TEMPLATE_DIR="$ROOT_DIR/templates/car-store"
 
 echo "══════════════════════════════════════"
 echo "  NEXIRO-FLUX — تحديث وبناء كامل"
@@ -58,7 +58,7 @@ if command -v pm2 &> /dev/null; then
   pm2 restart ycz-store 2>/dev/null || pm2 start npm --name ycz-store -- start
   echo "✅ قالب ycz-store يعمل على المنفذ 4000 (pm2)"
 else
-  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd website/public/templates/ycz-store && npm start"
+  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd templates/ycz-store && npm start"
 fi
 echo ""
 
@@ -72,7 +72,7 @@ if command -v pm2 &> /dev/null; then
   pm2 restart hx-tools-store 2>/dev/null || pm2 start npm --name hx-tools-store -- start
   echo "✅ قالب hx-tools-store يعمل على المنفذ 4002 (pm2)"
 else
-  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd website/public/templates/hx-tools-store && npm start"
+  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd templates/hx-tools-store && npm start"
 fi
 echo ""
 
@@ -86,7 +86,7 @@ if command -v pm2 &> /dev/null; then
   pm2 restart car-store 2>/dev/null || pm2 start npm --name car-store -- start
   echo "✅ قالب car-store يعمل على المنفذ 4003 (pm2)"
 else
-  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd website/public/templates/car-store && npm start"
+  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd templates/car-store && npm start"
 fi
 echo ""
 

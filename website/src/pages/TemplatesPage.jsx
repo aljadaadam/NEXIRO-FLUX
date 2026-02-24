@@ -1,4 +1,4 @@
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 import TemplatesGallery from '../components/home/TemplatesGallery';
 
 export default function TemplatesPage() {

@@ -4,7 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowLeft, ArrowRight, Loader2, Aler
 import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 import api from '../services/api';
 
 export default function LoginPage() {

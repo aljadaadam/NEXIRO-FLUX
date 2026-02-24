@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, FileText, Shield, AlertTriangle, Scale, Clock, Globe } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 
 export default function TermsPage() {
   const { isRTL } = useLanguage();

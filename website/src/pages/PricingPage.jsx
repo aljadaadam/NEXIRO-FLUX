@@ -1,4 +1,4 @@
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 import PricingSection from '../components/home/PricingSection';
 
 export default function PricingPage() {

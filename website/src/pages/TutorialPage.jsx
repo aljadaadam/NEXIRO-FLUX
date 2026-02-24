@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { BookOpen, ShoppingCart, Palette, Globe, TrendingUp, Settings, ArrowRight, ArrowLeft, Clock, Tag, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import SEO from '../components/SEO';
+import SEO from '../components/common/SEO';
 
 const tutorialSlugs = ['ecommerce', 'seo', 'design', 'domain', 'manage', 'marketing'];
 

@@ -5,27 +5,7 @@ const rateLimit = require('express-rate-limit');
 const { PORT, SITE_KEY } = require('./config/env');
 const { initializeDatabase } = require('./config/db');
 const { resolveTenant } = require('./middlewares/resolveTenant');
-
-// Routes
-const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const sourceRoutes = require('./routes/sourceRoutes');
-const customerRoutes = require('./routes/customerRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const ticketRoutes = require('./routes/ticketRoutes');
-const customizationRoutes = require('./routes/customizationRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const paymentGatewayRoutes = require('./routes/paymentGatewayRoutes');
-const checkoutRoutes = require('./routes/checkoutRoutes');
-const setupRoutes = require('./routes/setupRoutes');
-const purchaseCodeRoutes = require('./routes/purchaseCodeRoutes');
-const deliveryZoneRoutes = require('./routes/deliveryZoneRoutes');
-const currencyRoutes = require('./routes/currencyRoutes');
-const branchRoutes = require('./routes/branchRoutes');
-const blogRoutes = require('./routes/blogRoutes');
-const chatRoutes = require('./routes/chatRoutes');
+const { mountRoutes } = require('./routes');
 
 const app = express();
 
@@ -109,48 +89,8 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 // ─── Tenant Resolution (must be before routes) ───
 app.use(resolveTenant);
 
-// Routes
-// ─── Rate limiting لمسارات حساسة ───
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/register-admin', authLimiter);
-app.use('/api/auth/forgot-password', resetLimiter);
-app.use('/api/auth/reset-password', resetLimiter);
-app.use('/api/customers/login', authLimiter);
-app.use('/api/customers/register', authLimiter);
-app.use('/api/customers/verify-otp', otpLimiter);
-
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/sources', sourceRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/customization', customizationRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/payment-gateways', paymentGatewayRoutes);
-app.use('/api/checkout', checkoutRoutes);
-app.use('/api/delivery-zones', deliveryZoneRoutes);
-app.use('/api/currencies', currencyRoutes);
-app.use('/api/branches', branchRoutes);
-app.use('/api/blogs', blogRoutes);
-app.use('/api/chat', chatRoutes);
-
-// ─── Compatibility: Binance webhook legacy path ───
-// Some merchants configure webhook as /payments/binance-webhook in Binance dashboard
-// Forward it to the same handler used by /api/checkout/webhooks/binance
-try {
-  const { binanceWebhook } = require('./controllers/checkoutController');
-  app.post('/payments/binance-webhook', binanceWebhook);
-  app.post('/api/payments/binance-webhook', binanceWebhook);
-} catch (e) {
-  // ignore
-}
-
-app.use('/api/setup', setupRoutes);
-app.use('/api/purchase-codes', purchaseCodeRoutes);
+// ─── Mount all API routes ───
+mountRoutes(app, { authLimiter, resetLimiter, otpLimiter });
 
 // ─── Domain verification endpoint (used by HTTP check) ───
 app.get('/api/health/nexiro-verify', (req, res) => {
