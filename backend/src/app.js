@@ -57,10 +57,10 @@ const otpLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// ─── CORS (multi-tenant — يقبل فقط origins معروفة أو *.nexiroflux.com) ───
+// ─── CORS (multi-tenant — يقبل نطاقات النظام + نطاقات Tenant المخصصة) ───
 app.use(cors({
   origin: (origin, callback) => {
-    // السماح للطلبات بدون origin (مثل curl, Postman, webhooks)
+    // السماح للطلبات بدون origin (مثل curl, Postman, webhooks, SSR)
     if (!origin) return callback(null, true);
     // السماح لنطاقات النظام
     const allowed = [
@@ -69,10 +69,9 @@ app.use(cors({
       /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
     ];
     if (allowed.some(p => p.test(origin))) return callback(null, true);
-    // السماح للنطاقات المخصصة (أي tenant)
-    // في بيئة multi-tenant كل domain يكون tenant مختلف
-    // نسمح لأي origin لكن بدون credentials للنطاقات الغير معروفة
-    return callback(null, true);
+    // نطاقات Tenant المخصصة — يتم التحقق منها لاحقاً في resolveTenant
+    // نسمح بال origin لكن التوثيق يتم عبر JWT + site_key
+    return callback(null, origin);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

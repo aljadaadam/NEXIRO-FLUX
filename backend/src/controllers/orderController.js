@@ -8,6 +8,7 @@ const ActivityLog = require('../models/ActivityLog');
 const emailService = require('../services/email');
 const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
 const { decryptApiKey } = require('../utils/apiKeyCrypto');
+const { getPool } = require('../config/db');
 
 // ─── ترجمة أخطاء المصدر للعربية ─────────────────────────────
 function translateSourceError(msg) {
@@ -79,18 +80,39 @@ async function createOrder(req, res) {
     const qty = quantity || 1;
     const total_price = parseFloat(unit_price) * qty;
 
-    // التحقق من رصيد المحفظة إذا كان الدفع من المحفظة
+    // التحقق من رصيد المحفظة وخصمه بأمان (transaction + row lock)
+    const pool = getPool();
     if (payment_method === 'wallet') {
-      const customer = await Customer.findById(effectiveCustomerId);
-      if (!customer || customer.site_key !== site_key) {
-        return res.status(404).json({ error: 'الزبون غير موجود' });
+      const conn = await pool.getConnection();
+      try {
+        await conn.beginTransaction();
+        // قفل صف الزبون لمنع السحب المزدوج
+        const [rows] = await conn.query(
+          'SELECT id, wallet_balance, site_key FROM customers WHERE id = ? AND site_key = ? FOR UPDATE',
+          [effectiveCustomerId, site_key]
+        );
+        if (!rows[0]) {
+          await conn.rollback();
+          conn.release();
+          return res.status(404).json({ error: 'الزبون غير موجود' });
+        }
+        if (parseFloat(rows[0].wallet_balance) < total_price) {
+          await conn.rollback();
+          conn.release();
+          return res.status(400).json({ error: 'رصيد المحفظة غير كافٍ' });
+        }
+        // خصم من المحفظة داخل الـ transaction
+        await conn.query(
+          'UPDATE customers SET wallet_balance = wallet_balance - ? WHERE id = ? AND site_key = ?',
+          [total_price, effectiveCustomerId, site_key]
+        );
+        await conn.commit();
+        conn.release();
+      } catch (txErr) {
+        await conn.rollback().catch(() => {});
+        conn.release();
+        throw txErr;
       }
-      if (parseFloat(customer.wallet_balance) < total_price) {
-        return res.status(400).json({ error: 'رصيد المحفظة غير كافٍ' });
-      }
-
-      // خصم من المحفظة
-      await Customer.updateWallet(effectiveCustomerId, site_key, -total_price);
     }
 
     const order = await Order.create({
@@ -135,11 +157,10 @@ async function createOrder(req, res) {
     } catch (e) { /* ignore */ }
 
     // ─── إرسال تلقائي للمصدر الخارجي (إذا المنتج مرتبط بمصدر) ───
+    // محاولة واحدة فقط — أي فشل → pending (بدون استرجاع رصيد)
     let externalResult = null;
     if (product_id) {
       try {
-        const { getPool } = require('../config/db');
-        const pool = getPool();
         const [products] = await pool.query('SELECT * FROM products WHERE id = ? AND site_key = ?', [product_id, site_key]);
         let product = products[0];
 
@@ -188,48 +209,19 @@ async function createOrder(req, res) {
                     console.log(`✅ Order #${order.order_number} → Ref: ${result.referenceId}`);
                   }
                 } catch (sourceErr) {
-                  // ❌ المصدر رفض الطلب — استرجاع الرصيد
+                  // ❌ فشل الإرسال — الطلب يبقى pending دائماً (بدون استرجاع)
+                  // السبب: المصدر أحياناً يقبل الطلب ويخصم لكنه يرجع خطأ
                   const originalMsg = sourceErr instanceof DhruFusionError
                     ? sourceErr.message
                     : (sourceErr.message || 'خطأ اتصال بالمصدر');
-                  const translatedErr = translateSourceError(originalMsg);
-                  // نحفظ الرسالة الأصلية من المصدر كما هي للزبون
                   const responseForCustomer = originalMsg;
-                  const isConnectionError = !(sourceErr instanceof DhruFusionError);
 
-                  if (isConnectionError) {
-                    // مشكلة اتصال → الطلب يبقى pending
-                    await pool.query(
-                      `UPDATE orders SET status = 'pending', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [responseForCustomer, order.id, site_key]
-                    );
-                    externalResult = { ok: false, type: 'CONNECTION_ERROR', error: originalMsg };
-                    console.log(`⏳ Order #${order.order_number} → PENDING (اتصال فاشل)`);
-                  } else {
-                    // المصدر رفض → استرجاع الرصيد
-                    if (payment_method === 'wallet') {
-                      await Customer.updateWallet(effectiveCustomerId, site_key, total_price);
-                      await Payment.create({
-                        site_key, customer_id: effectiveCustomerId, order_id: order.id,
-                        type: 'refund', amount: total_price, payment_method: 'wallet', status: 'completed',
-                        description: `استرجاع: ${translatedErr}`
-                      });
-                      await Order.updatePaymentStatus(order.id, site_key, 'refunded');
-                    }
-                    await pool.query(
-                      `UPDATE orders SET status = 'failed', server_response = ? WHERE id = ? AND site_key = ?`,
-                      [responseForCustomer, order.id, site_key]
-                    );
-                    // إشعار الزبون
-                    await Notification.create({
-                      site_key, recipient_type: 'customer', recipient_id: effectiveCustomerId,
-                      title: 'تحديث الطلب',
-                      message: `طلبك #${order.order_number}: ${responseForCustomer}`,
-                      type: 'order'
-                    });
-                    externalResult = { ok: false, type: 'ORDER_REJECTED', error: responseForCustomer };
-                    console.log(`🚫 Order #${order.order_number} → REJECTED + Refunded: ${responseForCustomer}`);
-                  }
+                  await pool.query(
+                    `UPDATE orders SET status = 'pending', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
+                    [source.id, responseForCustomer, order.id, site_key]
+                  );
+                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: originalMsg };
+                  console.log(`⏳ Order #${order.order_number} → PENDING (خطأ مصدر): ${originalMsg}`);
                 }
               }
             }
@@ -345,7 +337,6 @@ async function placeExternalOrder(req, res) {
     }
 
     // جلب المنتج والمصدر
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const [products] = await pool.query(
       'SELECT * FROM products WHERE id = ? AND site_key = ?',

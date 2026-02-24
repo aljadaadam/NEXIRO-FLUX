@@ -31,6 +31,19 @@ class DhruFusionClient {
   }
 
   /**
+   * تنظيف النص من أحرف XML الخطرة (حماية من XML injection)
+   */
+  static escapeXml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  /**
    * إرسال طلب POST إلى DHRU FUSION API
    */
   async _post(action, extraParams = {}) {
@@ -172,7 +185,8 @@ class DhruFusionClient {
     const effectiveImei = imei || '';
 
     // بناء XML Parameters
-    let xml = `<PARAMETERS><ID>${serviceId}</ID><IMEI>${effectiveImei}</IMEI>`;
+    const esc = DhruFusionClient.escapeXml;
+    let xml = `<PARAMETERS><ID>${esc(serviceId)}</ID><IMEI>${esc(effectiveImei)}</IMEI>`;
     
     if (quantity && quantity > 1) {
       xml += `<QNT>${quantity}</QNT>`;
@@ -202,7 +216,7 @@ class DhruFusionClient {
   async getOrderStatus(referenceId) {
     if (!referenceId) throw new Error('referenceId مطلوب');
 
-    const xml = `<PARAMETERS><ID>${referenceId}</ID></PARAMETERS>`;
+    const xml = `<PARAMETERS><ID>${DhruFusionClient.escapeXml(referenceId)}</ID></PARAMETERS>`;
     const data = await this._post('getimeiorder', { parameters: xml });
     const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
 

@@ -278,8 +278,8 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     allowsQuantity: String(p.qnt || '0') === '1',
     minQuantity: Math.max(1, Number(p.minqnt) || 1),
     maxQuantity: Number(p.maxqnt) || 100,
-    rating: 4.5 + Math.random() * 0.5,
-    sales: Math.floor(Math.random() * 200 + 20),
+    rating: Number(p.rating) || 0,
+    sales: Number(p.sales) || 0,
     // حقول الباكند الأصلية
     service_type: sType,
     group_name: p.group_name,
