@@ -7,6 +7,7 @@ const Notification = require('../models/Notification');
 const ActivityLog = require('../models/ActivityLog');
 const emailService = require('../services/email');
 const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
+const { ImeiCheckClient, ImeiCheckError } = require('../services/imeiCheck');
 const { decryptApiKey } = require('../utils/apiKeyCrypto');
 const { getPool } = require('../config/db');
 
@@ -176,8 +177,9 @@ async function createOrder(req, res) {
         if (product && product.source_id) {
           const source = await Source.findById(product.source_id);
           const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
+          const supportedTypes = [...dhruTypes, 'imeicheck'];
 
-          if (source && source.site_key === site_key && dhruTypes.includes(source.type)) {
+          if (source && source.site_key === site_key && supportedTypes.includes(source.type)) {
             const apiKey = decryptApiKey(source.api_key);
             if (apiKey) {
               const serviceId = product.external_service_id || product.external_service_key;
@@ -185,33 +187,61 @@ async function createOrder(req, res) {
               const productServiceType = String(product.service_type || '').toUpperCase();
 
               if (serviceId && (orderImei || productServiceType === 'SERVER')) {
-                const client = new DhruFusionClient({
-                  baseUrl: source.url,
-                  username: source.username || '',
-                  apiAccessKey: apiKey
-                });
-
                 try {
-                  const result = await client.placeOrder({
-                    serviceId,
-                    imei: orderImei,
-                    quantity: qty,
-                    customFields: notes ? (() => { try { return JSON.parse(notes); } catch { return null; } })() : null
-                  });
+                  // ─── IMEI Check: إرسال عبر PHP API ───
+                  if (source.type === 'imeicheck') {
+                    const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+                    const imeiClient = new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl });
+                    const result = await imeiClient.createOrder({ serviceId, imei: orderImei });
 
-                  if (result.referenceId) {
-                    // ✅ نجاح — حفظ Reference ID وتحديث الحالة
-                    await pool.query(
-                      `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing' WHERE id = ? AND site_key = ?`,
-                      [result.referenceId, source.id, order.id, site_key]
-                    );
-                    externalResult = { ok: true, referenceId: result.referenceId };
-                    console.log(`✅ Order #${order.order_number} → Ref: ${result.referenceId}`);
+                    if (result.orderId) {
+                      await pool.query(
+                        `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing' WHERE id = ? AND site_key = ?`,
+                        [String(result.orderId), source.id, order.id, site_key]
+                      );
+                      externalResult = { ok: true, referenceId: String(result.orderId) };
+                      console.log(`✅ Order #${order.order_number} → IMEI Check Order: ${result.orderId}`);
+
+                      // إذا النتيجة جاهزة فوراً (instant)
+                      if (result.status === 'completed' && result.result) {
+                        await pool.query(
+                          `UPDATE orders SET status = 'completed', server_response = ?, completed_at = NOW() WHERE id = ? AND site_key = ?`,
+                          [result.result, order.id, site_key]
+                        );
+                        externalResult.instant = true;
+                        externalResult.result = result.result;
+                        console.log(`⚡ Order #${order.order_number} → Instant result from IMEI Check`);
+                      }
+                    }
+                  }
+                  // ─── DHRU Fusion وأشباهه ───
+                  else {
+                    const client = new DhruFusionClient({
+                      baseUrl: source.url,
+                      username: source.username || '',
+                      apiAccessKey: apiKey
+                    });
+
+                    const result = await client.placeOrder({
+                      serviceId,
+                      imei: orderImei,
+                      quantity: qty,
+                      customFields: notes ? (() => { try { return JSON.parse(notes); } catch { return null; } })() : null
+                    });
+
+                    if (result.referenceId) {
+                      await pool.query(
+                        `UPDATE orders SET external_reference_id = ?, source_id = ?, status = 'processing' WHERE id = ? AND site_key = ?`,
+                        [result.referenceId, source.id, order.id, site_key]
+                      );
+                      externalResult = { ok: true, referenceId: result.referenceId };
+                      console.log(`✅ Order #${order.order_number} → Ref: ${result.referenceId}`);
+                    }
                   }
                 } catch (sourceErr) {
                   // ❌ فشل الإرسال — الطلب يبقى pending دائماً (بدون استرجاع)
                   // السبب: المصدر أحياناً يقبل الطلب ويخصم لكنه يرجع خطأ
-                  const originalMsg = sourceErr instanceof DhruFusionError
+                  const originalMsg = (sourceErr instanceof DhruFusionError || sourceErr instanceof ImeiCheckError)
                     ? sourceErr.message
                     : (sourceErr.message || 'خطأ اتصال بالمصدر');
                   const responseForCustomer = originalMsg;
@@ -367,7 +397,8 @@ async function placeExternalOrder(req, res) {
 
     // التحقق من نوع المصدر
     const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
-    if (!dhruTypes.includes(source.type)) {
+    const supportedTypes = [...dhruTypes, 'imeicheck'];
+    if (!supportedTypes.includes(source.type)) {
       return res.status(400).json({ error: 'هذا المصدر لا يدعم الإرسال التلقائي' });
     }
 
@@ -375,13 +406,6 @@ async function placeExternalOrder(req, res) {
     if (!apiKey) {
       return res.status(400).json({ error: 'مفتاح API المصدر غير صالح' });
     }
-
-    // إنشاء اتصال DHRU FUSION
-    const client = new DhruFusionClient({
-      baseUrl: source.url,
-      username: source.username || '',
-      apiAccessKey: apiKey
-    });
 
     // تحديد الـ serviceId
     const serviceId = product.external_service_id || product.external_service_key;
@@ -395,34 +419,75 @@ async function placeExternalOrder(req, res) {
       return res.status(400).json({ error: 'IMEI مطلوب لهذا الطلب' });
     }
 
-    // إرسال الطلب
-    const result = await client.placeOrder({
-      serviceId,
-      imei: imei || '',
-      quantity: order.quantity || 1,
-      customFields: req.body.customFields || null
-    });
+    let referenceId;
+    let instantResult = null;
 
-    if (!result.referenceId) {
-      return res.status(500).json({ error: 'لم يتم الحصول على رقم مرجع من المصدر' });
+    // ─── IMEI Check: إرسال عبر PHP API ───
+    if (source.type === 'imeicheck') {
+      const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+      const imeiClient = new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl });
+      const result = await imeiClient.createOrder({ serviceId, imei: imei || '' });
+
+      if (!result.orderId) {
+        return res.status(500).json({ error: 'لم يتم الحصول على رقم طلب من IMEI Check' });
+      }
+      referenceId = String(result.orderId);
+
+      // إذا النتيجة جاهزة فوراً (instant check)
+      if (result.status === 'completed' && result.result) {
+        instantResult = result.result;
+      }
+    }
+    // ─── DHRU Fusion وأشباهه ───
+    else {
+      const client = new DhruFusionClient({
+        baseUrl: source.url,
+        username: source.username || '',
+        apiAccessKey: apiKey
+      });
+
+      const result = await client.placeOrder({
+        serviceId,
+        imei: imei || '',
+        quantity: order.quantity || 1,
+        customFields: req.body.customFields || null
+      });
+
+      if (!result.referenceId) {
+        return res.status(500).json({ error: 'لم يتم الحصول على رقم مرجع من المصدر' });
+      }
+      referenceId = result.referenceId;
     }
 
     // تحديث الطلب بالرقم المرجعي
-    await pool.query(
-      `UPDATE orders SET 
-        external_reference_id = ?,
-        source_id = ?,
-        status = 'processing'
-      WHERE id = ? AND site_key = ?`,
-      [result.referenceId, source.id, id, site_key]
-    );
+    if (instantResult) {
+      await pool.query(
+        `UPDATE orders SET 
+          external_reference_id = ?,
+          source_id = ?,
+          status = 'completed',
+          server_response = ?,
+          completed_at = NOW()
+        WHERE id = ? AND site_key = ?`,
+        [referenceId, source.id, instantResult, id, site_key]
+      );
+    } else {
+      await pool.query(
+        `UPDATE orders SET 
+          external_reference_id = ?,
+          source_id = ?,
+          status = 'processing'
+        WHERE id = ? AND site_key = ?`,
+        [referenceId, source.id, id, site_key]
+      );
+    }
 
     // إشعار
     await Notification.create({
       site_key,
       recipient_type: 'admin',
       title: 'تم إرسال الطلب للمصدر',
-      message: `طلب #${order.order_number} → المرجع: ${result.referenceId}`,
+      message: `طلب #${order.order_number} → المرجع: ${referenceId}`,
       type: 'order',
       link: `/orders/${order.id}`
     });
@@ -430,8 +495,9 @@ async function placeExternalOrder(req, res) {
     const updatedOrder = await Order.findById(id);
     res.json({
       success: true,
-      message: 'تم إرسال الطلب للمصدر بنجاح',
-      referenceId: result.referenceId,
+      message: instantResult ? 'تم إكمال الطلب فوراً' : 'تم إرسال الطلب للمصدر بنجاح',
+      referenceId,
+      instant: !!instantResult,
       order: updatedOrder
     });
   } catch (error) {
@@ -440,6 +506,11 @@ async function placeExternalOrder(req, res) {
       return res.status(400).json({
         error: `خطأ من المصدر: ${error.message}`,
         fullDescription: error.fullDescription
+      });
+    }
+    if (error instanceof ImeiCheckError) {
+      return res.status(400).json({
+        error: `خطأ من IMEI Check: ${error.message}`
       });
     }
     res.status(500).json({ error: error.message || 'حدث خطأ أثناء إرسال الطلب' });

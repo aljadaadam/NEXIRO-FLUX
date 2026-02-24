@@ -15,6 +15,7 @@ const Order = require('../models/Order');
 const Customer = require('../models/Customer');
 const Notification = require('../models/Notification');
 const { DhruFusionClient, DhruFusionError } = require('./dhruFusion');
+const { ImeiCheckClient, ImeiCheckError } = require('./imeiCheck');
 const { decryptApiKey } = require('../utils/apiKeyCrypto');
 const emailService = require('./email');
 
@@ -105,10 +106,20 @@ async function checkPendingOrders() {
           if (!source) continue;
 
           const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
-          if (!dhruTypes.includes(source.type)) continue;
-
           const apiKey = decryptApiKey(source.api_key);
           if (!apiKey) continue;
+
+          // ─── IMEI Check: استخدام ImeiCheckClient ───
+          if (source.type === 'imeicheck') {
+            const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+            const client = new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl });
+            sourceCache[srcId] = { client, type: 'imeicheck' };
+            siteSourceMap[siteKey][srcId].client = sourceCache[srcId];
+            continue;
+          }
+
+          // ─── DHRU Fusion وأشباهه ───
+          if (!dhruTypes.includes(source.type)) continue;
 
           const client = new DhruFusionClient({
             baseUrl: source.url,
@@ -116,7 +127,7 @@ async function checkPendingOrders() {
             apiAccessKey: apiKey
           });
 
-          sourceCache[srcId] = client;
+          sourceCache[srcId] = { client, type: 'dhru' };
           siteSourceMap[siteKey][srcId].client = client;
         } catch (err) {
           console.error(`[OrderCron] ❌ خطأ بناء client للمصدر ${srcId}:`, err.message);
@@ -129,12 +140,29 @@ async function checkPendingOrders() {
 
     for (const siteKey of Object.keys(siteSourceMap)) {
       for (const srcId of Object.keys(siteSourceMap[siteKey])) {
-        const { client, orders } = siteSourceMap[siteKey][srcId];
-        if (!client) continue;
+        const { client: clientInfo, orders } = siteSourceMap[siteKey][srcId];
+        if (!clientInfo) continue;
 
         for (const order of orders) {
           try {
-            const result = await client.getOrderStatus(order.external_reference_id);
+            let result;
+
+            // ─── IMEI Check: فحص الحالة عبر PHP API ───
+            if (clientInfo.type === 'imeicheck') {
+              const historyResult = await clientInfo.client.getOrderHistory(order.external_reference_id);
+              result = {
+                status: historyResult.status,
+                statusLabel: historyResult.statusLabel,
+                comments: historyResult.result || null,
+                message: historyResult.result || null,
+                fullResponse: historyResult.result || historyResult.statusLabel || '',
+              };
+            }
+            // ─── DHRU Fusion ───
+            else {
+              result = await clientInfo.client.getOrderStatus(order.external_reference_id);
+            }
+
             checked++;
 
             const statusMapping = {
