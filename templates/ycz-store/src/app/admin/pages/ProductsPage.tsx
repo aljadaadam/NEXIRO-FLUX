@@ -358,18 +358,22 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     return null;
   }
 
-  // المنتجات المتاحة للتحويل (حسب المصدر المختار)
+  // المنتجات المتاحة للتحويل (حسب المصدر المختار + نفس نوع الخدمة)
   const linkableProducts = useMemo(() => {
+    const editingProduct = products.find(p => p.id === editId);
+    const editingType = editingProduct?.service_type?.toUpperCase() || editServiceType?.toUpperCase() || '';
     return products.filter(p => {
       if (p.id === editId) return false;
-      // إذا تم اختيار مصدر، أظهر منتجات هذا المصدر فقط
-      if (editSelectedSourceId) return p.source_id === editSelectedSourceId;
+      // فلتر حسب المصدر المختار
+      if (editSelectedSourceId && p.source_id !== editSelectedSourceId) return false;
+      // فلتر حسب نوع الخدمة (IMEI/SERVER/REMOTE)
+      if (editingType && (p.service_type || '').toUpperCase() !== editingType) return false;
       return true;
     });
-  }, [products, editId, editSelectedSourceId]);
+  }, [products, editId, editSelectedSourceId, editServiceType]);
 
   const filteredLinkable = useMemo(() => {
-    if (!linkSearch.trim()) return linkableProducts.slice(0, 25);
+    if (!linkSearch.trim()) return linkableProducts.slice(0, 30);
     const q = linkSearch.toLowerCase();
     return linkableProducts.filter(p =>
       (p.arabic_name || '').toLowerCase().includes(q) ||
@@ -1014,31 +1018,77 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
                 {/* تحويل لمنتج آخر */}
                 <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <RefreshCw size={10} /> المنتج المرتبط (تحويل الطلب)
-                  </label>
-                  <select
-                    value={String(editLinkedProductId || '')}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setEditLinkedProductId(val ? Number(val) : null);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.74rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fafbfc', boxSizing: 'border-box', cursor: 'pointer' }}
-                  >
-                    <option value="">
-                      {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) + ' ✦ نفسه' : '— نفس المنتج (افتراضي) —'; })()}
-                    </option>
-                    {linkableProducts.map(p => (
-                      <option key={p.id} value={String(p.id)}>
-                        {p.arabic_name || p.name} (#{p.id})
-                      </option>
-                    ))}
-                  </select>
-                  {editLinkedProductId && (
-                    <p style={{ fontSize: '0.6rem', color: '#2563eb', marginTop: 4, margin: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <ArrowRightLeft size={9} /> الطلبات ستُحوّل لهذا المنتج
-                    </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <RefreshCw size={10} /> المنتج المرتبط (تحويل الطلب)
+                    </label>
+                    <span style={{ fontSize: '0.58rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
+                      {editServiceType} · {linkableProducts.length} منتج
+                    </span>
+                  </div>
+
+                  {/* المنتج المختار حالياً */}
+                  {editLinkedProductId ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.4rem 0.6rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', marginBottom: 8 }}>
+                      <Link2 size={11} color="#2563eb" />
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
+                        {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) + ` (#${lp.id})` : `#${editLinkedProductId}`; })()}
+                      </span>
+                      <button onClick={() => { setEditLinkedProductId(null); setLinkSearch(''); }} type="button" style={{ padding: '0.12rem 0.35rem', borderRadius: 4, border: '1px solid #fecaca', background: '#fee2e2', cursor: 'pointer', fontSize: '0.55rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif', lineHeight: 1 }}>
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.6rem', background: '#f8fafc', borderRadius: 8, border: '1px dashed #e2e8f0', marginBottom: 8 }}>
+                      <CheckCircle size={11} color="#16a34a" />
+                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748b' }}>
+                        {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) + ' ✦ نفسه' : 'نفس المنتج'; })()}
+                      </span>
+                    </div>
                   )}
+
+                  {/* بحث + قائمة */}
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 7, padding: '0.35rem 0.55rem', background: '#fafbfc' }}>
+                      <Search size={11} color="#94a3b8" />
+                      <input
+                        value={linkSearch}
+                        onChange={e => { setLinkSearch(e.target.value); setShowLinkDropdown(true); }}
+                        onFocus={() => setShowLinkDropdown(true)}
+                        placeholder={`ابحث في منتجات ${editServiceType} ${editSelectedSourceId ? 'بالمصدر المختار' : ''}...`}
+                        style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.68rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                      />
+                    </div>
+
+                    {showLinkDropdown && filteredLinkable.length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 200, overflow: 'auto' }}>
+                        {filteredLinkable.map(p => (
+                          <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
+                            display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                            padding: '0.4rem 0.65rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                            border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                            fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                            transition: 'background 0.1s',
+                          }} onMouseOver={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
+                            <span style={{ fontSize: '0.8rem' }}>{p.icon}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '0.68rem', fontWeight: 600, color: '#0b1020', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.arabic_name || p.name}</p>
+                              {p.arabic_name && <p style={{ fontSize: '0.54rem', color: '#94a3b8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, flexShrink: 0 }}>
+                              <span style={{ fontSize: '0.56rem', color: '#64748b', background: '#f1f5f9', padding: '0.08rem 0.3rem', borderRadius: 3, fontWeight: 600 }}>#{p.id}</span>
+                              {p.source_name && <span style={{ fontSize: '0.5rem', color: '#94a3b8' }}>{p.source_name}</span>}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {showLinkDropdown && filteredLinkable.length === 0 && linkSearch.trim() && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: '0.6rem', textAlign: 'center' }}>
+                        <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>لا توجد نتائج في {editServiceType}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
