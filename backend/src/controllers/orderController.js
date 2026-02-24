@@ -26,6 +26,7 @@ function translateSourceError(msg) {
     'invalid service':     'الخدمة غير متوفرة',
     'insufficient balance':'رصيد المصدر غير كافٍ',
     'insufficient credit': 'رصيد المصدر غير كافٍ',
+    'credit error':        'رصيد المصدر غير كافٍ',
     'service not found':   'الخدمة غير موجودة في المصدر',
     'incorrect':           'البيانات المدخلة غير صحيحة',
   };
@@ -158,7 +159,7 @@ async function createOrder(req, res) {
     } catch (e) { /* ignore */ }
 
     // ─── إرسال تلقائي للمصدر الخارجي (إذا المنتج مرتبط بمصدر) ───
-    // محاولة واحدة فقط — أي فشل → pending (بدون استرجاع رصيد)
+    // محاولة واحدة فقط — أي فشل → رفض + استرجاع رصيد
     let externalResult = null;
     if (product_id) {
       try {
@@ -239,19 +240,51 @@ async function createOrder(req, res) {
                     }
                   }
                 } catch (sourceErr) {
-                  // ❌ فشل الإرسال — الطلب يبقى pending دائماً (بدون استرجاع)
-                  // السبب: المصدر أحياناً يقبل الطلب ويخصم لكنه يرجع خطأ
+                  // ❌ فشل الإرسال — رفض الطلب + استرجاع الرصيد
                   const originalMsg = (sourceErr instanceof DhruFusionError || sourceErr instanceof ImeiCheckError)
                     ? sourceErr.message
                     : (sourceErr.message || 'خطأ اتصال بالمصدر');
-                  const responseForCustomer = originalMsg;
+                  const translatedMsg = translateSourceError(originalMsg);
 
+                  // تحديث الطلب → failed
                   await pool.query(
-                    `UPDATE orders SET status = 'pending', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
-                    [source.id, responseForCustomer, order.id, site_key]
+                    `UPDATE orders SET status = 'failed', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
+                    [source.id, translatedMsg, order.id, site_key]
                   );
-                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: originalMsg };
-                  console.log(`⏳ Order #${order.order_number} → PENDING (خطأ مصدر): ${originalMsg}`);
+
+                  // استرجاع رصيد المحفظة
+                  if (payment_method === 'wallet' && total_price > 0) {
+                    try {
+                      await Customer.updateWallet(effectiveCustomerId, site_key, total_price);
+                      await Payment.create({
+                        site_key,
+                        customer_id: effectiveCustomerId,
+                        order_id: order.id,
+                        type: 'refund',
+                        amount: total_price,
+                        payment_method: 'wallet',
+                        status: 'completed',
+                        description: `استرجاع تلقائي: طلب #${order.order_number} (${translatedMsg})`
+                      });
+                      await Order.updatePaymentStatus(order.id, site_key, 'refunded');
+                      console.log(`💰 Order #${order.order_number} → استرجاع $${total_price} للزبون ${effectiveCustomerId}`);
+                    } catch (refundErr) {
+                      console.error(`❌ فشل استرجاع الرصيد لطلب #${order.order_number}:`, refundErr.message);
+                    }
+                  }
+
+                  // إشعار الزبون
+                  await Notification.create({
+                    site_key,
+                    recipient_type: 'customer',
+                    recipient_id: effectiveCustomerId,
+                    title: 'طلب مرفوض ❌',
+                    message: `طلبك #${order.order_number} تم رفضه: ${translatedMsg}${payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
+                    type: 'order'
+                  });
+
+                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: translatedMsg, refunded: payment_method === 'wallet' };
+                  console.log(`❌ Order #${order.order_number} → FAILED (${translatedMsg}) — رصيد مسترجع: ${payment_method === 'wallet' ? 'نعم' : 'لا'}`);
                 }
               }
             }
