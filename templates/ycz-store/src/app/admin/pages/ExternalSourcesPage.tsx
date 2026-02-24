@@ -48,6 +48,7 @@ interface SyncLog {
 const FALLBACK_CONNECTED: ConnectedSource[] = [];
 const FALLBACK_AVAILABLE: AvailableSource[] = [
   { name: 'DHRU FUSION', type: 'dhru-fusion', icon: 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
+  { name: 'IMEI CHECK', type: 'imeicheck', icon: 'https://alpha.imeicheck.com/favicon.ico', desc: 'اتصل بمنصة IMEI Check لفحص أجهزة Apple والتحقق من حالة IMEI/SN فورياً. نتائج لحظية مع دعم كامل لجميع خدمات الفحص.', category: 'IMEI', fields: ['API Access Key'] },
 ];
 
 /* ───────── Skeleton Components ───────── */
@@ -191,7 +192,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
   const fieldPlaceholders: Record<string, string> = {
     'URL': 'https://sd-unlocker.com',
     'Username': 'اسم المستخدم في النظام',
-    'API Access Key': 'أدخل مفتاح الوصول',
+    'API Access Key': source.type === 'imeicheck' ? 'أدخل مفتاح API من لوحة تحكم IMEI Check' : 'أدخل مفتاح الوصول',
   };
 
   const allFilled = source.fields.every(f => formData[f]?.trim());
@@ -201,11 +202,12 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
     setStep('testing');
     setErrorMsg('');
     try {
+      const isImeiCheck = source.type === 'imeicheck';
       const payload: Record<string, unknown> = {
         name: sourceName || source.name,
         type: source.type,
-        url: formData['URL'] || '',
-        username: formData['Username'] || '',
+        url: isImeiCheck ? 'https://alpha.imeicheck.com/api/php-api' : (formData['URL'] || ''),
+        username: isImeiCheck ? '' : (formData['Username'] || ''),
         apiKey: formData['API Access Key'] || '',
         profitPercentage: profitType === 'percentage' ? Number(profitPercentage || '0') : 0,
         profitAmount: profitType === 'fixed' ? Number(profitAmount || '0') : null,
@@ -323,7 +325,10 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
             <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <Link2 size={14} color="#0369a1" style={{ flexShrink: 0, marginTop: 2 }} />
               <p style={{ fontSize: '0.75rem', color: '#0369a1', lineHeight: 1.6 }}>
-                سيتم اختبار الاتصال تلقائياً ثم جلب جميع الخدمات المتاحة من المصدر.
+                {source.type === 'imeicheck'
+                  ? 'سيتم اختبار الاتصال عبر فحص الرصيد ثم جلب جميع الخدمات المتاحة من IMEI Check.'
+                  : 'سيتم اختبار الاتصال تلقائياً ثم جلب جميع الخدمات المتاحة من المصدر.'
+                }
               </p>
             </div>
 
@@ -424,6 +429,7 @@ export default function ExternalSourcesPage() {
       const mapped: ConnectedSource[] = rawList.map((s: Record<string, unknown>) => {
         const typeIcons: Record<string, string> = {
           'dhru-fusion': 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg',
+          'imeicheck': 'https://alpha.imeicheck.com/favicon.ico',
         };
         const statusMap: Record<string, { label: string; color: string }> = {
           connected: { label: 'متصل', color: '#16a34a' },

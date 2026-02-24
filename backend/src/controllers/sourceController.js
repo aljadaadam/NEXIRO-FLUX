@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const { decryptApiKey, apiKeyLast4, apiKeyMaskedHyphenated } = require('../utils/apiKeyCrypto');
 const { getPool } = require('../config/db');
 const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
+const { ImeiCheckClient, ImeiCheckError } = require('../services/imeiCheck');
 const { invalidatePublicProductsCache } = require('./productController');
 
 function isPrivateOrLocalHostname(hostname) {
@@ -253,77 +254,105 @@ async function createSource(req, res) {
       syncOnly
     } = req.body;
 
-    let finalUrl = url || apiUrl;
+    const isImeiCheck = type === 'imeicheck';
+    let finalUrl = isImeiCheck
+      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/php-api')
+      : (url || apiUrl);
 
     // التحقق من المدخلات
-    if (!name || !type || !finalUrl) {
+    if (!name || !type || (!finalUrl && !isImeiCheck)) {
       return res.status(400).json({ 
         error: 'الاسم والنوع والرابط مطلوبة' 
       });
     }
 
     // أنواع المصادر المدعومة
-    const validTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world', 'custom-api'];
+    const validTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world', 'custom-api', 'imeicheck'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ 
         error: `النوع يجب أن يكون أحد: ${validTypes.join(', ')}` 
       });
     }
 
-    // ─── اكتشاف رابط API تلقائياً ───
-    try {
-      finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
-      console.log(`✅ Resolved API URL: ${finalUrl}`);
-    } catch (e) {
-      console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
-    }
-
-    // ─── التحقق من صحة بيانات الاتصال قبل إنشاء المصدر ───
-    if (apiKey) {
+    // ─── IMEI Check: اختبار الاتصال عبر endpoint الرصيد ───
+    if (isImeiCheck && apiKey) {
       try {
-        const client = new DhruFusionClient({
-          baseUrl: finalUrl,
-          username: username || '',
-          apiAccessKey: apiKey,
-        });
-        await client.getAccountInfo();
-        console.log(`✅ Connection test passed for: ${finalUrl}`);
+        const client = new ImeiCheckClient({ apiKey, baseUrl: finalUrl });
+        const balanceInfo = await client.getBalance();
+        console.log(`✅ IMEI Check connection test passed — Balance: ${balanceInfo.balance} ${balanceInfo.currency}`);
       } catch (connErr) {
-        console.error('❌ Connection validation failed:', connErr.message);
-        // ─── ترجمة أخطاء DHRU FUSION إلى رسائل عربية واضحة ───
-        let userError = 'فشل الاتصال بالمصدر';
+        console.error('❌ IMEI Check connection validation failed:', connErr.message);
+        let userError = 'فشل الاتصال بمصدر IMEI Check';
         const errMsg = String(connErr.message || '').toLowerCase();
-        const errFull = String(connErr.fullDescription || '').toLowerCase();
-        const combined = errMsg + ' ' + errFull;
 
-        if (combined.includes('invalid api') || combined.includes('invalid key') || combined.includes('api access key') || combined.includes('apiaccesskey')) {
-          userError = 'مفتاح الـ API غير صحيح — تأكد من نسخه بالكامل من لوحة تحكم المصدر';
-        } else if (combined.includes('invalid username') || combined.includes('incorrect username') || combined.includes('wrong username') || combined.includes('user not found') || combined.includes('username')) {
-          userError = 'اسم المستخدم غير صحيح — تأكد من إدخال اسم المستخدم الصحيح في لوحة المصدر';
-        } else if (combined.includes('ip') && (combined.includes('not allowed') || combined.includes('whitelist') || combined.includes('blocked') || combined.includes('not whitelisted') || combined.includes('not authorized'))) {
-          userError = 'عنوان IP السيرفر غير مسموح — أضف عنوان IP الخاص بالسيرفر في إعدادات API بلوحة تحكم المصدر';
-        } else if (combined.includes('suspended') || combined.includes('disabled') || combined.includes('banned')) {
-          userError = 'الحساب معطّل أو موقوف في المصدر — تواصل مع دعم المصدر';
-        } else if (combined.includes('insufficient') || combined.includes('no credit') || combined.includes('balance')) {
-          userError = 'رصيد الحساب غير كافٍ في المصدر';
-        } else if (combined.includes('timeout') || combined.includes('مهلة') || combined.includes('timed out') || combined.includes('aborted')) {
-          userError = 'انتهت مهلة الاتصال — تأكد من أن رابط المصدر صحيح ويعمل';
-        } else if (combined.includes('enotfound') || combined.includes('econnrefused') || combined.includes('dns') || combined.includes('getaddrinfo')) {
-          userError = 'لا يمكن الوصول إلى المصدر — تأكد من صحة الرابط';
-        } else if (combined.includes('non-json') || combined.includes('غير json')) {
-          userError = 'المصدر لا يرد بصيغة JSON — تأكد من صحة رابط الـ API';
-        } else if (connErr.name === 'DhruFusionError') {
-          // رسالة الخطأ الأصلية من المصدر
-          userError = `خطأ من المصدر: ${connErr.message}`;
-          if (connErr.fullDescription) {
-            userError += ` — ${connErr.fullDescription}`;
-          }
+        if (errMsg.includes('invalid') && errMsg.includes('key')) {
+          userError = 'مفتاح الـ API غير صحيح — تأكد من نسخه من لوحة تحكم IMEI Check';
+        } else if (errMsg.includes('wrong ip') || errMsg.includes('ip')) {
+          userError = 'عنوان IP السيرفر غير مسموح — أضف IP السيرفر في إعدادات IMEI Check';
+        } else if (errMsg.includes('credit') || errMsg.includes('balance')) {
+          userError = 'رصيد الحساب غير كافٍ';
+        } else if (errMsg.includes('timeout') || errMsg.includes('مهلة') || errMsg.includes('aborted')) {
+          userError = 'انتهت مهلة الاتصال — جرّب مرة أخرى';
+        } else if (errMsg.includes('enotfound') || errMsg.includes('econnrefused') || errMsg.includes('dns')) {
+          userError = 'لا يمكن الوصول إلى IMEI Check — تأكد من صحة الرابط';
+        } else if (connErr.name === 'ImeiCheckError' && connErr.message) {
+          userError = `خطأ من IMEI Check: ${connErr.message}`;
         }
 
-        return res.status(400).json({
-          error: userError,
-          detail: connErr.message,
-        });
+        return res.status(400).json({ error: userError, detail: connErr.message });
+      }
+    }
+
+    // ─── DHRU FUSION وأشباهه: اكتشاف رابط API + اختبار اتصال ───
+    if (!isImeiCheck) {
+      try {
+        finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
+        console.log(`✅ Resolved API URL: ${finalUrl}`);
+      } catch (e) {
+        console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
+      }
+
+      if (apiKey) {
+        try {
+          const client = new DhruFusionClient({
+            baseUrl: finalUrl,
+            username: username || '',
+            apiAccessKey: apiKey,
+          });
+          await client.getAccountInfo();
+          console.log(`✅ Connection test passed for: ${finalUrl}`);
+        } catch (connErr) {
+          console.error('❌ Connection validation failed:', connErr.message);
+          let userError = 'فشل الاتصال بالمصدر';
+          const errMsg = String(connErr.message || '').toLowerCase();
+          const errFull = String(connErr.fullDescription || '').toLowerCase();
+          const combined = errMsg + ' ' + errFull;
+
+          if (combined.includes('invalid api') || combined.includes('invalid key') || combined.includes('api access key') || combined.includes('apiaccesskey')) {
+            userError = 'مفتاح الـ API غير صحيح — تأكد من نسخه بالكامل من لوحة تحكم المصدر';
+          } else if (combined.includes('invalid username') || combined.includes('incorrect username') || combined.includes('wrong username') || combined.includes('user not found') || combined.includes('username')) {
+            userError = 'اسم المستخدم غير صحيح — تأكد من إدخال اسم المستخدم الصحيح في لوحة المصدر';
+          } else if (combined.includes('ip') && (combined.includes('not allowed') || combined.includes('whitelist') || combined.includes('blocked') || combined.includes('not whitelisted') || combined.includes('not authorized'))) {
+            userError = 'عنوان IP السيرفر غير مسموح — أضف عنوان IP الخاص بالسيرفر في إعدادات API بلوحة تحكم المصدر';
+          } else if (combined.includes('suspended') || combined.includes('disabled') || combined.includes('banned')) {
+            userError = 'الحساب معطّل أو موقوف في المصدر — تواصل مع دعم المصدر';
+          } else if (combined.includes('insufficient') || combined.includes('no credit') || combined.includes('balance')) {
+            userError = 'رصيد الحساب غير كافٍ في المصدر';
+          } else if (combined.includes('timeout') || combined.includes('مهلة') || combined.includes('timed out') || combined.includes('aborted')) {
+            userError = 'انتهت مهلة الاتصال — تأكد من أن رابط المصدر صحيح ويعمل';
+          } else if (combined.includes('enotfound') || combined.includes('econnrefused') || combined.includes('dns') || combined.includes('getaddrinfo')) {
+            userError = 'لا يمكن الوصول إلى المصدر — تأكد من صحة الرابط';
+          } else if (combined.includes('non-json') || combined.includes('غير json')) {
+            userError = 'المصدر لا يرد بصيغة JSON — تأكد من صحة رابط الـ API';
+          } else if (connErr.name === 'DhruFusionError') {
+            userError = `خطأ من المصدر: ${connErr.message}`;
+            if (connErr.fullDescription) {
+              userError += ` — ${connErr.fullDescription}`;
+            }
+          }
+
+          return res.status(400).json({ error: userError, detail: connErr.message });
+        }
       }
     }
 
@@ -398,20 +427,24 @@ async function updateSource(req, res) {
       syncOnly
     } = req.body;
 
-    let finalUrl = url || apiUrl;
+    let finalUrl = type === 'imeicheck'
+      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/php-api')
+      : (url || apiUrl);
 
     // التحقق من المدخلات
-    if (!name || !type || !finalUrl) {
+    if (!name || !type || (!finalUrl && type !== 'imeicheck')) {
       return res.status(400).json({ 
         error: 'الاسم والنوع والرابط مطلوبة' 
       });
     }
 
-    // ─── اكتشاف رابط API تلقائياً ───
-    try {
-      finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
-    } catch (e) {
-      console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
+    // ─── اكتشاف رابط API تلقائياً (DHRU FUSION فقط) ───
+    if (type !== 'imeicheck') {
+      try {
+        finalUrl = await resolveApiUrl(finalUrl, apiKey, username);
+      } catch (e) {
+        console.error('⚠️ resolveApiUrl failed (non-blocking):', e.message);
+      }
     }
 
     const source = await Source.update(id, site_key, {
@@ -533,7 +566,56 @@ async function testSourceConnection(req, res) {
     const apiKeyPlain = req.body?.apiKey || req.body?.api_key || decryptApiKey(source.api_key);
     const username = req.body?.username || source.username || null;
 
-    // ─── اكتشاف رابط API تلقائياً ───
+    // ─── IMEI Check: اختبار عبر endpoint الرصيد ───
+    if (source.type === 'imeicheck') {
+      try {
+        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
+        const balanceInfo = await client.getBalance();
+
+        await Source.updateConnectionStatus(source.id, site_key, {
+          ok: true,
+          checkedAt,
+          error: null,
+          balance: balanceInfo.balance,
+          currency: balanceInfo.currency,
+        });
+
+        return res.json({
+          success: true,
+          connectionOk: true,
+          resolvedUrl: baseUrl,
+          sourceBalance: balanceInfo.balance,
+          sourceCurrency: balanceInfo.currency,
+          lastChecked: checkedAt.toISOString(),
+        });
+      } catch (error) {
+        console.error('IMEI Check test failed:', error.message);
+        let userError = 'فشل الاتصال بـ IMEI Check';
+        const errMsg = String(error.message || '').toLowerCase();
+        if (errMsg.includes('invalid') && errMsg.includes('key')) {
+          userError = 'مفتاح الـ API غير صحيح';
+        } else if (errMsg.includes('ip')) {
+          userError = 'عنوان IP السيرفر غير مسموح في IMEI Check';
+        } else if (errMsg.includes('timeout') || errMsg.includes('مهلة')) {
+          userError = 'انتهت مهلة الاتصال';
+        }
+
+        await Source.updateConnectionStatus(source.id, site_key, {
+          ok: false,
+          checkedAt,
+          error: error.message,
+        });
+
+        return res.json({
+          success: true,
+          connectionOk: false,
+          error: userError,
+          lastChecked: checkedAt.toISOString(),
+        });
+      }
+    }
+
+    // ─── DHRU FUSION: اكتشاف رابط API تلقائياً ───
     try {
       const resolvedUrl = await resolveApiUrl(baseUrl, apiKeyPlain, username);
       if (resolvedUrl !== baseUrl) {
@@ -739,6 +821,8 @@ async function testSourceConnection(req, res) {
       userError = 'مشكلة في شهادة SSL للمصدر';
     } else if (error.name === 'DhruFusionError') {
       userError = `خطأ من المصدر: ${error.message}`;
+    } else if (error.name === 'ImeiCheckError') {
+      userError = `خطأ من IMEI Check: ${error.message}`;
     }
     try {
       const { site_key } = req.user;
@@ -846,6 +930,137 @@ async function syncSourceProducts(req, res) {
     const username = req.body?.username || source.username || null;
     const profitPercentage = source.profit_percentage == null ? 0 : Number(source.profit_percentage);
 
+    // ─── IMEI Check: مزامنة خاصة ───
+    if (source.type === 'imeicheck') {
+      logs.push('Source type: IMEI Check (alpha.imeicheck.com)');
+
+      // 1) Balance check
+      logs.push('Api action.....balance');
+      let balanceInfo;
+      try {
+        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
+        balanceInfo = await client.getBalance();
+        logs.push(`✓ Balance: ${balanceInfo.balance} ${balanceInfo.currency}`);
+      } catch (err) {
+        logs.push(`✗ Balance check failed: ${err.message}`);
+        await Source.updateConnectionStatus(source.id, site_key, {
+          ok: false, checkedAt: new Date(), error: err.message,
+        });
+        return res.status(400).json({ error: `فشل الاتصال: ${err.message}`, logs });
+      }
+
+      // 2) Fetch services
+      logs.push('Api action.....services');
+      let servicesData;
+      try {
+        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
+        servicesData = await client.getServices();
+        logs.push(`✓ Found ${servicesData.totalServices} services`);
+      } catch (err) {
+        logs.push(`✗ Services fetch failed: ${err.message}`);
+        return res.status(400).json({
+          error: `فشل جلب قائمة الخدمات: ${err.message}`, logs,
+          account: { credits: balanceInfo.balance, currency: balanceInfo.currency },
+        });
+      }
+
+      // حذف المنتجات القديمة إذا طُلب ذلك
+      if (deleteAllBrandModel || syncMode === 'delete_then_sync') {
+        logs.push('Deleting old products from this source...');
+        const pool = getPool();
+        const [deleteResult] = await pool.query(
+          'DELETE FROM products WHERE site_key = ? AND source_id = ?',
+          [site_key, source.id]
+        );
+        logs.push(`✓ Deleted ${deleteResult.affectedRows} old products`);
+      }
+
+      logs.push('Updating services list');
+
+      let count = 0;
+      const profitAmt = source.profit_amount != null ? Number(source.profit_amount) : null;
+
+      // Group services by their group field
+      const groupMap = {};
+      for (const svc of servicesData.services) {
+        const g = svc.group || 'General';
+        if (!groupMap[g]) groupMap[g] = [];
+        groupMap[g].push(svc);
+      }
+
+      for (const [groupName, services] of Object.entries(groupMap)) {
+        logs.push(`Group :: ${groupName}`);
+        for (const svc of services) {
+          logs.push(`Tool :: ${svc.name}`);
+
+          const sourcePrice = svc.price;
+          let finalPrice;
+          if (sourcePrice == null) {
+            finalPrice = null;
+          } else if (profitAmt && profitAmt > 0) {
+            finalPrice = Number((sourcePrice + profitAmt).toFixed(3));
+          } else {
+            finalPrice = Number((sourcePrice * (1 + (profitPercentage / 100))).toFixed(3));
+          }
+
+          await Product.upsertExternalService({
+            site_key,
+            source_id: source.id,
+            user_id,
+            external_service_key: String(svc.id),
+            external_service_id: svc.id,
+            group_name: groupName,
+            group_type: null,
+            service_type: svc.type || 'IMEI',
+            name: svc.name,
+            price: finalPrice ?? svc.price,
+            credit: svc.price,
+            credit_raw: svc.price == null ? null : String(svc.price),
+            source_price: sourcePrice,
+            final_price: finalPrice,
+            profit_percentage_applied: profitPercentage,
+            service_time: svc.time ?? null,
+            service_info: svc.info ?? null,
+            minqnt: null,
+            maxqnt: null,
+            qnt: null,
+            server_flag: null,
+            custom_json: null,
+            requires_custom_json: null,
+            raw_json: svc.raw ?? null,
+            description: svc.info || `المجموعة: ${groupName}`,
+          });
+
+          count++;
+        }
+      }
+
+      logs.push('✓ Successfully synchronize');
+
+      await Source.updateConnectionStatus(source.id, site_key, {
+        ok: true, checkedAt: new Date(), error: null,
+        balance: balanceInfo.balance, currency: balanceInfo.currency,
+      });
+
+      invalidatePublicProductsCache(site_key);
+
+      return res.json({
+        success: true,
+        count,
+        skipped: 0,
+        publishFrontend,
+        setupOptions: { setupIMEI, setupServer, setupRemote },
+        deleteAllBrandModel,
+        logs,
+        account: {
+          credits: balanceInfo.balance,
+          creditraw: balanceInfo.balance,
+          currency: balanceInfo.currency,
+        },
+      });
+    }
+
+    // ─── DHRU FUSION: المزامنة الأصلية ───
     logs.push('Black List domain check.....');
     let parsedUrl;
     try {
