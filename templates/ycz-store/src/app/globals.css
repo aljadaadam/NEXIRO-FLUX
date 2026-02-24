@@ -98,6 +98,9 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .dash-overview-grid { grid-template-columns: 1fr !important; }
   .dash-banner-card { flex-direction: column !important; text-align: center !important; }
   .dash-banner-card > div:last-child { align-self: center !important; }
+  .dash-quick-actions { gap: 6px !important; }
+  .dash-quick-action-btn { padding: 0.45rem 0.75rem !important; font-size: 0.72rem !important; }
+  .dash-alerts-row { flex-direction: column !important; gap: 6px !important; }
   .dash-toast { bottom: 5.5rem !important; }
 }
 

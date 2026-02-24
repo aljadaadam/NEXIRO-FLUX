@@ -203,6 +203,19 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     };
   }, [mobileDrawerOpen]);
 
+  // Listen for admin-navigate custom events from OverviewPage quick actions
+  useEffect(() => {
+    function onAdminNav(e: Event) {
+      const page = (e as CustomEvent).detail;
+      if (page && typeof page === 'string') {
+        setCurrentPage(page);
+        setMobileDrawerOpen(false);
+      }
+    }
+    window.addEventListener('admin-navigate', onAdminNav);
+    return () => window.removeEventListener('admin-navigate', onAdminNav);
+  });
+
   // Admin login handler
   async function handleAdminLogin(e: React.FormEvent) {
     e.preventDefault();
