@@ -8,6 +8,7 @@ import {
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
+import UserDetailsPage from './UserDetailsPage';
 
 // ─── Skeleton Row ───
 function SkeletonBlock({ w, h, r = 6 }: { w: string | number; h: number; r?: number }) {
@@ -212,6 +213,19 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: number; type: 'customer' | 'staff' } | null>(null);
+
+  // ─── If a user is selected, show UserDetailsPage ───
+  if (selectedUser) {
+    return (
+      <UserDetailsPage
+        theme={theme}
+        userId={selectedUser.id}
+        userType={selectedUser.type}
+        onBack={() => setSelectedUser(null)}
+      />
+    );
+  }
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
@@ -523,6 +537,14 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                     <td style={{ padding: '0.85rem 1rem', fontSize: '0.78rem', color: '#94a3b8' }}>{user.joined}</td>
                     <td style={{ padding: '0.85rem 1rem' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => setSelectedUser({ id: user.id, type: user._type || 'customer' })} title="عرض التفاصيل" style={{
+                            width: 30, height: 30, borderRadius: 6, border: 'none',
+                            background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center',
+                            transition: 'transform 0.15s',
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                          ><Eye size={13} color="#3b82f6" /></button>
                         {user._type === 'customer' && (
                           <button onClick={() => setWalletUser(user)} title="تعديل الرصيد" style={{
                             width: 30, height: 30, borderRadius: 6, border: 'none',

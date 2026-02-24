@@ -73,6 +73,10 @@ export interface User {
   spent?: string;
   wallet_balance?: number;
   _type?: 'customer' | 'staff';
+  phone?: string;
+  country?: string;
+  is_verified?: boolean | number;
+  last_login_at?: string;
 }
 
 export interface StatsCard {
