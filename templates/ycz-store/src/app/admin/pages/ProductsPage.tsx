@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Layers, Check } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -55,6 +55,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Groups management state
+  const [showGroups, setShowGroups] = useState(false);
+  const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [groupActionLoading, setGroupActionLoading] = useState(false);
   function showToast(message: string, type: 'success' | 'error' = 'success') {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
@@ -252,6 +258,52 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       console.error('toggleNamePriority error:', err);
     }
   }
+
+  // ─── Group Management Handlers ───
+  async function handleRenameGroup(oldName: string) {
+    if (!renameValue.trim() || renameValue.trim() === oldName) {
+      setRenamingGroup(null);
+      return;
+    }
+    setGroupActionLoading(true);
+    try {
+      const res = await adminApi.renameGroup(oldName, renameValue.trim());
+      showToast(res?.message || 'تم تغيير اسم القروب');
+      setRenamingGroup(null);
+      setRenameValue('');
+      await loadProducts();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل تغيير اسم القروب';
+      showToast(msg, 'error');
+    } finally {
+      setGroupActionLoading(false);
+    }
+  }
+
+  async function handleDeleteGroup(groupName: string, productCount: number) {
+    if (!confirm(`هل أنت متأكد من حذف قروب "${groupName}" مع جميع منتجاتها (${productCount} منتج)؟\nلا يمكن التراجع.`)) return;
+    setGroupActionLoading(true);
+    try {
+      const res = await adminApi.deleteGroup(groupName);
+      showToast(res?.message || 'تم حذف القروب');
+      await loadProducts();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل حذف القروب';
+      showToast(msg, 'error');
+    } finally {
+      setGroupActionLoading(false);
+    }
+  }
+
+  // بيانات القروبات مع عدد المنتجات
+  const groupsData = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      const g = String(p.group_name || '').trim();
+      if (g) map.set(g, (map.get(g) || 0) + 1);
+    }
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  }, [products]);
 
   // عرض الاسم حسب أولوية المنتج
   function displayName(p: Product) {
@@ -474,6 +526,98 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </div>
         ))}
       </div>
+
+      {/* ─── Groups Management Toggle ─── */}
+      <div style={{ marginBottom: 12 }}>
+        <button type="button" onClick={() => setShowGroups(!showGroups)} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '0.5rem 1rem', borderRadius: 10,
+          background: showGroups ? theme.primary : '#f8fafc',
+          color: showGroups ? '#fff' : '#64748b',
+          border: '1px solid ' + (showGroups ? theme.primary : '#e2e8f0'),
+          fontSize: '0.8rem', fontWeight: 700,
+          cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+          transition: 'all 0.2s',
+        }}>
+          <Layers size={15} />
+          إدارة القروبات ({groupsData.length})
+        </button>
+      </div>
+
+      {/* ─── Groups Management Table ─── */}
+      {showGroups && (
+        <div style={{
+          background: '#fff', borderRadius: 14,
+          border: '1px solid #e2e8f0', overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          marginBottom: 16,
+        }}>
+          <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020' }}>📂 القروبات</h3>
+            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} قروب</span>
+          </div>
+
+          {groupsData.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>لا توجد قروبات</div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                  {['#', 'اسم القروب', 'عدد المنتجات', 'إجراءات'].map(h => (
+                    <th key={h} style={{ padding: '0.7rem 0.8rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {groupsData.map((g, idx) => (
+                  <tr key={g.name} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#fafbfd')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <td style={{ padding: '0.65rem 0.8rem', fontSize: '0.7rem', color: '#94a3b8', width: 40 }}>{idx + 1}</td>
+                    <td style={{ padding: '0.65rem 0.8rem' }}>
+                      {renamingGroup === g.name ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <input
+                            autoFocus
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleRenameGroup(g.name); if (e.key === 'Escape') { setRenamingGroup(null); setRenameValue(''); } }}
+                            style={{ padding: '0.35rem 0.6rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: 220 }}
+                          />
+                          <button type="button" onClick={() => handleRenameGroup(g.name)} disabled={groupActionLoading} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                            <Check size={13} color="#16a34a" />
+                          </button>
+                          <button type="button" onClick={() => { setRenamingGroup(null); setRenameValue(''); }} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                            <X size={13} color="#64748b" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020' }}>{g.name}</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.65rem 0.8rem' }}>
+                      <span style={{ padding: '0.15rem 0.5rem', borderRadius: 5, background: '#eff6ff', fontSize: '0.72rem', fontWeight: 700, color: '#2563eb' }}>{g.count}</span>
+                    </td>
+                    <td style={{ padding: '0.65rem 0.8rem' }}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button type="button" onClick={() => { setRenamingGroup(g.name); setRenameValue(g.name); }} disabled={groupActionLoading} title="تعديل الاسم" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0f9ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                          <Edit size={13} color="#0ea5e9" />
+                        </button>
+                        <button type="button" onClick={() => handleDeleteGroup(g.name, g.count)} disabled={groupActionLoading} title="حذف القروب ومنتجاتها" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                          <Trash2 size={13} color="#dc2626" />
+                        </button>
+                        <button type="button" onClick={() => { setFilterGroup(g.name); setShowGroups(false); }} title="عرض المنتجات" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                          <Search size={13} color="#16a34a" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {/* ─── Filters + Bulk Actions Bar ─── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>

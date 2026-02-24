@@ -1095,6 +1095,48 @@ async function toggleFeatured(req, res) {
   }
 }
 
+// ─── إعادة تسمية قروب ───
+async function renameGroup(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName || !oldName.trim() || !newName.trim()) {
+      return res.status(400).json({ error: 'يجب تحديد الاسم القديم والجديد' });
+    }
+    const pool = getPool();
+    const [result] = await pool.query(
+      'UPDATE products SET group_name = ? WHERE site_key = ? AND group_name = ?',
+      [newName.trim(), site_key, oldName.trim()]
+    );
+    invalidatePublicProductsCache(site_key);
+    res.json({ message: `تم تغيير اسم القروب بنجاح (${result.affectedRows} منتج)`, affected: result.affectedRows });
+  } catch (error) {
+    console.error('Error in renameGroup:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إعادة تسمية القروب' });
+  }
+}
+
+// ─── حذف قروب مع جميع منتجاتها ───
+async function deleteGroup(req, res) {
+  try {
+    const { site_key } = req.user;
+    const groupName = decodeURIComponent(req.params.name || '');
+    if (!groupName.trim()) {
+      return res.status(400).json({ error: 'يجب تحديد اسم القروب' });
+    }
+    const pool = getPool();
+    const [result] = await pool.query(
+      'DELETE FROM products WHERE site_key = ? AND group_name = ?',
+      [site_key, groupName.trim()]
+    );
+    invalidatePublicProductsCache(site_key);
+    res.json({ message: `تم حذف القروب وجميع منتجاتها (${result.affectedRows} منتج)`, deleted: result.affectedRows });
+  } catch (error) {
+    console.error('Error in deleteGroup:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء حذف القروب' });
+  }
+}
+
 module.exports = {
   getAllProducts,
   createProduct,
@@ -1110,5 +1152,7 @@ module.exports = {
   seedTemplateProducts,
   debugProducts,
   toggleFeatured,
-  invalidatePublicProductsCache
+  invalidatePublicProductsCache,
+  renameGroup,
+  deleteGroup
 };
