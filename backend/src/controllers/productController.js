@@ -241,6 +241,14 @@ async function updateProduct(req, res) {
       updateData.is_game = ['1', 'true', 'on', 'yes'].includes(String(is_game_raw).toLowerCase()) ? 1 : 0;
     }
 
+    // حقول المنتج المخصصة (custom_json / requires_custom_json)
+    if (req.body.custom_json !== undefined) {
+      updateData.custom_json = req.body.custom_json === null ? null : JSON.stringify(req.body.custom_json);
+    }
+    if (req.body.requires_custom_json !== undefined) {
+      updateData.requires_custom_json = req.body.requires_custom_json === null ? null : JSON.stringify(req.body.requires_custom_json);
+    }
+
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'لا توجد بيانات للتحديث' });
     }

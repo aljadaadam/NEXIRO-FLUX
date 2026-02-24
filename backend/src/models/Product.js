@@ -192,7 +192,7 @@ class Product {
     return this.findById(id);
   }
 
-  static async update(id, site_key, { name, arabic_name, description, price, price_yearly, price_lifetime, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority, is_game }) {
+  static async update(id, site_key, { name, arabic_name, description, price, price_yearly, price_lifetime, service_type, source_id, image, status, category, qnt, linked_product_id, group_name, name_priority, is_game, custom_json, requires_custom_json }) {
     const pool = getPool();
     
     // Build dynamic update query
@@ -220,6 +220,8 @@ class Product {
     if (group_name !== undefined) { updates.push('group_name = ?'); values.push(group_name); }
     if (name_priority !== undefined) { updates.push('name_priority = ?'); values.push(name_priority); }
     if (is_game !== undefined) { updates.push('is_game = ?'); values.push(is_game ? 1 : 0); }
+    if (custom_json !== undefined) { updates.push('custom_json = ?'); values.push(custom_json); }
+    if (requires_custom_json !== undefined) { updates.push('requires_custom_json = ?'); values.push(requires_custom_json); }
     
     if (updates.length === 0) return this.findById(id);
     

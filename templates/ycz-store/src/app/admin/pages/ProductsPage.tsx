@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Save, Database, ArrowRightLeft } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Save, Database, ArrowRightLeft, ListOrdered, Plus as PlusIcon, Minus } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -50,8 +50,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editOriginalSourceId, setEditOriginalSourceId] = useState<number | null>(null);
   const [editSelectedSourceId, setEditSelectedSourceId] = useState<number | null>(null);
   const [sources, setSources] = useState<Array<{ id: number; name: string; url?: string; productsCount?: number }>>([]);
-
-  // Bulk selection state
+  const [editCustomFields, setEditCustomFields] = useState<Array<{ key: string; label: string; placeholder: string; required: boolean }>>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -145,6 +144,14 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setEditLinkedProductId(product.linked_product_id ?? null);
     setLinkSearch('');
     setShowLinkDropdown(false);
+    // تحميل حقول المنتج من customFields الحالية
+    const fields = (product.customFields || []).map(f => ({
+      key: f.key || '',
+      label: f.label || '',
+      placeholder: f.placeholder || '',
+      required: f.required !== false,
+    }));
+    setEditCustomFields(fields);
     setShowEdit(true);
   }
 
@@ -180,6 +187,25 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
       // تحويل الاتصال لمنتج آخر
       updateData.linked_product_id = editLinkedProductId;
+
+      // حفظ حقول المنتج المخصصة
+      if (editCustomFields.length > 0) {
+        // Build requires_custom_json from fields
+        const fieldsArr = editCustomFields.filter(f => f.key.trim()).map(f => ({
+          key: f.key.trim(),
+          label: f.label.trim() || f.key.trim(),
+          placeholder: f.placeholder.trim() || `أدخل ${f.label.trim() || f.key.trim()}`,
+          required: f.required ? '1' : '0',
+        }));
+        updateData.requires_custom_json = fieldsArr.length > 0 ? fieldsArr : null;
+        // Check if first field is IMEI-type, build custom_json
+        const firstField = fieldsArr[0];
+        if (firstField && firstField.key.toLowerCase() === 'imei') {
+          updateData.custom_json = { allow: '1', customname: firstField.label, custominfo: firstField.placeholder };
+        }
+      } else {
+        updateData.requires_custom_json = null;
+      }
 
       await adminApi.updateProduct(editId, updateData);
       closeEdit();
@@ -1180,6 +1206,150 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 }}>
                   {editSourceConnected ? <><Unlink size={12} /> فصل المنتج من المصدر</> : <><Link2 size={12} /> إعادة ربط بالمصدر الأصلي</>}
                 </button>
+              )}
+            </div>
+
+            {/* ─── Section 5: حقول المنتج ─── */}
+            <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: '#e0f2fe', display: 'grid', placeItems: 'center' }}>
+                  <ListOrdered size={14} color="#0284c7" />
+                </div>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>حقول المنتج</p>
+                <span style={{ fontSize: '0.58rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
+                  {editCustomFields.length} حقل
+                </span>
+                <p style={{ fontSize: '0.58rem', color: '#94a3b8', margin: 0, marginRight: 'auto' }}>
+                  الحقول التي يملأها العميل عند الطلب
+                </p>
+              </div>
+
+              {/* جدول الحقول */}
+              {editCustomFields.length > 0 && (
+                <div style={{ borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden', marginBottom: 10 }}>
+                  {/* رأس الجدول */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 60px 36px', gap: 0, background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>المفتاح (Key)</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>التسمية (Label)</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>النص التوضيحي</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569', textAlign: 'center' }}>مطلوب</div>
+                    <div />
+                  </div>
+                  {/* صفوف الحقول */}
+                  {editCustomFields.map((field, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 60px 36px', gap: 0, borderBottom: idx < editCustomFields.length - 1 ? '1px solid #f1f5f9' : 'none', background: '#fff' }}>
+                      <div style={{ padding: '0.3rem 0.4rem' }}>
+                        <input
+                          value={field.key}
+                          onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], key: e.target.value }; setEditCustomFields(arr); }}
+                          placeholder="imei"
+                          style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box', background: '#fafbfc', direction: 'ltr' }}
+                          onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                      </div>
+                      <div style={{ padding: '0.3rem 0.4rem' }}>
+                        <input
+                          value={field.label}
+                          onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], label: e.target.value }; setEditCustomFields(arr); }}
+                          placeholder="رقم IMEI"
+                          style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }}
+                          onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                      </div>
+                      <div style={{ padding: '0.3rem 0.4rem' }}>
+                        <input
+                          value={field.placeholder}
+                          onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], placeholder: e.target.value }; setEditCustomFields(arr); }}
+                          placeholder="مثال: 356938035643809"
+                          style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }}
+                          onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                      </div>
+                      <div style={{ padding: '0.3rem 0.4rem', display: 'grid', placeItems: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], required: e.target.checked }; setEditCustomFields(arr); }}
+                          style={{ width: 15, height: 15, accentColor: theme.primary, cursor: 'pointer' }}
+                        />
+                      </div>
+                      <div style={{ padding: '0.3rem 0.2rem', display: 'grid', placeItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => { const arr = [...editCustomFields]; arr.splice(idx, 1); setEditCustomFields(arr); }}
+                          style={{ width: 24, height: 24, borderRadius: 5, border: '1px solid #fecaca', background: '#fff5f5', cursor: 'pointer', display: 'grid', placeItems: 'center', transition: 'background 0.15s' }}
+                          onMouseOver={e => e.currentTarget.style.background = '#fee2e2'} onMouseOut={e => e.currentTarget.style.background = '#fff5f5'}
+                        >
+                          <Minus size={11} color="#dc2626" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* زر إضافة حقل + زر جلب الافتراضي */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditCustomFields([...editCustomFields, { key: '', label: '', placeholder: '', required: true }])}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }}
+                  onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#fff'}
+                >
+                  <Plus size={12} /> إضافة حقل
+                </button>
+
+                {editSelectedSourceId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // جلب الحقول الافتراضية من بيانات المنتج الأصلية
+                      const product = products.find(p => p.id === editId);
+                      if (product?.customFields && product.customFields.length > 0) {
+                        setEditCustomFields(product.customFields.map(f => ({
+                          key: f.key || '',
+                          label: f.label || '',
+                          placeholder: f.placeholder || '',
+                          required: f.required !== false,
+                        })));
+                      } else {
+                        // حقول افتراضية حسب نوع الخدمة
+                        if (editServiceType === 'IMEI') {
+                          setEditCustomFields([{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }]);
+                        } else if (editServiceType === 'SERVER') {
+                          setEditCustomFields([
+                            { key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true },
+                            { key: 'password', label: 'كلمة المرور', placeholder: 'أدخل كلمة المرور', required: true },
+                          ]);
+                        } else {
+                          setEditCustomFields([{ key: 'info', label: 'معلومات', placeholder: 'أدخل المعلومات المطلوبة', required: true }]);
+                        }
+                      }
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#dbeafe'} onMouseOut={e => e.currentTarget.style.background = '#eff6ff'}
+                  >
+                    <RefreshCw size={11} /> جلب الحقول الافتراضية
+                  </button>
+                )}
+
+                {editCustomFields.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setEditCustomFields([])}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff5f5', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', marginRight: 'auto', transition: 'all 0.15s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#fee2e2'} onMouseOut={e => e.currentTarget.style.background = '#fff5f5'}
+                  >
+                    <Trash2 size={11} /> مسح الكل
+                  </button>
+                )}
+              </div>
+
+              {editCustomFields.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '0.8rem 0.5rem', color: '#94a3b8', fontSize: '0.68rem' }}>
+                  <p style={{ margin: 0, marginBottom: 2 }}>لا توجد حقول مخصصة</p>
+                  <p style={{ margin: 0, fontSize: '0.58rem' }}>أضف حقول أو اجلب الافتراضية من المصدر</p>
+                </div>
               )}
             </div>
 
