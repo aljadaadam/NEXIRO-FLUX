@@ -215,18 +215,6 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: number; type: 'customer' | 'staff' } | null>(null);
 
-  // ─── If a user is selected, show UserDetailsPage ───
-  if (selectedUser) {
-    return (
-      <UserDetailsPage
-        theme={theme}
-        userId={selectedUser.id}
-        userType={selectedUser.type}
-        onBack={() => setSelectedUser(null)}
-      />
-    );
-  }
-
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
@@ -347,6 +335,18 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
     { label: 'المشرفين', value: statCounts.staff, icon: ShieldCheck, color: '#3b82f6', bg: '#eff6ff' },
     { label: 'المحظورين', value: statCounts.blocked, icon: UserX, color: '#ef4444', bg: '#fef2f2' },
   ];
+
+  // ─── If a user is selected, show UserDetailsPage ───
+  if (selectedUser) {
+    return (
+      <UserDetailsPage
+        theme={theme}
+        userId={selectedUser.id}
+        userType={selectedUser.type}
+        onBack={() => setSelectedUser(null)}
+      />
+    );
+  }
 
   return (
     <>
