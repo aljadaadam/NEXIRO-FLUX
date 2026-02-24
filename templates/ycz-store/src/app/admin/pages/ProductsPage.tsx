@@ -60,6 +60,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [groupActionLoading, setGroupActionLoading] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [bulkDeletingGroups, setBulkDeletingGroups] = useState(false);
   function showToast(message: string, type: 'success' | 'error' = 'success') {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
@@ -285,6 +287,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     try {
       const res = await adminApi.deleteGroup(groupName);
       showToast(res?.message || 'تم حذف القروب');
+      setSelectedGroups(prev => { const n = new Set(prev); n.delete(groupName); return n; });
       await loadProducts();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'فشل حذف القروب';
@@ -292,6 +295,31 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     } finally {
       setGroupActionLoading(false);
     }
+  }
+
+  async function handleBulkDeleteGroups() {
+    if (selectedGroups.size === 0) return;
+    const totalProducts = groupsData.filter(g => selectedGroups.has(g.name)).reduce((sum, g) => sum + g.count, 0);
+    if (!confirm(`هل أنت متأكد من حذف ${selectedGroups.size} قروب مع جميع منتجاتها (${totalProducts} منتج)؟\nلا يمكن التراجع.`)) return;
+    setBulkDeletingGroups(true);
+    let successCount = 0;
+    let failCount = 0;
+    for (const name of selectedGroups) {
+      try {
+        await adminApi.deleteGroup(name);
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    setSelectedGroups(new Set());
+    if (failCount > 0) {
+      showToast(`تم حذف ${successCount} قروب، فشل ${failCount}`, 'error');
+    } else {
+      showToast(`تم حذف ${successCount} قروب بنجاح`);
+    }
+    await loadProducts();
+    setBulkDeletingGroups(false);
   }
 
   // بيانات القروبات مع عدد المنتجات (حسب التصنيف المختار)
@@ -575,7 +603,22 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         }}>
           <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020' }}>📂 القروبات {filterType !== 'all' ? `(${filterType})` : ''}</h3>
-            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} قروب</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {selectedGroups.size > 0 && (
+                <button type="button" onClick={handleBulkDeleteGroups} disabled={bulkDeletingGroups} style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '0.35rem 0.8rem', borderRadius: 7,
+                  background: '#dc2626', color: '#fff',
+                  border: 'none', fontSize: '0.72rem', fontWeight: 700,
+                  cursor: bulkDeletingGroups ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+                  opacity: bulkDeletingGroups ? 0.7 : 1,
+                }}>
+                  <Trash2 size={12} />
+                  {bulkDeletingGroups ? 'جاري الحذف...' : `حذف المحدد (${selectedGroups.size})`}
+                </button>
+              )}
+              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} قروب</span>
+            </div>
           </div>
 
           {groupsData.length === 0 ? (
@@ -585,6 +628,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ padding: '0.7rem 0.5rem 0.7rem 0.8rem', width: 40 }}>
+                    <input type="checkbox" checked={groupsData.length > 0 && selectedGroups.size === groupsData.length} onChange={() => {
+                      if (selectedGroups.size === groupsData.length) setSelectedGroups(new Set());
+                      else setSelectedGroups(new Set(groupsData.map(g => g.name)));
+                    }} style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#dc2626' }} />
+                  </th>
                   {['#', 'اسم القروب', 'عدد المنتجات', 'إجراءات'].map(h => (
                     <th key={h} style={{ padding: '0.7rem 0.8rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -592,9 +641,14 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               </thead>
               <tbody>
                 {groupsData.map((g, idx) => (
-                  <tr key={g.name} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#fafbfd')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <tr key={g.name} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s', background: selectedGroups.has(g.name) ? '#fef2f2' : 'transparent' }}
+                    onMouseEnter={e => { if (!selectedGroups.has(g.name)) e.currentTarget.style.background = '#fafbfd'; }}
+                    onMouseLeave={e => { if (!selectedGroups.has(g.name)) e.currentTarget.style.background = 'transparent'; }}>
+                    <td style={{ padding: '0.65rem 0.5rem 0.65rem 0.8rem', width: 40 }}>
+                      <input type="checkbox" checked={selectedGroups.has(g.name)} onChange={() => {
+                        setSelectedGroups(prev => { const n = new Set(prev); if (n.has(g.name)) n.delete(g.name); else n.add(g.name); return n; });
+                      }} style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#dc2626' }} />
+                    </td>
                     <td style={{ padding: '0.65rem 0.8rem', fontSize: '0.7rem', color: '#94a3b8', width: 40 }}>{idx + 1}</td>
                     <td style={{ padding: '0.65rem 0.8rem' }}>
                       {renamingGroup === g.name ? (
@@ -640,7 +694,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{groupsData.length} قروب{filterType !== 'all' ? ` — تصفية: ${filterType}` : ''}</span>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{selectedGroups.size > 0 ? `${selectedGroups.size} محدد من ` : ''}{groupsData.length} قروب{filterType !== 'all' ? ` — تصفية: ${filterType}` : ''}</span>
           </div>
         </div>
       ) : (
