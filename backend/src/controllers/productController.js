@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const { getPool } = require('../config/db');
 
 // ─── كاش المنتجات العامة (per site_key) ───
 // يخزّن نتائج getPublicProducts لمدة 30 ثانية لتسريع التحميل
@@ -34,7 +35,6 @@ async function getAllProducts(req, res) {
     const { site_key } = req.user;
     
     // Get products with source information
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const [products] = await pool.query(
       `SELECT p.*, s.id as source_id, s.name as source_name, s.url as source_url
@@ -826,7 +826,6 @@ async function getPublicProducts(req, res) {
       return res.json(cached);
     }
 
-    const { getPool } = require('../config/db');
     const pool = getPool();
 
     // جلب المنتجات مع استبعاد المصادر التي تعمل بوضع المزامنة فقط (sync_only)
@@ -861,7 +860,6 @@ async function getPublicProducts(req, res) {
 // جلب منتج واحد للمتجر (بدون مصادقة)
 async function getPublicProduct(req, res) {
   try {
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const siteKey = req.siteKey;
     const { id } = req.params;
@@ -887,7 +885,6 @@ async function getPublicProduct(req, res) {
 // جلب التصنيفات (الفئات) للمتجر (بدون مصادقة)
 async function getProductCategories(req, res) {
   try {
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const siteKey = req.siteKey;
 
@@ -910,7 +907,6 @@ async function getProductCategories(req, res) {
 // ─── تشخيص المنتجات (debug) ───
 async function debugProducts(req, res) {
   try {
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const siteKey = req.siteKey;
 
@@ -942,7 +938,6 @@ async function debugProducts(req, res) {
 // ─── تعبئة المنتجات الافتراضية (القوالب) ───
 async function seedTemplateProducts(req, res) {
   try {
-    const { getPool } = require('../config/db');
     const pool = getPool();
     const siteKey = req.siteKey || req.user?.site_key;
 

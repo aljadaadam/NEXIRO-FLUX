@@ -19,6 +19,7 @@ const {
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 const { checkPermission } = require('../middlewares/permissionMiddleware');
+const { validateCreateProduct, validateImportProducts, validateProductId } = require('../validators/productValidator');
 
 // ─── Public (بدون مصادقة) ───
 router.get('/public', getPublicProducts);
@@ -41,7 +42,7 @@ router.get('/', authenticateToken, requireRole('admin', 'user'), checkPermission
 router.get('/stats', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getProductsStats);
 
 // إنشاء منتج جديد (يحتاج صلاحية products:create)
-router.post('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), createProduct);
+router.post('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), validateCreateProduct, createProduct);
 
 // ============================================
 // 1️⃣ SYNC (مزامنة Dashboard ↔ Backend)
@@ -64,7 +65,7 @@ router.get('/sync', authenticateToken, requireRole('admin', 'user'), checkPermis
 // اختر المسار المناسب حسب مصدر البيانات:
 
 // استيراد من dashboard (منتجات جاهزة)
-router.post('/import', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), importProducts);
+router.post('/import', authenticateToken, requireRole('admin', 'user'), checkPermission('products:create'), validateImportProducts, importProducts);
 
 // استيراد من أي API خارجي عام
 router.post('/import/sync', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), syncProducts);
@@ -76,12 +77,12 @@ router.post('/import/sd-unlocker', authenticateToken, requireRole('admin', 'user
 router.post('/import-external', authenticateToken, requireRole('admin', 'user'), checkPermission('products:sync'), syncProducts);
 
 // تبديل حالة المنتج المميز
-router.patch('/:id/featured', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), toggleFeatured);
+router.patch('/:id/featured', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), validateProductId, toggleFeatured);
 
 // تحديث منتج (يحتاج صلاحية products:update)
-router.put('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), updateProduct);
+router.put('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), validateProductId, updateProduct);
 
 // حذف منتج (يحتاج صلاحية products:delete)
-router.delete('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:delete'), deleteProduct);
+router.delete('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:delete'), validateProductId, deleteProduct);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -49,6 +49,17 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [showLinkDropdown, setShowLinkDropdown] = useState(false);
   const [editOriginalSourceId, setEditOriginalSourceId] = useState<number | null>(null);
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  function showToast(message: string, type: 'success' | 'error' = 'success') {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  }
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -87,8 +98,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       setNewName(''); setNewArabicName(''); setNewPrice(''); setNewDesc('');
       setNewServiceType('SERVER'); setNewGroup(''); setNewCustomGroup('');
       setNewIsGame(false);
+      showToast('تم إنشاء المنتج بنجاح');
       loadProducts();
-    } catch { /* ignore */ }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل إنشاء المنتج';
+      showToast(msg, 'error');
+    }
     finally { setSaving(false); }
   }
 
@@ -149,16 +164,66 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
       await adminApi.updateProduct(editId, updateData);
       closeEdit();
+      showToast('تم تحديث المنتج بنجاح');
       loadProducts();
-    } catch { /* ignore */ }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل تحديث المنتج';
+      showToast(msg, 'error');
+    }
     finally { setUpdating(false); }
   }
 
   async function handleDelete(id: number) {
+    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع.')) return;
     try {
       await adminApi.deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
-    } catch { /* ignore */ }
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+      showToast('تم حذف المنتج');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'فشل حذف المنتج';
+      showToast(msg, 'error');
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.`)) return;
+    setBulkDeleting(true);
+    let successCount = 0;
+    let failCount = 0;
+    for (const id of selectedIds) {
+      try {
+        await adminApi.deleteProduct(id);
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    setSelectedIds(new Set());
+    if (failCount > 0) {
+      showToast(`تم حذف ${successCount} منتج، فشل ${failCount}`, 'error');
+    } else {
+      showToast(`تم حذف ${successCount} منتج بنجاح`);
+    }
+    await loadProducts();
+    setBulkDeleting(false);
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(p => p.id)));
+    }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
   }
 
   async function handleToggleFeatured(e: React.MouseEvent, id: number) {
@@ -391,101 +456,184 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         </div>
       )}
 
-      {/* Products Table */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 12 }}>
+
+      {/* ─── Stats Cards ─── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 14 }}>
         {[
-          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020' },
-          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a' },
-          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb' },
-          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed' },
+          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020', icon: '📦' },
+          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a', icon: '✅' },
+          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb', icon: '📱' },
+          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed', icon: '🖥️' },
         ].map((item, i) => (
-          <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12, padding: '0.75rem 0.9rem' }}>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 4 }}>{item.label}</p>
-            <p style={{ fontSize: '1.15rem', fontWeight: 800, color: item.color, background: item.bg, display: 'inline-block', padding: '0.1rem 0.55rem', borderRadius: 8 }}>{item.value}</p>
+          <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 14, padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 2, lineHeight: 1 }}>{item.label}</p>
+              <p style={{ fontSize: '1.2rem', fontWeight: 800, color: item.color, lineHeight: 1 }}>{item.value}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif' }}>
-          <option value="all">كل الحالات</option>
-          <option value="active">نشط</option>
-          <option value="inactive">غير نشط</option>
-        </select>
+      {/* ─── Filters + Bulk Actions Bar ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
+            <option value="all">كل الحالات</option>
+            <option value="active">نشط</option>
+            <option value="inactive">غير نشط</option>
+          </select>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
+            <option value="all">كل الأنواع</option>
+            <option value="SERVER">SERVER</option>
+            <option value="IMEI">IMEI</option>
+            <option value="REMOTE">REMOTE</option>
+          </select>
+          <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160 }}>
+            <option value="all">كل القروبات</option>
+            {groupsForDropdown.map((group) => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
 
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif' }}>
-          <option value="all">كل الأنواع</option>
-          <option value="SERVER">SERVER</option>
-          <option value="IMEI">IMEI</option>
-          <option value="REMOTE">REMOTE</option>
-        </select>
-
-        <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', fontFamily: 'Tajawal, sans-serif', minWidth: 180 }}>
-          <option value="all">كل القروبات</option>
-          {groupsForDropdown.map((group) => (
-            <option key={group} value={group}>{group}</option>
-          ))}
-        </select>
+        {/* Bulk delete button */}
+        {selectedIds.size > 0 && (
+          <button type="button" onClick={handleBulkDelete} disabled={bulkDeleting} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '0.45rem 1rem', borderRadius: 8,
+            background: '#dc2626', color: '#fff',
+            border: 'none', fontSize: '0.78rem', fontWeight: 700,
+            cursor: bulkDeleting ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+            opacity: bulkDeleting ? 0.7 : 1,
+          }}>
+            <Trash2 size={14} />
+            {bulkDeleting ? 'جاري الحذف...' : `حذف المحدد (${selectedIds.size})`}
+          </button>
+        )}
       </div>
 
+      {/* ─── Products Table ─── */}
       <div style={{
-        background: '#fff', borderRadius: 16,
-        border: '1px solid #f1f5f9', overflow: 'hidden',
+        background: '#fff', borderRadius: 14,
+        border: '1px solid #e2e8f0', overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>لا توجد منتجات مطابقة للفلتر</p>
+          </div>
+        ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                {['المنتج', 'السعر', 'النوع', 'القروب', 'الحالة', 'إجراءات'].map(h => (
+              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                <th style={{ padding: '0.7rem 0.5rem 0.7rem 0.8rem', width: 40 }}>
+                  <input type="checkbox" checked={filtered.length > 0 && selectedIds.size === filtered.length} onChange={toggleSelectAll}
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: theme.primary }} />
+                </th>
+                {['#', 'المنتج', 'السعر', 'النوع', 'القروب', 'المصدر', 'الحالة', 'إجراءات'].map(h => (
                   <th key={h} style={{
-                    padding: '0.85rem 1rem', textAlign: 'right',
-                    fontSize: '0.75rem', fontWeight: 700, color: '#64748b',
-                    borderBottom: '1px solid #f1f5f9',
+                    padding: '0.7rem 0.65rem', textAlign: 'right',
+                    fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
+                    whiteSpace: 'nowrap',
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map(p => (
-                <tr key={p.id} style={{ borderBottom: '1px solid #f8fafc' }}>
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '1.25rem' }}>{p.icon}</span>
-                      <div>
-                        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{displayName(p)}</p>
-                        {secondaryName(p) && <p style={{ fontSize: '0.68rem', color: '#64748b' }}>{secondaryName(p)}</p>}
+              {filtered.map((p, idx) => {
+                const isSelected = selectedIds.has(p.id);
+                const statusRaw = String(p.status || 'active').toLowerCase();
+                const isActive = statusRaw === 'active' || statusRaw === 'نشط';
+                const typeColors: Record<string, {bg: string, color: string}> = {
+                  IMEI: { bg: '#dbeafe', color: '#1d4ed8' },
+                  SERVER: { bg: '#ede9fe', color: '#6d28d9' },
+                  REMOTE: { bg: '#fef3c7', color: '#b45309' },
+                };
+                const sType = String(p.service_type || 'SERVER').toUpperCase();
+                const tc = typeColors[sType] || { bg: '#f1f5f9', color: '#64748b' };
+
+                return (
+                <tr key={p.id} style={{
+                  borderBottom: '1px solid #f1f5f9',
+                  background: isSelected ? '#f0f7ff' : 'transparent',
+                  transition: 'background 0.15s',
+                }}>
+                  <td style={{ padding: '0.65rem 0.5rem 0.65rem 0.8rem', width: 40 }}>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(p.id)}
+                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: theme.primary }} />
+                  </td>
+                  <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, width: 40 }}>{idx + 1}</td>
+                  <td style={{ padding: '0.65rem 0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>{p.icon}</span>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{displayName(p)}</p>
+                        {secondaryName(p) && <p style={{ fontSize: '0.65rem', color: '#94a3b8', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{secondaryName(p)}</p>}
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', fontWeight: 700, color: '#0b1020' }}>${String(p.price).replace('$', '')}</td>
-                  <td style={{ padding: '0.85rem 1rem' }}>
+                  <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', whiteSpace: 'nowrap' }}>${String(p.price).replace('$', '')}</td>
+                  <td style={{ padding: '0.65rem 0.5rem' }}>
                     <span style={{
-                      padding: '0.2rem 0.6rem', borderRadius: 6,
-                      background: '#f1f5f9', fontSize: '0.72rem', fontWeight: 600, color: '#64748b',
-                    }}>{String(p.service_type || 'SERVER').toUpperCase()}</span>
+                      padding: '0.15rem 0.5rem', borderRadius: 5,
+                      background: tc.bg, fontSize: '0.68rem', fontWeight: 700, color: tc.color,
+                    }}>{sType}</span>
                   </td>
-                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', color: '#64748b' }}>{p.group_name || '—'}</td>
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    {(() => {
-                      const raw = String(p.status || 'active').toLowerCase();
-                      const isActive = raw === 'active' || raw === 'نشط';
-                      return <span style={{ padding: '0.2rem 0.6rem', borderRadius: 6, background: isActive ? '#dcfce7' : '#fee2e2', fontSize: '0.72rem', fontWeight: 700, color: isActive ? '#16a34a' : '#dc2626' }}>{isActive ? 'نشط' : 'غير نشط'}</span>;
-                    })()}
+                  <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.group_name || '—'}</td>
+                  <td style={{ padding: '0.65rem 0.5rem' }}>
+                    {p.source_id ? (
+                      <span title={`مصدر #${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669' }}>
+                        🔗 متصل
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>—</span>
+                    )}
                   </td>
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button type="button" onClick={(e) => handleToggleFeatured(e, p.id)} title={p.is_featured ? 'إلغاء التمييز' : 'تمييز المنتج'} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: p.is_featured ? '#fef3c7' : '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Star size={13} color={p.is_featured ? '#f59e0b' : '#cbd5e1'} fill={p.is_featured ? '#f59e0b' : 'none'} /></button>
-                      <button type="button" onClick={(e) => handleToggleNamePriority(e, p)} title={`أولوية الاسم: ${(p.name_priority || 'ar') === 'ar' ? 'عربي' : 'إنجليزي'}`} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: (p.name_priority || 'ar') === 'ar' ? '#f0fdf4' : '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '0.6rem', fontWeight: 800, color: (p.name_priority || 'ar') === 'ar' ? '#16a34a' : '#2563eb' }}>{(p.name_priority || 'ar') === 'ar' ? 'ع' : 'En'}</button>
-                      <button type="button" onClick={() => openEdit(p)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={13} color="#3b82f6" /></button>
-                      <button type="button" onClick={() => handleDelete(p.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={13} color="#dc2626" /></button>
+                  <td style={{ padding: '0.65rem 0.5rem' }}>
+                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: 5, background: isActive ? '#dcfce7' : '#fee2e2', fontSize: '0.68rem', fontWeight: 700, color: isActive ? '#16a34a' : '#dc2626' }}>{isActive ? 'نشط' : 'غير نشط'}</span>
+                  </td>
+                  <td style={{ padding: '0.65rem 0.5rem' }}>
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      <button type="button" onClick={(e) => handleToggleFeatured(e, p.id)} title={p.is_featured ? 'إلغاء التمييز' : 'تمييز المنتج'} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: p.is_featured ? '#fef3c7' : '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Star size={12} color={p.is_featured ? '#f59e0b' : '#cbd5e1'} fill={p.is_featured ? '#f59e0b' : 'none'} /></button>
+                      <button type="button" onClick={(e) => handleToggleNamePriority(e, p)} title={`أولوية: ${(p.name_priority || 'ar') === 'ar' ? 'عربي' : 'En'}`} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: (p.name_priority || 'ar') === 'ar' ? '#f0fdf4' : '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '0.58rem', fontWeight: 800, color: (p.name_priority || 'ar') === 'ar' ? '#16a34a' : '#2563eb' }}>{(p.name_priority || 'ar') === 'ar' ? 'ع' : 'En'}</button>
+                      <button type="button" onClick={() => openEdit(p)} title="تعديل" style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={12} color="#3b82f6" /></button>
+                      <button type="button" onClick={() => handleDelete(p.id)} title="حذف" style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={12} color="#dc2626" /></button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
+        )}
+        {/* Table footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            {selectedIds.size > 0 ? `${selectedIds.size} محدد من ` : ''}عرض {filtered.length} من {products.length} منتج
+          </span>
+        </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '0.7rem 1.25rem', borderRadius: 10,
+          background: toast.type === 'error' ? '#dc2626' : '#16a34a',
+          color: '#fff', fontSize: '0.82rem', fontWeight: 700,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          fontFamily: 'Tajawal, sans-serif',
+          animation: 'slideUp 0.3s ease-out',
+        }}>
+          {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckSquare size={16} />}
+          {toast.message}
+        </div>
+      )}
+      <style>{`@keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
 
       {/* Edit Product Modal */}
       {showEdit && (
