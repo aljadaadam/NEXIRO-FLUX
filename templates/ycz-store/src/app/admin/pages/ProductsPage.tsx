@@ -532,7 +532,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <input type="checkbox" checked={filtered.length > 0 && selectedIds.size === filtered.length} onChange={toggleSelectAll}
                     style={{ width: 16, height: 16, cursor: 'pointer', accentColor: theme.primary }} />
                 </th>
-                {['#', 'المنتج', 'السعر', 'النوع', 'القروب', 'المصدر', 'الحالة', 'إجراءات'].map(h => (
+                {['#', 'المنتج', 'السعر', 'النوع', 'المصدر', 'الحالة', 'إجراءات'].map(h => (
                   <th key={h} style={{
                     padding: '0.7rem 0.65rem', textAlign: 'right',
                     fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
@@ -581,7 +581,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                       background: tc.bg, fontSize: '0.68rem', fontWeight: 700, color: tc.color,
                     }}>{sType}</span>
                   </td>
-                  <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.group_name || '—'}</td>
                   <td style={{ padding: '0.65rem 0.5rem' }}>
                     {p.source_id ? (
                       <span title={`#${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
