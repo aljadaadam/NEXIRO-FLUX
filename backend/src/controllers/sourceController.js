@@ -256,7 +256,7 @@ async function createSource(req, res) {
 
     const isImeiCheck = type === 'imeicheck';
     let finalUrl = isImeiCheck
-      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/php-api')
+      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/index.php')
       : (url || apiUrl);
 
     // التحقق من المدخلات
@@ -274,12 +274,25 @@ async function createSource(req, res) {
       });
     }
 
-    // ─── IMEI Check: اختبار الاتصال عبر endpoint الرصيد ───
+    // ─── IMEI Check: اختبار الاتصال عبر PHP API (الرصيد) + DHRU API (الخدمات) ───
     if (isImeiCheck && apiKey) {
       try {
-        const client = new ImeiCheckClient({ apiKey, baseUrl: finalUrl });
+        // فحص الرصيد عبر PHP API
+        const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+        const client = new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl });
         const balanceInfo = await client.getBalance();
-        console.log(`✅ IMEI Check connection test passed — Balance: ${balanceInfo.balance} ${balanceInfo.currency}`);
+        console.log(`✅ IMEI Check balance test passed — Balance: ${balanceInfo.balance} ${balanceInfo.currency}`);
+
+        // اختبار DHRU API لجلب الخدمات (يحتاج username)
+        if (username) {
+          const dhruClient = new DhruFusionClient({
+            baseUrl: finalUrl,
+            username: username,
+            apiAccessKey: apiKey,
+          });
+          await dhruClient.getAccountInfo();
+          console.log(`✅ IMEI Check DHRU API test passed`);
+        }
       } catch (connErr) {
         console.error('❌ IMEI Check connection validation failed:', connErr.message);
         let userError = 'فشل الاتصال بمصدر IMEI Check';
@@ -428,7 +441,7 @@ async function updateSource(req, res) {
     } = req.body;
 
     let finalUrl = type === 'imeicheck'
-      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/php-api')
+      ? (url || apiUrl || 'https://alpha.imeicheck.com/api/index.php')
       : (url || apiUrl);
 
     // التحقق من المدخلات
@@ -566,10 +579,11 @@ async function testSourceConnection(req, res) {
     const apiKeyPlain = req.body?.apiKey || req.body?.api_key || decryptApiKey(source.api_key);
     const username = req.body?.username || source.username || null;
 
-    // ─── IMEI Check: اختبار عبر endpoint الرصيد ───
+    // ─── IMEI Check: اختبار عبر PHP API (رصيد) + DHRU API (خدمات) ───
     if (source.type === 'imeicheck') {
       try {
-        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
+        const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl: phpBaseUrl });
         const balanceInfo = await client.getBalance();
 
         await Source.updateConnectionStatus(source.id, site_key, {
@@ -930,37 +944,70 @@ async function syncSourceProducts(req, res) {
     const username = req.body?.username || source.username || null;
     const profitPercentage = source.profit_percentage == null ? 0 : Number(source.profit_percentage);
 
-    // ─── IMEI Check: مزامنة خاصة ───
+    // ─── IMEI Check: مزامنة عبر DHRU API + فحص رصيد عبر PHP API ───
     if (source.type === 'imeicheck') {
-      logs.push('Source type: IMEI Check (alpha.imeicheck.com)');
+      logs.push('Source type: IMEI Checker (alpha.imeicheck.com)');
+      logs.push('Strategy: PHP API for balance + DHRU API for services');
 
-      // 1) Balance check
-      logs.push('Api action.....balance');
+      const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+      const dhruBaseUrl = baseUrl || 'https://alpha.imeicheck.com/api/index.php';
+
+      // 1) Balance via PHP API
+      logs.push('Api action.....balance (PHP API)');
       let balanceInfo;
       try {
-        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
-        balanceInfo = await client.getBalance();
+        const phpClient = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl: phpBaseUrl });
+        balanceInfo = await phpClient.getBalance();
         logs.push(`✓ Balance: ${balanceInfo.balance} ${balanceInfo.currency}`);
       } catch (err) {
         logs.push(`✗ Balance check failed: ${err.message}`);
         await Source.updateConnectionStatus(source.id, site_key, {
           ok: false, checkedAt: new Date(), error: err.message,
         });
-        return res.status(400).json({ error: `فشل الاتصال: ${err.message}`, logs });
+        return res.status(400).json({ error: `فشل فحص الرصيد: ${err.message}`, logs });
       }
 
-      // 2) Fetch services
-      logs.push('Api action.....services');
-      let servicesData;
-      try {
-        const client = new ImeiCheckClient({ apiKey: apiKeyPlain, baseUrl });
-        servicesData = await client.getServices();
-        logs.push(`✓ Found ${servicesData.totalServices} services`);
-      } catch (err) {
-        logs.push(`✗ Services fetch failed: ${err.message}`);
+      // 2) accountinfo via DHRU API
+      logs.push('Api action.....accountinfo (DHRU API)');
+      const accountResponse = await postResellerAction({
+        baseUrl: dhruBaseUrl,
+        apiKey: apiKeyPlain,
+        action: 'accountinfo',
+        extraBody: username ? { username } : undefined
+      });
+      if (!accountResponse.ok) {
+        const errStr = `${accountResponse.status} ${accountResponse.statusText}`;
+        logs.push(`✗ DHRU accountinfo failed: ${errStr}`);
+        await Source.updateConnectionStatus(source.id, site_key, {
+          ok: false, checkedAt: new Date(), error: errStr,
+        });
+        return res.status(400).json({ error: `فشل الاتصال بـ DHRU API: ${errStr}`, logs });
+      }
+      const accountRaw = await accountResponse.json();
+      logs.push('Validate response data.....OK');
+      const account = parseAccountInfo(accountRaw);
+
+      // 3) imeiservicelist via DHRU API
+      logs.push('Api action.....imeiservicelist (DHRU API)');
+      const listResponse = await postResellerAction({
+        baseUrl: dhruBaseUrl,
+        apiKey: apiKeyPlain,
+        action: 'imeiservicelist',
+        extraBody: username ? { username } : undefined
+      });
+      if (!listResponse.ok) {
+        const errStr = `${listResponse.status} ${listResponse.statusText}`;
+        logs.push(`✗ DHRU imeiservicelist failed: ${errStr}`);
         return res.status(400).json({
-          error: `فشل جلب قائمة الخدمات: ${err.message}`, logs,
-          account: { credits: balanceInfo.balance, currency: balanceInfo.currency },
+          error: `فشل جلب قائمة الخدمات: ${errStr}`, logs, account,
+        });
+      }
+      const listRaw = await listResponse.json();
+      const groups = extractGroupsList(listRaw);
+      if (!groups) {
+        logs.push('✗ LIST not found in response');
+        return res.status(400).json({
+          error: 'تنسيق imeiservicelist غير متوقع (LIST غير موجود)', logs, account,
         });
       }
 
@@ -978,22 +1025,35 @@ async function syncSourceProducts(req, res) {
       logs.push('Updating services list');
 
       let count = 0;
+      let skipped = 0;
       const profitAmt = source.profit_amount != null ? Number(source.profit_amount) : null;
 
-      // Group services by their group field
-      const groupMap = {};
-      for (const svc of servicesData.services) {
-        const g = svc.group || 'General';
-        if (!groupMap[g]) groupMap[g] = [];
-        groupMap[g].push(svc);
-      }
-
-      for (const [groupName, services] of Object.entries(groupMap)) {
+      for (const [groupKey, group] of Object.entries(groups)) {
+        const groupName = group?.GROUPNAME || groupKey;
+        const groupType = group?.GROUPTYPE || null;
         logs.push(`Group :: ${groupName}`);
-        for (const svc of services) {
-          logs.push(`Tool :: ${svc.name}`);
 
-          const sourcePrice = svc.price;
+        const services = group?.SERVICES;
+        if (!services || typeof services !== 'object') continue;
+
+        for (const [serviceKey, service] of Object.entries(services)) {
+          const serviceName = service?.SERVICENAME || service?.name || null;
+          const serviceType = service?.SERVICETYPE || groupType || 'IMEI';
+
+          const shouldInclude = checkSetupFilter(serviceType, setupIMEI, setupServer, setupRemote);
+          if (!shouldInclude) { skipped++; continue; }
+
+          logs.push(`Tool :: ${serviceName || serviceKey}`);
+
+          const creditRaw = service?.CREDIT ?? service?.credit ?? null;
+          const creditNum = creditRaw == null || creditRaw === '' ? null : Number.parseFloat(String(creditRaw));
+
+          const descriptionParts = [];
+          if (groupName) descriptionParts.push(`المجموعة: ${groupName}`);
+          if (service?.TIME) descriptionParts.push(`المدة: ${String(service.TIME).trim()}`);
+          if (service?.INFO) descriptionParts.push(String(service.INFO).trim());
+
+          const sourcePrice = creditNum;
           let finalPrice;
           if (sourcePrice == null) {
             finalPrice = null;
@@ -1007,28 +1067,28 @@ async function syncSourceProducts(req, res) {
             site_key,
             source_id: source.id,
             user_id,
-            external_service_key: String(svc.id),
-            external_service_id: svc.id,
-            group_name: groupName,
-            group_type: null,
-            service_type: svc.type || 'IMEI',
-            name: svc.name,
-            price: finalPrice ?? svc.price,
-            credit: svc.price,
-            credit_raw: svc.price == null ? null : String(svc.price),
+            external_service_key: serviceKey,
+            external_service_id: service?.SERVICEID ?? null,
+            group_name: groupName ?? null,
+            group_type: groupType ?? null,
+            service_type: serviceType,
+            name: serviceName,
+            price: finalPrice ?? creditNum,
+            credit: creditNum,
+            credit_raw: creditRaw == null ? null : String(creditRaw),
             source_price: sourcePrice,
             final_price: finalPrice,
             profit_percentage_applied: profitPercentage,
-            service_time: svc.time ?? null,
-            service_info: svc.info ?? null,
-            minqnt: null,
-            maxqnt: null,
-            qnt: null,
-            server_flag: null,
-            custom_json: null,
-            requires_custom_json: null,
-            raw_json: svc.raw ?? null,
-            description: svc.info || `المجموعة: ${groupName}`,
+            service_time: service?.TIME ?? null,
+            service_info: service?.INFO ?? null,
+            minqnt: service?.MINQNT ?? null,
+            maxqnt: service?.MAXQNT ?? null,
+            qnt: service?.QNT ?? null,
+            server_flag: service?.SERVER ?? null,
+            custom_json: service?.CUSTOM ?? null,
+            requires_custom_json: service?.['Requires.Custom'] ?? null,
+            raw_json: service ?? null,
+            description: descriptionParts.filter(Boolean).join('\n') || null,
           });
 
           count++;
@@ -1036,10 +1096,14 @@ async function syncSourceProducts(req, res) {
       }
 
       logs.push('✓ Successfully synchronize');
+      if (skipped > 0) {
+        logs.push(`→ Skipped ${skipped} products (not matching setup filters)`);
+      }
 
       await Source.updateConnectionStatus(source.id, site_key, {
         ok: true, checkedAt: new Date(), error: null,
-        balance: balanceInfo.balance, currency: balanceInfo.currency,
+        balance: balanceInfo.balance || account.creditraw || account.credits,
+        currency: balanceInfo.currency || account.currency,
       });
 
       invalidatePublicProductsCache(site_key);
@@ -1047,16 +1111,12 @@ async function syncSourceProducts(req, res) {
       return res.json({
         success: true,
         count,
-        skipped: 0,
+        skipped,
         publishFrontend,
         setupOptions: { setupIMEI, setupServer, setupRemote },
         deleteAllBrandModel,
         logs,
-        account: {
-          credits: balanceInfo.balance,
-          creditraw: balanceInfo.balance,
-          currency: balanceInfo.currency,
-        },
+        account,
       });
     }
 

@@ -48,7 +48,7 @@ interface SyncLog {
 const FALLBACK_CONNECTED: ConnectedSource[] = [];
 const FALLBACK_AVAILABLE: AvailableSource[] = [
   { name: 'DHRU FUSION', type: 'dhru-fusion', icon: 'https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg', desc: 'اتصل بأي نظام DHRU FUSION لجلب خدمات فك القفل والـ IMEI تلقائياً. يدعم SD-Unlocker وغيرها.', category: 'API', fields: ['URL', 'Username', 'API Access Key'] },
-  { name: 'IMEI Checker', type: 'imeicheck', icon: 'https://imeicheck.com/front/images/logo.svg', desc: 'اتصل بمنصة IMEI Checker لفحص أجهزة Apple والتحقق من حالة IMEI/SN فورياً. نتائج لحظية مع دعم كامل لجميع خدمات الفحص.', category: 'IMEI', fields: ['API Access Key'] },
+  { name: 'IMEI Checker', type: 'imeicheck', icon: 'https://imeicheck.com/front/images/logo.svg', desc: 'اتصل بمنصة IMEI Checker لفحص أجهزة Apple والتحقق من حالة IMEI/SN فورياً. نتائج لحظية مع دعم كامل لجميع خدمات الفحص.', category: 'IMEI', fields: ['Username', 'API Access Key'] },
 ];
 
 /* ───────── Skeleton Components ───────── */
@@ -206,8 +206,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
       const payload: Record<string, unknown> = {
         name: sourceName || source.name,
         type: source.type,
-        url: isImeiCheck ? 'https://alpha.imeicheck.com/api/php-api' : (formData['URL'] || ''),
-        username: isImeiCheck ? '' : (formData['Username'] || ''),
+        url: isImeiCheck ? 'https://alpha.imeicheck.com/api/index.php' : (formData['URL'] || ''),
+        username: isImeiCheck ? (formData['Username'] || '') : (formData['Username'] || ''),
         apiKey: formData['API Access Key'] || '',
         profitPercentage: profitType === 'percentage' ? Number(profitPercentage || '0') : 0,
         profitAmount: profitType === 'fixed' ? Number(profitAmount || '0') : null,
