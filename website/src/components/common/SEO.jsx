@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const SITE_URL = 'https://nexiroflux.com';
 const SITE_NAME = 'NEXIRO-FLUX';
