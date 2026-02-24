@@ -373,13 +373,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }, [products, editId, editSelectedSourceId, editServiceType]);
 
   const filteredLinkable = useMemo(() => {
-    if (!linkSearch.trim()) return linkableProducts.slice(0, 30);
+    if (!linkSearch.trim()) return linkableProducts;
     const q = linkSearch.toLowerCase();
     return linkableProducts.filter(p =>
       (p.arabic_name || '').toLowerCase().includes(q) ||
       (p.name || '').toLowerCase().includes(q) ||
       String(p.id).includes(q)
-    ).slice(0, 25);
+    );
   }, [linkableProducts, linkSearch]);
 
   const groupsForDropdown = useMemo(() => {
@@ -1027,65 +1027,130 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     </span>
                   </div>
 
-                  {/* المنتج المختار حالياً */}
-                  {editLinkedProductId ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.4rem 0.6rem', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', marginBottom: 8 }}>
-                      <Link2 size={11} color="#2563eb" />
-                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e40af', flex: 1 }}>
-                        {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) + ` (#${lp.id})` : `#${editLinkedProductId}`; })()}
-                      </span>
-                      <button onClick={() => { setEditLinkedProductId(null); setLinkSearch(''); }} type="button" style={{ padding: '0.12rem 0.35rem', borderRadius: 4, border: '1px solid #fecaca', background: '#fee2e2', cursor: 'pointer', fontSize: '0.55rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif', lineHeight: 1 }}>
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.6rem', background: '#f8fafc', borderRadius: 8, border: '1px dashed #e2e8f0', marginBottom: 8 }}>
-                      <CheckCircle size={11} color="#16a34a" />
-                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748b' }}>
-                        {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) + ' ✦ نفسه' : 'نفس المنتج'; })()}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* بحث + قائمة */}
+                  {/* القائمة المنسدلة */}
                   <div style={{ position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 7, padding: '0.35rem 0.55rem', background: '#fafbfc' }}>
-                      <Search size={11} color="#94a3b8" />
-                      <input
-                        value={linkSearch}
-                        onChange={e => { setLinkSearch(e.target.value); setShowLinkDropdown(true); }}
-                        onFocus={() => setShowLinkDropdown(true)}
-                        placeholder={`ابحث في منتجات ${editServiceType} ${editSelectedSourceId ? 'بالمصدر المختار' : ''}...`}
-                        style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.68rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
-                      />
-                    </div>
+                    {/* رأس القائمة - يعرض المنتج المختار */}
+                    <button
+                      type="button"
+                      onClick={() => { setShowLinkDropdown(!showLinkDropdown); setLinkSearch(''); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '0.5rem 0.65rem', borderRadius: 8,
+                        border: '1px solid ' + (showLinkDropdown ? '#93c5fd' : '#e2e8f0'),
+                        background: '#fafbfc', cursor: 'pointer',
+                        fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                        transition: 'border-color 0.15s',
+                      }}
+                    >
+                      {editLinkedProductId ? (
+                        <>
+                          <Link2 size={12} color="#2563eb" />
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1e40af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp ? (lp.arabic_name || lp.name) : `#${editLinkedProductId}`; })()}
+                          </span>
+                          <span style={{ fontSize: '0.55rem', color: '#64748b', background: '#e0e7ff', padding: '0.08rem 0.35rem', borderRadius: 4, fontWeight: 600, flexShrink: 0 }}>
+                            {(() => { const lp = products.find(p => p.id === editLinkedProductId); return lp?.price ? `${lp.price} USD` : `#${editLinkedProductId}`; })()}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle size={12} color="#16a34a" />
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#374151', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : 'نفس المنتج'; })()}
+                          </span>
+                          <span style={{ fontSize: '0.55rem', color: '#16a34a', background: '#dcfce7', padding: '0.08rem 0.35rem', borderRadius: 4, fontWeight: 600, flexShrink: 0 }}>
+                            {(() => { const ep = products.find(p => p.id === editId); return ep?.price ? `${ep.price} USD` : ''; })()}
+                          </span>
+                        </>
+                      )}
+                      <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginRight: 2, transform: showLinkDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>▾</span>
+                    </button>
 
-                    {showLinkDropdown && filteredLinkable.length > 0 && (
-                      <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 200, overflow: 'auto' }}>
-                        {filteredLinkable.map(p => (
-                          <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
+                    {/* جسم القائمة المنسدلة */}
+                    {showLinkDropdown && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+                        {/* حقل البحث */}
+                        <div style={{ padding: '0.4rem 0.55rem', borderBottom: '1px solid #f1f5f9', background: '#fafbfc' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 6, padding: '0.3rem 0.5rem', background: '#fff' }}>
+                            <Search size={11} color="#94a3b8" />
+                            <input
+                              value={linkSearch}
+                              onChange={e => setLinkSearch(e.target.value)}
+                              autoFocus
+                              placeholder={`ابحث في منتجات ${editServiceType}...`}
+                              style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.68rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* خيار "نفسه" - إعادة التعيين */}
+                        <button
+                          type="button"
+                          onClick={() => { setEditLinkedProductId(null); setLinkSearch(''); setShowLinkDropdown(false); }}
+                          style={{
                             display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-                            padding: '0.4rem 0.65rem', background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
-                            border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                            padding: '0.45rem 0.65rem',
+                            background: !editLinkedProductId ? '#f0fdf4' : 'transparent',
+                            border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer',
                             fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
                             transition: 'background 0.1s',
-                          }} onMouseOver={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
-                            <span style={{ fontSize: '0.8rem' }}>{p.icon}</span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: '0.68rem', fontWeight: 600, color: '#0b1020', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.arabic_name || p.name}</p>
-                              {p.arabic_name && <p style={{ fontSize: '0.54rem', color: '#94a3b8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>}
+                          }}
+                          onMouseOver={e => { if (editLinkedProductId) e.currentTarget.style.background = '#f8fafc'; }}
+                          onMouseOut={e => { if (editLinkedProductId) e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          <CheckCircle size={11} color="#16a34a" />
+                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#374151', flex: 1 }}>
+                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : 'نفس المنتج'; })()}
+                          </span>
+                          <span style={{ fontSize: '0.55rem', color: '#16a34a', fontWeight: 700 }}>✦ نفسه</span>
+                        </button>
+
+                        {/* قائمة المنتجات */}
+                        <div style={{ maxHeight: 200, overflow: 'auto' }}>
+                          {filteredLinkable.length > 0 ? (
+                            <>
+                              {/* Group products by group_name */}
+                              {(() => {
+                                const grouped = new Map<string, typeof filteredLinkable>();
+                                for (const p of filteredLinkable) {
+                                  const g = p.group_name || '';
+                                  if (!grouped.has(g)) grouped.set(g, []);
+                                  grouped.get(g)!.push(p);
+                                }
+                                return Array.from(grouped.entries()).map(([groupName, items]) => (
+                                  <div key={groupName}>
+                                    {groupName && (
+                                      <div style={{ padding: '0.3rem 0.65rem', fontSize: '0.6rem', fontWeight: 800, color: '#475569', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
+                                        {groupName}
+                                      </div>
+                                    )}
+                                    {items.map(p => (
+                                      <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
+                                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                                        padding: '0.4rem 0.65rem',
+                                        background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                                        border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                                        fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                                        transition: 'background 0.1s',
+                                      }} onMouseOver={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                          <p style={{ fontSize: '0.68rem', fontWeight: 600, color: '#0b1020', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.arabic_name || p.name}</p>
+                                        </div>
+                                        <span style={{ fontSize: '0.56rem', color: '#64748b', flexShrink: 0 }}>
+                                          {p.price ? `${p.price} USD` : `#${p.id}`}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ));
+                              })()}
+                            </>
+                          ) : linkSearch.trim() ? (
+                            <div style={{ padding: '0.6rem', textAlign: 'center' }}>
+                              <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>لا توجد نتائج في {editServiceType}</p>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, flexShrink: 0 }}>
-                              <span style={{ fontSize: '0.56rem', color: '#64748b', background: '#f1f5f9', padding: '0.08rem 0.3rem', borderRadius: 3, fontWeight: 600 }}>#{p.id}</span>
-                              {p.source_name && <span style={{ fontSize: '0.5rem', color: '#94a3b8' }}>{p.source_name}</span>}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {showLinkDropdown && filteredLinkable.length === 0 && linkSearch.trim() && (
-                      <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: '0.6rem', textAlign: 'center' }}>
-                        <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>لا توجد نتائج في {editServiceType}</p>
+                          ) : null}
+                        </div>
                       </div>
                     )}
                   </div>
