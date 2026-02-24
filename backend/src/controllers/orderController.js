@@ -244,12 +244,11 @@ async function createOrder(req, res) {
                   const originalMsg = (sourceErr instanceof DhruFusionError || sourceErr instanceof ImeiCheckError)
                     ? sourceErr.message
                     : (sourceErr.message || 'خطأ اتصال بالمصدر');
-                  const translatedMsg = translateSourceError(originalMsg);
 
-                  // تحديث الطلب → failed
+                  // تحديث الطلب → failed (الرسالة الأصلية بدون ترجمة)
                   await pool.query(
                     `UPDATE orders SET status = 'failed', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
-                    [source.id, translatedMsg, order.id, site_key]
+                    [source.id, originalMsg, order.id, site_key]
                   );
 
                   // استرجاع رصيد المحفظة
@@ -264,7 +263,7 @@ async function createOrder(req, res) {
                         amount: total_price,
                         payment_method: 'wallet',
                         status: 'completed',
-                        description: `استرجاع تلقائي: طلب #${order.order_number} (${translatedMsg})`
+                        description: `استرجاع تلقائي: طلب #${order.order_number} (${originalMsg})`
                       });
                       await Order.updatePaymentStatus(order.id, site_key, 'refunded');
                       console.log(`💰 Order #${order.order_number} → استرجاع $${total_price} للزبون ${effectiveCustomerId}`);
@@ -279,12 +278,12 @@ async function createOrder(req, res) {
                     recipient_type: 'customer',
                     recipient_id: effectiveCustomerId,
                     title: 'طلب مرفوض ❌',
-                    message: `طلبك #${order.order_number} تم رفضه: ${translatedMsg}${payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
+                    message: `طلبك #${order.order_number} تم رفضه: ${originalMsg}${payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
                     type: 'order'
                   });
 
-                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: translatedMsg, refunded: payment_method === 'wallet' };
-                  console.log(`❌ Order #${order.order_number} → FAILED (${translatedMsg}) — رصيد مسترجع: ${payment_method === 'wallet' ? 'نعم' : 'لا'}`);
+                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: originalMsg, refunded: payment_method === 'wallet' };
+                  console.log(`❌ Order #${order.order_number} → FAILED (${originalMsg}) — رصيد مسترجع: ${payment_method === 'wallet' ? 'نعم' : 'لا'}`);
                 }
               }
             }
