@@ -287,6 +287,8 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     group_name: p.group_name,
     external_service_key: p.external_service_key,
     source_id: p.source_id,
+    source_name: p.source_name || p.source?.name || undefined,
+    linked_product_id: p.linked_product_id ?? null,
     requires_custom_json: requiresCustom,
     custom_json: customJson,
     customFields,
