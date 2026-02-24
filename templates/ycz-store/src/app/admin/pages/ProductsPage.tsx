@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Layers, Check } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -57,7 +57,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Groups management state
-  const [showGroups, setShowGroups] = useState(false);
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [groupActionLoading, setGroupActionLoading] = useState(false);
@@ -295,15 +294,16 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     }
   }
 
-  // بيانات القروبات مع عدد المنتجات
+  // بيانات القروبات مع عدد المنتجات (حسب التصنيف المختار)
   const groupsData = useMemo(() => {
+    const typeFiltered = filterType === 'all' ? products : products.filter(p => String(p.service_type || '').toUpperCase() === filterType);
     const map = new Map<string, number>();
-    for (const p of products) {
+    for (const p of typeFiltered) {
       const g = String(p.group_name || '').trim();
       if (g) map.set(g, (map.get(g) || 0) + 1);
     }
     return Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [products]);
+  }, [products, filterType]);
 
   // عرض الاسم حسب أولوية المنتج
   function displayName(p: Product) {
@@ -345,7 +345,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }, [products, filterType]);
 
   useEffect(() => {
-    if (filterGroup !== 'all' && !groupsForDropdown.includes(filterGroup)) {
+    if (filterGroup !== 'all' && filterGroup !== '__manage_groups__' && !groupsForDropdown.includes(filterGroup)) {
       setFilterGroup('all');
     }
   }, [filterGroup, groupsForDropdown]);
@@ -367,7 +367,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     const statusMatch = filterStatus === 'all' || statusNormalized === filterStatus;
 
     const typeMatch = filterType === 'all' || String(p.service_type || '').toUpperCase() === filterType;
-    const groupMatch = filterGroup === 'all' || String(p.group_name || '').trim() === filterGroup;
+    const groupMatch = filterGroup === 'all' || filterGroup === '__manage_groups__' || String(p.group_name || '').trim() === filterGroup;
 
     return searchMatch && statusMatch && typeMatch && groupMatch;
   });
@@ -527,39 +527,61 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         ))}
       </div>
 
-      {/* ─── Groups Management Toggle ─── */}
-      <div style={{ marginBottom: 12 }}>
-        <button type="button" onClick={() => setShowGroups(!showGroups)} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '0.5rem 1rem', borderRadius: 10,
-          background: showGroups ? theme.primary : '#f8fafc',
-          color: showGroups ? '#fff' : '#64748b',
-          border: '1px solid ' + (showGroups ? theme.primary : '#e2e8f0'),
-          fontSize: '0.8rem', fontWeight: 700,
-          cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-          transition: 'all 0.2s',
-        }}>
-          <Layers size={15} />
-          إدارة القروبات ({groupsData.length})
-        </button>
+      {/* ─── Filters + Bulk Actions Bar ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
+            <option value="all">كل الحالات</option>
+            <option value="active">نشط</option>
+            <option value="inactive">غير نشط</option>
+          </select>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
+            <option value="all">كل الأنواع</option>
+            <option value="SERVER">SERVER</option>
+            <option value="IMEI">IMEI</option>
+            <option value="REMOTE">REMOTE</option>
+          </select>
+          <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: filterGroup === '__manage_groups__' ? '#eff6ff' : '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160, fontWeight: filterGroup === '__manage_groups__' ? 700 : 400 }}>
+            <option value="all">كل القروبات</option>
+            <option value="__manage_groups__">📂 إدارة القروبات ({groupsData.length})</option>
+            {groupsForDropdown.map((group) => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Bulk delete button */}
+        {selectedIds.size > 0 && (
+          <button type="button" onClick={handleBulkDelete} disabled={bulkDeleting} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '0.45rem 1rem', borderRadius: 8,
+            background: '#dc2626', color: '#fff',
+            border: 'none', fontSize: '0.78rem', fontWeight: 700,
+            cursor: bulkDeleting ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+            opacity: bulkDeleting ? 0.7 : 1,
+          }}>
+            <Trash2 size={14} />
+            {bulkDeleting ? 'جاري الحذف...' : `حذف المحدد (${selectedIds.size})`}
+          </button>
+        )}
       </div>
 
-      {/* ─── Groups Management Table ─── */}
-      {showGroups && (
+      {/* ─── Groups Management Table (when __manage_groups__ selected) ─── */}
+      {filterGroup === '__manage_groups__' ? (
         <div style={{
           background: '#fff', borderRadius: 14,
           border: '1px solid #e2e8f0', overflow: 'hidden',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          marginBottom: 16,
         }}>
           <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020' }}>📂 القروبات</h3>
+            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020' }}>📂 القروبات {filterType !== 'all' ? `(${filterType})` : ''}</h3>
             <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} قروب</span>
           </div>
 
           {groupsData.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>لا توجد قروبات</div>
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>لا توجد قروبات{filterType !== 'all' ? ` من نوع ${filterType}` : ''}</div>
           ) : (
+            <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
@@ -606,7 +628,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         <button type="button" onClick={() => handleDeleteGroup(g.name, g.count)} disabled={groupActionLoading} title="حذف القروب ومنتجاتها" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Trash2 size={13} color="#dc2626" />
                         </button>
-                        <button type="button" onClick={() => { setFilterGroup(g.name); setShowGroups(false); }} title="عرض المنتجات" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button type="button" onClick={() => setFilterGroup(g.name)} title="عرض المنتجات" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Search size={13} color="#16a34a" />
                         </button>
                       </div>
@@ -615,49 +637,14 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{groupsData.length} قروب{filterType !== 'all' ? ` — تصفية: ${filterType}` : ''}</span>
+          </div>
         </div>
-      )}
-
-      {/* ─── Filters + Bulk Actions Bar ─── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
-            <option value="all">كل الحالات</option>
-            <option value="active">نشط</option>
-            <option value="inactive">غير نشط</option>
-          </select>
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
-            <option value="all">كل الأنواع</option>
-            <option value="SERVER">SERVER</option>
-            <option value="IMEI">IMEI</option>
-            <option value="REMOTE">REMOTE</option>
-          </select>
-          <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160 }}>
-            <option value="all">كل القروبات</option>
-            {groupsForDropdown.map((group) => (
-              <option key={group} value={group}>{group}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Bulk delete button */}
-        {selectedIds.size > 0 && (
-          <button type="button" onClick={handleBulkDelete} disabled={bulkDeleting} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '0.45rem 1rem', borderRadius: 8,
-            background: '#dc2626', color: '#fff',
-            border: 'none', fontSize: '0.78rem', fontWeight: 700,
-            cursor: bulkDeleting ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
-            opacity: bulkDeleting ? 0.7 : 1,
-          }}>
-            <Trash2 size={14} />
-            {bulkDeleting ? 'جاري الحذف...' : `حذف المحدد (${selectedIds.size})`}
-          </button>
-        )}
-      </div>
-
-      {/* ─── Products Table ─── */}
+      ) : (
+      /* ─── Products Table ─── */
       <div style={{
         background: '#fff', borderRadius: 14,
         border: '1px solid #e2e8f0', overflow: 'hidden',
@@ -759,6 +746,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </span>
         </div>
       </div>
+      )}
 
       {/* Toast Notification */}
       {toast && (
