@@ -584,8 +584,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.group_name || '—'}</td>
                   <td style={{ padding: '0.65rem 0.5rem' }}>
                     {p.source_id ? (
-                      <span title={`مصدر #${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669' }}>
-                        🔗 متصل
+                      <span title={`#${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        🔗 {p.source_name || `مصدر #${p.source_id}`}
                       </span>
                     ) : (
                       <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>—</span>
