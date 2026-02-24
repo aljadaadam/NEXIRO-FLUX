@@ -141,6 +141,11 @@ export interface ExternalSource {
   lastSync: string;
   products: number;
   balance: string;
+  profitPercentage?: number;
+  profitAmount?: number | null;
+  connectionError?: string | null;
+  syncOnly?: boolean;
+  connectionStatus?: string;
 }
 
 export interface ChatConversation {

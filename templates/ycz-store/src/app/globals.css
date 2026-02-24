@@ -102,6 +102,11 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .dash-quick-action-btn { padding: 0.45rem 0.75rem !important; font-size: 0.72rem !important; }
   .dash-alerts-row { flex-direction: column !important; gap: 6px !important; }
   .dash-toast { bottom: 5.5rem !important; }
+  .src-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .src-stats-grid > div { padding: 0.85rem !important; }
+  .src-available-grid { grid-template-columns: 1fr !important; }
+  .src-mini-stats { gap: 6px !important; }
+  .src-mini-stats > div { padding: 0.35rem 0.6rem !important; }
 }
 
 @media (max-width: 480px) {
