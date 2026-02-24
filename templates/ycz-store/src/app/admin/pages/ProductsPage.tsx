@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Palette, Save } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Save } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -874,7 +874,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 </div>
                 <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>إعدادات المنتج</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 10 }}>
                 <div>
                   <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Package size={10} /> النوع</label>
                   <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
@@ -889,10 +889,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     <option value="active">نشط</option>
                     <option value="inactive">غير نشط</option>
                   </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Palette size={10} /> الأيقونة</label>
-                  <input placeholder="🔓" value={editIcon} onChange={(e) => setEditIcon(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> أولوية اللغة</label>
