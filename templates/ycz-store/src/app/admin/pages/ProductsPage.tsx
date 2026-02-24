@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
@@ -423,7 +423,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📦 المنتجات</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={22} color="#64748b" /> المنتجات</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
@@ -540,13 +540,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       {/* ─── Stats Cards ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 14 }}>
         {[
-          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020', icon: '📦' },
-          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a', icon: '✅' },
-          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb', icon: '📱' },
-          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed', icon: '🖥️' },
+          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020', Icon: Package },
+          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a', Icon: CheckCircle },
+          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb', Icon: Smartphone },
+          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed', Icon: Monitor },
         ].map((item, i) => (
           <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 14, padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: item.bg, display: 'grid', placeItems: 'center' }}><item.Icon size={18} color={item.color} /></div>
             <div>
               <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 2, lineHeight: 1 }}>{item.label}</p>
               <p style={{ fontSize: '1.2rem', fontWeight: 800, color: item.color, lineHeight: 1 }}>{item.value}</p>
@@ -571,7 +571,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </select>
           <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: filterGroup === '__manage_groups__' ? '#eff6ff' : '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160, fontWeight: filterGroup === '__manage_groups__' ? 700 : 400 }}>
             <option value="all">كل القروبات</option>
-            <option value="__manage_groups__">📂 إدارة القروبات ({groupsData.length})</option>
+            <option value="__manage_groups__">⊞ إدارة القروبات ({groupsData.length})</option>
             {groupsForDropdown.map((group) => (
               <option key={group} value={group}>{group}</option>
             ))}
@@ -602,7 +602,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
           <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020' }}>📂 القروبات {filterType !== 'all' ? `(${filterType})` : ''}</h3>
+            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><FolderOpen size={16} color="#64748b" /> القروبات {filterType !== 'all' ? `(${filterType})` : ''}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {selectedGroups.size > 0 && (
                 <button type="button" onClick={handleBulkDeleteGroups} disabled={bulkDeletingGroups} style={{
@@ -769,7 +769,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.65rem 0.5rem' }}>
                     {p.source_id ? (
                       <span title={`#${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        🔗 {p.source_name || `مصدر #${p.source_id}`}
+                        <Link2 size={11} /> {p.source_name || `مصدر #${p.source_id}`}
                       </span>
                     ) : (
                       <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>—</span>
@@ -826,7 +826,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '95%', maxWidth: 820, maxHeight: '92vh', overflow: 'auto', padding: '1rem 1.15rem', border: '1px solid #e2e8f0' }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>
-              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b1020' }}>✏️ تعديل المنتج</h3>
+              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><Edit size={16} color="#64748b" /> تعديل المنتج</h3>
               <button type="button" onClick={closeEdit} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                 <X size={12} color="#64748b" />
               </button>
@@ -881,13 +881,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
             {/* ─── إعدادات الاتصال بالمصدر ─── */}
             <div style={{ padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9', marginBottom: 10 }}>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 8 }}>🔗 اتصال المصدر</p>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}><Link2 size={13} color="#334155" /> اتصال المصدر</p>
 
               {editOriginalSourceId && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 8 }}>
                   <div>
                     <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020' }}>
-                      {editSourceConnected ? '✅ متصل' : '❌ مفصول'}
+                      {editSourceConnected ? <><CheckCircle size={12} color="#16a34a" style={{ display: 'inline', verticalAlign: 'middle' }} /> متصل</> : <><AlertCircle size={12} color="#dc2626" style={{ display: 'inline', verticalAlign: 'middle' }} /> مفصول</>}
                     </p>
                     <p style={{ fontSize: '0.62rem', color: '#94a3b8' }}>
                       {editSourceConnected ? 'يرسل الطلبات تلقائياً' : 'الطلبات تبقى معلقة'}
@@ -909,7 +909,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               {/* تحويل لمنتج آخر */}
               <div style={{ padding: '0.45rem 0.65rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020' }}>🔄 تحويل لمنتج آخر</p>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 4 }}><RefreshCw size={12} color="#64748b" /> تحويل لمنتج آخر</p>
                   {editLinkedProductId && (
                     <button onClick={() => setEditLinkedProductId(null)} type="button" style={{ padding: '0.15rem 0.45rem', borderRadius: 4, border: 'none', background: '#fee2e2', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 700, color: '#dc2626', fontFamily: 'Tajawal, sans-serif' }}>
                       إلغاء التحويل
