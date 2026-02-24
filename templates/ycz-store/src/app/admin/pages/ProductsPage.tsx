@@ -40,6 +40,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [editCustomGroup, setEditCustomGroup] = useState('');
   const [editNamePriority, setEditNamePriority] = useState<'ar' | 'en'>('ar');
   const [editIsGame, setEditIsGame] = useState(false);
+  const [editAllowsQnt, setEditAllowsQnt] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   // Source & product linking state
@@ -138,20 +139,36 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setEditCustomGroup('');
     setEditNamePriority(product.name_priority || 'ar');
     setEditIsGame(!!product.is_game);
+    setEditAllowsQnt(!!product.allowsQuantity);
     setEditSourceConnected(!!product.source_id);
     setEditOriginalSourceId(product.source_id || null);
     setEditSelectedSourceId(product.source_id || null);
     setEditLinkedProductId(product.linked_product_id ?? null);
     setLinkSearch('');
     setShowLinkDropdown(false);
-    // تحميل حقول المنتج من customFields الحالية
-    const fields = (product.customFields || []).map(f => ({
+    // تحميل حقول المنتج - إذا موجودة استخدمها، وإلا جلب الافتراضية
+    const existingFields = (product.customFields || []).map(f => ({
       key: f.key || '',
       label: f.label || '',
       placeholder: f.placeholder || '',
       required: f.required !== false,
     }));
-    setEditCustomFields(fields);
+    if (existingFields.length > 0) {
+      setEditCustomFields(existingFields);
+    } else {
+      // حقول افتراضية حسب نوع الخدمة
+      const sType = (product.service_type || 'SERVER').toUpperCase();
+      if (sType === 'IMEI') {
+        setEditCustomFields([{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }]);
+      } else if (sType === 'SERVER') {
+        setEditCustomFields([
+          { key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true },
+          { key: 'password', label: 'كلمة المرور', placeholder: 'أدخل كلمة المرور', required: true },
+        ]);
+      } else {
+        setEditCustomFields([{ key: 'info', label: 'معلومات', placeholder: 'أدخل المعلومات المطلوبة', required: true }]);
+      }
+    }
     setShowEdit(true);
   }
 
@@ -176,6 +193,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         group_name: groupValue || null,
         name_priority: editNamePriority,
         is_game: editIsGame ? 1 : 0,
+        stock: editAllowsQnt ? '1' : null,
       };
 
       // إدارة المصدر
@@ -945,11 +963,20 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   </select>
                 </div>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', width: 'fit-content' }}>
-                <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 15, height: 15, accentColor: theme.primary }} />
-                <Gamepad2 size={13} color="#64748b" />
-                تصنيف كـ لعبة
-              </label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', width: 'fit-content' }}>
+                  <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 15, height: 15, accentColor: theme.primary }} />
+                  <Gamepad2 size={13} color="#64748b" />
+                  تصنيف كـ لعبة
+                </label>
+                {editServiceType === 'SERVER' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: editAllowsQnt ? '#f0fdf4' : '#fff', borderRadius: 8, border: '1px solid ' + (editAllowsQnt ? '#bbf7d0' : '#e2e8f0'), cursor: 'pointer', width: 'fit-content', transition: 'all 0.15s' }}>
+                    <input type="checkbox" checked={editAllowsQnt} onChange={(e) => setEditAllowsQnt(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#16a34a' }} />
+                    <Package size={13} color={editAllowsQnt ? '#16a34a' : '#64748b'} />
+                    تفعيل QNT (الكمية)
+                  </label>
+                )}
+              </div>
             </div>
 
             {/* ─── Section 3: القروب والوصف ─── */}
@@ -1299,40 +1326,6 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <Plus size={12} /> إضافة حقل
                 </button>
 
-                {editSelectedSourceId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // جلب الحقول الافتراضية من بيانات المنتج الأصلية
-                      const product = products.find(p => p.id === editId);
-                      if (product?.customFields && product.customFields.length > 0) {
-                        setEditCustomFields(product.customFields.map(f => ({
-                          key: f.key || '',
-                          label: f.label || '',
-                          placeholder: f.placeholder || '',
-                          required: f.required !== false,
-                        })));
-                      } else {
-                        // حقول افتراضية حسب نوع الخدمة
-                        if (editServiceType === 'IMEI') {
-                          setEditCustomFields([{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }]);
-                        } else if (editServiceType === 'SERVER') {
-                          setEditCustomFields([
-                            { key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true },
-                            { key: 'password', label: 'كلمة المرور', placeholder: 'أدخل كلمة المرور', required: true },
-                          ]);
-                        } else {
-                          setEditCustomFields([{ key: 'info', label: 'معلومات', placeholder: 'أدخل المعلومات المطلوبة', required: true }]);
-                        }
-                      }
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }}
-                    onMouseOver={e => e.currentTarget.style.background = '#dbeafe'} onMouseOut={e => e.currentTarget.style.background = '#eff6ff'}
-                  >
-                    <RefreshCw size={11} /> جلب الحقول الافتراضية
-                  </button>
-                )}
-
                 {editCustomFields.length > 0 && (
                   <button
                     type="button"
@@ -1348,7 +1341,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               {editCustomFields.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '0.8rem 0.5rem', color: '#94a3b8', fontSize: '0.68rem' }}>
                   <p style={{ margin: 0, marginBottom: 2 }}>لا توجد حقول مخصصة</p>
-                  <p style={{ margin: 0, fontSize: '0.58rem' }}>أضف حقول أو اجلب الافتراضية من المصدر</p>
+                  <p style={{ margin: 0, fontSize: '0.58rem' }}>أضف حقول ليملأها العميل عند الطلب</p>
                 </div>
               )}
             </div>
