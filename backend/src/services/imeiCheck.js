@@ -158,12 +158,16 @@ class ImeiCheckClient {
       imei: imei,
     });
 
-    // Response: { orderId, duration, status, imei, price, result, object }
+    // التحقق من حالة الخطأ — API يرجع { status: "error", response: "Credit Error" }
     const status = (data?.status || '').toLowerCase();
+    if (status === 'error') {
+      const errMsg = data?.response || data?.message || 'خطأ من IMEI Check';
+      throw new ImeiCheckError(errMsg, null, data);
+    }
+
     const statusMap = {
       success: 'completed',
       failed: 'rejected',
-      error: 'error',
       pending: 'pending',
       processing: 'pending',
     };
@@ -191,10 +195,14 @@ class ImeiCheckClient {
     const data = await this._get('history', { orderId });
 
     const status = (data?.status || '').toLowerCase();
+    if (status === 'error') {
+      const errMsg = data?.response || data?.message || 'خطأ من IMEI Check';
+      throw new ImeiCheckError(errMsg, null, data);
+    }
+
     const statusMap = {
       success: 'completed',
       failed: 'rejected',
-      error: 'error',
       pending: 'pending',
       processing: 'pending',
     };
