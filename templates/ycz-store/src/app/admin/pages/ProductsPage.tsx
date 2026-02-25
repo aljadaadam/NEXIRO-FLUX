@@ -702,7 +702,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                       </div>
                       <button
                         type="button"
-                        onClick={() => { setNewLinkedProductId(null); setNewLinkSearch(''); setShowNewLinkDropdown(false); }}
+                        onClick={() => { setNewLinkedProductId(null); setNewLinkSearch(''); setShowNewLinkDropdown(false); setNewCustomFields([]); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                           padding: '0.45rem 0.65rem',
@@ -743,7 +743,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                                 </div>
                               )}
                               {items.map(p => (
-                                <button key={p.id} type="button" onClick={() => { setNewLinkedProductId(p.id); setNewLinkSearch(''); setShowNewLinkDropdown(false); }} style={{
+                                <button key={p.id} type="button" onClick={() => { setNewLinkedProductId(p.id); setNewLinkSearch(''); setShowNewLinkDropdown(false); const fields = (p.customFields || []).map(f => ({ key: f.key || '', label: f.label || '', placeholder: f.placeholder || '', required: f.required !== false })); if (fields.length > 0) { setNewCustomFields(fields); } else { const sType = (p.service_type || 'SERVER').toUpperCase(); if (sType === 'IMEI') setNewCustomFields([{ key: 'imei', label: t('رقم IMEI'), placeholder: t('مثال: 356938035643809'), required: true }]); else if (sType === 'SERVER') setNewCustomFields([{ key: 'username', label: t('اسم المستخدم'), placeholder: t('أدخل اسم المستخدم'), required: true }, { key: 'password', label: t('كلمة المرور'), placeholder: t('أدخل كلمة المرور'), required: true }]); else setNewCustomFields([{ key: 'info', label: t('معلومات'), placeholder: t('أدخل المعلومات المطلوبة'), required: true }]); } }} style={{
                                   display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                                   padding: '0.4rem 0.65rem',
                                   background: newLinkedProductId === p.id ? '#eff6ff' : 'transparent',
@@ -1393,7 +1393,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         {/* خيار "نفسه" - إعادة التعيين */}
                         <button
                           type="button"
-                          onClick={() => { setEditLinkedProductId(null); setLinkSearch(''); setShowLinkDropdown(false); }}
+                          onClick={() => { setEditLinkedProductId(null); setLinkSearch(''); setShowLinkDropdown(false); const ep = products.find(pp => pp.id === editId); if (ep) { const fields = (ep.customFields || []).map(f => ({ key: f.key || '', label: f.label || '', placeholder: f.placeholder || '', required: f.required !== false })); if (fields.length > 0) setEditCustomFields(fields); else { const sType = (ep.service_type || 'SERVER').toUpperCase(); if (sType === 'IMEI') setEditCustomFields([{ key: 'imei', label: t('رقم IMEI'), placeholder: t('مثال: 356938035643809'), required: true }]); else if (sType === 'SERVER') setEditCustomFields([{ key: 'username', label: t('اسم المستخدم'), placeholder: t('أدخل اسم المستخدم'), required: true }, { key: 'password', label: t('كلمة المرور'), placeholder: t('أدخل كلمة المرور'), required: true }]); else setEditCustomFields([{ key: 'info', label: t('معلومات'), placeholder: t('أدخل المعلومات المطلوبة'), required: true }]); } } }}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                             padding: '0.45rem 0.65rem',
@@ -1432,7 +1432,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                                       </div>
                                     )}
                                     {items.map(p => (
-                                      <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); }} style={{
+                                      <button key={p.id} type="button" onClick={() => { setEditLinkedProductId(p.id); setLinkSearch(''); setShowLinkDropdown(false); const fields = (p.customFields || []).map(f => ({ key: f.key || '', label: f.label || '', placeholder: f.placeholder || '', required: f.required !== false })); if (fields.length > 0) { setEditCustomFields(fields); } else { const sType = (p.service_type || 'SERVER').toUpperCase(); if (sType === 'IMEI') setEditCustomFields([{ key: 'imei', label: t('رقم IMEI'), placeholder: t('مثال: 356938035643809'), required: true }]); else if (sType === 'SERVER') setEditCustomFields([{ key: 'username', label: t('اسم المستخدم'), placeholder: t('أدخل اسم المستخدم'), required: true }, { key: 'password', label: t('كلمة المرور'), placeholder: t('أدخل كلمة المرور'), required: true }]); else setEditCustomFields([{ key: 'info', label: t('معلومات'), placeholder: t('أدخل المعلومات المطلوبة'), required: true }]); } }} style={{
                                         display: 'flex', alignItems: 'center', gap: 7, width: '100%',
                                         padding: '0.4rem 0.65rem',
                                         background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
