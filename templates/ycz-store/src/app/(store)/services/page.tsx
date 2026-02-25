@@ -285,7 +285,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                     <input
                       value={formValues[field.key] || ''}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      placeholder={t(field.placeholder || '') || `${t('أدخل')} ${t(field.label)}`}
+                      placeholder={`${t('أدخل')} ${t(field.label)}`}
                       style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
