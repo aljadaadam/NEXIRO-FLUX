@@ -1,6 +1,7 @@
 const Customer = require('../models/Customer');
 const ActivityLog = require('../models/ActivityLog');
 const Customization = require('../models/Customization');
+const Notification = require('../models/Notification');
 const { generateToken } = require('../utils/token');
 const emailService = require('../services/email');
 
@@ -323,6 +324,100 @@ async function verifyOtp(req, res) {
   }
 }
 
+// رفع وثيقة الهوية للتحقق
+async function uploadIdentityDocument(req, res) {
+  try {
+    const { document_url } = req.body;
+    if (!document_url) {
+      return res.status(400).json({ error: 'يرجى رفع صورة الهوية' });
+    }
+
+    const ok = await Customer.uploadIdDocument(req.user.id, req.user.site_key, document_url);
+    if (!ok) {
+      return res.status(400).json({ error: 'فشل في رفع الوثيقة' });
+    }
+
+    // إشعار للأدمن
+    await Notification.create({
+      site_key: req.user.site_key,
+      recipient_type: 'admin',
+      title: 'طلب توثيق هوية جديد',
+      message: `الزبون #${req.user.id} رفع وثيقة هوية للتحقق`,
+      type: 'info',
+    });
+
+    res.json({ message: 'تم رفع الوثيقة بنجاح. سيتم مراجعتها قريباً.', status: 'pending' });
+  } catch (error) {
+    console.error('Error in uploadIdentityDocument:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء رفع الوثيقة' });
+  }
+}
+
+// جلب إشعارات الزبون
+async function getCustomerNotifications(req, res) {
+  try {
+    const notifications = await Notification.findBySiteKey(req.user.site_key, {
+      recipient_type: 'customer',
+      recipient_id: req.user.id,
+      limit: parseInt(req.query.limit) || 30,
+      unread_only: req.query.unread_only === 'true',
+    });
+    const unreadCount = await Notification.countUnread(req.user.site_key, 'customer', req.user.id);
+    res.json({ notifications, unreadCount });
+  } catch (error) {
+    console.error('Error in getCustomerNotifications:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
+// قراءة إشعار زبون
+async function markCustomerNotificationRead(req, res) {
+  try {
+    const { id } = req.params;
+    if (id === 'all') {
+      await Notification.markAllAsRead(req.user.site_key, 'customer', req.user.id);
+    } else {
+      await Notification.markAsRead(id, req.user.site_key);
+    }
+    res.json({ message: 'تم' });
+  } catch (error) {
+    console.error('Error in markCustomerNotificationRead:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
+// تحديث حالة التحقق (للأدمن)
+async function updateCustomerVerification(req, res) {
+  try {
+    const { id } = req.params;
+    const { status, note } = req.body;
+    if (!['verified', 'rejected', 'pending', 'none'].includes(status)) {
+      return res.status(400).json({ error: 'حالة غير صالحة' });
+    }
+    const ok = await Customer.updateVerification(id, req.user.site_key, status, note);
+    if (!ok) {
+      return res.status(404).json({ error: 'الزبون غير موجود' });
+    }
+
+    // إشعار للزبون
+    const notifTitle = status === 'verified' ? 'تم التحقق من هويتك ✅' : status === 'rejected' ? 'تم رفض طلب التحقق ❌' : 'تحديث حالة التحقق';
+    const notifMsg = status === 'verified' ? 'تم التحقق من هويتك بنجاح. يمكنك الآن الاستمتاع بجميع المزايا.' : status === 'rejected' ? (note || 'تم رفض طلب التحقق. يرجى إعادة رفع وثيقة واضحة.') : 'تم تحديث حالة التحقق من هويتك.';
+    await Notification.create({
+      site_key: req.user.site_key,
+      recipient_type: 'customer',
+      recipient_id: parseInt(id),
+      title: notifTitle,
+      message: notifMsg,
+      type: status === 'verified' ? 'success' : status === 'rejected' ? 'warning' : 'info',
+    });
+
+    res.json({ message: 'تم تحديث حالة التحقق' });
+  } catch (error) {
+    console.error('Error in updateCustomerVerification:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   registerCustomer,
   loginCustomer,
@@ -331,5 +426,9 @@ module.exports = {
   toggleBlockCustomer,
   updateCustomerWallet,
   getMyCustomerProfile,
-  updateMyCustomerProfile
+  updateMyCustomerProfile,
+  uploadIdentityDocument,
+  getCustomerNotifications,
+  markCustomerNotificationRead,
+  updateCustomerVerification,
 };

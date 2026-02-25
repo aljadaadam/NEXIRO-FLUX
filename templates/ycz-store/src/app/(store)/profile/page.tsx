@@ -6,7 +6,7 @@ import {
   User, CreditCard, Shield, Wallet, Lock, Mail, Phone,
   CheckCircle, X, Upload, Send, Save, ChevronRight, ChevronLeft,
   ShoppingCart, Bell, Settings, LogOut, DollarSign, Clock,
-  Eye, EyeOff
+  Eye, EyeOff, ArrowRight, Globe, Loader2
 } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { storeApi } from '@/lib/api';
@@ -954,6 +954,21 @@ export default function ProfilePage() {
   const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
   const [walletStats, setWalletStats] = useState({ totalDeposits: 0, totalPurchases: 0, totalRefunded: 0 });
 
+  // Identity verification state
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
+  const [verificationNote, setVerificationNote] = useState('');
+  const [idDocFile, setIdDocFile] = useState<File | null>(null);
+  const [idDocPreview, setIdDocPreview] = useState<string | null>(null);
+  const [idUploading, setIdUploading] = useState(false);
+  const [idUploadError, setIdUploadError] = useState('');
+  const [idUploadSuccess, setIdUploadSuccess] = useState(false);
+  const idFileRef = useRef<HTMLInputElement>(null);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<{ id: number; title: string; message: string; type: string; is_read: number; created_at: string }[]>([]);
+  const [notifUnread, setNotifUnread] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(false);
+
   // Check if already logged in (or demo mode)
   useEffect(() => {
     const isDemo = typeof window !== 'undefined' && (
@@ -964,12 +979,14 @@ export default function ProfilePage() {
       sessionStorage.setItem('demo_mode', '1');
       setIsLoggedIn(true);
       loadProfile();
+      loadNotifications();
       return;
     }
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (token) {
       setIsLoggedIn(true);
       loadProfile();
+      loadNotifications();
     }
   }, []);
 
@@ -998,6 +1015,9 @@ export default function ProfilePage() {
     if (isLoggedIn && view === 'wallet') {
       loadPayments();
     }
+    if (isLoggedIn && view === 'notifications') {
+      loadNotifications();
+    }
   }, [isLoggedIn, view]);
 
   async function loadProfile() {
@@ -1012,6 +1032,10 @@ export default function ProfilePage() {
           phone: customer.phone || '',
           balance: `$${walletBalance.toFixed(2)}`,
         });
+        // Verification status from backend
+        const vs = customer.verification_status || (customer.is_verified ? 'verified' : 'none');
+        setVerificationStatus(vs as 'none' | 'pending' | 'verified' | 'rejected');
+        if (customer.verification_note) setVerificationNote(customer.verification_note);
         setPersonalData(d => ({
           ...d,
           name: customer.name || customer.username || d.name,
@@ -1087,6 +1111,35 @@ export default function ProfilePage() {
       setWalletStats({ totalDeposits, totalPurchases, totalRefunded });
       setTransactions(mapped);
     } catch { /* ignore */ }
+  }
+
+  async function loadNotifications() {
+    setNotifLoading(true);
+    try {
+      const res = await storeApi.getNotifications();
+      const list = res?.notifications || [];
+      setNotifications(list);
+      setNotifUnread(res?.unreadCount || 0);
+    } catch { /* ignore */ }
+    finally { setNotifLoading(false); }
+  }
+
+  async function handleUploadIdentity() {
+    if (!idDocPreview) return;
+    setIdUploading(true);
+    setIdUploadError('');
+    try {
+      await storeApi.uploadIdentity({ document_url: idDocPreview });
+      setIdUploadSuccess(true);
+      setVerificationStatus('pending');
+      setIdDocFile(null);
+      setIdDocPreview(null);
+      loadProfile();
+    } catch (err: any) {
+      setIdUploadError(err?.message || t('فشل في رفع الوثيقة'));
+    } finally {
+      setIdUploading(false);
+    }
   }
 
   async function handleSavePersonal() {
@@ -1373,6 +1426,15 @@ export default function ProfilePage() {
 
   // ─── Security / Verification Sub-View ───
   if (view === 'security') {
+    const statusConfig = {
+      none: { bg: '#fffbeb', iconBg: '#fef3c7', iconColor: '#f59e0b', textColor: '#92400e', subColor: '#b45309', icon: <Clock size={20} color="#f59e0b" />, title: t('غير متحقق'), desc: t('يرجى رفع بطاقة هوية لتوثيق حسابك') },
+      pending: { bg: '#eff6ff', iconBg: '#dbeafe', iconColor: '#3b82f6', textColor: '#1e40af', subColor: '#2563eb', icon: <Clock size={20} color="#3b82f6" />, title: t('قيد المراجعة'), desc: t('تم استلام وثيقتك وهي قيد المراجعة') },
+      verified: { bg: '#f0fdf4', iconBg: '#dcfce7', iconColor: '#22c55e', textColor: '#166534', subColor: '#16a34a', icon: <CheckCircle size={20} color="#22c55e" />, title: t('تم التحقق ✓'), desc: t('تم التحقق من هويتك بنجاح') },
+      rejected: { bg: '#fef2f2', iconBg: '#fee2e2', iconColor: '#ef4444', textColor: '#991b1b', subColor: '#dc2626', icon: <X size={20} color="#ef4444" />, title: t('مرفوض'), desc: verificationNote || t('تم رفض الوثيقة. يرجى إعادة رفع صورة واضحة.') },
+    };
+    const sc = statusConfig[verificationStatus] || statusConfig.none;
+    const canUpload = verificationStatus === 'none' || verificationStatus === 'rejected';
+
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem 1rem' }}>
         <button onClick={() => setView('menu')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: currentTheme.primary, fontSize: '0.88rem', fontWeight: 600, fontFamily: 'inherit', marginBottom: 20, padding: 0 }}>
@@ -1384,15 +1446,22 @@ export default function ProfilePage() {
           </h3>
 
           {/* Verification Status */}
-          <div style={{ background: '#fffbeb', borderRadius: 14, padding: '1.25rem', marginBottom: 20, display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fef3c7', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <Clock size={20} color="#f59e0b" />
+          <div style={{ background: sc.bg, borderRadius: 14, padding: '1.25rem', marginBottom: 20, display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: sc.iconBg, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              {sc.icon}
             </div>
             <div>
-              <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#92400e' }}>{t('غير متحقق')}</p>
-              <p style={{ fontSize: '0.78rem', color: '#b45309' }}>{t('يرجى رفع بطاقة هوية لتوثيق حسابك')}</p>
+              <p style={{ fontSize: '0.88rem', fontWeight: 700, color: sc.textColor }}>{sc.title}</p>
+              <p style={{ fontSize: '0.78rem', color: sc.subColor }}>{sc.desc}</p>
             </div>
           </div>
+
+          {idUploadSuccess && (
+            <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CheckCircle size={16} color="#22c55e" />
+              <span style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 600 }}>{t('تم رفع الوثيقة بنجاح. سيتم مراجعتها قريباً.')}</span>
+            </div>
+          )}
 
           {/* Benefits */}
           <div style={{ marginBottom: 20 }}>
@@ -1410,17 +1479,148 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Upload ID */}
-          <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{t('رفع صورة الهوية')}</p>
-          <div style={{ border: '2px dashed var(--border-default)', borderRadius: 14, padding: '2rem', textAlign: 'center', cursor: 'pointer', marginBottom: 16 }}>
-            <Upload size={28} color="var(--text-muted)" style={{ margin: '0 auto 10px', display: 'block' }} />
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{t('اضغط لرفع صورة بطاقة الهوية')}</p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
+          {/* Upload ID - only if none or rejected */}
+          {canUpload && (
+            <>
+              <input ref={idFileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { setIdUploadError(t('حجم الملف كبير جداً. الحد الأقصى 5MB')); return; }
+                setIdDocFile(file);
+                setIdUploadError('');
+                setIdUploadSuccess(false);
+                const reader = new FileReader();
+                reader.onload = () => setIdDocPreview(reader.result as string);
+                reader.readAsDataURL(file);
+              }} />
+              <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{t('رفع صورة الهوية')}</p>
+              <div onClick={() => idFileRef.current?.click()} style={{ border: '2px dashed var(--border-default)', borderRadius: 14, padding: idDocPreview ? '0.5rem' : '2rem', textAlign: 'center', cursor: 'pointer', marginBottom: 16, transition: 'border-color 0.2s' }}>
+                {idDocPreview ? (
+                  <div style={{ position: 'relative' }}>
+                    <img src={idDocPreview} alt="ID" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 10, objectFit: 'contain' }} />
+                    <button type="button" onClick={e => { e.stopPropagation(); setIdDocFile(null); setIdDocPreview(null); }} style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                      <X size={12} color="#fff" />
+                    </button>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>{idDocFile?.name}</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={28} color="var(--text-muted)" style={{ margin: '0 auto 10px', display: 'block' }} />
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{t('اضغط لرفع صورة بطاقة الهوية')}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
+                  </>
+                )}
+              </div>
+
+              {idUploadError && (
+                <p style={{ fontSize: '0.78rem', color: '#dc2626', marginBottom: 12, fontWeight: 600 }}>{idUploadError}</p>
+              )}
+
+              <button onClick={handleUploadIdentity} disabled={!idDocPreview || idUploading} style={{ width: '100%', padding: '0.75rem', borderRadius: btnR, background: !idDocPreview ? '#94a3b8' : currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: !idDocPreview || idUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: idUploading ? 0.7 : 1 }}>
+                {idUploading ? (
+                  <><div style={{ width: 14, height: 14, border: '2px solid #fff4', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> {t('جاري الرفع...')}</>
+                ) : (
+                  <><Send size={14} /> {t('إرسال للتوثيق')}</>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Notifications View ───
+  if (view === 'notifications') {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+        <button onClick={() => setView('main')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', marginBottom: 16, fontFamily: 'inherit', fontSize: '0.85rem' }}>
+          <ArrowRight size={16} /> {t('رجوع')}
+        </button>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>{t('الإشعارات')}</h2>
+
+        {notifLoading ? (
+          <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+            <Loader2 size={28} className="spin" style={{ margin: '0 auto 8px', animation: 'spin 1s linear infinite' }} />
+            <p>{t('جاري التحميل...')}</p>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+            <Bell size={48} color="var(--text-muted)" style={{ opacity: 0.3, margin: '0 auto 12px', display: 'block' }} />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('لا توجد إشعارات')}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notifUnread > 0 && (
+              <button onClick={async () => { try { await storeApi.markNotificationRead('all'); loadNotifications(); } catch {} }} style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', background: 'none', border: 'none', cursor: 'pointer', color: currentTheme.primary, fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', marginBottom: 4 }}>
+                {t('تعيين الكل كمقروء')}
+              </button>
+            )}
+            {notifications.map((n: any) => (
+              <div key={n.id} onClick={async () => { if (!n.is_read) { try { await storeApi.markNotificationRead(n.id); loadNotifications(); } catch {} } }} style={{ padding: '0.85rem 1rem', background: n.is_read ? 'var(--bg-card)' : `${currentTheme.primary}08`, borderRadius: 12, border: `1px solid ${n.is_read ? 'var(--border-light)' : currentTheme.primary + '30'}`, cursor: n.is_read ? 'default' : 'pointer', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: n.is_read ? 'transparent' : currentTheme.primary, marginTop: 6, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '0.88rem', fontWeight: n.is_read ? 400 : 600, color: 'var(--text-primary)', marginBottom: 4, lineHeight: 1.5 }}>{n.title}</p>
+                    {n.message && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{n.message}</p>}
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Settings View ───
+  if (view === 'settings') {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+        <button onClick={() => setView('main')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', marginBottom: 16, fontFamily: 'inherit', fontSize: '0.85rem' }}>
+          <ArrowRight size={16} /> {t('رجوع')}
+        </button>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>{t('الإعدادات')}</h2>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Language */}
+          <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#3b82f615', color: '#3b82f6', display: 'grid', placeItems: 'center' }}><Globe size={18} /></div>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('اللغة')}</span>
+              </div>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>{isRTL ? 'العربية' : 'English'}</span>
+            </div>
           </div>
 
-          <button style={{ width: '100%', padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Send size={14} /> {t('إرسال للتوثيق')}
-          </button>
+          {/* Notifications Toggle */}
+          <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#8b5cf615', color: '#8b5cf6', display: 'grid', placeItems: 'center' }}><Bell size={18} /></div>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('الإشعارات')}</span>
+              </div>
+              <div style={{ width: 42, height: 24, borderRadius: 12, background: currentTheme.primary, padding: 2, cursor: 'pointer' }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', transform: isRTL ? 'translateX(0)' : 'translateX(18px)', transition: 'transform 0.2s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Account */}
+          <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#06b6d415', color: '#06b6d4', display: 'grid', placeItems: 'center' }}><Shield size={18} /></div>
+                <div>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>{t('حالة الحساب')}</span>
+                  <span style={{ fontSize: '0.75rem', color: verificationStatus === 'verified' ? '#22c55e' : 'var(--text-muted)' }}>{verificationStatus === 'verified' ? t('متحقق ✓') : verificationStatus === 'pending' ? t('قيد المراجعة') : t('غير متحقق')}</span>
+                </div>
+              </div>
+              <button onClick={() => setView('security')} style={{ fontSize: '0.78rem', color: currentTheme.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>{t('إدارة')}</button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1440,9 +1640,9 @@ export default function ProfilePage() {
         </div>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{displayName}</h3>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{displayEmail}</p>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '0.3rem 0.75rem', borderRadius: 20, background: '#fffbeb', border: '1px solid #fde68a' }}>
-          <Clock size={12} color="#f59e0b" />
-          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>{t('غير متحقق')}</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '0.3rem 0.75rem', borderRadius: 20, background: verificationStatus === 'verified' ? '#f0fdf4' : verificationStatus === 'pending' ? '#eff6ff' : '#fffbeb', border: `1px solid ${verificationStatus === 'verified' ? '#bbf7d0' : verificationStatus === 'pending' ? '#bfdbfe' : '#fde68a'}` }}>
+          {verificationStatus === 'verified' ? <CheckCircle size={12} color="#22c55e" /> : verificationStatus === 'pending' ? <Clock size={12} color="#3b82f6" /> : <Clock size={12} color="#f59e0b" />}
+          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: verificationStatus === 'verified' ? '#166534' : verificationStatus === 'pending' ? '#1e40af' : '#92400e' }}>{verificationStatus === 'verified' ? t('متحقق ✓') : verificationStatus === 'pending' ? t('قيد المراجعة') : t('غير متحقق')}</span>
         </div>
       </div>
 
@@ -1473,12 +1673,15 @@ export default function ProfilePage() {
           { icon: <CreditCard size={18} />, label: t('شحن الرصيد'), color: '#f59e0b', action: () => setShowWalletModal(true) },
           { icon: <ShoppingCart size={18} />, label: t('طلباتي'), color: '#8b5cf6', action: () => router.push('/orders') },
           { icon: <Shield size={18} />, label: t('التحقق من الهوية'), color: '#06b6d4', action: () => setView('security') },
-          { icon: <Bell size={18} />, label: t('الإشعارات'), color: '#8b5cf6', action: () => {} },
-          { icon: <Settings size={18} />, label: t('الإعدادات'), color: '#64748b', action: () => {} },
+          { icon: <Bell size={18} />, label: t('الإشعارات'), color: '#8b5cf6', action: () => setView('notifications'), badge: notifUnread },
+          { icon: <Settings size={18} />, label: t('الإعدادات'), color: '#64748b', action: () => setView('settings') },
           { icon: <LogOut size={18} />, label: t('تسجيل الخروج'), color: '#ef4444', action: handleLogout },
-        ].map((item, i) => (
-          <button key={i} onClick={item.action} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)', cursor: 'pointer', width: '100%', fontFamily: 'inherit', textAlign: isRTL ? 'right' : 'left' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center' }}>{item.icon}</div>
+        ].map((item: any, i: number) => (
+          <button key={i} onClick={item.action} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)', cursor: 'pointer', width: '100%', fontFamily: 'inherit', textAlign: isRTL ? 'right' : 'left', position: 'relative' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center', position: 'relative' }}>
+              {item.icon}
+              {item.badge > 0 && <span style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 700, display: 'grid', placeItems: 'center', border: '2px solid var(--bg-card)' }}>{item.badge > 9 ? '9+' : item.badge}</span>}
+            </div>
             <span style={{ fontSize: '0.88rem', fontWeight: 600, color: item.color === '#ef4444' ? '#ef4444' : 'var(--text-primary)', flex: 1 }}>{item.label}</span>
             <ChevronLeft size={16} color="var(--text-muted)" />
           </button>

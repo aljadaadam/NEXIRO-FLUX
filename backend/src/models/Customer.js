@@ -8,6 +8,9 @@ class Customer {
       try { await pool.query(`ALTER TABLE customers ADD COLUMN ${col} ${def}`); } catch (e) { /* exists */ }
     };
     await addCol('country', 'VARCHAR(100) NULL');
+    await addCol('id_document_url', 'TEXT NULL');
+    await addCol('verification_status', "VARCHAR(20) DEFAULT 'none'");
+    await addCol('verification_note', 'TEXT NULL');
   }
 
   // إنشاء زبون جديد
@@ -27,7 +30,8 @@ class Customer {
   // البحث بالـ ID (مع عزل بـ site_key إختياري)
   static async findById(id, site_key = null) {
     const pool = getPool();
-    let query = 'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at FROM customers WHERE id = ?';
+    await this.ensureColumns();
+    let query = 'SELECT id, site_key, name, email, phone, country, wallet_balance, is_verified, is_blocked, last_login_at, created_at, id_document_url, verification_status, verification_note FROM customers WHERE id = ?';
     const params = [id];
     if (site_key) {
       query += ' AND site_key = ?';
@@ -128,6 +132,40 @@ class Customer {
 
     if (updates.length === 0) return false;
 
+    params.push(id, site_key);
+    const [result] = await pool.query(
+      `UPDATE customers SET ${updates.join(', ')} WHERE id = ? AND site_key = ?`,
+      params
+    );
+    return result.affectedRows > 0;
+  }
+
+  // رفع وثيقة هوية
+  static async uploadIdDocument(id, site_key, documentUrl) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const [result] = await pool.query(
+      "UPDATE customers SET id_document_url = ?, verification_status = 'pending' WHERE id = ? AND site_key = ?",
+      [documentUrl, id, site_key]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // تحديث حالة التحقق (للأدمن)
+  static async updateVerification(id, site_key, status, note) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const updates = ["verification_status = ?"];
+    const params = [status];
+    if (status === 'verified') {
+      updates.push('is_verified = 1');
+    } else if (status === 'rejected') {
+      updates.push('is_verified = 0');
+    }
+    if (note !== undefined) {
+      updates.push('verification_note = ?');
+      params.push(note);
+    }
     params.push(id, site_key);
     const [result] = await pool.query(
       `UPDATE customers SET ${updates.join(', ')} WHERE id = ? AND site_key = ?`,
