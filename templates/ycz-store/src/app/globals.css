@@ -60,6 +60,9 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     left: 0 !important;
     right: 0 !important;
     z-index: 9999 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
   .store-mobile-toggle { display: block !important; }
   .store-main { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
