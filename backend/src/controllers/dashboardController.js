@@ -261,6 +261,13 @@ async function getPlatformStats(req, res) {
       exSubs.params
     );
 
+    // ─── DEBUG: التحقق من بيانات الداشبورد ───
+    console.log('[DEBUG-DASHBOARD] platformKeys:', platformKeys);
+    console.log('[DEBUG-DASHBOARD] excludeClause:', ex);
+    console.log('[DEBUG-DASHBOARD] subStats:', JSON.stringify(subStats));
+    console.log('[DEBUG-DASHBOARD] totalSites:', totalSites, 'totalUsers:', totalUsers);
+    console.log('[DEBUG-DASHBOARD] purchaseCodeStats:', JSON.stringify(purchaseCodeStats));
+
     res.json({
       // المواقع
       totalSites,
