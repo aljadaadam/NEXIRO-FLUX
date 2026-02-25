@@ -7,7 +7,7 @@ const API_BASE = '/api';
 
 // ─── كشف وضع العرض التجريبي ───
 // يتحقق من ?demo=1 في URL أو من sessionStorage (يُحفظ عند أول زيارة ليبقى عبر التنقل)
-function isDemoMode(): boolean {
+export function isDemoMode(): boolean {
   // Auto-detect demo subdomain
   if (typeof window !== 'undefined' && window.location.hostname.startsWith('demo-')) return true;
   if (typeof window === 'undefined') return false;

@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { COLOR_THEMES, ColorTheme, getTheme } from '@/lib/themes';
 import { translate, Language } from '@/lib/translations';
+import { isDemoMode } from '@/lib/api';
+import { demoSettings } from '@/lib/demoData';
 
 interface ThemeContextType {
   themeId: string;
@@ -139,6 +141,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const fetchFromServer = useCallback(async () => {
     const myId = ++fetchIdRef.current;
     try {
+      // في وضع الديمو نستخدم البيانات الوهمية مباشرة
+      if (isDemoMode()) {
+        const c = demoSettings;
+        if (c.theme_id) setThemeId(c.theme_id);
+        if (c.logo_url) setLogoPreview(c.logo_url);
+        if (c.font_family) setFontFamily(c.font_family);
+        if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
+        if (c.button_radius) setButtonRadius(c.button_radius);
+        if (c.header_style) setHeaderStyle(c.header_style);
+        if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
+        if (c.store_name) setStoreName(c.store_name);
+        setLoaded(true);
+        return;
+      }
+
       const adminToken = localStorage.getItem('admin_key');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
