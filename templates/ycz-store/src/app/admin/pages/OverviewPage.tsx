@@ -337,20 +337,27 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             </button>
             <div style={{
               padding: '0.4rem 0.85rem',
-              borderRadius: 999,
-              background: 'rgba(34,197,94,0.15)',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.08)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(34,197,94,0.3)',
+              border: '1px solid rgba(255,255,255,0.15)',
               fontSize: '0.76rem',
               fontWeight: 700,
               whiteSpace: 'nowrap',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              color: '#bbf7d0',
+              gap: 7,
+              color: '#e2e8f0',
             }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px #22c55e55' }} />
-              {t('المتجر نشط')} ✅
+              <div style={{
+                width: 18, height: 18, borderRadius: 6,
+                background: 'rgba(34,197,94,0.15)',
+                border: '1px solid rgba(34,197,94,0.3)',
+                display: 'grid', placeItems: 'center',
+              }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e88' }} />
+              </div>
+              {t('المتجر نشط')}
             </div>
           </div>
         </div>
