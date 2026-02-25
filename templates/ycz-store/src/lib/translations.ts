@@ -53,6 +53,16 @@ const en: Record<string, string> = {
   'المبلغ الإجمالي': 'Total Amount',
   'الرصيد بعد الخصم': 'Balance After Deduction',
   'أدخل': 'Enter',
+  'أدخل IMEI': 'Enter IMEI',
+  'أدخل رقم IMEI': 'Enter IMEI Number',
+  'مثال: 356938035643809': 'Example: 356938035643809',
+  'رقم IMEI': 'IMEI Number',
+  'معلومات': 'Information',
+  'أدخل المعلومات المطلوبة': 'Enter the required information',
+  'اسم المستخدم': 'Username',
+  'أدخل اسم المستخدم': 'Enter Username',
+  'كلمة المرور': 'Password',
+  'أدخل كلمة المرور': 'Enter Password',
 
   // ─── Featured Products ───
   '🔥 المنتجات المميزة': '🔥 Featured Products',

@@ -344,13 +344,13 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 {orderFields.map((field) => (
                   <div key={field.key}>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
-                      {field.label}
+                      {t(field.label)}
                       {field.required !== false && <span style={{ color: '#ef4444' }}> *</span>}
                     </label>
                     <input
                       value={formValues[field.key] || ''}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      placeholder={field.placeholder || `${t('أدخل')} ${field.label}`}
+                      placeholder={t(field.placeholder) || `${t('أدخل')} ${t(field.label)}`}
                       style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
