@@ -23,13 +23,13 @@ router.use(validateSite);
 
 // ===== مسارات عامة (بدون مصادقة) =====
 router.post('/login', login);
+router.post('/register', registerUser); // تسجيل مستخدم جديد (عام — من صفحة التسجيل)
 router.post('/register-admin', registerAdmin); // محمي: يعمل فقط إذا لا يوجد أدمن مسجل
 router.post('/google', googleLogin);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
 // ===== مسارات الأدمن فقط (توكن أدمن/يوزر — ليس زبون) =====
-router.post('/register', authenticateToken, requireRole('admin'), registerUser); // فقط الأدمن يقدر يسجل مستخدمين
 router.post('/users', authenticateToken, requireRole('admin'), createUser);
 router.get('/profile', authenticateToken, requireRole('admin', 'user'), getMyProfile);
 router.get('/users', authenticateToken, requireRole('admin'), getSiteUsers);
