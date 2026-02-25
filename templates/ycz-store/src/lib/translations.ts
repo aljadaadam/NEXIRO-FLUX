@@ -11,12 +11,15 @@ const en: Record<string, string> = {
 
   // ─── Home Page ───
   'مرحباً بك 👋': 'Welcome 👋',
+  'مرحباً بك': 'Welcome',
   'متجرك الإلكتروني جاهز': 'Your online store is ready',
   'أضف منتجاتك وابدأ البيع الآن': 'Add your products and start selling now',
   'خدمات متنوعة ⚡': 'Various Services ⚡',
+  'خدمات متنوعة': 'Various Services',
   'كل ما تحتاجه في مكان واحد': 'Everything you need in one place',
   'تصفح الخدمات واطلب بسهولة': 'Browse services and order easily',
   'دعم فني 🛡️': 'Technical Support 🛡️',
+  'دعم فني': 'Technical Support',
   'نحن هنا لمساعدتك': "We're here to help you",
   'فريق دعم متاح على مدار الساعة': 'Support team available 24/7',
   'تسوق الآن': 'Shop Now',
