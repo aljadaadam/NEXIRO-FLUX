@@ -69,7 +69,7 @@ export default function AdminOverview() {
       iconColor: '#10b981',
     },
     {
-      labelAr: 'إيرادات المنصة', labelEn: 'Platform Revenue',
+      labelAr: 'إجمالي مبيعات المتاجر', labelEn: 'Total Store Sales',
       value: `$${(stats?.totalRevenue || 0).toLocaleString()}`,
       sub: `+$${(stats?.todayRevenue || 0).toLocaleString()} ${isRTL ? 'اليوم' : 'today'}`,
       icon: DollarSign,
@@ -88,7 +88,7 @@ export default function AdminOverview() {
 
   const secondaryCards = [
     {
-      labelAr: 'إجمالي المستخدمين', labelEn: 'Total Users',
+      labelAr: 'مستخدمو المتاجر', labelEn: 'Store Users',
       value: stats?.totalUsers || 0,
       sub: `+${stats?.newUsersToday || 0} ${isRTL ? 'اليوم' : 'today'}`,
       icon: Users, color: 'text-indigo-400 bg-indigo-500/10',
@@ -179,7 +179,9 @@ export default function AdminOverview() {
               <Globe className="w-4 h-4 text-violet-400" />
               {isRTL ? 'أحدث المواقع' : 'Recent Sites'}
             </h3>
-            <span className="text-dark-600 text-[11px]">{isRTL ? `${stats?.totalSites || 0} موقع` : `${stats?.totalSites || 0} sites`}</span>
+            <Link to="/admin/sites" className="text-primary-400 hover:text-primary-300 text-[11px] transition-colors">
+              {isRTL ? `عرض الكل (${stats?.totalSites || 0})` : `View All (${stats?.totalSites || 0})`}
+            </Link>
           </div>
           {stats?.recentSites?.length > 0 ? (
             <div className="divide-y divide-white/5">
@@ -215,8 +217,11 @@ export default function AdminOverview() {
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <h3 className="font-bold text-white flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-cyan-400" />
-              {isRTL ? 'آخر المدفوعات' : 'Recent Payments'}
+              {isRTL ? 'آخر مدفوعات المتاجر' : 'Recent Store Payments'}
             </h3>
+            <Link to="/admin/payments" className="text-primary-400 hover:text-primary-300 text-[11px] transition-colors">
+              {isRTL ? 'عرض الكل' : 'View All'}
+            </Link>
           </div>
           {stats?.recentPayments?.length > 0 ? (
             <div className="divide-y divide-white/5">
@@ -234,7 +239,7 @@ export default function AdminOverview() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-white text-sm font-medium">${p.amount}</p>
+                      <p className="text-white text-sm font-medium">{p.currency === 'USD' || !p.currency ? '$' : p.currency}{p.amount}</p>
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                         p.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
                         p.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :

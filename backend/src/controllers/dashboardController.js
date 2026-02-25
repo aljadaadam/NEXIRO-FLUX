@@ -179,12 +179,11 @@ async function getPlatformStats(req, res) {
     const platformKeys = await resolvePlatformSiteKeys(pool);
     const ex = buildExcludePlatformClause(platformKeys);
 
-    // جلب مواقع العملاء فقط (استثناء المنصة)
-    const [clientSites] = await pool.query(
-      `SELECT * FROM sites WHERE ${ex.clause} ORDER BY created_at DESC`,
+    // عدد مواقع العملاء (استثناء المنصة) — بدون تحميل كل الصفوف
+    const [[{ totalSites }]] = await pool.query(
+      `SELECT COUNT(*) as totalSites FROM sites WHERE ${ex.clause}`,
       ex.params
     );
-    const totalSites = clientSites.length;
 
     // المواقع الجديدة اليوم (استثناء المنصة)
     const [[{ newSitesToday }]] = await pool.query(
@@ -236,8 +235,12 @@ async function getPlatformStats(req, res) {
       WHERE ${ex.clause}
     `, ex.params);
 
-    // آخر 10 مواقع عملاء أُنشئت (استثناء المنصة)
-    const recentSites = clientSites.slice(0, 10).map(s => ({
+    // آخر 10 مواقع عملاء أُنشئت (استثناء المنصة) — استعلام محدود
+    const [recentSitesRaw] = await pool.query(
+      `SELECT id, site_key, domain, custom_domain, name, created_at FROM sites WHERE ${ex.clause} ORDER BY created_at DESC LIMIT 10`,
+      ex.params
+    );
+    const recentSites = recentSitesRaw.map(s => ({
       id: s.id,
       site_key: s.site_key,
       domain: s.custom_domain || s.domain,
@@ -246,13 +249,15 @@ async function getPlatformStats(req, res) {
     }));
 
     // آخر 10 مدفوعات (مواقع العملاء فقط)
+    const exPayments = buildExcludePlatformClause(platformKeys, 'p.site_key');
     const [recentPayments] = await pool.query(
-      `SELECT p.*, s.domain as site_domain, s.name as site_name
+      `SELECT p.id, p.amount, p.currency, p.status, p.type, p.site_key, p.created_at,
+              s.domain as site_domain, s.name as site_name
        FROM payments p
        LEFT JOIN sites s ON p.site_key = s.site_key
-       WHERE ${buildExcludePlatformClause(platformKeys, 'p.site_key').clause}
+       WHERE ${exPayments.clause}
        ORDER BY p.created_at DESC LIMIT 10`,
-      buildExcludePlatformClause(platformKeys, 'p.site_key').params
+      exPayments.params
     );
 
     res.json({
