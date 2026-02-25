@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import ChatWidget from './components/chat/ChatWidget';
 
 // Critical page - loaded eagerly
 import HomePage from './pages/HomePage';
@@ -179,6 +180,7 @@ function AppContent() {
         </Suspense>
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
