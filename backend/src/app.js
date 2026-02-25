@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const { PORT, SITE_KEY } = require('./config/env');
 const { initializeDatabase } = require('./config/db');
 const { resolveTenant } = require('./middlewares/resolveTenant');
+const { checkSubscription } = require('./middlewares/checkSubscription');
 const { mountRoutes } = require('./routes');
 
 const app = express();
@@ -104,6 +105,9 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 // ─── Tenant Resolution (must be before routes) ───
 app.use(resolveTenant);
 
+// ─── Subscription Check (blocks suspended sites) ───
+app.use(checkSubscription);
+
 // ─── Mount all API routes ───
 mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimiter, codeLimiter });
 
@@ -145,6 +149,10 @@ async function startServer() {
     // ─── تشغيل كرون تأكيد المدفوعات (Binance) ───
     const { startPaymentCron } = require('./services/paymentCron');
     startPaymentCron();
+
+    // ─── تشغيل كرون فحص الاشتراكات (انتهاء + تحذيرات) ───
+    const { startSubscriptionCron } = require('./services/subscriptionCron');
+    startSubscriptionCron();
 
     app.listen(PORT, () => {
       console.log(`✅ السيرفر يعمل على http://localhost:${PORT}`);

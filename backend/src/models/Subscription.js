@@ -5,23 +5,14 @@ class Subscription {
   static async create({ site_key, plan_id, template_id, billing_cycle, price }) {
     const pool = getPool();
 
-    // حساب تاريخ الانتهاء
-    let expires_at = null;
-    const now = new Date();
-    if (billing_cycle === 'monthly') {
-      expires_at = new Date(now.setMonth(now.getMonth() + 1));
-    } else if (billing_cycle === 'yearly') {
-      expires_at = new Date(now.setFullYear(now.getFullYear() + 1));
-    }
-    // lifetime = null (لا ينتهي)
-
+    // الفترة التجريبية فقط — expires_at يُحسب عند التفعيل
     const trial_ends = new Date();
     trial_ends.setDate(trial_ends.getDate() + 14); // 14 يوم تجربة
 
     const [result] = await pool.query(
       `INSERT INTO subscriptions (site_key, plan_id, template_id, billing_cycle, price, status, trial_ends_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, 'trial', ?, ?)`,
-      [site_key, plan_id, template_id, billing_cycle || 'monthly', price || 0, trial_ends, expires_at]
+       VALUES (?, ?, ?, ?, ?, 'trial', ?, NULL)`,
+      [site_key, plan_id, template_id, billing_cycle || 'monthly', price || 0, trial_ends]
     );
 
     return this.findById(result.insertId);
@@ -44,12 +35,38 @@ class Subscription {
     return rows[0] || null;
   }
 
-  // تفعيل الاشتراك
+  // جلب آخر اشتراك للموقع (بأي حالة)
+  static async findLatestBySiteKey(site_key) {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      "SELECT * FROM subscriptions WHERE site_key = ? ORDER BY created_at DESC LIMIT 1",
+      [site_key]
+    );
+    return rows[0] || null;
+  }
+
+  // تفعيل الاشتراك — يحسب expires_at من لحظة التفعيل (وليس الإنشاء)
   static async activate(id, site_key) {
     const pool = getPool();
+
+    // جلب الاشتراك الحالي لمعرفة الـ billing_cycle
+    const sub = await this.findById(id);
+    if (!sub) return false;
+
+    let expires_at = null;
+    const now = new Date();
+    if (sub.billing_cycle === 'monthly') {
+      expires_at = new Date(now);
+      expires_at.setMonth(expires_at.getMonth() + 1);
+    } else if (sub.billing_cycle === 'yearly') {
+      expires_at = new Date(now);
+      expires_at.setFullYear(expires_at.getFullYear() + 1);
+    }
+    // lifetime = null (لا ينتهي)
+
     const [result] = await pool.query(
-      "UPDATE subscriptions SET status = 'active', starts_at = NOW() WHERE id = ? AND site_key = ?",
-      [id, site_key]
+      "UPDATE subscriptions SET status = 'active', starts_at = NOW(), expires_at = ? WHERE id = ? AND site_key = ?",
+      [expires_at, id, site_key]
     );
     return result.affectedRows > 0;
   }

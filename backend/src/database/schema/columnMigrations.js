@@ -16,6 +16,7 @@ async function runColumnMigrations(pool) {
   await migrateUsers(pool);
   await migrateOrders(pool);
   await migrateProductIndexes(pool);
+  await migrateSubscriptions(pool);
 }
 
 // ─── Sites Columns ───
@@ -128,6 +129,11 @@ async function migrateProductIndexes(pool) {
       'CREATE UNIQUE INDEX uniq_products_source_servicekey ON products (site_key, source_id, external_service_key)'
     );
   }
+}
+
+// ─── Subscriptions Columns ───
+async function migrateSubscriptions(pool) {
+  await ensureColumn(pool, 'subscriptions', 'warning_sent_at', "warning_sent_at DATETIME NULL COMMENT 'آخر مرة تم إرسال تحذير انتهاء الاشتراك'");
 }
 
 module.exports = { runColumnMigrations };
