@@ -29,6 +29,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [newIsGame, setNewIsGame] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // New product — source connection
+  const [newSourceId, setNewSourceId] = useState<number | null>(null);
+  const [newLinkedProductId, setNewLinkedProductId] = useState<number | null>(null);
+  const [newLinkSearch, setNewLinkSearch] = useState('');
+  const [showNewLinkDropdown, setShowNewLinkDropdown] = useState(false);
+
+  // New product — custom fields
+  const [newCustomFields, setNewCustomFields] = useState<Array<{ key: string; label: string; placeholder: string; required: boolean }>>([]);
+
   // Edit product form state
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
@@ -104,7 +113,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     if (!groupValue) return;
     setSaving(true);
     try {
-      await adminApi.createProduct({
+      const createData: Record<string, unknown> = {
         name: newName,
         arabic_name: newArabicName || null,
         price: Number.parseFloat(String(newPrice).replace(/[$,\s]/g, '')),
@@ -113,11 +122,24 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         group_name: groupValue,
         status: 'active',
         is_game: newIsGame ? 1 : 0,
-      });
+      };
+      if (newSourceId) createData.source_id = newSourceId;
+      if (newLinkedProductId) createData.linked_product_id = newLinkedProductId;
+      if (newCustomFields.length > 0) {
+        const fieldsArr = newCustomFields.filter(f => f.key.trim()).map(f => ({
+          key: f.key.trim(),
+          label: f.label.trim() || f.key.trim(),
+          placeholder: f.placeholder.trim() || (isRTL ? `أدخل ${f.label.trim() || f.key.trim()}` : `Enter ${f.label.trim() || f.key.trim()}`),
+          required: f.required ? '1' : '0',
+        }));
+        if (fieldsArr.length > 0) createData.requires_custom_json = fieldsArr;
+      }
+      await adminApi.createProduct(createData);
       setShowAdd(false);
       setNewName(''); setNewArabicName(''); setNewPrice(''); setNewDesc('');
       setNewServiceType('SERVER'); setNewGroup(''); setNewCustomGroup('');
-      setNewIsGame(false);
+      setNewIsGame(false); setNewSourceId(null); setNewLinkedProductId(null);
+      setNewLinkSearch(''); setShowNewLinkDropdown(false); setNewCustomFields([]);
       showToast(t('تم إنشاء المنتج بنجاح'));
       loadProducts();
     } catch (err: unknown) {
@@ -584,6 +606,236 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             <input type="checkbox" checked={newIsGame} onChange={(e) => setNewIsGame(e.target.checked)} style={{ width: 16, height: 16 }} />
             {t('تصنيف كـ لعبة (isGame)')}
           </label>
+
+          {/* ─── Source Connection ─── */}
+          <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fce7f3', display: 'grid', placeItems: 'center' }}>
+                <Link2 size={14} color="#db2777" />
+              </div>
+              <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('اتصال المصدر')}</p>
+              {newSourceId && (
+                <div style={{ ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }), display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#16a34a' }} />
+                  <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#16a34a' }}>
+                    {t('متصل — يرسل تلقائياً')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {/* Source selector */}
+              <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Database size={10} /> {t('المصدر المرتبط')}
+                </label>
+                <select
+                  value={String(newSourceId || '')}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewSourceId(val ? Number(val) : null);
+                    setNewLinkedProductId(null);
+                    setNewLinkSearch('');
+                    setShowNewLinkDropdown(false);
+                  }}
+                  style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.74rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fafbfc', boxSizing: 'border-box', cursor: 'pointer' }}
+                >
+                  <option value="">{t('— بدون مصدر (مفصول) —')}</option>
+                  {sources.map(s => (
+                    <option key={s.id} value={String(s.id)}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Linked product selector */}
+              <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <RefreshCw size={10} /> {t('المنتج المرتبط (تحويل الطلب)')}
+                  </label>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewLinkDropdown(!showNewLinkDropdown); setNewLinkSearch(''); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                      padding: '0.5rem 0.65rem', borderRadius: 8,
+                      border: '1px solid ' + (showNewLinkDropdown ? '#93c5fd' : '#e2e8f0'),
+                      background: '#fafbfc', cursor: 'pointer',
+                      fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
+                      transition: 'border-color 0.15s',
+                    }}
+                  >
+                    {newLinkedProductId ? (
+                      <>
+                        <Link2 size={12} color="#2563eb" />
+                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1e40af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {(() => { const lp = products.find(p => p.id === newLinkedProductId); return lp ? (lp.arabic_name || lp.name) : `#${newLinkedProductId}`; })()}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={12} color="#94a3b8" />
+                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', flex: 1 }}>
+                          {t('نفس المنتج')}
+                        </span>
+                      </>
+                    )}
+                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', transform: showNewLinkDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>▾</span>
+                  </button>
+
+                  {showNewLinkDropdown && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, left: 0, zIndex: 50, marginTop: 3, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+                      <div style={{ padding: '0.4rem 0.55rem', borderBottom: '1px solid #f1f5f9', background: '#fafbfc' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid #e2e8f0', borderRadius: 6, padding: '0.3rem 0.5rem', background: '#fff' }}>
+                          <Search size={11} color="#94a3b8" />
+                          <input
+                            value={newLinkSearch}
+                            onChange={e => setNewLinkSearch(e.target.value)}
+                            autoFocus
+                            placeholder={isRTL ? `ابحث في المنتجات...` : `Search products...`}
+                            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.68rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setNewLinkedProductId(null); setNewLinkSearch(''); setShowNewLinkDropdown(false); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                          padding: '0.45rem 0.65rem',
+                          background: !newLinkedProductId ? '#f0fdf4' : 'transparent',
+                          border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer',
+                          fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      >
+                        <CheckCircle size={11} color="#16a34a" />
+                        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#374151', flex: 1 }}>{t('نفس المنتج')}</span>
+                        <span style={{ fontSize: '0.55rem', color: '#16a34a', fontWeight: 700 }}>{t('✦ نفسه')}</span>
+                      </button>
+                      <div style={{ maxHeight: 200, overflow: 'auto' }}>
+                        {(() => {
+                          const q = newLinkSearch.toLowerCase();
+                          const filtered = products.filter(p => {
+                            if (newSourceId && p.source_id !== newSourceId) return false;
+                            if (newServiceType && (p.service_type || '').toUpperCase() !== newServiceType.toUpperCase()) return false;
+                            if (q && !(p.arabic_name || '').toLowerCase().includes(q) && !(p.name || '').toLowerCase().includes(q) && !String(p.id).includes(q)) return false;
+                            return true;
+                          });
+                          if (filtered.length === 0) return (
+                            <div style={{ padding: '0.6rem', textAlign: 'center' }}>
+                              <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>{t('لا توجد نتائج')}</p>
+                            </div>
+                          );
+                          const grouped = new Map<string, typeof filtered>();
+                          for (const p of filtered) {
+                            const g = p.group_name || '';
+                            if (!grouped.has(g)) grouped.set(g, []);
+                            grouped.get(g)!.push(p);
+                          }
+                          return Array.from(grouped.entries()).map(([groupName, items]) => (
+                            <div key={groupName}>
+                              {groupName && (
+                                <div style={{ padding: '0.3rem 0.65rem', fontSize: '0.6rem', fontWeight: 800, color: '#475569', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
+                                  {groupName}
+                                </div>
+                              )}
+                              {items.map(p => (
+                                <button key={p.id} type="button" onClick={() => { setNewLinkedProductId(p.id); setNewLinkSearch(''); setShowNewLinkDropdown(false); }} style={{
+                                  display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                                  padding: '0.4rem 0.65rem',
+                                  background: newLinkedProductId === p.id ? '#eff6ff' : 'transparent',
+                                  border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                                  fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
+                                  transition: 'background 0.1s',
+                                }} onMouseOver={e => { if (newLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (newLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontSize: '0.68rem', fontWeight: 600, color: '#0b1020', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.arabic_name || p.name}</p>
+                                  </div>
+                                  <span style={{ fontSize: '0.56rem', color: '#64748b', flexShrink: 0 }}>
+                                    {p.price ? `${p.price} USD` : `#${p.id}`}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Custom Fields ─── */}
+          <div style={{ padding: '0.85rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: '#e0f2fe', display: 'grid', placeItems: 'center' }}>
+                <ListOrdered size={14} color="#0284c7" />
+              </div>
+              <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('حقول المنتج')}</p>
+              <span style={{ fontSize: '0.58rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
+                {newCustomFields.length} {t('حقل')}
+              </span>
+              <p style={{ fontSize: '0.58rem', color: '#94a3b8', margin: 0, ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }) }}>
+                {t('الحقول التي يملأها العميل عند الطلب')}
+              </p>
+            </div>
+
+            {newCustomFields.length > 0 && (
+              <div style={{ borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden', marginBottom: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 60px 36px', gap: 0, background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('المفتاح (Key)')}</div>
+                  <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('التسمية (Label)')}</div>
+                  <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('النص التوضيحي')}</div>
+                  <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569', textAlign: 'center' }}>{t('مطلوب')}</div>
+                  <div />
+                </div>
+                {newCustomFields.map((field, idx) => (
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 60px 36px', gap: 0, borderBottom: idx < newCustomFields.length - 1 ? '1px solid #f1f5f9' : 'none', background: '#fff' }}>
+                    <div style={{ padding: '0.3rem 0.4rem' }}>
+                      <input value={field.key} onChange={e => { const arr = [...newCustomFields]; arr[idx] = { ...arr[idx], key: e.target.value }; setNewCustomFields(arr); }} placeholder="imei" style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box', background: '#fafbfc', direction: 'ltr' }} />
+                    </div>
+                    <div style={{ padding: '0.3rem 0.4rem' }}>
+                      <input value={field.label} onChange={e => { const arr = [...newCustomFields]; arr[idx] = { ...arr[idx], label: e.target.value }; setNewCustomFields(arr); }} placeholder={t('رقم IMEI')} style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }} />
+                    </div>
+                    <div style={{ padding: '0.3rem 0.4rem' }}>
+                      <input value={field.placeholder} onChange={e => { const arr = [...newCustomFields]; arr[idx] = { ...arr[idx], placeholder: e.target.value }; setNewCustomFields(arr); }} placeholder={t('مثال: 356938035643809')} style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }} />
+                    </div>
+                    <div style={{ padding: '0.3rem 0.4rem', display: 'grid', placeItems: 'center' }}>
+                      <input type="checkbox" checked={field.required} onChange={e => { const arr = [...newCustomFields]; arr[idx] = { ...arr[idx], required: e.target.checked }; setNewCustomFields(arr); }} style={{ width: 15, height: 15, accentColor: theme.primary, cursor: 'pointer' }} />
+                    </div>
+                    <div style={{ padding: '0.3rem 0.2rem', display: 'grid', placeItems: 'center' }}>
+                      <button type="button" onClick={() => { const arr = [...newCustomFields]; arr.splice(idx, 1); setNewCustomFields(arr); }} style={{ width: 24, height: 24, borderRadius: 5, border: '1px solid #fecaca', background: '#fff5f5', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <Minus size={11} color="#dc2626" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button type="button" onClick={() => setNewCustomFields([...newCustomFields, { key: '', label: '', placeholder: '', required: true }])} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }}>
+                <Plus size={12} /> {t('إضافة حقل')}
+              </button>
+              {newCustomFields.length > 0 && (
+                <button type="button" onClick={() => setNewCustomFields([])} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff5f5', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }) }}>
+                  <Trash2 size={11} /> {t('مسح الكل')}
+                </button>
+              )}
+            </div>
+
+            {newCustomFields.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '0.8rem 0.5rem', color: '#94a3b8', fontSize: '0.68rem' }}>
+                <p style={{ margin: 0, marginBottom: 2 }}>{t('لا توجد حقول مخصصة')}</p>
+                <p style={{ margin: 0, fontSize: '0.58rem' }}>{t('أضف حقول ليملأها العميل عند الطلب')}</p>
+              </div>
+            )}
+          </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleAddProduct} disabled={saving} style={{
