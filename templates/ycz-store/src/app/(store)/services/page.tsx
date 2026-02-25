@@ -10,7 +10,7 @@ import JsonLd from '@/components/seo/JsonLd';
 
 // ─── OrderModal (Enhanced: rich product details + confirmation step) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const { currentTheme, buttonRadius, t } = useTheme();
+  const { currentTheme, buttonRadius, t, isRTL } = useTheme();
   const [step, setStep] = useState(1); // 1=form, 2=confirm, 3=success
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -165,7 +165,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 <span style={{
                   fontSize: '0.62rem', fontWeight: 700, color: currentTheme.primary,
                   background: `${currentTheme.primary}15`, padding: '2px 8px', borderRadius: 6,
-                }}>{product.category || t('عام')}</span>
+                }}>{t(product.category || 'عام')}</span>
                 {serviceType && (
                   <span style={{
                     fontSize: '0.62rem', fontWeight: 700, color: '#fff',
@@ -287,7 +287,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                     <input
                       value={formValues[field.key] || ''}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      placeholder={field.placeholder || `أدخل ${field.label}`}
+                      placeholder={field.placeholder || `${t('أدخل')} ${field.label}`}
                       style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
@@ -306,7 +306,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 cursor: allRequiredFilled ? 'pointer' : 'not-allowed',
                 opacity: allRequiredFilled ? 1 : 0.6,
               }}>
-              {t('متابعة')} →
+              {isRTL ? `${t('متابعة')} ←` : `${t('متابعة')} →`}
             </button>
 
             {isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet && (
@@ -383,7 +383,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
               <button
                 onClick={() => { setError(null); setStep(1); }}
                 style={{ flex: 1, padding: '0.75rem', borderRadius: btnR, background: '#f1f5f9', color: '#334155', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                ← {t('تعديل')}
+                {isRTL ? `→ ${t('تعديل')}` : `← ${t('تعديل')}`}
               </button>
               <button
                 onClick={submitOrder}
@@ -653,7 +653,7 @@ export default function ServicesPage() {
             <div style={{ fontSize: '1.8rem', textAlign: 'center', marginBottom: 8, height: 48, display: 'grid', placeItems: 'center', background: '#f8fafc', borderRadius: 10 }}>
               {p.icon}
             </div>
-            <p style={{ fontSize: '0.7rem', color: currentTheme.primary, fontWeight: 600, marginBottom: 4 }}>{p.category}</p>
+            <p style={{ fontSize: '0.7rem', color: currentTheme.primary, fontWeight: 600, marginBottom: 4 }}>{t(p.category)}</p>
             <h4 style={{
               fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4,
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',

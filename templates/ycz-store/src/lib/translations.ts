@@ -24,6 +24,8 @@ const en: Record<string, string> = {
 
   // ─── Product / Order Modal ───
   'طلب المنتج': 'Order Product',
+  'تأكيد الطلب': 'Confirm Order',
+  'تم الطلب': 'Order Placed',
   'وقت الخدمة:': 'Service Time:',
   'الكمية': 'Quantity',
   'الدفع بالمحفظة': 'Pay with Wallet',
@@ -42,6 +44,15 @@ const en: Record<string, string> = {
   'سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة \u201Cطلباتي\u201D.': 'Your order will be processed within minutes. You can track the order from "My Orders" page.',
   'الرصيد المتبقي:': 'Remaining balance:',
   'حسناً': 'OK',
+  'عام': 'General',
+  'تفاصيل المنتج': 'Product Details',
+  'متابعة': 'Continue',
+  'تعديل': 'Edit',
+  'ملخص الطلب': 'Order Summary',
+  'المنتج': 'Product',
+  'المبلغ الإجمالي': 'Total Amount',
+  'الرصيد بعد الخصم': 'Balance After Deduction',
+  'أدخل': 'Enter',
 
   // ─── Featured Products ───
   '🔥 المنتجات المميزة': '🔥 Featured Products',
