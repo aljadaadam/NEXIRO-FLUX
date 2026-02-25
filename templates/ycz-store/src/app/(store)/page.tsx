@@ -10,42 +10,225 @@ import type { Product } from '@/lib/types';
 import SeoHead from '@/components/seo/SeoHead';
 import JsonLd from '@/components/seo/JsonLd';
 
-// ─── HeroBanner (Demo-style: contained, left-aligned, auto-rotate) ───
+// ─── HeroBanner (Modern animated hero with particles, glassmorphism, progress bar) ───
 function HeroBanner() {
-  const { currentTheme, showBanner, buttonRadius, t } = useTheme();
+  const { currentTheme, showBanner, buttonRadius, t, isRTL } = useTheme();
   const [active, setActive] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const [progress, setProgress] = useState(0);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const banners = [
-    { title: t('مرحباً بك 👋'), subtitle: t('متجرك الإلكتروني جاهز'), desc: t('أضف منتجاتك وابدأ البيع الآن'), gradient: `linear-gradient(135deg, ${currentTheme.primary} 0%, ${currentTheme.accent} 100%)` },
-    { title: t('خدمات متنوعة ⚡'), subtitle: t('كل ما تحتاجه في مكان واحد'), desc: t('تصفح الخدمات واطلب بسهولة'), gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' },
-    { title: t('دعم فني 🛡️'), subtitle: t('نحن هنا لمساعدتك'), desc: t('فريق دعم متاح على مدار الساعة'), gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)' },
+    {
+      icon: '🚀',
+      title: t('مرحباً بك'),
+      subtitle: t('متجرك الإلكتروني جاهز'),
+      desc: t('أضف منتجاتك وابدأ البيع الآن'),
+      gradient: `linear-gradient(135deg, ${currentTheme.primary} 0%, ${currentTheme.accent} 100%)`,
+      meshColor1: 'rgba(255,255,255,0.12)',
+      meshColor2: 'rgba(255,255,255,0.06)',
+    },
+    {
+      icon: '⚡',
+      title: t('خدمات متنوعة'),
+      subtitle: t('كل ما تحتاجه في مكان واحد'),
+      desc: t('تصفح الخدمات واطلب بسهولة'),
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+      meshColor1: 'rgba(255,200,50,0.15)',
+      meshColor2: 'rgba(239,68,68,0.1)',
+    },
+    {
+      icon: '🛡️',
+      title: t('دعم فني'),
+      subtitle: t('نحن هنا لمساعدتك'),
+      desc: t('فريق دعم متاح على مدار الساعة'),
+      gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
+      meshColor1: 'rgba(6,182,212,0.15)',
+      meshColor2: 'rgba(139,92,246,0.1)',
+    },
   ];
 
+  const DURATION = 5000;
+
   useEffect(() => {
-    const i = setInterval(() => setActive(p => (p + 1) % banners.length), 4500);
-    return () => clearInterval(i);
-  }, [banners.length]);
+    setProgress(0);
+    const startTime = Date.now();
+    const frame = () => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min((elapsed / DURATION) * 100, 100);
+      setProgress(pct);
+      if (pct < 100) rafRef = requestAnimationFrame(frame);
+    };
+    let rafRef = requestAnimationFrame(frame);
+
+    const timer = setTimeout(() => {
+      setActive(p => (p + 1) % banners.length);
+      setAnimKey(k => k + 1);
+    }, DURATION);
+
+    return () => {
+      cancelAnimationFrame(rafRef);
+      clearTimeout(timer);
+    };
+  }, [active, banners.length]);
 
   if (!showBanner) return null;
   const b = banners[active];
 
+  // Floating particles/shapes positions
+  const particles = [
+    { size: 60, top: '10%', right: '8%', delay: '0s', dur: '6s', opacity: 0.08 },
+    { size: 40, top: '60%', right: '15%', delay: '1s', dur: '8s', opacity: 0.06 },
+    { size: 80, top: '20%', right: '35%', delay: '2s', dur: '7s', opacity: 0.05 },
+    { size: 30, top: '70%', right: '50%', delay: '0.5s', dur: '9s', opacity: 0.07 },
+    { size: 50, top: '5%', right: '60%', delay: '1.5s', dur: '6.5s', opacity: 0.06 },
+    { size: 20, top: '80%', right: '75%', delay: '3s', dur: '5s', opacity: 0.09 },
+  ];
+
   return (
-    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', background: b.gradient, padding: '2rem 1.5rem', marginBottom: '1.5rem', transition: 'all 0.5s', minHeight: 150 }}>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <p style={{ fontSize: '0.8rem', opacity: 0.85, marginBottom: 4, color: '#fff' }}>{b.title}</p>
-        <h2 className="store-hero-title" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: 6, lineHeight: 1.3 }}>{b.subtitle}</h2>
-        <p style={{ fontSize: '0.82rem', opacity: 0.75, color: '#fff', marginBottom: 14 }}>{b.desc}</p>
-        <button style={{ padding: '0.5rem 1.25rem', borderRadius: btnR, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-          {t('تسوق الآن')}
-        </button>
+    <div
+      style={{
+        position: 'relative', borderRadius: 20, overflow: 'hidden',
+        background: b.gradient, marginBottom: '1.5rem',
+        minHeight: 200, padding: 0,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+      }}
+    >
+      {/* ── Animated mesh/blob background ── */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        {/* Large animated gradient orb */}
+        <div className="hero-orb hero-orb-1" style={{
+          position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+          background: `radial-gradient(circle, ${b.meshColor1} 0%, transparent 70%)`,
+          top: '-20%', right: '-10%', filter: 'blur(40px)',
+        }} />
+        <div className="hero-orb hero-orb-2" style={{
+          position: 'absolute', width: 200, height: 200, borderRadius: '50%',
+          background: `radial-gradient(circle, ${b.meshColor2} 0%, transparent 70%)`,
+          bottom: '-15%', left: '-5%', filter: 'blur(30px)',
+        }} />
+
+        {/* Floating particles */}
+        {particles.map((p, i) => (
+          <div key={i} className="hero-particle" style={{
+            position: 'absolute', width: p.size, height: p.size, borderRadius: '50%',
+            background: 'rgba(255,255,255,' + p.opacity + ')',
+            top: p.top, right: p.right,
+            animationDelay: p.delay, animationDuration: p.dur,
+          }} />
+        ))}
+
+        {/* Grid pattern overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }} />
       </div>
 
-      {/* Dots */}
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 16 }}>
-        {banners.map((_, i) => (
-          <button key={i} onClick={() => setActive(i)} style={{ width: i === active ? 24 : 8, height: 8, borderRadius: 4, background: i === active ? '#fff' : 'rgba(255,255,255,0.4)', border: 'none', cursor: 'pointer', transition: 'all 0.3s' }} />
-        ))}
+      {/* ── Content with slide animation ── */}
+      <div key={animKey} className="hero-slide-in" style={{
+        position: 'relative', zIndex: 2,
+        padding: '2rem 2rem 1rem',
+        display: 'flex', alignItems: 'center', gap: 20,
+      }}>
+        {/* Animated icon bubble */}
+        <div className="hero-icon-bubble" style={{
+          width: 64, height: 64, borderRadius: 18, flexShrink: 0,
+          background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          display: 'grid', placeItems: 'center', fontSize: '1.8rem',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+        }}>
+          {b.icon}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Animated tag */}
+          <div className="hero-tag" style={{
+            display: 'inline-block', padding: '3px 10px', borderRadius: 20,
+            background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)',
+            marginBottom: 8, letterSpacing: '0.5px',
+          }}>
+            {b.title}
+          </div>
+
+          <h2 className="store-hero-title" style={{
+            fontSize: 'clamp(1.2rem, 4vw, 1.7rem)', fontWeight: 800, color: '#fff',
+            marginBottom: 6, lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}>
+            {b.subtitle}
+          </h2>
+
+          <p style={{
+            fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)',
+            marginBottom: 16, lineHeight: 1.5, maxWidth: 400,
+          }}>
+            {b.desc}
+          </p>
+
+         <Link href="/services" style={{ textDecoration: 'none' }}>
+          <button className="hero-cta-btn" style={{
+            padding: '0.6rem 1.5rem', borderRadius: btnR,
+            background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.3)', color: '#fff',
+            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'inherit', transition: 'all 0.3s',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            {t('تسوق الآن')}
+            <span style={{ transition: 'transform 0.3s' }}>{isRTL ? '←' : '→'}</span>
+          </button>
+         </Link>
+        </div>
+      </div>
+
+      {/* ── Bottom bar: progress + dot indicators ── */}
+      <div style={{
+        position: 'relative', zIndex: 2,
+        padding: '0 2rem 1.2rem',
+        display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        {/* Slide indicators */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {banners.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { setActive(i); setAnimKey(k => k + 1); }}
+              style={{
+                position: 'relative', width: i === active ? 32 : 8, height: 8,
+                borderRadius: 4, border: 'none', cursor: 'pointer',
+                background: i === active ? 'transparent' : 'rgba(255,255,255,0.3)',
+                overflow: 'hidden', transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)',
+                padding: 0,
+              }}
+            >
+              {i === active && (
+                <>
+                  <div style={{
+                    position: 'absolute', inset: 0, borderRadius: 4,
+                    background: 'rgba(255,255,255,0.25)',
+                  }} />
+                  <div style={{
+                    position: 'absolute', top: 0, left: 0, bottom: 0,
+                    borderRadius: 4, background: '#fff',
+                    width: `${progress}%`, transition: 'width 0.1s linear',
+                  }} />
+                </>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Slide counter */}
+        <span style={{
+          fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          {String(active + 1).padStart(2, '0')}/{String(banners.length).padStart(2, '0')}
+        </span>
       </div>
     </div>
   );
