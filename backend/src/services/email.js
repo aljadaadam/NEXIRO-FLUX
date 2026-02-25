@@ -100,9 +100,12 @@ class EmailService {
   }
 
   // ─── Core send method ───
-  async send({ to, subject, html, siteSettings = null }) {
+  async send({ to, subject, html, siteSettings = null, storeName = null }) {
     const transport = this._getSiteTransporter(siteSettings) || this.transporter;
-    const from = siteSettings?.smtp?.from || SMTP_FROM;
+    const fromEmail = siteSettings?.smtp?.from || SMTP_FROM;
+    // إضافة اسم المتجر كـ display name في حقل الـ from
+    const displayName = storeName || (siteSettings?.smtp?.from ? null : null);
+    const from = displayName ? `"${displayName}" <${fromEmail}>` : fromEmail;
 
     if (!transport) {
       console.log(`📧 [LOG ONLY] To: ${to} | Subject: ${subject}`);
@@ -129,9 +132,10 @@ class EmailService {
     const siteSettings = await this._getSiteSettingsFromDB(siteKey);
     return this.send({
       to,
-      subject: `مرحباً بك في ${branding.storeName || siteName || 'NEXIRO-FLUX'} 🎉`,
+      subject: `مرحباً بك في ${branding.storeName || siteName || 'المتجر'} 🎉`,
       html: templates.welcomeAdmin({ name, siteName, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -140,9 +144,10 @@ class EmailService {
     const siteSettings = await this._getSiteSettingsFromDB(siteKey);
     return this.send({
       to,
-      subject: `مرحباً بك في ${branding.storeName || 'NEXIRO-FLUX'} 🎉`,
+      subject: `مرحباً بك في ${branding.storeName || 'المتجر'} 🎉`,
       html: templates.welcomeUser({ name, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -154,6 +159,7 @@ class EmailService {
       subject: `مرحباً بك في ${branding.storeName || storeName || 'متجرنا'} 🎉`,
       html: templates.welcomeCustomer({ name, storeName: branding.storeName || storeName, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -165,6 +171,7 @@ class EmailService {
       subject: 'إعادة تعيين كلمة المرور 🔑',
       html: templates.passwordReset({ name, resetLink, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -176,6 +183,7 @@ class EmailService {
       subject: 'تأكيد بريدك الإلكتروني ✉️',
       html: templates.emailVerification({ name, code, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -187,6 +195,7 @@ class EmailService {
       subject: 'تنبيه تسجيل دخول جديد 🔐',
       html: templates.loginAlert({ name, ip, device, time, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -198,6 +207,7 @@ class EmailService {
       subject: 'تم تعليق حسابك ⚠️',
       html: templates.accountBlocked({ name, reason, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -209,6 +219,7 @@ class EmailService {
       subject: 'تم إعادة تفعيل حسابك ✅',
       html: templates.accountUnblocked({ name, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -224,6 +235,7 @@ class EmailService {
       subject: `تأكيد الطلب #${orderId} ✅`,
       html: templates.orderConfirmation({ name, orderId, items, total, currency, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -235,6 +247,7 @@ class EmailService {
       subject: `🛒 طلب جديد #${orderId}`,
       html: templates.newOrderAlert({ orderId, customerName, total, currency, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -253,6 +266,7 @@ class EmailService {
       subject: `تحديث الطلب #${orderId} — ${statusLabels[status] || status}`,
       html: templates.orderStatusUpdate({ name, orderId, status, statusLabel: statusLabels[status] || status, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -268,6 +282,7 @@ class EmailService {
       subject: `إيصال الدفع — $${amount} ✅`,
       html: templates.paymentReceipt({ name, amount, currency, method, transactionId, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -279,6 +294,7 @@ class EmailService {
       subject: 'فشل عملية الدفع ❌',
       html: templates.paymentFailed({ name, amount, currency, reason, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -290,6 +306,7 @@ class EmailService {
       subject: `تعليمات الدفع — ${method} 💳`,
       html: templates.paymentInstructions({ name, method, amount, currency, details, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -301,6 +318,7 @@ class EmailService {
       subject: `📎 إيصال بنكي بحاجة مراجعة — طلب #${orderId}`,
       html: templates.bankReceiptReview({ orderId, customerName, amount, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -316,6 +334,7 @@ class EmailService {
       subject: `🎫 تذكرة دعم جديدة #${ticketId}`,
       html: templates.newTicket({ ticketId, ticketSubject, customerName, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -327,6 +346,7 @@ class EmailService {
       subject: `رد على تذكرة #${ticketId} 💬`,
       html: templates.ticketReply({ name, ticketId, message, replierName, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -338,6 +358,7 @@ class EmailService {
       subject: `تذكرة #${ticketId} — تم الإغلاق ✅`,
       html: templates.ticketClosed({ name, ticketId, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -353,6 +374,7 @@ class EmailService {
       subject: `تم إنشاء موقعك "${branding.storeName || siteName}" بنجاح 🚀`,
       html: templates.siteCreated({ name, siteName, siteKey, domain, plan, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -364,6 +386,7 @@ class EmailService {
       subject: `بدأت الفترة التجريبية — ${trialDays} يوم 🕐`,
       html: templates.trialStarted({ name, siteName, trialDays, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -375,6 +398,7 @@ class EmailService {
       subject: `⚠️ الفترة التجريبية تنتهي خلال ${daysLeft} يوم`,
       html: templates.trialExpiring({ name, siteName, daysLeft, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -386,6 +410,7 @@ class EmailService {
       subject: 'انتهت الفترة التجريبية ⏰',
       html: templates.trialExpired({ name, siteName, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -397,6 +422,7 @@ class EmailService {
       subject: 'تم تجديد اشتراكك ✅',
       html: templates.subscriptionRenewed({ name, plan, nextBilling, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -408,6 +434,7 @@ class EmailService {
       subject: 'تم إلغاء اشتراكك',
       html: templates.subscriptionCancelled({ name, expiresAt, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 
@@ -423,6 +450,7 @@ class EmailService {
       subject: `تحديث رصيد المحفظة 💰`,
       html: templates.walletUpdated({ name, oldBalance, newBalance, currency, branding }),
       siteSettings,
+      storeName: branding.storeName,
     });
   }
 }

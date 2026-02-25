@@ -69,7 +69,7 @@ function createUI(primaryColor = '#7c3aed') {
 // ═══════════════════════════════════
 
 function baseLayout({ title, content, footer = '', branding = {} }) {
-  const storeName = branding.storeName || 'NEXIRO-FLUX';
+  const storeName = branding.storeName || 'المتجر';
   const logoUrl = branding.logoUrl || '';
   const primaryColor = branding.primaryColor || '#7c3aed';
   const gradientEnd = darkenHex(primaryColor);
@@ -124,7 +124,7 @@ function welcomeAdmin({ name, siteName, branding = {} }) {
     content: `
       ${ui.icon('🎉')}
       ${ui.heading(`مرحباً ${name || ''}!`)}
-      ${ui.text(`تم إنشاء حسابك بنجاح على منصة ${ui.highlight(siteName || branding.storeName || 'NEXIRO-FLUX')}.`)}
+      ${ui.text(`تم إنشاء حسابك بنجاح على منصة ${ui.highlight(siteName || branding.storeName || 'المتجر')}.`)}
       ${ui.text('يمكنك الآن الوصول إلى لوحة التحكم وإدارة موقعك بالكامل:')}
       ${ui.text('• إضافة وتعديل المنتجات')}
       ${ui.text('• إدارة الطلبات والمدفوعات')}
@@ -138,7 +138,7 @@ function welcomeAdmin({ name, siteName, branding = {} }) {
 
 function welcomeUser({ name, branding = {} }) {
   const ui = createUI(branding.primaryColor);
-  const sName = branding.storeName || 'NEXIRO-FLUX';
+  const sName = branding.storeName || 'المتجر';
   return baseLayout({
     title: `مرحباً بك في ${sName}`,
     branding,
