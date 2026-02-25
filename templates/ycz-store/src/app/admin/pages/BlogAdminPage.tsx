@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff, X, BookOpen, Calendar, Clock, Save } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { BlogPost } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 const CATEGORY_COLORS = [
   { label: 'أزرق', value: '#3b82f6' },
@@ -18,6 +19,7 @@ const CATEGORY_COLORS = [
 const POST_EMOJIS = ['📝', '🍎', '📱', '🔧', '🛡️', '🔎', '🎮', '💻', '🔐', '📡', '⚡', '🌐', '📊', '🎯'];
 
 export default function BlogAdminPage() {
+  const { t, isRTL } = useAdminLang();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -92,7 +94,7 @@ export default function BlogAdminPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('هل تريد حذف هذا المقال؟')) return;
+    if (!confirm(t('هل تريد حذف هذا المقال؟'))) return;
     try {
       await adminApi.deleteBlogPost(id);
       setPosts(prev => prev.filter(p => p.id !== id));
@@ -116,9 +118,9 @@ export default function BlogAdminPage() {
     <>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📝 المدونة</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>{t('📝 المدونة')}</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{posts.length} مقال</span>
+          <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{posts.length} {t('مقال')}</span>
           <button onClick={() => { resetForm(); setShowForm(!showForm); }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -127,7 +129,7 @@ export default function BlogAdminPage() {
               border: 'none', fontSize: '0.82rem', fontWeight: 700,
               cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
             }}>
-            <Plus size={16} /> مقال جديد
+            <Plus size={16} /> {t('مقال جديد')}
           </button>
         </div>
       </div>
@@ -140,7 +142,7 @@ export default function BlogAdminPage() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>
-              {editingPost ? '✏️ تعديل المقال' : '➕ مقال جديد'}
+              {editingPost ? t('✏️ تعديل المقال') : t('➕ مقال جديد')}
             </h3>
             <button onClick={() => { setShowForm(false); resetForm(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
               <X size={18} />
@@ -149,27 +151,27 @@ export default function BlogAdminPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>العنوان (عربي) *</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="عنوان المقال بالعربي" style={inputStyle} />
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('العنوان (عربي)')} *</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder={t('عنوان المقال بالعربي')} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>العنوان (إنجليزي)</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('العنوان (إنجليزي)')}</label>
               <input value={titleEn} onChange={e => setTitleEn(e.target.value)} placeholder="Article title in English" style={{ ...inputStyle, direction: 'ltr' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>الملخص (عربي)</label>
-              <input value={excerpt} onChange={e => setExcerpt(e.target.value)} placeholder="ملخص قصير للمقال" style={inputStyle} />
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('الملخص (عربي)')}</label>
+              <input value={excerpt} onChange={e => setExcerpt(e.target.value)} placeholder={t('ملخص قصير للمقال')} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>الملخص (إنجليزي)</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('الملخص (إنجليزي)')}</label>
               <input value={excerptEn} onChange={e => setExcerptEn(e.target.value)} placeholder="Short excerpt in English" style={{ ...inputStyle, direction: 'ltr' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>التصنيف</label>
-              <input value={category} onChange={e => setCategory(e.target.value)} placeholder="مثل: iCloud, فتح شبكات, أدوات سوفتوير" style={inputStyle} />
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('التصنيف')}</label>
+              <input value={category} onChange={e => setCategory(e.target.value)} placeholder={t('مثل: iCloud, فتح شبكات, أدوات سوفتوير')} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>وقت القراءة (دقائق)</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('وقت القراءة (دقائق)')}</label>
               <input type="number" value={readTime} onChange={e => setReadTime(Number(e.target.value))} min={1} max={60} style={inputStyle} />
             </div>
           </div>
@@ -177,11 +179,11 @@ export default function BlogAdminPage() {
           {/* Color & Emoji */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>لون التصنيف</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('لون التصنيف')}</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {CATEGORY_COLORS.map(c => (
                   <button key={c.value} onClick={() => setCategoryColor(c.value)}
-                    title={c.label}
+                    title={t(c.label)}
                     style={{
                       width: 28, height: 28, borderRadius: 8, background: c.value, border: categoryColor === c.value ? '3px solid #0b1020' : '2px solid #e2e8f0',
                       cursor: 'pointer', transition: 'all 0.15s',
@@ -190,7 +192,7 @@ export default function BlogAdminPage() {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>أيقونة المقال</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('أيقونة المقال')}</label>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 {POST_EMOJIS.map(e => (
                   <button key={e} onClick={() => setImage(e)}
@@ -207,9 +209,9 @@ export default function BlogAdminPage() {
 
           {/* Content */}
           <div style={{ marginTop: 12 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>المحتوى (كل سطر = فقرة)</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>{t('المحتوى (كل سطر = فقرة)')}</label>
             <textarea rows={8} value={contentText} onChange={e => setContentText(e.target.value)}
-              placeholder="اكتب محتوى المقال هنا...\nكل سطر يُعتبر فقرة منفصلة.\nيمكنك استخدام إيموجي مثل 🔹 أو ✅ في بداية السطر."
+              placeholder={t('اكتب محتوى المقال هنا...\nكل سطر يُعتبر فقرة منفصلة.\nيمكنك استخدام إيموجي مثل 🔹 أو ✅ في بداية السطر.')}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.8 }} />
           </div>
 
@@ -218,12 +220,12 @@ export default function BlogAdminPage() {
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>
               <input type="checkbox" checked={isPublished} onChange={e => setIsPublished(e.target.checked)}
                 style={{ accentColor: '#7c5cff', width: 18, height: 18 }} />
-              نشر المقال فوراً
+              {t('نشر المقال فوراً')}
             </label>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => { setShowForm(false); resetForm(); }}
                 style={{ padding: '0.6rem 1.5rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
-                إلغاء
+                {t('إلغاء')}
               </button>
               <button onClick={handleSave} disabled={saving || !title.trim()}
                 style={{
@@ -234,7 +236,7 @@ export default function BlogAdminPage() {
                   cursor: saving ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
                   opacity: (saving || !title.trim()) ? 0.6 : 1,
                 }}>
-                <Save size={14} /> {saving ? 'جاري الحفظ...' : editingPost ? 'حفظ التعديلات' : 'نشر المقال'}
+                <Save size={14} /> {saving ? t('جاري الحفظ...') : editingPost ? t('حفظ التعديلات') : t('نشر المقال')}
               </button>
             </div>
           </div>
@@ -262,8 +264,8 @@ export default function BlogAdminPage() {
       {!loading && posts.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
           <BookOpen size={48} color="#94a3b8" style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>لا توجد مقالات بعد</p>
-          <p style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>اضغط &quot;مقال جديد&quot; لإضافة أول مقال في المدونة</p>
+          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>{t('لا توجد مقالات بعد')}</p>
+          <p style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>{t('اضغط "مقال جديد" لإضافة أول مقال في المدونة')}</p>
         </div>
       )}
 
@@ -290,28 +292,28 @@ export default function BlogAdminPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.title}</h4>
                   {!post.is_published && (
-                    <span style={{ padding: '2px 8px', borderRadius: 6, background: '#fef3c7', color: '#92400e', fontSize: '0.65rem', fontWeight: 600, flexShrink: 0 }}>مسودة</span>
+                    <span style={{ padding: '2px 8px', borderRadius: 6, background: '#fef3c7', color: '#92400e', fontSize: '0.65rem', fontWeight: 600, flexShrink: 0 }}>{t('مسودة')}</span>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 10, fontSize: '0.72rem', color: '#94a3b8', flexWrap: 'wrap' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 6, background: `${post.category_color || '#3b82f6'}12`, color: post.category_color || '#3b82f6', fontWeight: 600 }}>{post.category || 'بدون تصنيف'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 6, background: `${post.category_color || '#3b82f6'}12`, color: post.category_color || '#3b82f6', fontWeight: 600 }}>{post.category || t('بدون تصنيف')}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Calendar size={11} /> {new Date(post.published_at || post.created_at).toLocaleDateString('ar-SA')}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={11} /> {(post.views || 0).toLocaleString()}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {post.read_time} د</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {post.read_time} {t('د')}</span>
                 </div>
               </div>
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                <button onClick={() => handleTogglePublish(post.id)} title={post.is_published ? 'إلغاء النشر' : 'نشر'}
+                <button onClick={() => handleTogglePublish(post.id)} title={post.is_published ? t('إلغاء النشر') : t('نشر')}
                   style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: post.is_published ? '#f0fdf4' : '#fef3c7', color: post.is_published ? '#16a34a' : '#92400e', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                   {post.is_published ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
-                <button onClick={() => openEditForm(post)} title="تعديل"
+                <button onClick={() => openEditForm(post)} title={t('تعديل')}
                   style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: '#f1f5f9', color: '#64748b', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                   <Edit size={15} />
                 </button>
-                <button onClick={() => handleDelete(post.id)} title="حذف"
+                <button onClick={() => handleDelete(post.id)} title={t('حذف')}
                   style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: '#fef2f2', color: '#ef4444', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                   <Trash2 size={15} />
                 </button>

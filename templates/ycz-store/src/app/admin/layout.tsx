@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/providers/ThemeProvider';
+import { AdminLanguageProvider, useAdminLang } from '@/providers/AdminLanguageProvider';
 import Sidebar from '@/components/admin/Sidebar';
 import DashHeader from '@/components/admin/DashHeader';
 
@@ -14,12 +15,13 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
   setCurrentPage: (p: string) => void;
   theme: import('@/lib/themes').ColorTheme;
 }) {
+  const { t } = useAdminLang();
   const items = [
-    { id: 'overview', icon: LayoutDashboard, label: 'الرئيسية' },
-    { id: 'products', icon: Package, label: 'المنتجات' },
-    { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
-    { id: 'users', icon: Users, label: 'المستخدمين' },
-    { id: 'settings', icon: Settings, label: 'الإعدادات' },
+    { id: 'overview', icon: LayoutDashboard, label: t('الرئيسية') },
+    { id: 'products', icon: Package, label: t('المنتجات') },
+    { id: 'orders', icon: ShoppingCart, label: t('الطلبات') },
+    { id: 'users', icon: Users, label: t('المستخدمين') },
+    { id: 'settings', icon: Settings, label: t('الإعدادات') },
   ];
 
   return (
@@ -84,14 +86,16 @@ import SettingsAdminPage from './pages/SettingsAdminPage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    }>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
-    </Suspense>
+    <AdminLanguageProvider>
+      <Suspense fallback={
+        <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f1f5f9', fontFamily: 'Tajawal, sans-serif' }}>
+          <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#7c5cff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      }>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </Suspense>
+    </AdminLanguageProvider>
   );
 }
 
@@ -99,6 +103,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currentTheme, logoPreview, storeName } = useTheme();
+  const { t, isRTL, lang } = useAdminLang();
 
   const [currentPage, setCurrentPage] = useState('overview');
   const [overviewReload, setOverviewReload] = useState(0);
@@ -221,7 +226,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     e.preventDefault();
     setLoginError('');
     if (!loginEmail.trim() || !loginPassword.trim()) {
-      setLoginError('البريد الإلكتروني وكلمة المرور مطلوبان');
+      setLoginError(t('البريد الإلكتروني وكلمة المرور مطلوبان'));
       return;
     }
     setLoginLoading(true);
@@ -234,12 +239,12 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setLoginError(data.error || 'حدث خطأ أثناء تسجيل الدخول');
+        setLoginError(data.error || t('حدث خطأ أثناء تسجيل الدخول'));
         setLoginLoading(false);
         return;
       }
       if (data.user?.role !== 'admin') {
-        setLoginError('هذا الحساب ليس حساب مدير');
+        setLoginError(t('هذا الحساب ليس حساب مدير'));
         setLoginLoading(false);
         return;
       }
@@ -250,7 +255,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       setAuthed(true);
       setLoginLoading(false);
     } catch {
-      setLoginError('لا يمكن الاتصال بالخادم');
+      setLoginError(t('لا يمكن الاتصال بالخادم'));
       setLoginLoading(false);
     }
   }
@@ -268,11 +273,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   // ─── Show 404 if slug not verified ───
   if (slugVerified === false) {
     return (
-      <div dir="rtl" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f8fafc', fontFamily: 'Tajawal, sans-serif' }}>
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f8fafc', fontFamily: 'Tajawal, sans-serif' }}>
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: '4rem', fontWeight: 900, color: '#cbd5e1', marginBottom: 8 }}>404</h1>
-          <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: 24 }}>الصفحة غير موجودة</p>
-          <a href="/" style={{ padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>العودة للرئيسية</a>
+          <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: 24 }}>{t('الصفحة غير موجودة')}</p>
+          <a href="/" style={{ padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>{t('العودة للرئيسية')}</a>
         </div>
       </div>
     );
@@ -290,7 +295,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (authed === false) {
     return (
-      <div dir="rtl" style={{
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{
         minHeight: '100vh', display: 'grid', placeItems: 'center',
         background: 'linear-gradient(135deg, #0b1020 0%, #1a1040 50%, #0f0a2a 100%)',
         fontFamily: 'Tajawal, sans-serif', padding: '1rem',
@@ -311,9 +316,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: 6 }}>
-              {storeName || 'لوحة التحكم'}
+              {storeName || t('لوحة التحكم')}
             </h1>
-            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>سجّل الدخول للوصول إلى لوحة الإدارة</p>
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>{t('سجّل الدخول للوصول إلى لوحة الإدارة')}</p>
           </div>
 
           {/* Form */}
@@ -336,15 +341,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             {/* Email */}
             <div style={{ marginBottom: 18 }}>
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>
-                البريد الإلكتروني
+                {t('البريد الإلكتروني')}
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                <Mail size={16} style={{ position: 'absolute', right: isRTL ? 14 : undefined, left: isRTL ? undefined : 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                 <input
                   type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
                   placeholder="admin@example.com" dir="ltr"
                   style={{
-                    width: '100%', padding: '0.8rem 1rem', paddingRight: 42,
+                    width: '100%', padding: '0.8rem 1rem', paddingRight: isRTL ? 42 : undefined, paddingLeft: isRTL ? undefined : 42,
                     borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
                     background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.88rem',
                     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
@@ -356,22 +361,22 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             {/* Password */}
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>
-                كلمة المرور
+                {t('كلمة المرور')}
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                <Lock size={16} style={{ position: 'absolute', right: isRTL ? 14 : undefined, left: isRTL ? undefined : 14, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                 <input
                   type={loginShowPass ? 'text' : 'password'} value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
                   placeholder="••••••••" dir="ltr"
                   style={{
-                    width: '100%', padding: '0.8rem 2.8rem 0.8rem 1rem', paddingRight: 42,
+                    width: '100%', padding: '0.8rem 2.8rem 0.8rem 1rem', paddingRight: isRTL ? 42 : undefined, paddingLeft: isRTL ? undefined : 42,
                     borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
                     background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.88rem',
                     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
                   }}
                 />
                 <button type="button" onClick={() => setLoginShowPass(!loginShowPass)} style={{
-                  position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                  position: 'absolute', left: isRTL ? 12 : undefined, right: isRTL ? undefined : 12, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4,
                 }}>
                   {loginShowPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -390,7 +395,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               opacity: loginLoading ? 0.8 : 1,
             }}>
               {loginLoading ? <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite' }} /> : <LogIn size={18} />}
-              {loginLoading ? 'جاري الدخول...' : 'تسجيل الدخول'}
+              {loginLoading ? t('جاري الدخول...') : t('تسجيل الدخول')}
             </button>
           </form>
         </div>
@@ -430,7 +435,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div dir="rtl" className={mobileDrawerOpen ? 'dash-drawer-open' : ''} style={{
+    <div dir={isRTL ? 'rtl' : 'ltr'} className={mobileDrawerOpen ? 'dash-drawer-open' : ''} style={{
       fontFamily: 'Tajawal, Cairo, sans-serif',
       background: '#f1f5f9', minHeight: '100vh', color: '#0b1020',
     }}>
@@ -459,8 +464,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       />
 
       <div className="dash-main-content" style={{
-        marginRight: collapsed ? 70 : 260,
-        transition: 'margin-right 0.3s',
+        marginRight: isRTL ? (collapsed ? 70 : 260) : undefined,
+        marginLeft: isRTL ? undefined : (collapsed ? 70 : 260),
+        transition: 'margin 0.3s',
         minHeight: '100vh', paddingBottom: '1rem',
       }}>
         <DashHeader

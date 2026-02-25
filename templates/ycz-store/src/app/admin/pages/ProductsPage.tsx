@@ -5,8 +5,10 @@ import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertC
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 export default function ProductsPage({ theme }: { theme: ColorTheme }) {
+  const { t, isRTL } = useAdminLang();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
@@ -116,10 +118,10 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       setNewName(''); setNewArabicName(''); setNewPrice(''); setNewDesc('');
       setNewServiceType('SERVER'); setNewGroup(''); setNewCustomGroup('');
       setNewIsGame(false);
-      showToast('تم إنشاء المنتج بنجاح');
+      showToast(t('تم إنشاء المنتج بنجاح'));
       loadProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل إنشاء المنتج';
+      const msg = err instanceof Error ? err.message : t('فشل إنشاء المنتج');
       showToast(msg, 'error');
     }
     finally { setSaving(false); }
@@ -159,14 +161,14 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       // حقول افتراضية حسب نوع الخدمة
       const sType = (product.service_type || 'SERVER').toUpperCase();
       if (sType === 'IMEI') {
-        setEditCustomFields([{ key: 'imei', label: 'رقم IMEI', placeholder: 'مثال: 356938035643809', required: true }]);
+        setEditCustomFields([{ key: 'imei', label: t('رقم IMEI'), placeholder: t('مثال: 356938035643809'), required: true }]);
       } else if (sType === 'SERVER') {
         setEditCustomFields([
-          { key: 'username', label: 'اسم المستخدم', placeholder: 'أدخل اسم المستخدم', required: true },
-          { key: 'password', label: 'كلمة المرور', placeholder: 'أدخل كلمة المرور', required: true },
+          { key: 'username', label: t('اسم المستخدم'), placeholder: t('أدخل اسم المستخدم'), required: true },
+          { key: 'password', label: t('كلمة المرور'), placeholder: t('أدخل كلمة المرور'), required: true },
         ]);
       } else {
-        setEditCustomFields([{ key: 'info', label: 'معلومات', placeholder: 'أدخل المعلومات المطلوبة', required: true }]);
+        setEditCustomFields([{ key: 'info', label: t('معلومات'), placeholder: t('أدخل المعلومات المطلوبة'), required: true }]);
       }
     }
     setShowEdit(true);
@@ -212,7 +214,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         const fieldsArr = editCustomFields.filter(f => f.key.trim()).map(f => ({
           key: f.key.trim(),
           label: f.label.trim() || f.key.trim(),
-          placeholder: f.placeholder.trim() || `أدخل ${f.label.trim() || f.key.trim()}`,
+          placeholder: f.placeholder.trim() || (isRTL ? `أدخل ${f.label.trim() || f.key.trim()}` : `Enter ${f.label.trim() || f.key.trim()}`),
           required: f.required ? '1' : '0',
         }));
         updateData.requires_custom_json = fieldsArr.length > 0 ? fieldsArr : null;
@@ -227,31 +229,31 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
       await adminApi.updateProduct(editId, updateData);
       closeEdit();
-      showToast('تم تحديث المنتج بنجاح');
+      showToast(t('تم تحديث المنتج بنجاح'));
       loadProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل تحديث المنتج';
+      const msg = err instanceof Error ? err.message : t('فشل تحديث المنتج');
       showToast(msg, 'error');
     }
     finally { setUpdating(false); }
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع.')) return;
+    if (!confirm(t('هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع.'))) return;
     try {
       await adminApi.deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
       setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
-      showToast('تم حذف المنتج');
+      showToast(t('تم حذف المنتج'));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل حذف المنتج';
+      const msg = err instanceof Error ? err.message : t('فشل حذف المنتج');
       showToast(msg, 'error');
     }
   }
 
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return;
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.`)) return;
+    if (!confirm(isRTL ? `هل أنت متأكد من حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.` : `Are you sure you want to delete ${selectedIds.size} product(s)? This cannot be undone.`)) return;
     setBulkDeleting(true);
     let successCount = 0;
     let failCount = 0;
@@ -265,9 +267,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     }
     setSelectedIds(new Set());
     if (failCount > 0) {
-      showToast(`تم حذف ${successCount} منتج، فشل ${failCount}`, 'error');
+      showToast(isRTL ? `تم حذف ${successCount} منتج، فشل ${failCount}` : `Deleted ${successCount} product(s), ${failCount} failed`, 'error');
     } else {
-      showToast(`تم حذف ${successCount} منتج بنجاح`);
+      showToast(isRTL ? `تم حذف ${successCount} منتج بنجاح` : `Successfully deleted ${successCount} product(s)`);
     }
     await loadProducts();
     setBulkDeleting(false);
@@ -300,7 +302,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       console.error('toggleFeatured error:', err);
       // Rollback — نرجع الحالة الأصلية عند الفشل
       setProducts(prev => prev.map(p => p.id === id ? { ...p, is_featured: p.is_featured ? 0 : 1 } : p));
-      alert('فشل تبديل حالة المنتج المميز — تأكد من أن الخادم يعمل');
+      alert(t('فشل تبديل حالة المنتج المميز — تأكد من أن الخادم يعمل'));
     }
   }
 
@@ -325,12 +327,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     setGroupActionLoading(true);
     try {
       const res = await adminApi.renameGroup(oldName, renameValue.trim());
-      showToast(res?.message || 'تم تغيير اسم القروب');
+      showToast(res?.message || t('تم تغيير اسم القروب'));
       setRenamingGroup(null);
       setRenameValue('');
       await loadProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل تغيير اسم القروب';
+      const msg = err instanceof Error ? err.message : t('فشل تغيير اسم القروب');
       showToast(msg, 'error');
     } finally {
       setGroupActionLoading(false);
@@ -338,15 +340,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }
 
   async function handleDeleteGroup(groupName: string, productCount: number) {
-    if (!confirm(`هل أنت متأكد من حذف قروب "${groupName}" مع جميع منتجاتها (${productCount} منتج)؟\nلا يمكن التراجع.`)) return;
+    if (!confirm(isRTL ? `هل أنت متأكد من حذف قروب "${groupName}" مع جميع منتجاتها (${productCount} منتج)؟\nلا يمكن التراجع.` : `Are you sure you want to delete group "${groupName}" with all its products (${productCount} product(s))?\nThis cannot be undone.`)) return;
     setGroupActionLoading(true);
     try {
       const res = await adminApi.deleteGroup(groupName);
-      showToast(res?.message || 'تم حذف القروب');
+      showToast(res?.message || t('تم حذف القروب'));
       setSelectedGroups(prev => { const n = new Set(prev); n.delete(groupName); return n; });
       await loadProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل حذف القروب';
+      const msg = err instanceof Error ? err.message : t('فشل حذف القروب');
       showToast(msg, 'error');
     } finally {
       setGroupActionLoading(false);
@@ -356,7 +358,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   async function handleBulkDeleteGroups() {
     if (selectedGroups.size === 0) return;
     const totalProducts = groupsData.filter(g => selectedGroups.has(g.name)).reduce((sum, g) => sum + g.count, 0);
-    if (!confirm(`هل أنت متأكد من حذف ${selectedGroups.size} قروب مع جميع منتجاتها (${totalProducts} منتج)؟\nلا يمكن التراجع.`)) return;
+    if (!confirm(isRTL ? `هل أنت متأكد من حذف ${selectedGroups.size} قروب مع جميع منتجاتها (${totalProducts} منتج)؟\nلا يمكن التراجع.` : `Are you sure you want to delete ${selectedGroups.size} group(s) with all their products (${totalProducts} product(s))?\nThis cannot be undone.`)) return;
     setBulkDeletingGroups(true);
     let successCount = 0;
     let failCount = 0;
@@ -370,9 +372,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     }
     setSelectedGroups(new Set());
     if (failCount > 0) {
-      showToast(`تم حذف ${successCount} قروب، فشل ${failCount}`, 'error');
+      showToast(isRTL ? `تم حذف ${successCount} قروب، فشل ${failCount}` : `Deleted ${successCount} group(s), ${failCount} failed`, 'error');
     } else {
-      showToast(`تم حذف ${successCount} قروب بنجاح`);
+      showToast(isRTL ? `تم حذف ${successCount} قروب بنجاح` : `Successfully deleted ${successCount} group(s)`);
     }
     await loadProducts();
     setBulkDeletingGroups(false);
@@ -488,7 +490,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={22} color="#64748b" /> المنتجات</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={22} color="#64748b" /> {t('المنتجات')}</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
@@ -497,7 +499,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           }}>
             <Search size={14} color="#94a3b8" />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="بحث..."
+              placeholder={t('بحث...')}
               style={{ border: 'none', outline: 'none', width: 140, fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
             />
           </div>
@@ -508,7 +510,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             border: 'none', fontSize: '0.82rem', fontWeight: 700,
             cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
           }}>
-            <Plus size={16} /> إضافة منتج
+            <Plus size={16} /> {t('إضافة منتج')}
           </button>
         </div>
       </div>
@@ -520,7 +522,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           border: '1px solid #f1f5f9', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>منتج جديد</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{t('منتج جديد')}</h3>
             <button onClick={() => setShowAdd(false)} style={{
               width: 28, height: 28, borderRadius: 6,
               border: 'none', background: '#f1f5f9',
@@ -530,17 +532,17 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <input placeholder="اسم المنتج" value={newName} onChange={e => setNewName(e.target.value)} style={{
+            <input placeholder={t('اسم المنتج')} value={newName} onChange={e => setNewName(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="اسم المنتج بالعربي" value={newArabicName} onChange={e => setNewArabicName(e.target.value)} style={{
+            <input placeholder={t('اسم المنتج بالعربي')} value={newArabicName} onChange={e => setNewArabicName(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <input placeholder="السعر ($)" value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{
+            <input placeholder={t('السعر ($)')} value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{
               padding: '0.65rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
@@ -559,19 +561,19 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff',
             }}>
-              <option value="">— اختر القروب —</option>
+              <option value="">{t('— اختر القروب —')}</option>
               {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
-              <option value="__new__">➕ قروب جديد...</option>
+              <option value="__new__">{t('➕ قروب جديد...')}</option>
             </select>
             {newGroup === '__new__' && (
-              <input placeholder="اسم القروب الجديد" value={newCustomGroup} onChange={e => setNewCustomGroup(e.target.value)} style={{
+              <input placeholder={t('اسم القروب الجديد')} value={newCustomGroup} onChange={e => setNewCustomGroup(e.target.value)} style={{
                 padding: '0.65rem 1rem', borderRadius: 10,
                 border: '1px solid #e2e8f0', fontSize: '0.85rem',
                 fontFamily: 'Tajawal, sans-serif', outline: 'none',
               }} />
             )}
           </div>
-          <textarea rows={2} placeholder="وصف المنتج..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{
+          <textarea rows={2} placeholder={t('وصف المنتج...')} value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{
             width: '100%', padding: '0.65rem 1rem', borderRadius: 10,
             border: '1px solid #e2e8f0', fontSize: '0.85rem',
             fontFamily: 'Tajawal, sans-serif', outline: 'none',
@@ -580,7 +582,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.8rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>
             <input type="checkbox" checked={newIsGame} onChange={(e) => setNewIsGame(e.target.checked)} style={{ width: 16, height: 16 }} />
-            تصنيف كـ لعبة (isGame)
+            {t('تصنيف كـ لعبة (isGame)')}
           </label>
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -590,13 +592,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
               border: 'none', fontSize: '0.82rem', fontWeight: 700,
               cursor: saving ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
               opacity: saving ? 0.7 : 1,
-            }}>{saving ? 'جاري الحفظ...' : 'حفظ'}</button>
+            }}>{saving ? t('جاري الحفظ...') : t('حفظ')}</button>
             <button onClick={() => setShowAdd(false)} style={{
               padding: '0.6rem 1.5rem', borderRadius: 10,
               background: '#f1f5f9', color: '#64748b',
               border: 'none', fontSize: '0.82rem', fontWeight: 700,
               cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-            }}>إلغاء</button>
+            }}>{t('إلغاء')}</button>
           </div>
         </div>
       )}
@@ -605,10 +607,10 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       {/* ─── Stats Cards ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 14 }}>
         {[
-          { label: 'إجمالي المنتجات', value: stats.total, bg: '#f8fafc', color: '#0b1020', Icon: Package },
-          { label: 'منتجات نشطة', value: stats.active, bg: '#f0fdf4', color: '#16a34a', Icon: CheckCircle },
-          { label: 'خدمات IMEI', value: stats.imei, bg: '#eff6ff', color: '#2563eb', Icon: Smartphone },
-          { label: 'أدوات سوفتوير', value: stats.server, bg: '#f5f3ff', color: '#7c3aed', Icon: Monitor },
+          { label: t('إجمالي المنتجات'), value: stats.total, bg: '#f8fafc', color: '#0b1020', Icon: Package },
+          { label: t('منتجات نشطة'), value: stats.active, bg: '#f0fdf4', color: '#16a34a', Icon: CheckCircle },
+          { label: t('خدمات IMEI'), value: stats.imei, bg: '#eff6ff', color: '#2563eb', Icon: Smartphone },
+          { label: t('أدوات سوفتوير'), value: stats.server, bg: '#f5f3ff', color: '#7c3aed', Icon: Monitor },
         ].map((item, i) => (
           <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 14, padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: item.bg, display: 'grid', placeItems: 'center' }}><item.Icon size={18} color={item.color} /></div>
@@ -624,19 +626,19 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
-            <option value="all">كل الحالات</option>
-            <option value="active">نشط</option>
-            <option value="inactive">غير نشط</option>
+            <option value="all">{t('كل الحالات')}</option>
+            <option value="active">{t('نشط')}</option>
+            <option value="inactive">{t('غير نشط')}</option>
           </select>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif' }}>
-            <option value="all">كل الأنواع</option>
+            <option value="all">{t('كل الأنواع')}</option>
             <option value="SERVER">SERVER</option>
             <option value="IMEI">IMEI</option>
             <option value="REMOTE">REMOTE</option>
           </select>
           <select value={filterGroup} onChange={(e) => setFilterGroup(e.target.value)} style={{ padding: '0.45rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0', background: filterGroup === '__manage_groups__' ? '#eff6ff' : '#fff', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', minWidth: 160, fontWeight: filterGroup === '__manage_groups__' ? 700 : 400 }}>
-            <option value="all">كل القروبات</option>
-            <option value="__manage_groups__">⊞ إدارة القروبات ({groupsData.length})</option>
+            <option value="all">{t('كل القروبات')}</option>
+            <option value="__manage_groups__">{isRTL ? `⊞ إدارة القروبات (${groupsData.length})` : `⊞ Manage Groups (${groupsData.length})`}</option>
             {groupsForDropdown.map((group) => (
               <option key={group} value={group}>{group}</option>
             ))}
@@ -654,7 +656,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             opacity: bulkDeleting ? 0.7 : 1,
           }}>
             <Trash2 size={14} />
-            {bulkDeleting ? 'جاري الحذف...' : `حذف المحدد (${selectedIds.size})`}
+            {bulkDeleting ? t('جاري الحذف...') : (isRTL ? `حذف المحدد (${selectedIds.size})` : `Delete Selected (${selectedIds.size})`)}
           </button>
         )}
       </div>
@@ -667,7 +669,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
           <div style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><FolderOpen size={16} color="#64748b" /> القروبات {filterType !== 'all' ? `(${filterType})` : ''}</h3>
+            <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><FolderOpen size={16} color="#64748b" /> {t('القروبات')} {filterType !== 'all' ? `(${filterType})` : ''}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {selectedGroups.size > 0 && (
                 <button type="button" onClick={handleBulkDeleteGroups} disabled={bulkDeletingGroups} style={{
@@ -679,15 +681,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   opacity: bulkDeletingGroups ? 0.7 : 1,
                 }}>
                   <Trash2 size={12} />
-                  {bulkDeletingGroups ? 'جاري الحذف...' : `حذف المحدد (${selectedGroups.size})`}
+                  {bulkDeletingGroups ? t('جاري الحذف...') : (isRTL ? `حذف المحدد (${selectedGroups.size})` : `Delete Selected (${selectedGroups.size})`)}
                 </button>
               )}
-              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} قروب</span>
+              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{groupsData.length} {t('قروب')}</span>
             </div>
           </div>
 
           {groupsData.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>لا توجد قروبات{filterType !== 'all' ? ` من نوع ${filterType}` : ''}</div>
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>{t('لا توجد قروبات')}{filterType !== 'all' ? (isRTL ? ` من نوع ${filterType}` : ` of type ${filterType}`) : ''}</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -699,8 +701,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                       else setSelectedGroups(new Set(groupsData.map(g => g.name)));
                     }} style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#dc2626' }} />
                   </th>
-                  {['#', 'اسم القروب', 'عدد المنتجات', 'إجراءات'].map(h => (
-                    <th key={h} style={{ padding: '0.7rem 0.8rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
+                  {['#', t('اسم القروب'), t('عدد المنتجات'), t('إجراءات')].map(h => (
+                    <th key={h} style={{ padding: '0.7rem 0.8rem', textAlign: isRTL ? 'right' : 'left', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -741,13 +743,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     </td>
                     <td style={{ padding: '0.65rem 0.8rem' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button type="button" onClick={() => { setRenamingGroup(g.name); setRenameValue(g.name); }} disabled={groupActionLoading} title="تعديل الاسم" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0f9ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button type="button" onClick={() => { setRenamingGroup(g.name); setRenameValue(g.name); }} disabled={groupActionLoading} title={t('تعديل الاسم')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0f9ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Edit size={13} color="#0ea5e9" />
                         </button>
-                        <button type="button" onClick={() => handleDeleteGroup(g.name, g.count)} disabled={groupActionLoading} title="حذف القروب ومنتجاتها" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button type="button" onClick={() => handleDeleteGroup(g.name, g.count)} disabled={groupActionLoading} title={t('حذف القروب ومنتجاتها')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Trash2 size={13} color="#dc2626" />
                         </button>
-                        <button type="button" onClick={() => setFilterGroup(g.name)} title="عرض المنتجات" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button type="button" onClick={() => setFilterGroup(g.name)} title={t('عرض المنتجات')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Search size={13} color="#16a34a" />
                         </button>
                       </div>
@@ -759,7 +761,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{selectedGroups.size > 0 ? `${selectedGroups.size} محدد من ` : ''}{groupsData.length} قروب{filterType !== 'all' ? ` — تصفية: ${filterType}` : ''}</span>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{selectedGroups.size > 0 ? (isRTL ? `${selectedGroups.size} محدد من ` : `${selectedGroups.size} selected of `) : ''}{groupsData.length} {t('قروب')}{filterType !== 'all' ? (isRTL ? ` — تصفية: ${filterType}` : ` — Filter: ${filterType}`) : ''}</span>
           </div>
         </div>
       ) : (
@@ -771,7 +773,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>لا توجد منتجات مطابقة للفلتر</p>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>{t('لا توجد منتجات مطابقة للفلتر')}</p>
           </div>
         ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -782,9 +784,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <input type="checkbox" checked={filtered.length > 0 && selectedIds.size === filtered.length} onChange={toggleSelectAll}
                     style={{ width: 16, height: 16, cursor: 'pointer', accentColor: theme.primary }} />
                 </th>
-                {['#', 'المنتج', 'السعر', 'النوع', 'المصدر', 'الحالة', 'إجراءات'].map(h => (
+                {['#', t('المنتج'), t('السعر'), t('النوع'), t('المصدر'), t('الحالة'), t('إجراءات')].map(h => (
                   <th key={h} style={{
-                    padding: '0.7rem 0.65rem', textAlign: 'right',
+                    padding: '0.7rem 0.65rem', textAlign: isRTL ? 'right' : 'left',
                     fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
                     whiteSpace: 'nowrap',
                   }}>{h}</th>
@@ -834,21 +836,21 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <td style={{ padding: '0.65rem 0.5rem' }}>
                     {p.source_id ? (
                       <span title={`#${p.source_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '0.15rem 0.45rem', borderRadius: 5, background: '#ecfdf5', fontSize: '0.65rem', fontWeight: 700, color: '#059669', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <Link2 size={11} /> {p.source_name || `مصدر #${p.source_id}`}
+                        <Link2 size={11} /> {p.source_name || (isRTL ? `مصدر #${p.source_id}` : `Source #${p.source_id}`)}
                       </span>
                     ) : (
                       <span style={{ fontSize: '0.65rem', color: '#cbd5e1' }}>—</span>
                     )}
                   </td>
                   <td style={{ padding: '0.65rem 0.5rem' }}>
-                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: 5, background: isActive ? '#dcfce7' : '#fee2e2', fontSize: '0.68rem', fontWeight: 700, color: isActive ? '#16a34a' : '#dc2626' }}>{isActive ? 'نشط' : 'غير نشط'}</span>
+                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: 5, background: isActive ? '#dcfce7' : '#fee2e2', fontSize: '0.68rem', fontWeight: 700, color: isActive ? '#16a34a' : '#dc2626' }}>{isActive ? t('نشط') : t('غير نشط')}</span>
                   </td>
                   <td style={{ padding: '0.65rem 0.5rem' }}>
                     <div style={{ display: 'flex', gap: 3 }}>
-                      <button type="button" onClick={(e) => handleToggleFeatured(e, p.id)} title={p.is_featured ? 'إلغاء التمييز' : 'تمييز المنتج'} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: p.is_featured ? '#fef3c7' : '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Star size={12} color={p.is_featured ? '#f59e0b' : '#cbd5e1'} fill={p.is_featured ? '#f59e0b' : 'none'} /></button>
-                      <button type="button" onClick={(e) => handleToggleNamePriority(e, p)} title={`أولوية: ${(p.name_priority || 'ar') === 'ar' ? 'عربي' : 'En'}`} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: (p.name_priority || 'ar') === 'ar' ? '#f0fdf4' : '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '0.58rem', fontWeight: 800, color: (p.name_priority || 'ar') === 'ar' ? '#16a34a' : '#2563eb' }}>{(p.name_priority || 'ar') === 'ar' ? 'ع' : 'En'}</button>
-                      <button type="button" onClick={() => openEdit(p)} title="تعديل" style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={12} color="#3b82f6" /></button>
-                      <button type="button" onClick={() => handleDelete(p.id)} title="حذف" style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={12} color="#dc2626" /></button>
+                      <button type="button" onClick={(e) => handleToggleFeatured(e, p.id)} title={p.is_featured ? t('إلغاء التمييز') : t('تمييز المنتج')} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: p.is_featured ? '#fef3c7' : '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Star size={12} color={p.is_featured ? '#f59e0b' : '#cbd5e1'} fill={p.is_featured ? '#f59e0b' : 'none'} /></button>
+                      <button type="button" onClick={(e) => handleToggleNamePriority(e, p)} title={isRTL ? `أولوية: ${(p.name_priority || 'ar') === 'ar' ? 'عربي' : 'En'}` : `Priority: ${(p.name_priority || 'ar') === 'ar' ? 'Arabic' : 'En'}`} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: (p.name_priority || 'ar') === 'ar' ? '#f0fdf4' : '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '0.58rem', fontWeight: 800, color: (p.name_priority || 'ar') === 'ar' ? '#16a34a' : '#2563eb' }}>{(p.name_priority || 'ar') === 'ar' ? 'ع' : 'En'}</button>
+                      <button type="button" onClick={() => openEdit(p)} title={t('تعديل')} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={12} color="#3b82f6" /></button>
+                      <button type="button" onClick={() => handleDelete(p.id)} title={t('حذف')} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={12} color="#dc2626" /></button>
                     </div>
                   </td>
                 </tr>
@@ -861,7 +863,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
         {/* Table footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
           <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-            {selectedIds.size > 0 ? `${selectedIds.size} محدد من ` : ''}عرض {filtered.length} من {products.length} منتج
+            {selectedIds.size > 0 ? (isRTL ? `${selectedIds.size} محدد من ` : `${selectedIds.size} selected of `) : ''}{isRTL ? `عرض ${filtered.length} من ${products.length} منتج` : `Showing ${filtered.length} of ${products.length} products`}
           </span>
         </div>
       </div>
@@ -896,8 +898,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <Edit size={16} color={theme.primary} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020', margin: 0 }}>تعديل المنتج</h3>
-                  <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>تعديل بيانات وإعدادات المنتج</p>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020', margin: 0 }}>{t('تعديل المنتج')}</h3>
+                  <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>{t('تعديل بيانات وإعدادات المنتج')}</p>
                 </div>
               </div>
               <button type="button" onClick={closeEdit} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', transition: 'background 0.15s' }} onMouseOver={e => (e.currentTarget.style.background = '#f1f5f9')} onMouseOut={e => (e.currentTarget.style.background = '#fff')}>
@@ -913,19 +915,19 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: '#dbeafe', display: 'grid', placeItems: 'center' }}>
                   <Type size={14} color="#2563eb" />
                 </div>
-                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>معلومات أساسية</p>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('معلومات أساسية')}</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> الاسم (إنجليزي)</label>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> {t('الاسم (إنجليزي)')}</label>
                   <input placeholder="Product Name" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Type size={10} /> الاسم (عربي)</label>
-                  <input placeholder="اسم المنتج" value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Type size={10} /> {t('الاسم (عربي)')}</label>
+                  <input placeholder={t('اسم المنتج')} value={editArabicName} onChange={(e) => setEditArabicName(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><DollarSign size={10} /> السعر</label>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><DollarSign size={10} /> {t('السعر')}</label>
                   <input placeholder="0.00" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s', textAlign: 'center' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                 </div>
               </div>
@@ -937,11 +939,11 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fef3c7', display: 'grid', placeItems: 'center' }}>
                   <Settings2 size={14} color="#d97706" />
                 </div>
-                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>إعدادات المنتج</p>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('إعدادات المنتج')}</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Package size={10} /> النوع</label>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Package size={10} /> {t('النوع')}</label>
                   <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
                     <option value="SERVER">SERVER</option>
                     <option value="IMEI">IMEI</option>
@@ -949,17 +951,17 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><ToggleLeft size={10} /> الحالة</label>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><ToggleLeft size={10} /> {t('الحالة')}</label>
                   <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
-                    <option value="active">نشط</option>
-                    <option value="inactive">غير نشط</option>
+                    <option value="active">{t('نشط')}</option>
+                    <option value="inactive">{t('غير نشط')}</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> أولوية اللغة</label>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10} /> {t('أولوية اللغة')}</label>
                   <select value={editNamePriority} onChange={(e) => setEditNamePriority(e.target.value as 'ar' | 'en')} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}>
-                    <option value="ar">عربي أولاً</option>
-                    <option value="en">English أولاً</option>
+                    <option value="ar">{t('عربي أولاً')}</option>
+                    <option value="en">{t('English أولاً')}</option>
                   </select>
                 </div>
               </div>
@@ -967,13 +969,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', width: 'fit-content' }}>
                   <input type="checkbox" checked={editIsGame} onChange={(e) => setEditIsGame(e.target.checked)} style={{ width: 15, height: 15, accentColor: theme.primary }} />
                   <Gamepad2 size={13} color="#64748b" />
-                  تصنيف كـ لعبة
+                  {t('تصنيف كـ لعبة')}
                 </label>
                 {editServiceType === 'SERVER' && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.74rem', fontWeight: 700, color: '#334155', fontFamily: 'Tajawal, sans-serif', padding: '0.4rem 0.6rem', background: editAllowsQnt ? '#f0fdf4' : '#fff', borderRadius: 8, border: '1px solid ' + (editAllowsQnt ? '#bbf7d0' : '#e2e8f0'), cursor: 'pointer', width: 'fit-content', transition: 'all 0.15s' }}>
                     <input type="checkbox" checked={editAllowsQnt} onChange={(e) => setEditAllowsQnt(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#16a34a' }} />
                     <Package size={13} color={editAllowsQnt ? '#16a34a' : '#64748b'} />
-                    تفعيل QNT (الكمية)
+                    {t('تفعيل QNT (الكمية)')}
                   </label>
                 )}
               </div>
@@ -987,15 +989,15 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <div style={{ width: 28, height: 28, borderRadius: 7, background: '#e0e7ff', display: 'grid', placeItems: 'center' }}>
                     <FolderOpen size={14} color="#6366f1" />
                   </div>
-                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>القروب</p>
+                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('القروب')}</p>
                 </div>
                 <select value={editGroup === '__new__' ? '__new__' : editGroup} onChange={e => { setEditGroup(e.target.value); if (e.target.value !== '__new__') setEditCustomGroup(''); }} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box', cursor: 'pointer', marginBottom: editGroup === '__new__' ? 8 : 0 }}>
-                  <option value="">— بدون قروب —</option>
+                  <option value="">{t('— بدون قروب —')}</option>
                   {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                  <option value="__new__">+ قروب جديد...</option>
+                  <option value="__new__">{t('+ قروب جديد...')}</option>
                 </select>
                 {editGroup === '__new__' && (
-                  <input placeholder="اسم القروب الجديد" value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                  <input placeholder={t('اسم القروب الجديد')} value={editCustomGroup} onChange={e => setEditCustomGroup(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
                 )}
               </div>
 
@@ -1005,9 +1007,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   <div style={{ width: 28, height: 28, borderRadius: 7, background: '#dcfce7', display: 'grid', placeItems: 'center' }}>
                     <FileText size={14} color="#16a34a" />
                   </div>
-                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>الوصف</p>
+                  <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('الوصف')}</p>
                 </div>
-                <textarea rows={3} placeholder="أضف وصف للمنتج..." value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <textarea rows={3} placeholder={t('أضف وصف للمنتج...')} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.76rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }} onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
             </div>
 
@@ -1017,12 +1019,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fce7f3', display: 'grid', placeItems: 'center' }}>
                   <Link2 size={14} color="#db2777" />
                 </div>
-                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>اتصال المصدر</p>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('اتصال المصدر')}</p>
                 {editOriginalSourceId && (
-                  <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }), display: 'flex', alignItems: 'center', gap: 5 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: editSourceConnected ? '#16a34a' : '#dc2626' }} />
                     <span style={{ fontSize: '0.65rem', fontWeight: 600, color: editSourceConnected ? '#16a34a' : '#dc2626' }}>
-                      {editSourceConnected ? 'متصل — يرسل تلقائياً' : 'مفصول — الطلبات معلقة'}
+                      {editSourceConnected ? t('متصل — يرسل تلقائياً') : t('مفصول — الطلبات معلقة')}
                     </span>
                   </div>
                 )}
@@ -1032,7 +1034,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 {/* اختيار المصدر */}
                 <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                   <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Database size={10} /> المصدر المرتبط
+                    <Database size={10} /> {t('المصدر المرتبط')}
                   </label>
                   <select
                     value={editSourceConnected ? String(editSelectedSourceId || '') : ''}
@@ -1055,16 +1057,16 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                     }}
                     style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.74rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fafbfc', boxSizing: 'border-box', cursor: 'pointer' }}
                   >
-                    <option value="">— بدون مصدر (مفصول) —</option>
+                    <option value="">{t('— بدون مصدر (مفصول) —')}</option>
                     {sources.map(s => (
                       <option key={s.id} value={String(s.id)}>
-                        {s.name}{editOriginalSourceId === s.id ? ' ✦ الحالي' : ''}
+                        {s.name}{editOriginalSourceId === s.id ? (isRTL ? ' ✦ الحالي' : ' ✦ Current') : ''}
                       </option>
                     ))}
                   </select>
                   {editSelectedSourceId && editSelectedSourceId !== editOriginalSourceId && (
                     <p style={{ fontSize: '0.6rem', color: '#d97706', marginTop: 4, margin: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <ArrowRightLeft size={9} /> سيتم نقل المنتج لمصدر جديد
+                      <ArrowRightLeft size={9} /> {t('سيتم نقل المنتج لمصدر جديد')}
                     </p>
                   )}
                 </div>
@@ -1073,10 +1075,10 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ padding: '0.55rem 0.75rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                     <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <RefreshCw size={10} /> المنتج المرتبط (تحويل الطلب)
+                      <RefreshCw size={10} /> {t('المنتج المرتبط (تحويل الطلب)')}
                     </label>
                     <span style={{ fontSize: '0.58rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
-                      {editServiceType} · {linkableProducts.length} منتج
+                      {editServiceType} · {linkableProducts.length} {t('منتج')}
                     </span>
                   </div>
 
@@ -1091,7 +1093,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         padding: '0.5rem 0.65rem', borderRadius: 8,
                         border: '1px solid ' + (showLinkDropdown ? '#93c5fd' : '#e2e8f0'),
                         background: '#fafbfc', cursor: 'pointer',
-                        fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                        fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
                         transition: 'border-color 0.15s',
                       }}
                     >
@@ -1109,7 +1111,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         <>
                           <CheckCircle size={12} color="#16a34a" />
                           <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#374151', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : 'نفس المنتج'; })()}
+                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : t('نفس المنتج'); })()}
                           </span>
                           <span style={{ fontSize: '0.55rem', color: '#16a34a', background: '#dcfce7', padding: '0.08rem 0.35rem', borderRadius: 4, fontWeight: 600, flexShrink: 0 }}>
                             {(() => { const ep = products.find(p => p.id === editId); return ep?.price ? `${ep.price} USD` : ''; })()}
@@ -1130,7 +1132,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                               value={linkSearch}
                               onChange={e => setLinkSearch(e.target.value)}
                               autoFocus
-                              placeholder={`ابحث في منتجات ${editServiceType}...`}
+                              placeholder={isRTL ? `ابحث في منتجات ${editServiceType}...` : `Search ${editServiceType} products...`}
                               style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.68rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
                             />
                           </div>
@@ -1145,7 +1147,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                             padding: '0.45rem 0.65rem',
                             background: !editLinkedProductId ? '#f0fdf4' : 'transparent',
                             border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer',
-                            fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                            fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
                             transition: 'background 0.1s',
                           }}
                           onMouseOver={e => { if (editLinkedProductId) e.currentTarget.style.background = '#f8fafc'; }}
@@ -1153,9 +1155,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         >
                           <CheckCircle size={11} color="#16a34a" />
                           <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#374151', flex: 1 }}>
-                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : 'نفس المنتج'; })()}
+                            {(() => { const ep = products.find(p => p.id === editId); return ep ? (ep.arabic_name || ep.name) : t('نفس المنتج'); })()}
                           </span>
-                          <span style={{ fontSize: '0.55rem', color: '#16a34a', fontWeight: 700 }}>✦ نفسه</span>
+                          <span style={{ fontSize: '0.55rem', color: '#16a34a', fontWeight: 700 }}>{t('✦ نفسه')}</span>
                         </button>
 
                         {/* قائمة المنتجات */}
@@ -1183,7 +1185,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                                         padding: '0.4rem 0.65rem',
                                         background: editLinkedProductId === p.id ? '#eff6ff' : 'transparent',
                                         border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
-                                        fontFamily: 'Tajawal, sans-serif', textAlign: 'right',
+                                        fontFamily: 'Tajawal, sans-serif', textAlign: isRTL ? 'right' : 'left',
                                         transition: 'background 0.1s',
                                       }} onMouseOver={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = '#f8fafc'; }} onMouseOut={e => { if (editLinkedProductId !== p.id) e.currentTarget.style.background = 'transparent'; }}>
                                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1200,7 +1202,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                             </>
                           ) : linkSearch.trim() ? (
                             <div style={{ padding: '0.6rem', textAlign: 'center' }}>
-                              <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>لا توجد نتائج في {editServiceType}</p>
+                              <p style={{ fontSize: '0.66rem', color: '#94a3b8', margin: 0 }}>{isRTL ? `لا توجد نتائج في ${editServiceType}` : `No results in ${editServiceType}`}</p>
                             </div>
                           ) : null}
                         </div>
@@ -1231,7 +1233,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                   transition: 'all 0.15s',
                 }}>
-                  {editSourceConnected ? <><Unlink size={12} /> فصل المنتج من المصدر</> : <><Link2 size={12} /> إعادة ربط بالمصدر الأصلي</>}
+                  {editSourceConnected ? <><Unlink size={12} /> {t('فصل المنتج من المصدر')}</> : <><Link2 size={12} /> {t('إعادة ربط بالمصدر الأصلي')}</>}
                 </button>
               )}
             </div>
@@ -1242,12 +1244,12 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: '#e0f2fe', display: 'grid', placeItems: 'center' }}>
                   <ListOrdered size={14} color="#0284c7" />
                 </div>
-                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>حقول المنتج</p>
+                <p style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{t('حقول المنتج')}</p>
                 <span style={{ fontSize: '0.58rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
-                  {editCustomFields.length} حقل
+                  {editCustomFields.length} {t('حقل')}
                 </span>
-                <p style={{ fontSize: '0.58rem', color: '#94a3b8', margin: 0, marginRight: 'auto' }}>
-                  الحقول التي يملأها العميل عند الطلب
+                <p style={{ fontSize: '0.58rem', color: '#94a3b8', margin: 0, ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }) }}>
+                  {t('الحقول التي يملأها العميل عند الطلب')}
                 </p>
               </div>
 
@@ -1256,10 +1258,10 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                 <div style={{ borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden', marginBottom: 10 }}>
                   {/* رأس الجدول */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 60px 36px', gap: 0, background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
-                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>المفتاح (Key)</div>
-                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>التسمية (Label)</div>
-                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>النص التوضيحي</div>
-                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569', textAlign: 'center' }}>مطلوب</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('المفتاح (Key)')}</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('التسمية (Label)')}</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569' }}>{t('النص التوضيحي')}</div>
+                    <div style={{ padding: '0.35rem 0.5rem', fontSize: '0.6rem', fontWeight: 700, color: '#475569', textAlign: 'center' }}>{t('مطلوب')}</div>
                     <div />
                   </div>
                   {/* صفوف الحقول */}
@@ -1278,7 +1280,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         <input
                           value={field.label}
                           onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], label: e.target.value }; setEditCustomFields(arr); }}
-                          placeholder="رقم IMEI"
+                          placeholder={t('رقم IMEI')}
                           style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }}
                           onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                         />
@@ -1287,7 +1289,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         <input
                           value={field.placeholder}
                           onChange={e => { const arr = [...editCustomFields]; arr[idx] = { ...arr[idx], placeholder: e.target.value }; setEditCustomFields(arr); }}
-                          placeholder="مثال: 356938035643809"
+                          placeholder={t('مثال: 356938035643809')}
                           style={{ width: '100%', padding: '0.35rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.7rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', background: '#fafbfc' }}
                           onFocus={e => e.target.style.borderColor = '#93c5fd'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                         />
@@ -1323,25 +1325,25 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                   style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }}
                   onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#fff'}
                 >
-                  <Plus size={12} /> إضافة حقل
+                  <Plus size={12} /> {t('إضافة حقل')}
                 </button>
 
                 {editCustomFields.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setEditCustomFields([])}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff5f5', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', marginRight: 'auto', transition: 'all 0.15s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0.4rem 0.75rem', borderRadius: 7, background: '#fff5f5', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', ...(isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }), transition: 'all 0.15s' }}
                     onMouseOver={e => e.currentTarget.style.background = '#fee2e2'} onMouseOut={e => e.currentTarget.style.background = '#fff5f5'}
                   >
-                    <Trash2 size={11} /> مسح الكل
+                    <Trash2 size={11} /> {t('مسح الكل')}
                   </button>
                 )}
               </div>
 
               {editCustomFields.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '0.8rem 0.5rem', color: '#94a3b8', fontSize: '0.68rem' }}>
-                  <p style={{ margin: 0, marginBottom: 2 }}>لا توجد حقول مخصصة</p>
-                  <p style={{ margin: 0, fontSize: '0.58rem' }}>أضف حقول ليملأها العميل عند الطلب</p>
+                  <p style={{ margin: 0, marginBottom: 2 }}>{t('لا توجد حقول مخصصة')}</p>
+                  <p style={{ margin: 0, fontSize: '0.58rem' }}>{t('أضف حقول ليملأها العميل عند الطلب')}</p>
                 </div>
               )}
             </div>
@@ -1352,11 +1354,11 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
             <div style={{ display: 'flex', gap: 10, padding: '0.85rem 1.25rem', borderTop: '1px solid #e2e8f0', background: '#fafbfc', borderRadius: '0 0 16px 16px', position: 'sticky', bottom: 0, zIndex: 10 }}>
               <button type="button" onClick={handleUpdateProduct} disabled={updating} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.55rem 1.5rem', borderRadius: 10, background: theme.primary, color: '#fff', border: 'none', fontSize: '0.8rem', fontWeight: 700, cursor: updating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: updating ? 0.7 : 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.15s' }}>
                 <Save size={14} />
-                {updating ? 'جاري الحفظ...' : 'حفظ التعديل'}
+                {updating ? t('جاري الحفظ...') : t('حفظ التعديل')}
               </button>
               <button type="button" onClick={closeEdit} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.55rem 1.5rem', borderRadius: 10, background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#fff'}>
                 <X size={14} />
-                إلغاء
+                {t('إلغاء')}
               </button>
             </div>
           </div>

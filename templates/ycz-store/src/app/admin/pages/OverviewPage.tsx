@@ -9,6 +9,7 @@ import {
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { StatsCard, Order } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 // ─── Map stat icon keys to Lucide components ───
 const STAT_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -119,6 +120,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadChat, setUnreadChat] = useState(0);
+  const { t, isRTL } = useAdminLang();
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -147,7 +149,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
           {
             label: 'الطلبات',
             value: String(totalOrders),
-            change: `${Number(res?.ordersToday || 0) || 0} اليوم`,
+            change: isRTL ? `${Number(res?.ordersToday || 0) || 0} اليوم` : `${Number(res?.ordersToday || 0) || 0} today`,
             positive: true,
             icon: 'orders',
             color: '#0ea5e9',
@@ -205,11 +207,11 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
 
   // ─── Quick action items ───
   const quickActions = [
-    { icon: Plus, label: 'منتج جديد', color: theme.primary, bg: `${theme.primary}12`, page: 'products' },
-    { icon: ShoppingCart, label: 'الطلبات المعلقة', color: '#f59e0b', bg: '#fffbeb', page: 'orders', badge: pendingCount },
-    { icon: MessageCircle, label: 'الرسائل', color: '#3b82f6', bg: '#eff6ff', page: 'chat', badge: unreadChat },
-    { icon: Eye, label: 'معاينة المتجر', color: '#22c55e', bg: '#f0fdf4', page: '_preview' },
-    { icon: Settings, label: 'الإعدادات', color: '#64748b', bg: '#f8fafc', page: 'settings' },
+    { icon: Plus, label: t('منتج جديد'), color: theme.primary, bg: `${theme.primary}12`, page: 'products' },
+    { icon: ShoppingCart, label: t('الطلبات المعلقة'), color: '#f59e0b', bg: '#fffbeb', page: 'orders', badge: pendingCount },
+    { icon: MessageCircle, label: t('الرسائل'), color: '#3b82f6', bg: '#eff6ff', page: 'chat', badge: unreadChat },
+    { icon: Eye, label: t('معاينة المتجر'), color: '#22c55e', bg: '#f0fdf4', page: '_preview' },
+    { icon: Settings, label: t('الإعدادات'), color: '#64748b', bg: '#f8fafc', page: 'settings' },
   ];
 
   return (
@@ -228,8 +230,8 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         boxShadow: '0 10px 24px rgba(124,92,255,0.18)',
       }}>
         <div>
-          <p style={{ fontSize: '0.78rem', opacity: 0.9, marginBottom: 4 }}>لوحة التحكم</p>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.5 }}>إدارة المتجر ومتابعة الأداء من مكان واحد</h3>
+          <p style={{ fontSize: '0.78rem', opacity: 0.9, marginBottom: 4 }}>{t('لوحة التحكم')}</p>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.5 }}>{t('إدارة المتجر ومتابعة الأداء من مكان واحد')}</h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -243,7 +245,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               display: 'grid', placeItems: 'center',
               color: '#fff',
             }}
-            title="تحديث البيانات"
+            title={t('تحديث البيانات')}
           >
             <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
@@ -256,7 +258,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             fontWeight: 700,
             whiteSpace: 'nowrap',
           }}>
-            المتجر نشط ✅
+            {t('المتجر نشط')} ✅
           </div>
         </div>
       </div>
@@ -274,7 +276,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               fontSize: '0.78rem', fontWeight: 600, color: '#92400e',
             }}>
               <AlertCircle size={15} />
-              لديك {pendingCount} طلب معلق بانتظار المعالجة
+              {isRTL ? <>لديك {pendingCount} طلب معلق بانتظار المعالجة</> : <>You have {pendingCount} pending order(s) awaiting processing</>}
             </div>
           )}
           {unreadChat > 0 && (
@@ -285,7 +287,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               fontSize: '0.78rem', fontWeight: 600, color: '#1e40af',
             }}>
               <MessageCircle size={15} />
-              لديك {unreadChat} رسالة جديدة غير مقروءة
+              {isRTL ? <>لديك {unreadChat} رسالة جديدة غير مقروءة</> : <>You have {unreadChat} new unread message(s)</>}
             </div>
           )}
         </div>
@@ -324,11 +326,11 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
                   background: stat.positive ? '#f0fdf4' : '#fef2f2',
                 }}>
                   {stat.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                  {stat.change}
+                  {t(stat.change)}
                 </span>
               </div>
               <p style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0b1020', marginBottom: 2 }}>{stat.value}</p>
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{stat.label}</p>
+              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t(stat.label)}</p>
             </div>
           ))}
         </div>
@@ -392,7 +394,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <BarChart3 size={18} color={theme.primary} />
-            المبيعات الشهرية
+            {t('المبيعات الشهرية')}
           </h3>
           {loading ? <ChartSkeleton /> : chartData.length === 0 ? (
             <div style={{
@@ -400,7 +402,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               justifyContent: 'center', height: 180, color: '#94a3b8', gap: 8,
             }}>
               <BarChart3 size={36} color="#e2e8f0" />
-              <p style={{ fontSize: '0.82rem', fontWeight: 600 }}>لا توجد بيانات مبيعات بعد</p>
+              <p style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t('لا توجد بيانات مبيعات بعد')}</p>
             </div>
           ) : (
             <div style={{
@@ -473,7 +475,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Clock size={18} color={theme.primary} />
-              آخر الطلبات
+              {t('آخر الطلبات')}
             </h3>
             {orders.length > 0 && (
               <button
@@ -484,7 +486,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
                   fontFamily: 'Tajawal, sans-serif',
                 }}
               >
-                عرض الكل
+                {t('عرض الكل')}
               </button>
             )}
           </div>
@@ -495,7 +497,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               color: '#94a3b8', gap: 8,
             }}>
               <Inbox size={32} color="#cbd5e1" />
-              <p style={{ fontSize: '0.82rem', fontWeight: 600 }}>لا توجد طلبات بعد</p>
+              <p style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t('لا توجد طلبات بعد')}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -528,7 +530,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
                       </p>
                       <p style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{order.order_number}</p>
                     </div>
-                    <div style={{ textAlign: 'left', flexShrink: 0 }}>
+                    <div style={{ textAlign: isRTL ? 'left' : 'right', flexShrink: 0 }}>
                       <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020' }}>
                         ${Number(order.total_price).toFixed(2)}
                       </p>
@@ -538,7 +540,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
                         background: si.bg,
                         padding: '1px 6px', borderRadius: 4,
                       }}>
-                        {si.label}
+                        {t(si.label)}
                       </span>
                     </div>
                   </div>

@@ -9,6 +9,7 @@ import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
 import UserDetailsPage from './UserDetailsPage';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 // ─── Skeleton Row ───
 function SkeletonBlock({ w, h, r = 6 }: { w: string | number; h: number; r?: number }) {
@@ -59,6 +60,7 @@ function BlockConfirmModal({ user, theme, onClose, onConfirm, blocking }: {
   user: User; theme: ColorTheme; onClose: () => void; onConfirm: () => void; blocking: boolean;
 }) {
   const isBlocked = user.status === 'محظور';
+  const { t, isRTL } = useAdminLang();
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '1.75rem', width: '90%', maxWidth: 380, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
@@ -71,12 +73,12 @@ function BlockConfirmModal({ user, theme, onClose, onConfirm, blocking }: {
             {isBlocked ? <UserCheck size={26} color="#16a34a" /> : <UserX size={26} color="#dc2626" />}
           </div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', marginBottom: 6 }}>
-            {isBlocked ? 'إلغاء الحظر' : 'حظر المستخدم'}
+            {isBlocked ? t('إلغاء الحظر') : t('حظر المستخدم')}
           </h3>
           <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6 }}>
             {isBlocked
-              ? <>هل تريد إلغاء حظر <strong>{user.name}</strong>؟ سيتمكن من الوصول للمتجر مجدداً.</>
-              : <>هل أنت متأكد من حظر <strong>{user.name}</strong>؟ لن يتمكن من تسجيل الدخول أو الشراء.</>
+              ? (isRTL ? <>هل تريد إلغاء حظر <strong>{user.name}</strong>؟ سيتمكن من الوصول للمتجر مجدداً.</> : <>Do you want to unblock <strong>{user.name}</strong>? They will regain access to the store.</>)
+              : (isRTL ? <>هل أنت متأكد من حظر <strong>{user.name}</strong>؟ لن يتمكن من تسجيل الدخول أو الشراء.</> : <>Are you sure you want to block <strong>{user.name}</strong>? They won't be able to log in or purchase.</>)
             }
           </p>
         </div>
@@ -86,14 +88,14 @@ function BlockConfirmModal({ user, theme, onClose, onConfirm, blocking }: {
             background: '#f1f5f9', border: 'none', color: '#64748b',
             fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
             fontFamily: 'Tajawal, sans-serif',
-          }}>إلغاء</button>
+          }}>{t('إلغاء')}</button>
           <button onClick={onConfirm} disabled={blocking} style={{
             flex: 1, padding: '0.65rem', borderRadius: 12,
             background: isBlocked ? '#16a34a' : '#dc2626', border: 'none', color: '#fff',
             fontSize: '0.85rem', fontWeight: 700, cursor: blocking ? 'wait' : 'pointer',
             fontFamily: 'Tajawal, sans-serif', opacity: blocking ? 0.7 : 1,
           }}>
-            {blocking ? 'جارٍ...' : isBlocked ? 'إلغاء الحظر' : 'تأكيد الحظر'}
+            {blocking ? t('جارٍ...') : isBlocked ? t('إلغاء الحظر') : t('تأكيد الحظر')}
           </button>
         </div>
       </div>
@@ -110,6 +112,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
   const [success, setSuccess] = useState<string | null>(null);
 
   const numAmount = parseFloat(amount) || 0;
+  const { t, isRTL } = useAdminLang();
 
   const submit = async () => {
     if (submitting || numAmount <= 0) return;
@@ -120,11 +123,11 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
       const finalAmount = mode === 'deduct' ? -numAmount : numAmount;
       const res = await adminApi.updateCustomerWallet(user.id, finalAmount);
       const nb = parseFloat(res?.wallet_balance ?? 0);
-      setSuccess(`تم ${mode === 'add' ? 'إضافة' : 'خصم'} $${numAmount.toFixed(2)} بنجاح. الرصيد الجديد: $${nb.toFixed(2)}`);
+      setSuccess(isRTL ? `تم ${mode === 'add' ? 'إضافة' : 'خصم'} $${numAmount.toFixed(2)} بنجاح. الرصيد الجديد: $${nb.toFixed(2)}` : `Successfully ${mode === 'add' ? 'added' : 'deducted'} $${numAmount.toFixed(2)}. New balance: $${nb.toFixed(2)}`);
       onDone(nb);
       setAmount('');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'فشلت العملية');
+      setError(e instanceof Error ? e.message : t('فشلت العملية'));
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +138,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '1.75rem', width: '90%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Wallet size={20} color={theme.primary} /> تعديل الرصيد
+            <Wallet size={20} color={theme.primary} /> {t('تعديل الرصيد')}
           </h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={14} /></button>
         </div>
@@ -145,22 +148,22 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
           <div style={{ width: 36, height: 36, borderRadius: 10, background: theme.gradient, display: 'grid', placeItems: 'center', color: '#fff', fontSize: '0.8rem', fontWeight: 800 }}>{user.name.charAt(0)}</div>
           <div>
             <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0b1020' }}>{user.name}</p>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الرصيد الحالي: <strong style={{ color: '#0b1020' }}>${(user.wallet_balance ?? 0).toFixed(2)}</strong></p>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('الرصيد الحالي:')} <strong style={{ color: '#0b1020' }}>${(user.wallet_balance ?? 0).toFixed(2)}</strong></p>
           </div>
         </div>
 
         {/* اختيار إضافة / خصم */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           <button onClick={() => { setMode('add'); setError(null); setSuccess(null); }} style={{ flex: 1, padding: '0.6rem', borderRadius: 10, border: mode === 'add' ? `2px solid ${theme.primary}` : '2px solid #e2e8f0', background: mode === 'add' ? `${theme.primary}15` : '#fff', color: mode === 'add' ? theme.primary : '#64748b', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Plus size={14} /> إضافة رصيد
+            <Plus size={14} /> {t('إضافة رصيد')}
           </button>
           <button onClick={() => { setMode('deduct'); setError(null); setSuccess(null); }} style={{ flex: 1, padding: '0.6rem', borderRadius: 10, border: mode === 'deduct' ? '2px solid #ef4444' : '2px solid #e2e8f0', background: mode === 'deduct' ? '#fef2f215' : '#fff', color: mode === 'deduct' ? '#ef4444' : '#64748b', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Minus size={14} /> خصم رصيد
+            <Minus size={14} /> {t('خصم رصيد')}
           </button>
         </div>
 
         {/* حقل المبلغ */}
-        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>المبلغ ($)</label>
+        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>{t('المبلغ ($)')}</label>
         <input
           type="number" min="0" step="0.01" value={amount}
           onChange={e => setAmount(e.target.value)}
@@ -183,7 +186,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
             fontFamily: 'Tajawal, sans-serif',
             opacity: numAmount > 0 ? 1 : 0.5,
           }}>
-          {submitting ? 'جارٍ التنفيذ...' : mode === 'add' ? `إضافة $${numAmount.toFixed(2)}` : `خصم $${numAmount.toFixed(2)}`}
+          {submitting ? t('جارٍ التنفيذ...') : mode === 'add' ? (isRTL ? `إضافة $${numAmount.toFixed(2)}` : `Add $${numAmount.toFixed(2)}`) : (isRTL ? `خصم $${numAmount.toFixed(2)}` : `Deduct $${numAmount.toFixed(2)}`)}
         </button>
       </div>
     </div>
@@ -203,6 +206,7 @@ type RoleFilter = typeof ROLE_FILTERS[number]['key'];
 const PER_PAGE = 15;
 
 export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
+  const { t, isRTL } = useAdminLang();
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -354,14 +358,14 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Users size={22} color={theme.primary} />
-          المستخدمين
+          {t('المستخدمين')}
           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>({filtered.length})</span>
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            title="تحديث البيانات"
+            title={t('تحديث البيانات')}
             style={{
               width: 36, height: 36, borderRadius: 10,
               background: '#fff', border: '1px solid #e2e8f0',
@@ -379,7 +383,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
           }}>
             <Search size={14} color="#94a3b8" />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="بحث عن مستخدم..."
+              placeholder={t('بحث عن مستخدم...')}
               style={{ border: 'none', outline: 'none', width: 180, fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif', background: 'transparent' }}
             />
           </div>
@@ -406,7 +410,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
               </div>
               <div>
                 <p style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0b1020', lineHeight: 1 }}>{s.value}</p>
-                <p style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>{s.label}</p>
+                <p style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>{t(s.label)}</p>
               </div>
             </div>
           );
@@ -434,7 +438,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
               transition: 'all 0.15s',
             }}>
               <Icon size={14} />
-              {f.label}
+              {t(f.label)}
               <span style={{
                 minWidth: 18, height: 18, borderRadius: 9,
                 background: active ? theme.primary : '#e2e8f0',
@@ -459,10 +463,10 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
               <tr style={{ background: '#f8fafc' }}>
                 {['المستخدم', 'الدور', 'الرصيد', 'الطلبات', 'الإنفاق', 'الحالة', 'تاريخ التسجيل', 'إجراءات'].map(h => (
                   <th key={h} style={{
-                    padding: '0.85rem 1rem', textAlign: 'right',
+                    padding: '0.85rem 1rem', textAlign: isRTL ? 'right' : 'left',
                     fontSize: '0.75rem', fontWeight: 700, color: '#64748b',
                     borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
-                  }}>{h}</th>
+                  }}>{t(h)}</th>
                 ))}
               </tr>
             </thead>
@@ -473,7 +477,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#94a3b8' }}>
                       <Inbox size={36} color="#cbd5e1" />
                       <p style={{ fontSize: '0.88rem', fontWeight: 700 }}>
-                        {search.trim() ? 'لا توجد نتائج مطابقة للبحث' : 'لا يوجد مستخدمين'}
+                        {search.trim() ? t('لا توجد نتائج مطابقة للبحث') : t('لا يوجد مستخدمين')}
                       </p>
                       {search.trim() && (
                         <button onClick={() => setSearch('')} style={{
@@ -481,7 +485,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                           background: `${theme.primary}12`, border: 'none',
                           color: theme.primary, fontSize: '0.78rem', fontWeight: 700,
                           cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-                        }}>مسح البحث</button>
+                        }}>{t('مسح البحث')}</button>
                       )}
                     </div>
                   </td>
@@ -519,7 +523,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                       <span style={{
                         padding: '0.2rem 0.6rem', borderRadius: 6,
                         background: roleBg, fontSize: '0.72rem', fontWeight: 700, color: roleColor,
-                      }}>{user.role}</span>
+                      }}>{t(user.role)}</span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', fontWeight: 700, color: user._type === 'customer' ? '#0b1020' : '#94a3b8' }}>
                       {user._type === 'customer' ? `$${(user.wallet_balance ?? 0).toFixed(2)}` : '--'}
@@ -532,12 +536,12 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                         fontSize: '0.72rem', fontWeight: 700,
                         background: user.status === 'نشط' ? '#dcfce7' : '#fee2e2',
                         color: user.status === 'نشط' ? '#16a34a' : '#dc2626',
-                      }}>{user.status}</span>
+                      }}>{t(user.status)}</span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontSize: '0.78rem', color: '#94a3b8' }}>{user.joined}</td>
                     <td style={{ padding: '0.85rem 1rem' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => setSelectedUser({ id: user.id, type: user._type || 'customer' })} title="عرض التفاصيل" style={{
+                        <button onClick={() => setSelectedUser({ id: user.id, type: user._type || 'customer' })} title={t('عرض التفاصيل')} style={{
                             width: 30, height: 30, borderRadius: 6, border: 'none',
                             background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center',
                             transition: 'transform 0.15s',
@@ -546,7 +550,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                           ><Eye size={13} color="#3b82f6" /></button>
                         {user._type === 'customer' && (
-                          <button onClick={() => setWalletUser(user)} title="تعديل الرصيد" style={{
+                          <button onClick={() => setWalletUser(user)} title={t('تعديل الرصيد')} style={{
                             width: 30, height: 30, borderRadius: 6, border: 'none',
                             background: '#f0fdf4', cursor: 'pointer', display: 'grid', placeItems: 'center',
                             transition: 'transform 0.15s',
@@ -558,7 +562,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                         {user._type === 'customer' && (
                           <button
                             onClick={() => setBlockUser(user)}
-                            title={user.status === 'محظور' ? 'إلغاء الحظر' : 'حظر المستخدم'}
+                            title={user.status === 'محظور' ? t('إلغاء الحظر') : t('حظر المستخدم')}
                             style={{
                               width: 30, height: 30, borderRadius: 6, border: 'none',
                               background: user.status === 'محظور' ? '#f0fdf4' : '#fee2e2',
@@ -636,8 +640,8 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
               }}
             ><ChevronLeft size={14} color="#64748b" /></button>
 
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginRight: 8 }}>
-              {(page - 1) * PER_PAGE + 1}-{Math.min(page * PER_PAGE, filtered.length)} من {filtered.length}
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, ...(isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }}>
+              {(page - 1) * PER_PAGE + 1}-{Math.min(page * PER_PAGE, filtered.length)} {t('من')} {filtered.length}
             </span>
           </div>
         )}

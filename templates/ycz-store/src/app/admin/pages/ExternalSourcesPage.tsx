@@ -8,6 +8,7 @@ import {
   X, Eye, EyeOff, Link2, Send, ChevronDown, ChevronUp, Zap,
   Edit3, DollarSign, Percent, Globe, WifiOff, Search, Server,
 } from 'lucide-react';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 /* ───────── Interfaces ───────── */
 interface ConnectedSource {
@@ -83,20 +84,21 @@ function SourceCardSkeleton() {
 
 /* ───────── Delete Confirmation Modal ───────── */
 function DeleteConfirmModal({ sourceName, onConfirm, onCancel }: { sourceName: string; onConfirm: () => void; onCancel: () => void }) {
+  const { t, isRTL } = useAdminLang();
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onCancel}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
           <Trash2 size={24} color="#dc2626" />
         </div>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: 8 }}>حذف المصدر</h3>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: 8 }}>{t('حذف المصدر')}</h3>
         <p style={{ fontSize: '0.82rem', color: '#64748b', textAlign: 'center', lineHeight: 1.7, marginBottom: 20 }}>
-          هل أنت متأكد من حذف <strong style={{ color: '#0b1020' }}>{sourceName}</strong>؟<br />سيتم حذف جميع الخدمات المرتبطة به نهائياً.
+          {t('هل أنت متأكد من حذف')} <strong style={{ color: '#0b1020' }}>{sourceName}</strong>{t('؟')}<br />{t('سيتم حذف جميع الخدمات المرتبطة به نهائياً.')}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+          <button onClick={onCancel} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
           <button onClick={onConfirm} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, background: '#dc2626', color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Trash2 size={14} /> نعم، احذف
+            <Trash2 size={14} /> {t('نعم، احذف')}
           </button>
         </div>
       </div>
@@ -109,6 +111,7 @@ function EditSourceModal({ source, onClose, onSuccess }: { source: ConnectedSour
   const [name, setName] = useState(source.name);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { t, isRTL } = useAdminLang();
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -123,7 +126,7 @@ function EditSourceModal({ source, onClose, onSuccess }: { source: ConnectedSour
         onClose();
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'فشل التحديث');
+      setError(err instanceof Error ? err.message : t('فشل التحديث'));
     } finally {
       setSaving(false);
     }
@@ -133,7 +136,7 @@ function EditSourceModal({ source, onClose, onSuccess }: { source: ConnectedSour
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 420, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020' }}>تعديل المصدر</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020' }}>{t('تعديل المصدر')}</h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} color="#64748b" />
           </button>
@@ -141,13 +144,13 @@ function EditSourceModal({ source, onClose, onSuccess }: { source: ConnectedSour
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>اسم المصدر</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="اسم المصدر" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>{t('اسم المصدر')}</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder={t('اسم المصدر')} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
           </div>
 
           <div style={{ background: '#f8fafc', borderRadius: 10, padding: '0.75rem 1rem' }}>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 4 }}>النوع: <strong style={{ color: '#475569' }}>{source.type}</strong></p>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الرابط: <strong style={{ color: '#475569', direction: 'ltr', display: 'inline-block' }}>{source.url}</strong></p>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 4 }}>{t('النوع:')} <strong style={{ color: '#475569' }}>{source.type}</strong></p>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('الرابط:')} <strong style={{ color: '#475569', direction: 'ltr', display: 'inline-block' }}>{source.url}</strong></p>
           </div>
 
           {error && (
@@ -164,7 +167,7 @@ function EditSourceModal({ source, onClose, onSuccess }: { source: ConnectedSour
             fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}>
             {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <CheckCircle size={16} />}
-            {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+            {saving ? t('جاري الحفظ...') : t('حفظ التغييرات')}
           </button>
         </div>
       </div>
@@ -182,17 +185,18 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
   const [profitPercentage, setProfitPercentage] = useState('0');
   const [profitType, setProfitType] = useState<'percentage' | 'fixed'>('percentage');
   const [profitAmount, setProfitAmount] = useState('0');
+  const { t, isRTL } = useAdminLang();
 
   const fieldLabels: Record<string, string> = {
-    'URL': 'رابط الـ API',
-    'Username': 'اسم المستخدم',
-    'API Access Key': 'مفتاح الـ API',
+    'URL': t('رابط الـ API'),
+    'Username': t('اسم المستخدم'),
+    'API Access Key': t('مفتاح الـ API'),
   };
 
   const fieldPlaceholders: Record<string, string> = {
     'URL': 'https://sd-unlocker.com',
-    'Username': 'اسم المستخدم في النظام',
-    'API Access Key': source.type === 'imeicheck' ? 'أدخل مفتاح API من لوحة تحكم IMEI Check' : 'أدخل مفتاح الوصول',
+    'Username': t('اسم المستخدم في النظام'),
+    'API Access Key': source.type === 'imeicheck' ? t('أدخل مفتاح API من لوحة تحكم IMEI Check') : t('أدخل مفتاح الوصول'),
   };
 
   const allFilled = source.fields.every(f => formData[f]?.trim());
@@ -216,14 +220,14 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
       const res = await adminApi.connectSource(payload);
       if (res?.error) {
         setStep('error');
-        setErrorMsg(res.error || res.message || 'فشل الاتصال');
+        setErrorMsg(res.error || res.message || t('فشل الاتصال'));
       } else {
         setStep('success');
         setTimeout(() => { onSuccess(); onClose(); }, 1500);
       }
     } catch (err: unknown) {
       setStep('error');
-      setErrorMsg(err instanceof Error ? err.message : 'فشل الاتصال بالمصدر');
+      setErrorMsg(err instanceof Error ? err.message : t('فشل الاتصال بالمصدر'));
     }
   }
 
@@ -235,7 +239,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {source.icon.startsWith('http') ? <img src={source.icon} alt={source.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <Globe size={24} color="#7c5cff" />}
             <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020' }}>ربط {source.name}</h3>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020' }}>{t('ربط')} {source.name}</h3>
               <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{source.category}</p>
             </div>
           </div>
@@ -248,8 +252,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
         {step === 'form' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>اسم المصدر</label>
-              <input value={sourceName} onChange={e => setSourceName(e.target.value)} placeholder="مثال: SD-Unlocker" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>{t('اسم المصدر')}</label>
+              <input value={sourceName} onChange={e => setSourceName(e.target.value)} placeholder={isRTL ? 'مثال: SD-Unlocker' : 'Example: SD-Unlocker'} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
             {source.fields.map(field => (
@@ -283,8 +287,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
                 </div>
                 {field === 'URL' && (
                   <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 4 }}>
-                    <Search size={10} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 3 }} />
-                    أدخل رابط الموقع فقط — سيتم اكتشاف مسار API تلقائياً
+                    <Search size={10} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: isRTL ? 3 : 0, marginRight: isRTL ? 0 : 3 }} />
+                    {t('أدخل رابط الموقع فقط — سيتم اكتشاف مسار API تلقائياً')}
                   </p>
                 )}
               </div>
@@ -292,7 +296,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
 
             {/* Profit Type Toggle */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 8 }}>نوع الربح</label>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 8 }}>{t('نوع الربح')}</label>
               <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 10, padding: 3, marginBottom: 10 }}>
                 <button onClick={() => setProfitType('percentage')} style={{
                   flex: 1, padding: '0.45rem', borderRadius: 8, border: 'none', cursor: 'pointer',
@@ -301,7 +305,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
                   color: profitType === 'percentage' ? '#fff' : '#64748b',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   transition: 'all 0.2s',
-                }}><Percent size={13} /> نسبة مئوية</button>
+                }}><Percent size={13} /> {t('نسبة مئوية')}</button>
                 <button onClick={() => setProfitType('fixed')} style={{
                   flex: 1, padding: '0.45rem', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontFamily: 'Tajawal, sans-serif', fontSize: '0.75rem', fontWeight: 600,
@@ -309,7 +313,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
                   color: profitType === 'fixed' ? '#fff' : '#64748b',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   transition: 'all 0.2s',
-                }}><DollarSign size={13} /> مبلغ ثابت</button>
+                }}><DollarSign size={13} /> {t('مبلغ ثابت')}</button>
               </div>
               <input
                 value={profitType === 'percentage' ? profitPercentage : profitAmount}
@@ -318,7 +322,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
                 style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
               />
               <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 4 }}>
-                {profitType === 'percentage' ? 'تُضاف كنسبة مئوية فوق سعر التكلفة.' : 'يُضاف كمبلغ ثابت ($) فوق سعر التكلفة.'}
+                {profitType === 'percentage' ? t('تُضاف كنسبة مئوية فوق سعر التكلفة.') : t('يُضاف كمبلغ ثابت ($) فوق سعر التكلفة.')}
               </p>
             </div>
 
@@ -326,8 +330,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
               <Link2 size={14} color="#0369a1" style={{ flexShrink: 0, marginTop: 2 }} />
               <p style={{ fontSize: '0.75rem', color: '#0369a1', lineHeight: 1.6 }}>
                 {source.type === 'imeicheck'
-                  ? 'سيتم اختبار الاتصال عبر فحص الرصيد ثم جلب جميع الخدمات المتاحة من IMEI Check.'
-                  : 'سيتم اختبار الاتصال تلقائياً ثم جلب جميع الخدمات المتاحة من المصدر.'
+                  ? t('سيتم اختبار الاتصال عبر فحص الرصيد ثم جلب جميع الخدمات المتاحة من IMEI Check.')
+                  : t('سيتم اختبار الاتصال تلقائياً ثم جلب جميع الخدمات المتاحة من المصدر.')
                 }
               </p>
             </div>
@@ -339,7 +343,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
               cursor: allFilled ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
-              <PlugZap size={16} /> اختبار وربط المصدر
+              <PlugZap size={16} /> {t('اختبار وربط المصدر')}
             </button>
           </div>
         )}
@@ -348,8 +352,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
         {step === 'testing' && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
             <Loader2 size={40} color="#7c5cff" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px', display: 'block' }} />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>جاري اختبار الاتصال...</h3>
-            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>يتم التحقق من بيانات الدخول وجلب الخدمات</p>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('جاري اختبار الاتصال...')}</h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('يتم التحقق من بيانات الدخول وجلب الخدمات')}</p>
           </div>
         )}
 
@@ -359,8 +363,8 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={32} color="#16a34a" />
             </div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>تم الربط بنجاح!</h3>
-            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>تم الاتصال بـ {sourceName} وجلب الخدمات المتاحة.</p>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('تم الربط بنجاح!')}</h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{isRTL ? <>تم الاتصال بـ {sourceName} وجلب الخدمات المتاحة.</> : <>Connected to {sourceName} and imported available services.</>}</p>
           </div>
         )}
 
@@ -370,18 +374,18 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <AlertCircle size={32} color="#dc2626" />
             </div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>فشل الاتصال</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('فشل الاتصال')}</h3>
             <p style={{ fontSize: '0.82rem', color: '#ef4444', marginBottom: 16, lineHeight: 1.6 }}>{errorMsg}</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button onClick={() => setStep('form')} style={{
                 padding: '0.6rem 1.5rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b',
                 border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-              }}>تعديل البيانات</button>
+              }}>{t('تعديل البيانات')}</button>
               <button onClick={handleConnect} style={{
                 padding: '0.6rem 1.5rem', borderRadius: 10, background: '#7c5cff', color: '#fff',
                 border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                 display: 'flex', alignItems: 'center', gap: 4,
-              }}><RefreshCcw size={14} /> إعادة المحاولة</button>
+              }}><RefreshCcw size={14} /> {t('إعادة المحاولة')}</button>
             </div>
           </div>
         )}
@@ -394,6 +398,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
 /* ═══════════ Main Page Component ═══════════ */
 /* ═══════════════════════════════════════════ */
 export default function ExternalSourcesPage() {
+  const { t, isRTL } = useAdminLang();
   const [activeTab, setActiveTab] = useState('available');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<number | null>(null);
@@ -490,7 +495,7 @@ export default function ExternalSourcesPage() {
     const pType = profitTypeInputs[sourceId] || 'percentage';
     const val = Number(profitInputs[sourceId] ?? 0);
     if (Number.isNaN(val) || val < 0) {
-      showToast('القيمة غير صالحة', 'error');
+      showToast(t('القيمة غير صالحة'), 'error');
       return;
     }
 
@@ -506,8 +511,8 @@ export default function ExternalSourcesPage() {
         [sourceId]: {
           type: 'sync', success: !!res?.success,
           message: res?.success
-            ? `تم تطبيق ${pType === 'percentage' ? `نسبة ${val}%` : `مبلغ $${val}`} على ${res?.productsCount || 0} منتج`
-            : (res?.error || 'فشل تطبيق الربح'),
+            ? (isRTL ? `تم تطبيق ${pType === 'percentage' ? `نسبة ${val}%` : `مبلغ $${val}`} على ${res?.productsCount || 0} منتج` : `Applied ${pType === 'percentage' ? `${val}% profit` : `$${val} fixed`} to ${res?.productsCount || 0} products`)
+            : (res?.error || t('فشل تطبيق الربح')),
           logs: res?.success ? [
             `✓ ${pType === 'percentage' ? `Profit percentage: ${val}%` : `Fixed profit: $${val}`}`,
             `✓ Applied to ${res?.productsCount || 0} products`,
@@ -515,10 +520,10 @@ export default function ExternalSourcesPage() {
           ] : [],
         }
       }));
-      if (res?.success) showToast('تم تطبيق الربح بنجاح', 'success');
+      if (res?.success) showToast(t('تم تطبيق الربح بنجاح'), 'success');
       await fetchSources();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل تطبيق الربح';
+      const msg = err instanceof Error ? err.message : t('فشل تطبيق الربح');
       showToast(msg, 'error');
       setSourceResults(prev => ({
         ...prev,
@@ -527,7 +532,7 @@ export default function ExternalSourcesPage() {
     } finally {
       setApplyingProfit(null);
     }
-  }, [profitInputs, profitTypeInputs, fetchSources, showToast]);
+  }, [profitInputs, profitTypeInputs, fetchSources, showToast, t, isRTL]);
 
   // ─── مزامنة ───
   const handleSync = useCallback(async (sourceId: number) => {
@@ -537,9 +542,9 @@ export default function ExternalSourcesPage() {
       const res = await adminApi.syncSource(sourceId);
       const newLog: SyncLog = {
         time: new Date().toLocaleString('ar-EG'),
-        source: connectedSources.find(s => s.id === sourceId)?.name || 'مصدر',
-        action: 'مزامنة الخدمات',
-        count: `${res?.count || 0} خدمة`,
+        source: connectedSources.find(s => s.id === sourceId)?.name || t('مصدر'),
+        action: t('مزامنة الخدمات'),
+        count: isRTL ? `${res?.count || 0} خدمة` : `${res?.count || 0} services`,
         status: res?.success ? 'success' : 'error',
       };
       setSyncLogs(prev => [newLog, ...prev].slice(0, 20));
@@ -547,16 +552,16 @@ export default function ExternalSourcesPage() {
         ...prev,
         [sourceId]: {
           type: 'sync', success: !!res?.success,
-          message: res?.success ? `تم مزامنة ${res.count || 0} خدمة بنجاح` : (res?.error || 'فشل المزامنة'),
+          message: res?.success ? (isRTL ? `تم مزامنة ${res.count || 0} خدمة بنجاح` : `Synced ${res.count || 0} services successfully`) : (res?.error || t('فشل المزامنة')),
           logs: res?.logs || [], count: res?.count,
           balance: res?.account?.creditraw || res?.account?.credits,
           currency: res?.account?.currency,
         }
       }));
-      if (res?.success) showToast(`تم مزامنة ${res.count || 0} خدمة`, 'success');
+      if (res?.success) showToast(isRTL ? `تم مزامنة ${res.count || 0} خدمة` : `Synced ${res.count || 0} services`, 'success');
       await fetchSources();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل المزامنة';
+      const msg = err instanceof Error ? err.message : t('فشل المزامنة');
       showToast(msg, 'error');
       setSourceResults(prev => ({
         ...prev,
@@ -565,7 +570,7 @@ export default function ExternalSourcesPage() {
     } finally {
       setSyncing(null);
     }
-  }, [connectedSources, fetchSources, showToast]);
+  }, [connectedSources, fetchSources, showToast, t, isRTL]);
 
   // ─── اختبار ───
   const handleTest = useCallback(async (sourceId: number) => {
@@ -578,15 +583,15 @@ export default function ExternalSourcesPage() {
         [sourceId]: {
           type: 'test', success: !!res?.connectionOk,
           message: res?.connectionOk
-            ? `الاتصال ناجح${res?.resolvedUrl ? ` — تم اكتشاف: ${res.resolvedUrl}` : ''}`
-            : (res?.error || 'فشل الاتصال'),
+            ? (isRTL ? `الاتصال ناجح${res?.resolvedUrl ? ` — تم اكتشاف: ${res.resolvedUrl}` : ''}` : `Connection successful${res?.resolvedUrl ? ` — Resolved: ${res.resolvedUrl}` : ''}`)
+            : (res?.error || t('فشل الاتصال')),
           balance: res?.sourceBalance, currency: res?.sourceCurrency,
         }
       }));
-      if (res?.connectionOk) showToast('الاتصال ناجح', 'success');
+      if (res?.connectionOk) showToast(t('الاتصال ناجح'), 'success');
       await fetchSources();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل اختبار الاتصال';
+      const msg = err instanceof Error ? err.message : t('فشل اختبار الاتصال');
       showToast(msg, 'error');
       setSourceResults(prev => ({
         ...prev,
@@ -595,46 +600,46 @@ export default function ExternalSourcesPage() {
     } finally {
       setTesting(null);
     }
-  }, [fetchSources, showToast]);
+  }, [fetchSources, showToast, t, isRTL]);
 
   // ─── حذف ───
   const handleDelete = useCallback(async (sourceId: number) => {
     setDeleting(sourceId);
     try {
       await adminApi.deleteSource(sourceId);
-      showToast('تم حذف المصدر بنجاح', 'success');
+      showToast(t('تم حذف المصدر بنجاح'), 'success');
       await fetchSources();
     } catch {
-      showToast('فشل حذف المصدر', 'error');
+      showToast(t('فشل حذف المصدر'), 'error');
     } finally {
       setDeleting(null);
       setDeleteTarget(null);
     }
-  }, [fetchSources, showToast]);
+  }, [fetchSources, showToast, t]);
 
   // ─── تبديل وضع المزامنة ───
   const handleToggleSyncOnly = useCallback(async (sourceId: number, currentSyncOnly: boolean) => {
     setTogglingSync(sourceId);
     try {
       await adminApi.toggleSyncOnly(sourceId, !currentSyncOnly);
-      showToast(!currentSyncOnly ? 'تم التبديل لوضع المزامنة فقط' : 'تم تفعيل التثبيت في المتجر', 'success');
+      showToast(!currentSyncOnly ? t('تم التبديل لوضع المزامنة فقط') : t('تم تفعيل التثبيت في المتجر'), 'success');
       await fetchSources();
     } catch {
-      showToast('فشل تبديل وضع المزامنة', 'error');
+      showToast(t('فشل تبديل وضع المزامنة'), 'error');
     } finally {
       setTogglingSync(null);
     }
-  }, [fetchSources, showToast]);
+  }, [fetchSources, showToast, t]);
 
   // Count per tab
   const connectedCount = connectedSources.length;
 
   // Tabs memoized
   const tabs = useMemo(() => [
-    { id: 'available', label: 'المصادر المتاحة', count: availableSources.length },
-    { id: 'connected', label: 'المصادر المتصلة', count: connectedCount },
-    { id: 'logs', label: 'سجل المزامنة', count: syncLogs.length },
-  ], [availableSources.length, connectedCount, syncLogs.length]);
+    { id: 'available', label: t('المصادر المتاحة'), count: availableSources.length },
+    { id: 'connected', label: t('المصادر المتصلة'), count: connectedCount },
+    { id: 'logs', label: t('سجل المزامنة'), count: syncLogs.length },
+  ], [availableSources.length, connectedCount, syncLogs.length, t]);
 
   return (
     <>
@@ -673,8 +678,8 @@ export default function ExternalSourcesPage() {
             <Link2 size={18} color="#fff" />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>المصادر الخارجية</h2>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>إدارة مصادر API الخارجية ومزامنة الخدمات</p>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>{t('المصادر الخارجية')}</h2>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('إدارة مصادر API الخارجية ومزامنة الخدمات')}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -682,12 +687,12 @@ export default function ExternalSourcesPage() {
             display: 'flex', alignItems: 'center', gap: 5, padding: '0.55rem 1rem', borderRadius: 10,
             background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.8rem', fontWeight: 600,
             cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-          }}><RefreshCcw size={14} /> تحديث</button>
+          }}><RefreshCcw size={14} /> {t('تحديث')}</button>
           <button onClick={() => setActiveTab('available')} className="src-btn" style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '0.55rem 1.25rem', borderRadius: 10,
             background: 'linear-gradient(135deg, #7c5cff, #6d4de6)', color: '#fff',
             border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-          }}><Plus size={16} /> ربط مصدر جديد</button>
+          }}><Plus size={16} /> {t('ربط مصدر جديد')}</button>
         </div>
       </div>
 
@@ -699,10 +704,10 @@ export default function ExternalSourcesPage() {
           </>
         ) : (
           [
-            { label: 'مصادر متصلة', value: String(stats.connected), icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
-            { label: 'الرصيد', value: stats.balance, icon: CreditCard, color: '#3b82f6', bg: '#eff6ff' },
-            { label: 'خدمات مستوردة', value: String(stats.imported), icon: Package, color: '#7c5cff', bg: '#f5f3ff' },
-            { label: 'آخر مزامنة', value: stats.lastSync, icon: RefreshCcw, color: '#f59e0b', bg: '#fffbeb' },
+            { label: t('مصادر متصلة'), value: String(stats.connected), icon: Wifi, color: '#22c55e', bg: '#f0fdf4' },
+            { label: t('الرصيد'), value: stats.balance, icon: CreditCard, color: '#3b82f6', bg: '#eff6ff' },
+            { label: t('خدمات مستوردة'), value: String(stats.imported), icon: Package, color: '#7c5cff', bg: '#f5f3ff' },
+            { label: t('آخر مزامنة'), value: stats.lastSync, icon: RefreshCcw, color: '#f59e0b', bg: '#fffbeb' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -785,9 +790,9 @@ export default function ExternalSourcesPage() {
               </div>
 
               <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.7, marginBottom: 16, flex: 1 }}>{src.desc}</p>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.7, marginBottom: 16, flex: 1 }}>{t(src.desc)}</p>
                 <div style={{ marginBottom: 14 }}>
-                  <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>الحقول المطلوبة:</p>
+                  <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginBottom: 6 }}>{t('الحقول المطلوبة:')}</p>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {src.fields.map((f, j) => (
                       <span key={j} style={{
@@ -803,7 +808,7 @@ export default function ExternalSourcesPage() {
                   fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}>
-                  <PlugZap size={15} /> ربط الآن
+                  <PlugZap size={15} /> {t('ربط الآن')}
                 </button>
               </div>
             </div>
@@ -825,14 +830,14 @@ export default function ExternalSourcesPage() {
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f5f3ff', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
                 <WifiOff size={28} color="#7c5cff" />
               </div>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0b1020', marginBottom: 4 }}>لا توجد مصادر متصلة بعد</p>
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 16, lineHeight: 1.6 }}>اربط مصدر من تبويب &quot;المصادر المتاحة&quot; لبدء جلب الخدمات تلقائياً</p>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0b1020', marginBottom: 4 }}>{t('لا توجد مصادر متصلة بعد')}</p>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 16, lineHeight: 1.6 }}>{t('اربط مصدر من تبويب "المصادر المتاحة" لبدء جلب الخدمات تلقائياً')}</p>
               <button onClick={() => setActiveTab('available')} className="src-btn" style={{
                 padding: '0.6rem 1.5rem', borderRadius: 10, border: 'none',
                 background: 'linear-gradient(135deg, #7c5cff, #6d4de6)', color: '#fff',
                 fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}><Plus size={15} /> ربط مصدر جديد</button>
+              }}><Plus size={15} /> {t('ربط مصدر جديد')}</button>
             </div>
           )}
 
@@ -891,9 +896,9 @@ export default function ExternalSourcesPage() {
                           background: src.statusColor === '#16a34a' ? 'rgba(34,197,94,0.15)' : src.statusColor === '#dc2626' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
                           color: src.statusColor === '#16a34a' ? '#4ade80' : src.statusColor === '#dc2626' ? '#f87171' : '#fbbf24',
                           border: `1px solid ${src.statusColor === '#16a34a' ? 'rgba(34,197,94,0.2)' : src.statusColor === '#dc2626' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
-                        }}>{src.status}</span>
+                        }}>{t(src.status)}</span>
                       </div>
-                      <p style={{ fontSize: '0.72rem', color: 'rgba(148,163,184,0.8)', direction: 'ltr', textAlign: 'right' }}>{src.type} • {src.url}</p>
+                      <p style={{ fontSize: '0.72rem', color: 'rgba(148,163,184,0.8)', direction: 'ltr', textAlign: isRTL ? 'right' : 'left' }}>{src.type} • {src.url}</p>
                     </div>
                   </div>
 
@@ -908,7 +913,7 @@ export default function ExternalSourcesPage() {
                       fontFamily: 'Tajawal, sans-serif', color: '#93c5fd', opacity: testing === src.id ? 0.6 : 1,
                     }}>
                       {testing === src.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Zap size={13} />}
-                      {testing === src.id ? 'جاري...' : 'اختبار'}
+                      {testing === src.id ? t('جاري...') : t('اختبار')}
                     </button>
                     <button onClick={() => handleSync(src.id)} disabled={syncing === src.id} className="src-btn" style={{
                       display: 'flex', alignItems: 'center', gap: 4,
@@ -919,7 +924,7 @@ export default function ExternalSourcesPage() {
                       fontFamily: 'Tajawal, sans-serif', color: '#d1d5db', opacity: syncing === src.id ? 0.6 : 1,
                     }}>
                       <RefreshCcw size={13} style={syncing === src.id ? { animation: 'spin 1s linear infinite' } : {}} />
-                      {syncing === src.id ? 'جاري...' : 'مزامنة'}
+                      {syncing === src.id ? t('جاري...') : t('مزامنة')}
                     </button>
                     <button onClick={() => setEditTarget(src)} className="src-btn" style={{
                       width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
@@ -943,10 +948,10 @@ export default function ExternalSourcesPage() {
                 {/* Quick stats */}
                 <div className="src-mini-stats" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
                   {[
-                    { label: 'الخدمات', value: String(src.products), icon: Package, color: '#7c5cff' },
-                    { label: 'الرصيد', value: src.balance, icon: CreditCard, color: '#3b82f6' },
-                    { label: 'آخر مزامنة', value: src.lastSync, icon: Clock, color: '#f59e0b' },
-                    { label: 'الربح', value: src.profitAmount && src.profitAmount > 0 ? `$${src.profitAmount}` : `${src.profitPercentage}%`, icon: Settings, color: '#22c55e' },
+                    { label: t('الخدمات'), value: String(src.products), icon: Package, color: '#7c5cff' },
+                    { label: t('الرصيد'), value: src.balance, icon: CreditCard, color: '#3b82f6' },
+                    { label: t('آخر مزامنة'), value: src.lastSync, icon: Clock, color: '#f59e0b' },
+                    { label: t('الربح'), value: src.profitAmount && src.profitAmount > 0 ? `$${src.profitAmount}` : `${src.profitPercentage}%`, icon: Settings, color: '#22c55e' },
                   ].map((info, j) => {
                     const InfoIcon = info.icon;
                     return (
@@ -974,10 +979,10 @@ export default function ExternalSourcesPage() {
                     {src.syncOnly ? <EyeOff size={15} color="#ca8a04" /> : <Eye size={15} color="#16a34a" />}
                     <div>
                       <p style={{ fontSize: '0.75rem', fontWeight: 700, color: src.syncOnly ? '#a16207' : '#15803d' }}>
-                        {src.syncOnly ? 'مزامنة فقط' : 'مزامنة وتثبيت'}
+                        {src.syncOnly ? t('مزامنة فقط') : t('مزامنة وتثبيت')}
                       </p>
                       <p style={{ fontSize: '0.65rem', color: src.syncOnly ? '#ca8a04' : '#16a34a' }}>
-                        {src.syncOnly ? 'المنتجات مُزامَنة لكن لا تظهر للزبائن' : 'المنتجات مُزامَنة وتظهر في المتجر'}
+                        {src.syncOnly ? t('المنتجات مُزامَنة لكن لا تظهر للزبائن') : t('المنتجات مُزامَنة وتظهر في المتجر')}
                       </p>
                     </div>
                   </div>
@@ -1007,7 +1012,7 @@ export default function ExternalSourcesPage() {
                   marginBottom: src.connectionError || result ? 12 : 0,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 700 }}>تطبيق الربح</span>
+                    <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 700 }}>{t('تطبيق الربح')}</span>
                     <div style={{ display: 'flex', gap: 2, background: '#e2e8f0', borderRadius: 6, padding: 2 }}>
                       <button onClick={() => setProfitTypeInputs(prev => ({ ...prev, [src.id]: 'percentage' }))} style={{
                         padding: '0.2rem 0.5rem', borderRadius: 5, border: 'none', cursor: 'pointer',
@@ -1015,14 +1020,14 @@ export default function ExternalSourcesPage() {
                         background: pType === 'percentage' ? '#7c5cff' : 'transparent',
                         color: pType === 'percentage' ? '#fff' : '#64748b',
                         display: 'flex', alignItems: 'center', gap: 3, transition: 'all 0.2s',
-                      }}><Percent size={10} /> نسبة</button>
+                      }}><Percent size={10} /> {t('نسبة')}</button>
                       <button onClick={() => setProfitTypeInputs(prev => ({ ...prev, [src.id]: 'fixed' }))} style={{
                         padding: '0.2rem 0.5rem', borderRadius: 5, border: 'none', cursor: 'pointer',
                         fontSize: '0.68rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
                         background: pType === 'fixed' ? '#7c5cff' : 'transparent',
                         color: pType === 'fixed' ? '#fff' : '#64748b',
                         display: 'flex', alignItems: 'center', gap: 3, transition: 'all 0.2s',
-                      }}><DollarSign size={10} /> مبلغ</button>
+                      }}><DollarSign size={10} /> {t('مبلغ')}</button>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1052,7 +1057,7 @@ export default function ExternalSourcesPage() {
                       }}
                     >
                       {applyingProfit === src.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={13} />}
-                      {applyingProfit === src.id ? 'جاري...' : 'تطبيق'}
+                      {applyingProfit === src.id ? t('جاري...') : t('تطبيق')}
                     </button>
                   </div>
                 </div>
@@ -1065,7 +1070,7 @@ export default function ExternalSourcesPage() {
                   }}>
                     <AlertCircle size={15} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
                     <div>
-                      <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', marginBottom: 2 }}>خطأ اتصال</p>
+                      <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', marginBottom: 2 }}>{t('خطأ اتصال')}</p>
                       <p style={{ fontSize: '0.7rem', color: '#991b1b', lineHeight: 1.5, wordBreak: 'break-word' }}>{src.connectionError}</p>
                     </div>
                   </div>
@@ -1086,7 +1091,7 @@ export default function ExternalSourcesPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {result.success ? <CheckCircle size={15} color="#16a34a" /> : <AlertCircle size={15} color="#dc2626" />}
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: result.success ? '#16a34a' : '#dc2626' }}>
-                          {result.type === 'test' ? 'نتيجة الاختبار' : 'نتيجة المزامنة'}: {result.message}
+                          {result.type === 'test' ? t('نتيجة الاختبار') : t('نتيجة المزامنة')}: {result.message}
                         </span>
                       </div>
                       {isExpanded ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#94a3b8" />}
@@ -1095,14 +1100,14 @@ export default function ExternalSourcesPage() {
                       <div style={{ padding: '0 0.85rem 0.75rem', fontSize: '0.72rem', color: '#475569' }}>
                         {result.balance && (
                           <p style={{ marginBottom: 6 }}>
-                            <CreditCard size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
-                            الرصيد: <strong>{result.balance} {result.currency || ''}</strong>
+                            <CreditCard size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: isRTL ? 4 : 0, marginRight: isRTL ? 0 : 4 }} />
+                            {t('الرصيد:')} <strong>{result.balance} {result.currency || ''}</strong>
                           </p>
                         )}
                         {result.count !== undefined && (
                           <p style={{ marginBottom: 6 }}>
-                            <Package size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
-                            خدمات مستوردة: <strong>{result.count}</strong>
+                            <Package size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: isRTL ? 4 : 0, marginRight: isRTL ? 0 : 4 }} />
+                            {t('خدمات مستوردة:')} <strong>{result.count}</strong>
                           </p>
                         )}
                         {result.logs && result.logs.length > 0 && (
@@ -1110,7 +1115,7 @@ export default function ExternalSourcesPage() {
                             marginTop: 8, background: '#0b1020', borderRadius: 8, padding: '0.75rem',
                             maxHeight: 200, overflow: 'auto', direction: 'ltr',
                           }}>
-                            <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 6, fontWeight: 700 }}>سجل العمليات:</p>
+                            <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 6, fontWeight: 700 }}>{t('سجل العمليات:')}</p>
                             {result.logs.map((log, li) => (
                               <p key={li} style={{
                                 fontSize: '0.68rem', fontFamily: 'monospace, Tajawal',
@@ -1138,14 +1143,14 @@ export default function ExternalSourcesPage() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             padding: '1rem 1.25rem', borderBottom: '1px solid #f1f5f9',
           }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>سجل المزامنة الأخيرة</h3>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{t('سجل المزامنة الأخيرة')}</h3>
             <button onClick={fetchSources} className="src-btn" style={{
               display: 'flex', alignItems: 'center', gap: 4,
               padding: '0.35rem 0.75rem', borderRadius: 6, border: '1px solid #e2e8f0',
               background: '#fff', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
               fontFamily: 'Tajawal, sans-serif', color: '#64748b',
             }}>
-              <RefreshCcw size={12} /> تحديث
+              <RefreshCcw size={12} /> {t('تحديث')}
             </button>
           </div>
 
@@ -1154,8 +1159,8 @@ export default function ExternalSourcesPage() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f5f3ff', display: 'grid', placeItems: 'center', margin: '0 auto 12px' }}>
                 <Clock size={24} color="#7c5cff" />
               </div>
-              <p style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0b1020', marginBottom: 4 }}>لا توجد عمليات مزامنة بعد</p>
-              <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.6 }}>ستظهر هنا سجلات المزامنة عند تنفيذ أي عملية مزامنة من تبويب المصادر المتصلة</p>
+              <p style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0b1020', marginBottom: 4 }}>{t('لا توجد عمليات مزامنة بعد')}</p>
+              <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.6 }}>{t('ستظهر هنا سجلات المزامنة عند تنفيذ أي عملية مزامنة من تبويب المصادر المتصلة')}</p>
             </div>
           ) : (
             syncLogs.map((log, i) => (

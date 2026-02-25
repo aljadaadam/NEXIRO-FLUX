@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { adminApi } from '@/lib/api';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 type GatewayType = 'paypal' | 'bank_transfer' | 'usdt' | 'binance' | 'wallet' | 'bankak';
 
@@ -131,6 +132,7 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
 const ALL_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer', 'wallet', 'bankak'];
 
 export default function PaymentsPage() {
+  const { t, isRTL } = useAdminLang();
   const [gateways, setGateways] = useState<Gateway[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -164,7 +166,7 @@ export default function PaymentsPage() {
       setGateways(res.gateways || []);
     } catch (err) {
       console.error(err);
-      showToast('فشل في جلب بوابات الدفع', 'error');
+      showToast(t('فشل في جلب بوابات الدفع'), 'error');
     } finally {
       setLoading(false);
     }
@@ -194,11 +196,11 @@ export default function PaymentsPage() {
     try {
       await adminApi.updatePaymentStatus(tx.id, 'completed');
       setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: 'completed' } : t));
-      showToast(`تمت الموافقة على الدفعة #${tx.id} وتم إضافة الرصيد`);
+      showToast(isRTL ? `تمت الموافقة على الدفعة #${tx.id} وتم إضافة الرصيد` : `Payment #${tx.id} approved and balance added`);
       fetchTransactions();
     } catch (err) {
       console.error(err);
-      showToast('فشل في الموافقة على الدفعة', 'error');
+      showToast(t('فشل في الموافقة على الدفعة'), 'error');
     } finally {
       setApprovingId(null);
     }
@@ -209,11 +211,11 @@ export default function PaymentsPage() {
     try {
       await adminApi.updatePaymentStatus(tx.id, 'failed');
       setTransactions(prev => prev.map(t => t.id === tx.id ? { ...t, status: 'failed' } : t));
-      showToast('تم رفض الدفعة');
+      showToast(t('تم رفض الدفعة'));
       fetchTransactions();
     } catch (err) {
       console.error(err);
-      showToast('فشل في رفض الدفعة', 'error');
+      showToast(t('فشل في رفض الدفعة'), 'error');
     } finally {
       setApprovingId(null);
     }
@@ -239,7 +241,7 @@ export default function PaymentsPage() {
   };
 
   const handleSave = async () => {
-    if (!formName.trim()) { showToast('اسم البوابة مطلوب', 'error'); return; }
+    if (!formName.trim()) { showToast(t('اسم البوابة مطلوب'), 'error'); return; }
     setSaving(true);
     try {
       const data = {
@@ -251,16 +253,16 @@ export default function PaymentsPage() {
       };
       if (editingGw) {
         await adminApi.updatePaymentGateway(editingGw.id, data);
-        showToast('تم تحديث البوابة بنجاح');
+        showToast(t('تم تحديث البوابة بنجاح'));
       } else {
         await adminApi.createPaymentGateway(data);
-        showToast('تم إضافة البوابة بنجاح');
+        showToast(t('تم إضافة البوابة بنجاح'));
       }
       setShowModal(false);
       fetchGateways();
     } catch (err) {
       console.error(err);
-      showToast('فشل في حفظ البوابة', 'error');
+      showToast(t('فشل في حفظ البوابة'), 'error');
     } finally {
       setSaving(false);
     }
@@ -271,7 +273,7 @@ export default function PaymentsPage() {
       const requiredFields = (CONFIG_FIELDS[gw.type] || []).filter(f => f.required);
       const missing = requiredFields.filter(f => !gw.config?.[f.key]?.trim());
       if (missing.length > 0) {
-        showToast(`أكمل الحقول المطلوبة أولاً: ${missing.map(f => f.label).join('، ')}`, 'error');
+        showToast(isRTL ? `أكمل الحقول المطلوبة أولاً: ${missing.map(f => f.label).join('، ')}` : `Complete required fields first: ${missing.map(f => f.label).join(', ')}`, 'error');
         return;
       }
     }
@@ -280,7 +282,7 @@ export default function PaymentsPage() {
       if (res.error) { showToast(res.error, 'error'); return; }
       setGateways(prev => prev.map(g => g.id === gw.id ? { ...g, is_enabled: !g.is_enabled } : g));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'فشل في تبديل الحالة';
+      const msg = err instanceof Error ? err.message : t('فشل في تبديل الحالة');
       showToast(msg, 'error');
     }
   };
@@ -290,10 +292,10 @@ export default function PaymentsPage() {
       await adminApi.deletePaymentGateway(id);
       setGateways(prev => prev.filter(g => g.id !== id));
       setDeleteConfirm(null);
-      showToast('تم حذف البوابة');
+      showToast(t('تم حذف البوابة'));
     } catch (err) {
       console.error(err);
-      showToast('فشل في حذف البوابة', 'error');
+      showToast(t('فشل في حذف البوابة'), 'error');
     }
   };
 
@@ -326,15 +328,15 @@ export default function PaymentsPage() {
                 <circle cx="6" cy="15" r="1.5" fill="#7c5cff"/>
               </svg>
             </div>
-            بوابات الدفع
+            {t('بوابات الدفع')}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 600, padding: '0.35rem 0.75rem', borderRadius: 8, background: activeCount > 0 ? '#dcfce7' : '#fef2f2', color: activeCount > 0 ? '#16a34a' : '#dc2626' }}>
-              {activeCount > 0 ? `${activeCount} مفعّلة` : 'لا يوجد مفعّلة'}
+              {activeCount > 0 ? (isRTL ? `${activeCount} مفعّلة` : `${activeCount} active`) : t('لا يوجد مفعّلة')}
             </span>
           </div>
         </div>
-        <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>اختر وفعّل بوابات الدفع التي تريد تقديمها لعملائك</p>
+        <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{t('اختر وفعّل بوابات الدفع التي تريد تقديمها لعملائك')}</p>
       </div>
 
       {/* Gateway Cards Grid — Always Show All Types */}
@@ -379,10 +381,10 @@ export default function PaymentsPage() {
                         <span style={{
                           fontSize: '0.6rem', padding: '0.15rem 0.45rem', borderRadius: 4,
                           background: '#dbeafe', color: '#2563eb', fontWeight: 700, letterSpacing: '0.02em',
-                        }}>افتراضي</span>
+                        }}>{t('افتراضي')}</span>
                       )}
                     </div>
-                    <p style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>{meta.desc}</p>
+                    <p style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>{t(meta.desc)}</p>
                   </div>
                 </div>
 
@@ -405,7 +407,7 @@ export default function PaymentsPage() {
                     fontSize: '0.7rem', fontWeight: 600, padding: '0.25rem 0.6rem',
                     borderRadius: 6, background: '#f8fafc', color: '#94a3b8',
                     border: '1px solid #f1f5f9',
-                  }}>غير مُهيأة</span>
+                  }}>{t('غير مُهيأة')}</span>
                 )}
               </div>
 
@@ -424,7 +426,7 @@ export default function PaymentsPage() {
                           display: 'flex', alignItems: 'center', gap: 4,
                         }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M12 2L2 20h20L12 2z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          حقول ناقصة: {missing.map(f => f.label).join('، ')}
+                          {isRTL ? 'حقول ناقصة:' : 'Missing fields:'} {missing.map(f => t(f.label)).join(isRTL ? '، ' : ', ')}
                         </div>
                       );
                     }
@@ -434,41 +436,41 @@ export default function PaymentsPage() {
                   <div style={{ background: '#f8fafc', borderRadius: 10, padding: '0.6rem 0.75rem', marginBottom: 8 }}>
                     {type === 'paypal' && (
                       <>
-                        {gw?.config?.email && <ConfigRow label="البريد" value={gw.config.email} />}
-                        {gw?.config?.mode && <ConfigRow label="الوضع" value={gw.config.mode === 'live' ? '● حقيقي' : '● تجريبي'} valueColor={gw.config.mode === 'live' ? '#16a34a' : '#d97706'} />}
+                        {gw?.config?.email && <ConfigRow label={t("البريد")} value={gw.config.email} />}
+                        {gw?.config?.mode && <ConfigRow label={t("الوضع")} value={gw.config.mode === 'live' ? t('● حقيقي') : t('● تجريبي')} valueColor={gw.config.mode === 'live' ? '#16a34a' : '#d97706'} />}
                       </>
                     )}
                     {type === 'binance' && gw?.config?.binance_id && <ConfigRow label="Binance ID" value={gw.config.binance_id} />}
                     {type === 'usdt' && (
                       <>
-                        {gw?.config?.network && <ConfigRow label="الشبكة" value={gw.config.network} />}
-                        {gw?.config?.wallet_address && <ConfigRow label="المحفظة" value={maskString(gw.config.wallet_address)} />}
+                        {gw?.config?.network && <ConfigRow label={t("الشبكة")} value={gw.config.network} />}
+                        {gw?.config?.wallet_address && <ConfigRow label={t("المحفظة")} value={maskString(gw.config.wallet_address)} />}
                       </>
                     )}
                     {type === 'bank_transfer' && (
                       <>
-                        {gw?.config?.bank_name && <ConfigRow label="البنك" value={gw.config.bank_name} />}
+                        {gw?.config?.bank_name && <ConfigRow label={t("البنك")} value={gw.config.bank_name} />}
                         {gw?.config?.iban && <ConfigRow label="IBAN" value={maskString(gw.config.iban)} />}
                       </>
                     )}
                     {type === 'wallet' && (
                       <>
-                        {gw?.config?.instructions && <ConfigRow label="التعليمات" value={gw.config.instructions.length > 35 ? gw.config.instructions.slice(0, 35) + '...' : gw.config.instructions} />}
-                        {gw?.config?.contact_numbers && <ConfigRow label="التواصل" value={gw.config.contact_numbers} />}
+                        {gw?.config?.instructions && <ConfigRow label={t("التعليمات")} value={gw.config.instructions.length > 35 ? gw.config.instructions.slice(0, 35) + '...' : gw.config.instructions} />}
+                        {gw?.config?.contact_numbers && <ConfigRow label={t("التواصل")} value={gw.config.contact_numbers} />}
                         {gw?.config?.image_url && <ImgPreview src={gw.config.image_url} />}
                       </>
                     )}
                     {type === 'bankak' && (
                       <>
-                        {gw?.config?.full_name && <ConfigRow label="صاحب الحساب" value={gw.config.full_name} />}
-                        {gw?.config?.account_number && <ConfigRow label="رقم الحساب" value={maskString(gw.config.account_number)} />}
-                        {gw?.config?.exchange_rate && <ConfigRow label="سعر الصرف" value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || 'SDG'}`} />}
+                        {gw?.config?.full_name && <ConfigRow label={t("صاحب الحساب")} value={gw.config.full_name} />}
+                        {gw?.config?.account_number && <ConfigRow label={t("رقم الحساب")} value={maskString(gw.config.account_number)} />}
+                        {gw?.config?.exchange_rate && <ConfigRow label={t("سعر الصرف")} value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || 'SDG'}`} />}
                         {gw?.config?.image_url && <ImgPreview src={gw.config.image_url} />}
                       </>
                     )}
                     {/* Fallback if no details to show */}
                     {!gw?.config || Object.keys(gw.config).length === 0 ? (
-                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', padding: '0.25rem 0' }}>لم يتم إدخال بيانات بعد</p>
+                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', padding: '0.25rem 0' }}>{t('لم يتم إدخال بيانات بعد')}</p>
                     ) : null}
                   </div>
                 </div>
@@ -490,7 +492,7 @@ export default function PaymentsPage() {
                       transition: 'all 0.15s',
                     }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      تعديل
+                      {t('تعديل')}
                     </button>
                     <button onClick={() => setDeleteConfirm(gw!.id)} style={{
                       padding: '0.55rem 0.75rem', borderRadius: 10,
@@ -512,7 +514,7 @@ export default function PaymentsPage() {
                     transition: 'all 0.15s',
                   }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                    إعداد البوابة
+                    {t('إعداد البوابة')}
                   </button>
                 )}
               </div>
@@ -529,9 +531,9 @@ export default function PaymentsPage() {
               <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #059669, #10b981)', display: 'grid', placeItems: 'center' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 14l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
-              سجل عمليات الدفع
+              {t('سجل عمليات الدفع')}
             </h3>
-            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>جميع عمليات الشحن والدفع — يمكنك الموافقة على المعلقة</p>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>{t('جميع عمليات الشحن والدفع — يمكنك الموافقة على المعلقة')}</p>
           </div>
         </div>
 
@@ -549,7 +551,7 @@ export default function PaymentsPage() {
                 fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s',
                 boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
               }}>
-                {label} {count > 0 && <span style={{ marginRight: 4, opacity: 0.7 }}>({count})</span>}
+                {t(label)} {count > 0 && <span style={{ marginInlineStart: 4, opacity: 0.7 }}>({count})</span>}
               </button>
             );
           })}
@@ -569,7 +571,7 @@ export default function PaymentsPage() {
           if (filtered.length === 0) {
             return (
               <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: 14 }}>
-                <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>لا توجد عمليات دفع {txFilter !== 'all' ? 'بهذا التصنيف' : 'بعد'}</p>
+                <p style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>{t('لا توجد عمليات دفع')} {txFilter !== 'all' ? t('بهذا التصنيف') : t('بعد')}</p>
               </div>
             );
           }
@@ -584,11 +586,11 @@ export default function PaymentsPage() {
                   fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
                 }}>
                   <span>#</span>
-                  <span>العميل</span>
-                  <span>المبلغ</span>
-                  <span>البوابة</span>
-                  <span>الحالة</span>
-                  <span>الإجراء</span>
+                  <span>{t('العميل')}</span>
+                  <span>{t('المبلغ')}</span>
+                  <span>{t('البوابة')}</span>
+                  <span>{t('الحالة')}</span>
+                  <span>{t('الإجراء')}</span>
                 </div>
 
                 {/* Rows */}
@@ -598,11 +600,11 @@ export default function PaymentsPage() {
                   const methodLabel = GATEWAY_META[tx.payment_method as GatewayType]?.label || tx.payment_method;
                   const methodColor = GATEWAY_META[tx.payment_method as GatewayType]?.color || '#64748b';
                   const statusConfig = {
-                    pending: { label: 'معلّقة', bg: '#fef3c7', color: '#92400e', icon: '⏳' },
-                    completed: { label: 'مكتملة', bg: '#dcfce7', color: '#166534', icon: '✅' },
-                    failed: { label: 'مرفوضة', bg: '#fee2e2', color: '#b91c1c', icon: '❌' },
-                    refunded: { label: 'مستردة', bg: '#e0e7ff', color: '#4338ca', icon: '↩️' },
-                    cancelled: { label: 'ملغاة', bg: '#f1f5f9', color: '#64748b', icon: '🚫' },
+                    pending: { label: t('معلّقة'), bg: '#fef3c7', color: '#92400e', icon: '⏳' },
+                    completed: { label: t('مكتملة'), bg: '#dcfce7', color: '#166534', icon: '✅' },
+                    failed: { label: t('مرفوضة'), bg: '#fee2e2', color: '#b91c1c', icon: '❌' },
+                    refunded: { label: t('مستردة'), bg: '#e0e7ff', color: '#4338ca', icon: '↩️' },
+                    cancelled: { label: t('ملغاة'), bg: '#f1f5f9', color: '#64748b', icon: '🚫' },
                   }[tx.status] || { label: tx.status, bg: '#f1f5f9', color: '#64748b', icon: '•' };
 
                   return (
@@ -616,17 +618,17 @@ export default function PaymentsPage() {
                       <div>
                         <span style={{ fontWeight: 700, color: '#0b1020' }}>#{tx.id}</span>
                         <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 2 }}>
-                          {new Date(tx.created_at).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })}
+                          {new Date(tx.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric' })}
                           {' '}
-                          {new Date(tx.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(tx.created_at).toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
 
                       {/* Customer */}
                       <div>
-                        <span style={{ fontWeight: 600, color: '#334155' }}>{tx.customer_name || `عميل #${tx.customer_id}`}</span>
+                        <span style={{ fontWeight: 600, color: '#334155' }}>{tx.customer_name || (isRTL ? `عميل #${tx.customer_id}` : `Customer #${tx.customer_id}`)}</span>
                         <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 1 }}>
-                          {tx.type === 'deposit' ? 'شحن رصيد' : tx.type === 'purchase' ? 'شراء' : 'استرداد'}
+                          {tx.type === 'deposit' ? t('شحن رصيد') : tx.type === 'purchase' ? t('شراء') : t('استرداد')}
                         </p>
                       </div>
 
@@ -660,7 +662,7 @@ export default function PaymentsPage() {
                             padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0',
                             background: '#fff', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 600,
                             fontFamily: 'Tajawal, sans-serif', color: '#2563eb',
-                          }}>🧾 إيصال</button>
+                          }}>{t('🧁 إيصال')}</button>
                         )}
                         {isPending && (
                           <>
@@ -673,7 +675,7 @@ export default function PaymentsPage() {
                                 fontSize: '0.68rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                                 color: '#fff', opacity: approvingId === tx.id ? 0.6 : 1,
                               }}
-                            >{approvingId === tx.id ? '...' : '✓ موافقة'}</button>
+                            >{approvingId === tx.id ? '...' : t('✓ موافقة')}</button>
                             <button
                               onClick={() => handleReject(tx)}
                               disabled={approvingId === tx.id}
@@ -683,7 +685,7 @@ export default function PaymentsPage() {
                                 fontSize: '0.68rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
                                 color: '#dc2626', opacity: approvingId === tx.id ? 0.6 : 1,
                               }}
-                            >✗ رفض</button>
+                            >{t('✗ رفض')}</button>
                           </>
                         )}
                         {!isPending && !hasReceipt && (
@@ -702,13 +704,13 @@ export default function PaymentsPage() {
                     padding: '0.35rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0',
                     background: '#fff', cursor: txPage <= 1 ? 'not-allowed' : 'pointer',
                     fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: txPage <= 1 ? 0.4 : 1,
-                  }}>← السابق</button>
+                  }}>{isRTL ? '← السابق' : '← Previous'}</button>
                   <span style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', color: '#64748b' }}>{txPage} / {totalPages}</span>
                   <button disabled={txPage >= totalPages} onClick={() => setTxPage(p => p + 1)} style={{
                     padding: '0.35rem 0.7rem', borderRadius: 8, border: '1px solid #e2e8f0',
                     background: '#fff', cursor: txPage >= totalPages ? 'not-allowed' : 'pointer',
                     fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', color: '#64748b', opacity: txPage >= totalPages ? 0.4 : 1,
-                  }}>التالي →</button>
+                  }}>{isRTL ? 'التالي →' : 'Next →'}</button>
                 </div>
               )}
             </>
@@ -724,28 +726,28 @@ export default function PaymentsPage() {
             boxShadow: '0 25px 50px rgba(0,0,0,0.2)', maxHeight: '88vh', overflowY: 'auto',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>🧾 إيصال الدفع — #{receiptModal.id}</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{isRTL ? '🧁 إيصال الدفع' : '🧁 Payment Receipt'} — #{receiptModal.id}</h3>
               <button onClick={() => setReceiptModal(null)} style={{ background: '#f1f5f9', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: '0.9rem', display: 'grid', placeItems: 'center' }}>✕</button>
             </div>
 
             {/* Payment Info */}
             <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
-                <span style={{ color: '#64748b' }}>العميل</span>
+                <span style={{ color: '#64748b' }}>{t('العميل')}</span>
                 <span style={{ fontWeight: 600, color: '#0b1020' }}>{receiptModal.customer_name || `#${receiptModal.customer_id}`}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
-                <span style={{ color: '#64748b' }}>المبلغ</span>
+                <span style={{ color: '#64748b' }}>{t('المبلغ')}</span>
                 <span style={{ fontWeight: 700, color: '#059669', direction: 'ltr' as const }}>${receiptModal.amount}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
-                <span style={{ color: '#64748b' }}>البوابة</span>
+                <span style={{ color: '#64748b' }}>{t('البوابة')}</span>
                 <span style={{ fontWeight: 600, color: '#334155' }}>{GATEWAY_META[receiptModal.payment_method as GatewayType]?.label || receiptModal.payment_method}</span>
               </div>
               {receiptModal.meta?.receipt_uploaded_at && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                  <span style={{ color: '#64748b' }}>تاريخ الرفع</span>
-                  <span style={{ fontWeight: 500, color: '#334155', fontSize: '0.78rem' }}>{new Date(receiptModal.meta.receipt_uploaded_at).toLocaleString('ar-SA')}</span>
+                  <span style={{ color: '#64748b' }}>{t('تاريخ الرفع')}</span>
+                  <span style={{ fontWeight: 500, color: '#334155', fontSize: '0.78rem' }}>{new Date(receiptModal.meta.receipt_uploaded_at).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}</span>
                 </div>
               )}
             </div>
@@ -755,7 +757,7 @@ export default function PaymentsPage() {
               <div style={{ textAlign: 'center', marginBottom: 16 }}>
                 <img
                   src={receiptModal.meta.receipt_url}
-                  alt="إيصال الدفع"
+                  alt={t("إيصال الدفع")}
                   style={{ maxWidth: '100%', maxHeight: 400, borderRadius: 12, border: '1px solid #e2e8f0' }}
                   onError={e => { e.currentTarget.style.display = 'none'; }}
                 />
@@ -765,7 +767,7 @@ export default function PaymentsPage() {
             {/* Receipt Notes */}
             {receiptModal.meta?.receipt_notes && (
               <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16 }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#92400e' }}>ملاحظات العميل:</p>
+                <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#92400e' }}>{t('ملاحظات العميل:')}</p>
                 <p style={{ fontSize: '0.82rem', color: '#78350f', marginTop: 4 }}>{receiptModal.meta.receipt_notes}</p>
               </div>
             )}
@@ -777,12 +779,12 @@ export default function PaymentsPage() {
                   flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #fecaca',
                   background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
                   fontFamily: 'Tajawal, sans-serif', color: '#dc2626',
-                }}>✗ رفض</button>
+                }}>{t('✗ رفض')}</button>
                 <button onClick={() => { handleApprove(receiptModal); setReceiptModal(null); }} style={{
                   flex: 2, padding: '0.65rem', borderRadius: 10, border: 'none',
                   background: '#059669', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
                   fontFamily: 'Tajawal, sans-serif', color: '#fff',
-                }}>✓ موافقة وإضافة الرصيد</button>
+                }}>{t('✓ موافقة وإضافة الرصيد')}</button>
               </div>
             )}
           </div>
@@ -808,9 +810,9 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020' }}>
-                    {editingGw ? `تعديل ${GATEWAY_META[formType].label}` : `إعداد ${GATEWAY_META[formType].label}`}
+                    {editingGw ? (isRTL ? `تعديل ${GATEWAY_META[formType].label}` : `Edit ${GATEWAY_META[formType].labelEn}`) : (isRTL ? `إعداد ${GATEWAY_META[formType].label}` : `Setup ${GATEWAY_META[formType].labelEn}`)}
                   </h3>
-                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{GATEWAY_META[formType].desc}</p>
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t(GATEWAY_META[formType].desc)}</p>
                 </div>
               </div>
               <button onClick={() => setShowModal(false)} style={{
@@ -823,11 +825,11 @@ export default function PaymentsPage() {
               {/* Name */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>الاسم (عربي)</label>
-                  <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="اسم البوابة" style={inputStyle} />
+                  <label style={labelStyle}>{t('الاسم (عربي)')}</label>
+                  <input value={formName} onChange={e => setFormName(e.target.value)} placeholder={t("اسم البوابة")} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>الاسم (إنجليزي)</label>
+                  <label style={labelStyle}>{t('الاسم (إنجليزي)')}</label>
                   <input value={formNameEn} onChange={e => setFormNameEn(e.target.value)} placeholder="Gateway Name" style={inputStyle} />
                 </div>
               </div>
@@ -836,14 +838,14 @@ export default function PaymentsPage() {
               <div>
                 <label style={{ ...labelStyle, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#475569" strokeWidth="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="#475569" strokeWidth="2"/></svg>
-                  إعدادات {GATEWAY_META[formType].label}
+                  {isRTL ? 'إعدادات' : 'Settings'} {isRTL ? GATEWAY_META[formType].label : GATEWAY_META[formType].labelEn}
                 </label>
                 <div style={{ padding: '1rem', borderRadius: 12, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {fields.map(field => (
                     <div key={field.key}>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                        {field.label}
-                        {field.required && <span style={{ color: '#dc2626', marginRight: 2 }}> *</span>}
+                        {t(field.label)}
+                        {field.required && <span style={{ color: '#dc2626', marginInlineStart: 2 }}> *</span>}
                       </label>
                       {field.options ? (
                         <select
@@ -874,7 +876,7 @@ export default function PaymentsPage() {
                       )}
                       {field.key === 'image_url' && formConfig.image_url && (
                         <div style={{ marginTop: 8, textAlign: 'center' }}>
-                          <img src={formConfig.image_url} alt="معاينة" style={{ maxWidth: 120, maxHeight: 60, borderRadius: 8, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                          <img src={formConfig.image_url} alt={t("معاينة")} style={{ maxWidth: 120, maxHeight: 60, borderRadius: 8, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
                         </div>
                       )}
                     </div>
@@ -885,8 +887,8 @@ export default function PaymentsPage() {
               {/* Default Toggle */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 10 }}>
                 <div>
-                  <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0b1020' }}>بوابة افتراضية</p>
-                  <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>ستكون الأولى في قائمة الدفع</p>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0b1020' }}>{t('بوابة افتراضية')}</p>
+                  <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('ستكون الأولى في قائمة الدفع')}</p>
                 </div>
                 <button onClick={() => setFormDefault(!formDefault)} style={{
                   width: 42, height: 24, borderRadius: 12, border: 'none',
@@ -905,7 +907,7 @@ export default function PaymentsPage() {
                 cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Tajawal, sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}>
-                {saving ? '⏳ جاري الحفظ...' : editingGw ? '💾 حفظ التعديلات' : '💾 إضافة البوابة'}
+                {saving ? t('⏳ جاري الحفظ...') : editingGw ? t('💾 حفظ التعديلات') : t('💾 إضافة البوابة')}
               </button>
             </div>
           </div>
@@ -919,11 +921,11 @@ export default function PaymentsPage() {
             <div style={{ width: 56, height: 56, borderRadius: 16, background: '#fef2f2', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M12 2L2 20h20L12 2z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>حذف بوابة الدفع؟</h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: 20 }}>هذا الإجراء لا يمكن التراجع عنه</p>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('حذف بوابة الدفع؟')}</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: 20 }}>{t('هذا الإجراء لا يمكن التراجع عنه')}</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif', color: '#64748b' }}>إلغاء</button>
-              <button onClick={() => handleDelete(deleteConfirm)} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, border: 'none', background: '#dc2626', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif', color: '#fff' }}>نعم، احذف</button>
+              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif', color: '#64748b' }}>{t('إلغاء')}</button>
+              <button onClick={() => handleDelete(deleteConfirm)} style={{ flex: 1, padding: '0.65rem', borderRadius: 10, border: 'none', background: '#dc2626', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif', color: '#fff' }}>{t('نعم، احذف')}</button>
             </div>
           </div>
         </div>

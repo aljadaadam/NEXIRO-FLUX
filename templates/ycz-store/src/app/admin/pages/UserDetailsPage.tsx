@@ -10,6 +10,7 @@ import {
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User, Order } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 /* ═══ Skeleton ═══ */
 function SkeletonBlock({ w, h, r = 6 }: { w: string | number; h: number; r?: number }) {
@@ -61,6 +62,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { t, isRTL } = useAdminLang();
 
   const num = parseFloat(amount) || 0;
 
@@ -70,10 +72,10 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
     try {
       const res = await adminApi.updateCustomerWallet(user.id, mode === 'deduct' ? -num : num);
       const nb = parseFloat(res?.wallet_balance ?? 0);
-      setSuccess(`تم ${mode === 'add' ? 'إضافة' : 'خصم'} $${num.toFixed(2)}. الرصيد الجديد: $${nb.toFixed(2)}`);
+      setSuccess(isRTL ? `تم ${mode === 'add' ? 'إضافة' : 'خصم'} $${num.toFixed(2)}. الرصيد الجديد: $${nb.toFixed(2)}` : `${mode === 'add' ? 'Added' : 'Deducted'} $${num.toFixed(2)}. New balance: $${nb.toFixed(2)}`);
       onDone(nb);
       setAmount('');
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'فشلت العملية'); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : t('فشلت العملية')); }
     finally { setSubmitting(false); }
   };
 
@@ -82,7 +84,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '1.75rem', width: '90%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Wallet size={20} color={theme.primary} /> تعديل الرصيد
+            <Wallet size={20} color={theme.primary} /> {t('تعديل الرصيد')}
           </h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={14} /></button>
         </div>
@@ -91,7 +93,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
           <div style={{ width: 36, height: 36, borderRadius: 10, background: theme.gradient, display: 'grid', placeItems: 'center', color: '#fff', fontSize: '0.8rem', fontWeight: 800 }}>{user.name.charAt(0)}</div>
           <div>
             <p style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user.name}</p>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>الرصيد الحالي: <strong style={{ color: '#0b1020' }}>${(user.wallet_balance ?? 0).toFixed(2)}</strong></p>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('الرصيد الحالي:')} <strong style={{ color: '#0b1020' }}>${(user.wallet_balance ?? 0).toFixed(2)}</strong></p>
           </div>
         </div>
 
@@ -105,12 +107,12 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
               fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
-              {m === 'add' ? <><Plus size={14} /> إضافة رصيد</> : <><Minus size={14} /> خصم رصيد</>}
+              {m === 'add' ? <><Plus size={14} /> {t('إضافة رصيد')}</> : <><Minus size={14} /> {t('خصم رصيد')}</>}
             </button>
           ))}
         </div>
 
-        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>المبلغ ($)</label>
+        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>{t('المبلغ ($)')}</label>
         <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
           style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '1rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'left', direction: 'ltr' }} />
 
@@ -123,7 +125,7 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
           color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700,
           cursor: num > 0 ? 'pointer' : 'not-allowed', fontFamily: 'Tajawal, sans-serif', opacity: num > 0 ? 1 : 0.5,
         }}>
-          {submitting ? 'جارٍ التنفيذ...' : mode === 'add' ? `إضافة $${num.toFixed(2)}` : `خصم $${num.toFixed(2)}`}
+          {submitting ? t('جارٍ التنفيذ...') : mode === 'add' ? (isRTL ? `إضافة $${num.toFixed(2)}` : `Add $${num.toFixed(2)}`) : (isRTL ? `خصم $${num.toFixed(2)}` : `Deduct $${num.toFixed(2)}`)}
         </button>
       </div>
     </div>
@@ -141,6 +143,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; ico
 };
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useAdminLang();
   const s = STATUS_MAP[status] || { label: status, color: '#64748b', bg: '#f8fafc', icon: Clock };
   const Icon = s.icon;
   return (
@@ -149,7 +152,7 @@ function StatusBadge({ status }: { status: string }) {
       padding: '0.2rem 0.55rem', borderRadius: 6,
       background: s.bg, color: s.color, fontSize: '0.72rem', fontWeight: 700,
     }}>
-      <Icon size={11} /> {s.label}
+      <Icon size={11} /> {t(s.label)}
     </span>
   );
 }
@@ -186,6 +189,7 @@ interface UserDetailsPageProps {
 }
 
 export default function UserDetailsPage({ theme, userId, userType, onBack }: UserDetailsPageProps) {
+  const { t, isRTL } = useAdminLang();
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [payments, setPayments] = useState<Record<string, unknown>[]>([]);
@@ -310,7 +314,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
           background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer', marginBottom: 16,
           fontSize: '0.82rem', fontWeight: 700, color: '#64748b', fontFamily: 'Tajawal, sans-serif',
         }}>
-          <ArrowRight size={14} /> رجوع للمستخدمين
+          <ArrowRight size={14} /> {t('رجوع للمستخدمين')}
         </button>
         <ProfileSkeleton />
       </div>
@@ -321,12 +325,12 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
     return (
       <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
         <AlertTriangle size={40} color="#cbd5e1" />
-        <p style={{ marginTop: 12, fontSize: '0.9rem', fontWeight: 700 }}>المستخدم غير موجود</p>
+        <p style={{ marginTop: 12, fontSize: '0.9rem', fontWeight: 700 }}>{t('المستخدم غير موجود')}</p>
         <button onClick={onBack} style={{
           marginTop: 12, padding: '0.5rem 1.5rem', borderRadius: 10,
           background: theme.primary, color: '#fff', border: 'none',
           fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-        }}>رجوع</button>
+        }}>{t('رجوع')}</button>
       </div>
     );
   }
@@ -335,9 +339,9 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
   const isBlocked = user.status === 'محظور';
 
   const TABS = [
-    { key: 'orders' as const, label: 'الطلبات', icon: ShoppingCart, count: orders.length },
-    { key: 'payments' as const, label: 'المدفوعات', icon: CreditCard, count: payments.length },
-    { key: 'verification' as const, label: 'التحقق من الهوية', icon: ShieldCheck, count: null },
+    { key: 'orders' as const, label: t('الطلبات'), icon: ShoppingCart, count: orders.length },
+    { key: 'payments' as const, label: t('المدفوعات'), icon: CreditCard, count: payments.length },
+    { key: 'verification' as const, label: t('التحقق من الهوية'), icon: ShieldCheck, count: null },
   ];
 
   return (
@@ -352,7 +356,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
         onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
         onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
       >
-        <ArrowRight size={14} /> رجوع للمستخدمين
+        <ArrowRight size={14} /> {t('رجوع للمستخدمين')}
       </button>
 
       {/* ═══ Profile Header ═══ */}
@@ -381,7 +385,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               background: user.role === 'مدير' ? '#dbeafe' : user.role === 'محظور' ? '#fee2e2' : user.role === 'مشرف' ? '#e0e7ff' : `${theme.primary}12`,
               color: user.role === 'مدير' ? '#2563eb' : user.role === 'محظور' ? '#dc2626' : user.role === 'مشرف' ? '#4f46e5' : theme.primary,
               fontSize: '0.72rem', fontWeight: 700,
-            }}>{user.role}</span>
+            }}>{t(user.role)}</span>
             {/* Status */}
             <span style={{
               padding: '0.2rem 0.65rem', borderRadius: 8,
@@ -390,7 +394,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               fontSize: '0.72rem', fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: 4,
             }}>
-              {isBlocked ? <><UserX size={11} /> محظور</> : <><UserCheck size={11} /> نشط</>}
+              {isBlocked ? <><UserX size={11} /> {t('محظور')}</> : <><UserCheck size={11} /> {t('نشط')}</>}
             </span>
           </div>
 
@@ -410,7 +414,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               </span>
             )}
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: '#64748b' }}>
-              <Calendar size={13} /> انضم {user.joined}
+              <Calendar size={13} /> {t('انضم')} {user.joined}
             </span>
           </div>
         </div>
@@ -429,7 +433,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              <Wallet size={14} /> تعديل الرصيد
+              <Wallet size={14} /> {t('تعديل الرصيد')}
             </button>
             <button onClick={handleToggleBlock} disabled={blocking} style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -444,7 +448,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               onMouseEnter={e => { if (!blocking) e.currentTarget.style.transform = 'scale(1.03)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              {isBlocked ? <><UserCheck size={14} /> إلغاء الحظر</> : <><Shield size={14} /> حظر</>}
+              {isBlocked ? <><UserCheck size={14} /> {t('إلغاء الحظر')}</> : <><Shield size={14} /> {t('حظر')}</>}
             </button>
           </div>
         )}
@@ -456,10 +460,10 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16,
         }}>
           {[
-            { label: 'الرصيد', value: `$${(user.wallet_balance ?? 0).toFixed(2)}`, icon: Wallet, color: theme.primary, bg: `${theme.primary}12` },
-            { label: 'إجمالي الطلبات', value: orderStats.total, icon: ShoppingCart, color: '#3b82f6', bg: '#eff6ff' },
-            { label: 'مكتملة', value: orderStats.completed, icon: CheckCircle2, color: '#22c55e', bg: '#f0fdf4' },
-            { label: 'إجمالي الإنفاق', value: `$${orderStats.totalSpent.toFixed(2)}`, icon: DollarSign, color: '#f59e0b', bg: '#fffbeb' },
+            { label: t('الرصيد'), value: `$${(user.wallet_balance ?? 0).toFixed(2)}`, icon: Wallet, color: theme.primary, bg: `${theme.primary}12` },
+            { label: t('إجمالي الطلبات'), value: orderStats.total, icon: ShoppingCart, color: '#3b82f6', bg: '#eff6ff' },
+            { label: t('مكتملة'), value: orderStats.completed, icon: CheckCircle2, color: '#22c55e', bg: '#f0fdf4' },
+            { label: t('إجمالي الإنفاق'), value: `$${orderStats.totalSpent.toFixed(2)}`, icon: DollarSign, color: '#f59e0b', bg: '#fffbeb' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -487,11 +491,11 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
       {/* ═══ Tab Switcher ═══ */}
       {isCustomer && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-          {TABS.map(t => {
-            const Icon = t.icon;
-            const active = activeTab === t.key;
+          {TABS.map(tab => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
             return (
-              <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '0.5rem 0.9rem', borderRadius: 10,
                 background: active ? `${theme.primary}12` : '#fff',
@@ -501,8 +505,8 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                 cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s',
               }}>
                 <Icon size={14} />
-                {t.label}
-                {t.count !== null && (
+                {tab.label}
+                {tab.count !== null && (
                   <span style={{
                     minWidth: 18, height: 18, borderRadius: 9,
                     background: active ? theme.primary : '#e2e8f0',
@@ -510,7 +514,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                     fontSize: '0.6rem', fontWeight: 800,
                     display: 'grid', placeItems: 'center',
                     padding: '0 4px', fontFamily: 'system-ui',
-                  }}>{t.count}</span>
+                  }}>{tab.count}</span>
                 )}
               </button>
             );
@@ -520,22 +524,22 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 
       {/* ═══ Orders Tab ═══ */}
       {(activeTab === 'orders' && isCustomer) && (
-        <Section title="الطلبات" icon={ShoppingCart} extra={
-          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>{orders.length} طلب</span>
+        <Section title={t('الطلبات')} icon={ShoppingCart} extra={
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>{orders.length} {t('طلب')}</span>
         }>
           {orders.length === 0 ? (
             <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#94a3b8' }}>
               <Package size={32} color="#cbd5e1" />
-              <p style={{ marginTop: 8, fontSize: '0.85rem', fontWeight: 700 }}>لا توجد طلبات لهذا العميل</p>
+              <p style={{ marginTop: 8, fontSize: '0.85rem', fontWeight: 700 }}>{t('لا توجد طلبات لهذا العميل')}</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    {['#', 'المنتج', 'الكمية', 'السعر', 'الإجمالي', 'الحالة', 'طريقة الدفع', 'التاريخ'].map(h => (
+                    {['#', t('المنتج'), t('الكمية'), t('السعر'), t('الإجمالي'), t('الحالة'), t('طريقة الدفع'), t('التاريخ')].map(h => (
                       <th key={h} style={{
-                        padding: '0.75rem 0.85rem', textAlign: 'right', fontSize: '0.72rem',
+                        padding: '0.75rem 0.85rem', textAlign: isRTL ? 'right' : 'left', fontSize: '0.72rem',
                         fontWeight: 700, color: '#64748b', borderBottom: '1px solid #f1f5f9',
                         whiteSpace: 'nowrap',
                       }}>{h}</th>
@@ -560,7 +564,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                       <td style={{ padding: '0.75rem 0.85rem' }}><StatusBadge status={order.status} /></td>
                       <td style={{ padding: '0.75rem 0.85rem', fontSize: '0.78rem', color: '#64748b' }}>{order.payment_method || '--'}</td>
                       <td style={{ padding: '0.75rem 0.85rem', fontSize: '0.75rem', color: '#94a3b8' }}>
-                        {order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '--'}
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US') : '--'}
                       </td>
                     </tr>
                   ))}
@@ -573,22 +577,22 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 
       {/* ═══ Payments Tab ═══ */}
       {(activeTab === 'payments' && isCustomer) && (
-        <Section title="المدفوعات" icon={CreditCard} extra={
-          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>{payments.length} عملية</span>
+        <Section title={t('المدفوعات')} icon={CreditCard} extra={
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>{payments.length} {t('عملية')}</span>
         }>
           {payments.length === 0 ? (
             <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#94a3b8' }}>
               <CreditCard size={32} color="#cbd5e1" />
-              <p style={{ marginTop: 8, fontSize: '0.85rem', fontWeight: 700 }}>لا توجد عمليات دفع</p>
+              <p style={{ marginTop: 8, fontSize: '0.85rem', fontWeight: 700 }}>{t('لا توجد عمليات دفع')}</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    {['#', 'النوع', 'المبلغ', 'الطريقة', 'الحالة', 'التاريخ'].map(h => (
+                    {['#', t('النوع'), t('المبلغ'), t('الطريقة'), t('الحالة'), t('التاريخ')].map(h => (
                       <th key={h} style={{
-                        padding: '0.75rem 0.85rem', textAlign: 'right', fontSize: '0.72rem',
+                        padding: '0.75rem 0.85rem', textAlign: isRTL ? 'right' : 'left', fontSize: '0.72rem',
                         fontWeight: 700, color: '#64748b', borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
                       }}>{h}</th>
                     ))}
@@ -596,7 +600,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                 </thead>
                 <tbody>
                   {payments.map((p, idx) => {
-                    const typeMap: Record<string, string> = { deposit: 'إيداع', purchase: 'شراء', refund: 'استرجاع', subscription: 'اشتراك' };
+                    const typeMap: Record<string, string> = { deposit: t('إيداع'), purchase: t('شراء'), refund: t('استرجاع'), subscription: t('اشتراك') };
                     return (
                       <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#fafbfc'; }}
@@ -614,7 +618,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                         <td style={{ padding: '0.75rem 0.85rem', fontSize: '0.78rem', color: '#64748b' }}>{String(p.payment_method || '--')}</td>
                         <td style={{ padding: '0.75rem 0.85rem' }}><StatusBadge status={String(p.status || 'pending')} /></td>
                         <td style={{ padding: '0.75rem 0.85rem', fontSize: '0.75rem', color: '#94a3b8' }}>
-                          {p.created_at ? new Date(String(p.created_at)).toLocaleDateString('ar-EG') : '--'}
+                          {p.created_at ? new Date(String(p.created_at)).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US') : '--'}
                         </td>
                       </tr>
                     );
@@ -628,13 +632,13 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 
       {/* ═══ Verification Tab ═══ */}
       {(activeTab === 'verification' && isCustomer) && (
-        <Section title="التحقق من الهوية" icon={ShieldCheck}>
+        <Section title={t('التحقق من الهوية')} icon={ShieldCheck}>
           <div style={{ padding: '1.25rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
               {/* Email Verification */}
               <VerificationCard
                 icon={Mail}
-                title="البريد الإلكتروني"
+                title={t('البريد الإلكتروني')}
                 description={user.email}
                 verified={verificationStatus?.emailVerified ?? false}
                 theme={theme}
@@ -642,35 +646,35 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               {/* Phone Verification */}
               <VerificationCard
                 icon={Phone}
-                title="رقم الهاتف"
-                description={user.phone || 'لم يتم إضافة رقم هاتف'}
+                title={t('رقم الهاتف')}
+                description={user.phone || t('لم يتم إضافة رقم هاتف')}
                 verified={verificationStatus?.phoneVerified ?? false}
                 theme={theme}
               />
               {/* Identity Verification */}
               <VerificationCard
                 icon={Shield}
-                title="التحقق من الهوية"
-                description={verificationStatus?.identityVerified ? 'تم التحقق من وثيقة الهوية' : 'لم يتم تقديم وثيقة هوية بعد'}
+                title={t('التحقق من الهوية')}
+                description={verificationStatus?.identityVerified ? t('تم التحقق من وثيقة الهوية') : t('لم يتم تقديم وثيقة هوية بعد')}
                 verified={verificationStatus?.identityVerified ?? false}
                 theme={theme}
               />
               {/* Account Age */}
               <VerificationCard
                 icon={Calendar}
-                title="عمر الحساب"
-                description={`تاريخ الإنشاء: ${user.joined}`}
+                title={t('عمر الحساب')}
+                description={isRTL ? `تاريخ الإنشاء: ${user.joined}` : `Created: ${user.joined}`}
                 verified={true}
                 theme={theme}
               />
               {/* Last Login */}
               <VerificationCard
                 icon={Eye}
-                title="آخر تسجيل دخول"
+                title={t('آخر تسجيل دخول')}
                 description={
                   user.last_login_at
-                    ? new Date(user.last_login_at).toLocaleString('ar-EG')
-                    : 'لم يسجل دخول بعد'
+                    ? new Date(user.last_login_at).toLocaleString(isRTL ? 'ar-EG' : 'en-US')
+                    : t('لم يسجل دخول بعد')
                 }
                 verified={!!user.last_login_at}
                 theme={theme}
@@ -678,8 +682,8 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               {/* Block Status */}
               <VerificationCard
                 icon={isBlocked ? UserX : UserCheck}
-                title="حالة الحساب"
-                description={isBlocked ? 'هذا الحساب محظور حالياً' : 'الحساب نشط بدون قيود'}
+                title={t('حالة الحساب')}
+                description={isBlocked ? t('هذا الحساب محظور حالياً') : t('الحساب نشط بدون قيود')}
                 verified={!isBlocked}
                 theme={theme}
                 danger={isBlocked}
@@ -691,12 +695,12 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 
       {/* ═══ Staff info ═══ */}
       {!isCustomer && (
-        <Section title="معلومات المشرف" icon={ShieldCheck}>
+        <Section title={t('معلومات المشرف')} icon={ShieldCheck}>
           <div style={{ padding: '1.25rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-              <VerificationCard icon={Mail} title="البريد الإلكتروني" description={user.email} verified={true} theme={theme} />
-              <VerificationCard icon={ShieldCheck} title="الصلاحية" description={user.role === 'مدير' ? 'مدير النظام - صلاحيات كاملة' : 'مشرف - صلاحيات محدودة'} verified={true} theme={theme} />
-              <VerificationCard icon={Calendar} title="تاريخ الإنشاء" description={user.joined} verified={true} theme={theme} />
+              <VerificationCard icon={Mail} title={t('البريد الإلكتروني')} description={user.email} verified={true} theme={theme} />
+              <VerificationCard icon={ShieldCheck} title={t('الصلاحية')} description={user.role === 'مدير' ? t('مدير النظام - صلاحيات كاملة') : t('مشرف - صلاحيات محدودة')} verified={true} theme={theme} />
+              <VerificationCard icon={Calendar} title={t('تاريخ الإنشاء')} description={user.joined} verified={true} theme={theme} />
             </div>
           </div>
         </Section>

@@ -1,6 +1,7 @@
 'use client';
 
-import { Search, Bell, Menu, User } from 'lucide-react';
+import { Search, Bell, Menu, User, Globe } from 'lucide-react';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 import type { ColorTheme } from '@/lib/themes';
 
 interface DashHeaderProps {
@@ -11,6 +12,8 @@ interface DashHeaderProps {
 }
 
 export default function DashHeader({ collapsed, onMenuToggle, theme, logoPreview }: DashHeaderProps) {
+  const { t, lang, setLang, isRTL } = useAdminLang();
+
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 40,
@@ -39,7 +42,7 @@ export default function DashHeader({ collapsed, onMenuToggle, theme, logoPreview
           width: 240,
         }}>
           <Search size={15} color="#94a3b8" />
-          <input placeholder="بحث..." style={{
+          <input placeholder={t('بحث...')} style={{
             border: 'none', outline: 'none', width: '100%',
             fontSize: '0.82rem', fontFamily: 'Tajawal, sans-serif',
             background: 'transparent', color: '#334155',
@@ -48,6 +51,23 @@ export default function DashHeader({ collapsed, onMenuToggle, theme, logoPreview
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Language Switcher */}
+        <button
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+          title={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            height: 38, padding: '0 10px', borderRadius: 10,
+            border: '1px solid #f1f5f9', background: '#fff',
+            cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+            color: '#64748b', fontFamily: 'Tajawal, sans-serif',
+            transition: 'all 0.2s',
+          }}
+        >
+          <Globe size={15} />
+          <span>{lang === 'ar' ? 'EN' : 'ع'}</span>
+        </button>
+
         {/* Notifications */}
         <button style={{
           width: 38, height: 38, borderRadius: 10,
@@ -78,7 +98,7 @@ export default function DashHeader({ collapsed, onMenuToggle, theme, logoPreview
             <User size={14} color="#fff" />
           </div>
           <div className="dash-profile-text">
-            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020', lineHeight: 1 }}>المدير</p>
+            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020', lineHeight: 1 }}>{t('المدير')}</p>
             <p style={{ fontSize: '0.62rem', color: '#94a3b8' }}>admin</p>
           </div>
         </div>

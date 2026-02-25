@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, X, Clock, User, ChevronLeft, RefreshCw } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ChatConversation, ChatMsg } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 let _adminAudioCtx: AudioContext | null = null;
 function getAudioCtx() {
@@ -28,6 +29,7 @@ function playNotifSound() {
 }
 
 export default function ChatAdminPage() {
+  const { t, isRTL } = useAdminLang();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -146,13 +148,13 @@ export default function ChatAdminPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
-          💬 الدردشة المباشرة
+          {t('💬 الدردشة المباشرة')}
           {totalUnread > 0 && (
             <span style={{ padding: '2px 10px', borderRadius: 10, background: '#ef4444', color: '#fff', fontSize: '.72rem', fontWeight: 700 }}>{totalUnread}</span>
           )}
         </h2>
         <button onClick={loadConversations} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
-          <RefreshCw size={14} /> تحديث
+          <RefreshCw size={14} /> {t('تحديث')}
         </button>
       </div>
 
@@ -167,7 +169,7 @@ export default function ChatAdminPage() {
           transition: 'width .2s',
         }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', fontSize: '.8rem', fontWeight: 700, color: '#64748b' }}>
-            المحادثات ({conversations.length})
+            {t('المحادثات')} ({conversations.length})
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {loading && [1, 2, 3].map(i => (
@@ -179,8 +181,8 @@ export default function ChatAdminPage() {
             {!loading && conversations.length === 0 && (
               <div style={{ padding: '40px 16px', textAlign: 'center' }}>
                 <MessageCircle size={40} color="#cbd5e1" style={{ margin: '0 auto 10px', opacity: .3 }} />
-                <p style={{ fontSize: '.82rem', color: '#94a3b8', fontWeight: 600 }}>لا توجد محادثات</p>
-                <p style={{ fontSize: '.7rem', color: '#cbd5e1' }}>ستظهر هنا عندما يبدأ زبون محادثة</p>
+                <p style={{ fontSize: '.82rem', color: '#94a3b8', fontWeight: 600 }}>{t('لا توجد محادثات')}</p>
+                <p style={{ fontSize: '.7rem', color: '#cbd5e1' }}>{t('ستظهر هنا عندما يبدأ زبون محادثة')}</p>
               </div>
             )}
             {conversations.map(conv => (
@@ -201,7 +203,7 @@ export default function ChatAdminPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#0b1020' }}>{conv.customer_name || 'زائر'}</span>
+                      <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#0b1020' }}>{conv.customer_name || t('زائر')}</span>
                       {conv.unread_admin > 0 && (
                         <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#ef4444', color: '#fff', fontSize: '.62rem', fontWeight: 700, display: 'grid', placeItems: 'center', padding: '0 5px' }}>{conv.unread_admin}</span>
                       )}
@@ -209,7 +211,7 @@ export default function ChatAdminPage() {
                   </div>
                 </div>
                 <div style={{ fontSize: '.72rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 40 }}>
-                  {conv.last_message || 'بدون رسائل'}
+                  {conv.last_message || t('بدون رسائل')}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                   <span style={{ fontSize: '.62rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -219,7 +221,7 @@ export default function ChatAdminPage() {
                     padding: '1px 8px', borderRadius: 6, fontSize: '.6rem', fontWeight: 600,
                     background: conv.status === 'active' ? '#f0fdf4' : '#f1f5f9',
                     color: conv.status === 'active' ? '#16a34a' : '#94a3b8',
-                  }}>{conv.status === 'active' ? 'نشط' : 'مغلق'}</span>
+                  }}>{conv.status === 'active' ? t('نشط') : t('مغلق')}</span>
                 </div>
               </div>
             ))}
@@ -239,7 +241,7 @@ export default function ChatAdminPage() {
                 <User size={16} color="#94a3b8" />
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '.88rem', fontWeight: 700, color: '#0b1020', margin: 0 }}>{selectedConvData?.customer_name || 'زائر'}</h4>
+                <h4 style={{ fontSize: '.88rem', fontWeight: 700, color: '#0b1020', margin: 0 }}>{selectedConvData?.customer_name || t('زائر')}</h4>
                 <p style={{ fontSize: '.68rem', color: '#94a3b8', margin: 0 }}>
                   {selectedConvData?.customer_email || selectedConvData?.conversation_id?.slice(0, 12) + '...'}
                 </p>
@@ -247,7 +249,7 @@ export default function ChatAdminPage() {
               {selectedConvData?.status === 'active' && (
                 <button onClick={() => closeConv(selectedConv)}
                   style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 8, border: 'none', background: '#fef2f2', color: '#ef4444', fontSize: '.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>
-                  <X size={12} /> إغلاق
+                  <X size={12} /> {t('إغلاق')}
                 </button>
               )}
             </div>
@@ -262,7 +264,7 @@ export default function ChatAdminPage() {
                 </div>
               )}
               {!msgLoading && messages.length === 0 && (
-                <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: '.8rem' }}>لا توجد رسائل بعد</div>
+                <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: '.8rem' }}>{t('لا توجد رسائل بعد')}</div>
               )}
               {messages.map(msg => (
                 <div key={msg.id} style={{
@@ -276,7 +278,7 @@ export default function ChatAdminPage() {
                 }}>
                   <div>{msg.message}</div>
                   <div style={{ fontSize: '.62rem', opacity: .6, marginTop: 3, textAlign: msg.sender_type === 'admin' ? 'left' : 'right' }}>
-                    {msg.sender_type === 'admin' ? 'أنت' : 'الزبون'} • {formatTime(msg.created_at)}
+                    {msg.sender_type === 'admin' ? t('أنت') : t('الزبون')} • {formatTime(msg.created_at)}
                   </div>
                 </div>
               ))}
@@ -287,7 +289,7 @@ export default function ChatAdminPage() {
               <div style={{ padding: '12px 16px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 8, alignItems: 'center', background: '#fff', flexShrink: 0 }}>
                 <input ref={inputRef} value={reply} onChange={e => setReply(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendReply()}
-                  placeholder="اكتب ردك..."
+                  placeholder={t('اكتب ردك...')}
                   style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 14px', fontSize: '.82rem', outline: 'none', fontFamily: 'Tajawal, sans-serif' }} />
                 <button onClick={sendReply} disabled={!reply.trim() || sending}
                   style={{
@@ -303,7 +305,7 @@ export default function ChatAdminPage() {
             )}
             {selectedConvData?.status === 'closed' && (
               <div style={{ padding: '14px', textAlign: 'center', background: '#fafbfc', borderTop: '1px solid #f1f5f9', fontSize: '.78rem', color: '#94a3b8', fontWeight: 600 }}>
-                🔒 هذه المحادثة مغلقة
+                {t('🔒 هذه المحادثة مغلقة')}
               </div>
             )}
           </div>
@@ -313,8 +315,8 @@ export default function ChatAdminPage() {
           <div style={{ flex: 1, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
             <div style={{ textAlign: 'center', color: '#94a3b8' }}>
               <MessageCircle size={48} style={{ margin: '0 auto 12px', opacity: .2 }} />
-              <p style={{ fontSize: '.88rem', fontWeight: 600 }}>اختر محادثة للبدء</p>
-              <p style={{ fontSize: '.72rem', color: '#cbd5e1' }}>اضغط على أي محادثة من القائمة</p>
+              <p style={{ fontSize: '.88rem', fontWeight: 600 }}>{t('اختر محادثة للبدء')}</p>
+              <p style={{ fontSize: '.72rem', color: '#cbd5e1' }}>{t('اضغط على أي محادثة من القائمة')}</p>
             </div>
           </div>
         )}

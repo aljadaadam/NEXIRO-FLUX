@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 export default function AdminError({
   error,
@@ -13,8 +14,10 @@ export default function AdminError({
     console.error('[Admin Error]', error);
   }, [error]);
 
+  const { t, isRTL } = useAdminLang();
+
   return (
-    <div dir="rtl" style={{
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
@@ -34,7 +37,7 @@ export default function AdminError({
         border: '1px solid #fee2e2',
       }}>
         <h2 style={{ color: '#dc2626', fontSize: '1.2rem', fontWeight: 700, marginBottom: 12 }}>
-          حدث خطأ
+          {t('حدث خطأ')}
         </h2>
         <pre dir="ltr" style={{
           background: '#fef2f2',
@@ -65,7 +68,7 @@ export default function AdminError({
             fontFamily: 'Tajawal, sans-serif',
           }}
         >
-          إعادة المحاولة
+          {t('إعادة المحاولة')}
         </button>
       </div>
     </div>

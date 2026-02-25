@@ -5,6 +5,7 @@ import { Search, Download, CheckCircle, XCircle, RotateCw, Undo2, X } from 'luci
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Order } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:    { label: 'معلق', color: '#f59e0b' },
@@ -25,6 +26,8 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
   const [rejectModal, setRejectModal] = useState<Order | null>(null);
   const [responseText, setResponseText] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  const { t, isRTL } = useAdminLang();
 
   useEffect(() => {
     loadOrders();
@@ -57,13 +60,13 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
 
   async function handleReject() {
     if (!rejectModal) return;
-    await handleStatusChange(rejectModal.id, 'failed', responseText || 'مرفوض من الإدارة');
+    await handleStatusChange(rejectModal.id, 'failed', responseText || t('مرفوض من الإدارة'));
     setRejectModal(null);
     setResponseText('');
   }
 
   async function handleRefund(order: Order) {
-    if (!confirm(`هل أنت متأكد من استرجاع $${Number(order.total_price).toFixed(2)} للعميل ${order.customer_name || ''}؟`)) return;
+    if (!confirm(isRTL ? `هل أنت متأكد من استرجاع $${Number(order.total_price).toFixed(2)} للعميل ${order.customer_name || ''}؟` : `Are you sure you want to refund $${Number(order.total_price).toFixed(2)} to customer ${order.customer_name || ''}?`)) return;
     await handleStatusChange(order.id, 'refunded');
   }
 
@@ -72,12 +75,12 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
   }
 
   const filters = [
-    { key: 'all', label: 'الكل' },
-    { key: 'pending', label: 'معلق' },
-    { key: 'processing', label: 'جارٍ' },
-    { key: 'completed', label: 'مكتمل' },
-    { key: 'failed', label: 'مرفوض' },
-    { key: 'refunded', label: 'مسترجع' },
+    { key: 'all', label: t('الكل') },
+    { key: 'pending', label: t('معلق') },
+    { key: 'processing', label: t('جارٍ') },
+    { key: 'completed', label: t('مكتمل') },
+    { key: 'failed', label: t('مرفوض') },
+    { key: 'refunded', label: t('مسترجع') },
   ];
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
@@ -86,7 +89,7 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🛒 الطلبات</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🛒 {t('الطلبات')}</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {filters.map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)} style={{
@@ -104,12 +107,12 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
         {[
-          { label: 'إجمالي', value: orders.length, bg: '#f8fafc', color: '#0b1020' },
-          { label: 'معلق', value: orders.filter(o => o.status === 'pending').length, bg: '#fffbeb', color: '#f59e0b' },
-          { label: 'جارٍ', value: orders.filter(o => o.status === 'processing').length, bg: '#eff6ff', color: '#3b82f6' },
-          { label: 'مكتمل', value: orders.filter(o => o.status === 'completed').length, bg: '#f0fdf4', color: '#22c55e' },
-          { label: 'مرفوض', value: orders.filter(o => o.status === 'failed').length, bg: '#fef2f2', color: '#ef4444' },
-          { label: 'مسترجع', value: orders.filter(o => o.status === 'refunded').length, bg: '#f5f3ff', color: '#8b5cf6' },
+          { label: t('إجمالي'), value: orders.length, bg: '#f8fafc', color: '#0b1020' },
+          { label: t('معلق'), value: orders.filter(o => o.status === 'pending').length, bg: '#fffbeb', color: '#f59e0b' },
+          { label: t('جارٍ'), value: orders.filter(o => o.status === 'processing').length, bg: '#eff6ff', color: '#3b82f6' },
+          { label: t('مكتمل'), value: orders.filter(o => o.status === 'completed').length, bg: '#f0fdf4', color: '#22c55e' },
+          { label: t('مرفوض'), value: orders.filter(o => o.status === 'failed').length, bg: '#fef2f2', color: '#ef4444' },
+          { label: t('مسترجع'), value: orders.filter(o => o.status === 'refunded').length, bg: '#f5f3ff', color: '#8b5cf6' },
         ].map((s, i) => (
           <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12, padding: '0.7rem 0.85rem' }}>
             <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 4 }}>{s.label}</p>
@@ -123,9 +126,9 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['رقم الطلب', 'المنتج', 'العميل', 'المبلغ', 'الحالة', 'التاريخ', 'إجراءات'].map(h => (
+                {[t('رقم الطلب'), t('المنتج'), t('العميل'), t('المبلغ'), t('الحالة'), t('التاريخ'), t('إجراءات')].map(h => (
                   <th key={h} style={{
-                    padding: '0.85rem 1rem', textAlign: 'right',
+                    padding: '0.85rem 1rem', textAlign: isRTL ? 'right' : 'left',
                     fontSize: '0.75rem', fontWeight: 700, color: '#64748b',
                     borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
                   }}>{h}</th>
@@ -134,9 +137,9 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>جاري التحميل...</td></tr>
+                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>{t('جاري التحميل...')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>لا توجد طلبات</td></tr>
+                <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>{t('لا توجد طلبات')}</td></tr>
               ) : filtered.map(order => {
                 const si = getStatus(order.status);
                 return (
@@ -147,7 +150,7 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
                       <span>📦</span>
                       <div style={{ minWidth: 0 }}>
                         <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product_name}</span>
-                        {order.quantity > 1 && <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginRight: 4 }}> ×{order.quantity}</span>}
+                        {order.quantity > 1 && <span style={{ fontSize: '0.68rem', color: '#94a3b8', [isRTL ? 'marginRight' : 'marginLeft']: 4 }}> ×{order.quantity}</span>}
                       </div>
                     </div>
                   </td>
@@ -161,34 +164,34 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
                       padding: '0.2rem 0.6rem', borderRadius: 6,
                       fontSize: '0.72rem', fontWeight: 700,
                       background: `${si.color}18`, color: si.color,
-                    }}>{si.label}</span>
+                    }}>{t(si.label)}</span>
                   </td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
-                    {order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '--'}
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US') : '--'}
                   </td>
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       {/* إكمال الطلب */}
                       {order.status !== 'completed' && order.status !== 'refunded' && (
-                        <button onClick={() => { setCompleteModal(order); setResponseText(order.server_response || ''); }} title="إكمال الطلب" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button onClick={() => { setCompleteModal(order); setResponseText(order.server_response || ''); }} title={t('إكمال الطلب')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dcfce7', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <CheckCircle size={13} color="#16a34a" />
                         </button>
                       )}
                       {/* تحويل لجارٍ */}
                       {(order.status === 'pending' || order.status === 'failed') && (
-                        <button onClick={() => handleProcessing(order)} title="تحويل لجارٍ التنفيذ" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dbeafe', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button onClick={() => handleProcessing(order)} title={t('تحويل لجارٍ التنفيذ')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#dbeafe', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <RotateCw size={13} color="#2563eb" />
                         </button>
                       )}
                       {/* رفض */}
                       {order.status !== 'failed' && order.status !== 'completed' && order.status !== 'refunded' && (
-                        <button onClick={() => { setRejectModal(order); setResponseText(''); }} title="رفض الطلب" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button onClick={() => { setRejectModal(order); setResponseText(''); }} title={t('رفض الطلب')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <XCircle size={13} color="#dc2626" />
                         </button>
                       )}
                       {/* استرجاع */}
                       {(order.status !== 'refunded' && order.status !== 'cancelled' && order.payment_status === 'paid') && (
-                        <button onClick={() => handleRefund(order)} title="استرجاع الرصيد" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#ede9fe', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                        <button onClick={() => handleRefund(order)} title={t('استرجاع الرصيد')} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: '#ede9fe', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                           <Undo2 size={13} color="#7c3aed" />
                         </button>
                       )}
@@ -207,29 +210,29 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => setCompleteModal(null)}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '92%', maxWidth: 500, padding: '1.5rem', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>✅ إكمال الطلب #{completeModal.order_number}</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0b1020' }}>✅ {t('إكمال الطلب')} #{completeModal.order_number}</h3>
               <button onClick={() => setCompleteModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                 <X size={14} color="#64748b" />
               </button>
             </div>
             <div style={{ marginBottom: 14, padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>المنتج: <strong style={{ color: '#0b1020' }}>{completeModal.product_name}</strong></p>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>العميل: <strong style={{ color: '#0b1020' }}>{completeModal.customer_name || '—'}</strong></p>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>المبلغ: <strong style={{ color: '#0b1020' }}>${Number(completeModal.total_price).toFixed(2)}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('المنتج')}: <strong style={{ color: '#0b1020' }}>{completeModal.product_name}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('العميل')}: <strong style={{ color: '#0b1020' }}>{completeModal.customer_name || '—'}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('المبلغ')}: <strong style={{ color: '#0b1020' }}>${Number(completeModal.total_price).toFixed(2)}</strong></p>
             </div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>رسالة الإكمال / نتيجة الخدمة</label>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>{t('رسالة الإكمال / نتيجة الخدمة')}</label>
             <textarea
               rows={4}
               value={responseText}
               onChange={e => setResponseText(e.target.value)}
-              placeholder="أدخل رد الخدمة أو رسالة الإكمال للعميل..."
+              placeholder={t('أدخل رد الخدمة أو رسالة الإكمال للعميل...')}
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical' }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button onClick={handleComplete} disabled={actionLoading} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#16a34a', color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: actionLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: actionLoading ? 0.7 : 1 }}>
-                {actionLoading ? 'جاري...' : 'إكمال الطلب'}
+                {actionLoading ? t('جاري...') : t('إكمال الطلب')}
               </button>
-              <button onClick={() => setCompleteModal(null)} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+              <button onClick={() => setCompleteModal(null)} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
             </div>
           </div>
         </div>
@@ -240,29 +243,29 @@ export default function OrdersAdminPage({ theme }: { theme: ColorTheme }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => setRejectModal(null)}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '92%', maxWidth: 500, padding: '1.5rem', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#dc2626' }}>❌ رفض الطلب #{rejectModal.order_number}</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#dc2626' }}>❌ {t('رفض الطلب')} #{rejectModal.order_number}</h3>
               <button onClick={() => setRejectModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#f1f5f9', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                 <X size={14} color="#64748b" />
               </button>
             </div>
             <div style={{ marginBottom: 14, padding: '0.75rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>المنتج: <strong style={{ color: '#0b1020' }}>{rejectModal.product_name}</strong></p>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>العميل: <strong style={{ color: '#0b1020' }}>{rejectModal.customer_name || '—'}</strong></p>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>المبلغ: <strong style={{ color: '#0b1020' }}>${Number(rejectModal.total_price).toFixed(2)}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('المنتج')}: <strong style={{ color: '#0b1020' }}>{rejectModal.product_name}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('العميل')}: <strong style={{ color: '#0b1020' }}>{rejectModal.customer_name || '—'}</strong></p>
+              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('المبلغ')}: <strong style={{ color: '#0b1020' }}>${Number(rejectModal.total_price).toFixed(2)}</strong></p>
             </div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>سبب الرفض</label>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>{t('سبب الرفض')}</label>
             <textarea
               rows={3}
               value={responseText}
               onChange={e => setResponseText(e.target.value)}
-              placeholder="أدخل سبب الرفض..."
+              placeholder={t('أدخل سبب الرفض...')}
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical' }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button onClick={handleReject} disabled={actionLoading} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#dc2626', color: '#fff', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: actionLoading ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif', opacity: actionLoading ? 0.7 : 1 }}>
-                {actionLoading ? 'جاري...' : 'رفض الطلب'}
+                {actionLoading ? t('جاري...') : t('رفض الطلب')}
               </button>
-              <button onClick={() => setRejectModal(null)} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+              <button onClick={() => setRejectModal(null)} style={{ padding: '0.62rem 1.45rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
             </div>
           </div>
         </div>

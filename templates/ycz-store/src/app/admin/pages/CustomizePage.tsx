@@ -9,6 +9,7 @@ import {
   Megaphone, Zap, Check, Paintbrush, ShoppingCart, Share2,
   Trash2, RotateCcw, Globe, Code, FileText, X,
 } from 'lucide-react';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 const FONT_OPTIONS = [
   { id: 'Tajawal', label: 'تجوال', sample: 'خط عربي حديث وأنيق' },
@@ -73,13 +74,14 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
 
 export default function CustomizePage() {
   const theme = useTheme();
+  const { t, isRTL } = useAdminLang();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [logoError, setLogoError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentTheme = COLOR_THEMES.find(t => t.id === theme.themeId) || COLOR_THEMES[0];
+  const currentTheme = COLOR_THEMES.find(ct => ct.id === theme.themeId) || COLOR_THEMES[0];
 
   /* ─── Save ─── */
   const handleSave = async () => {
@@ -104,7 +106,7 @@ export default function CustomizePage() {
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       console.error('[Customize] Save failed:', err);
-      alert('فشل حفظ التخصيصات! تأكد من اتصالك بالسيرفر.');
+      alert(t('فشل حفظ التخصيصات! تأكد من اتصالك بالسيرفر.'));
     } finally {
       setSaving(false);
     }
@@ -112,7 +114,7 @@ export default function CustomizePage() {
 
   /* ─── Reset to Default ─── */
   const handleReset = async () => {
-    if (!confirm('هل أنت متأكد من إعادة التخصيص للقيم الافتراضية؟ لا يمكن التراجع.')) return;
+    if (!confirm(t('هل أنت متأكد من إعادة التخصيص للقيم الافتراضية؟ لا يمكن التراجع.'))) return;
     setResetting(true);
     try {
       await adminApi.resetCustomize();
@@ -121,7 +123,7 @@ export default function CustomizePage() {
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       console.error('[Customize] Reset failed:', err);
-      alert('فشل إعادة التعيين!');
+      alert(t('فشل إعادة التعيين!'));
     } finally {
       setResetting(false);
     }
@@ -134,11 +136,11 @@ export default function CustomizePage() {
     setLogoError('');
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setLogoError('نوع الملف غير مدعوم. استخدم PNG, JPG, WebP أو SVG');
+      setLogoError(t('نوع الملف غير مدعوم. استخدم PNG, JPG, WebP أو SVG'));
       return;
     }
     if (file.size > MAX_LOGO_SIZE) {
-      setLogoError(`حجم الملف ${(file.size / 1024 / 1024).toFixed(1)}MB — الحد الأقصى 2MB`);
+      setLogoError(isRTL ? `حجم الملف ${(file.size / 1024 / 1024).toFixed(1)}MB — الحد الأقصى 2MB` : `File size ${(file.size / 1024 / 1024).toFixed(1)}MB — max 2MB`);
       return;
     }
 
@@ -172,7 +174,7 @@ export default function CustomizePage() {
     <>
       {/* ─── Top Bar ─── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🎨 تخصيص المتجر</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>🎨 {t('تخصيص المتجر')}</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           {/* Reset Button */}
           <button
@@ -187,7 +189,7 @@ export default function CustomizePage() {
               transition: 'all 0.3s',
             }}
           >
-            <RotateCcw size={14} /> {resetting ? 'جاري...' : 'إعادة تعيين'}
+            <RotateCcw size={14} /> {resetting ? t('جاري...') : t('إعادة تعيين')}
           </button>
           {/* Save Button */}
           <button
@@ -202,7 +204,7 @@ export default function CustomizePage() {
               transition: 'all 0.3s',
             }}
           >
-            {saved ? <><Check size={16} /> تم الحفظ</> : saving ? 'جاري الحفظ...' : <><Paintbrush size={16} /> حفظ التعديلات</>}
+            {saved ? <><Check size={16} /> {t('تم الحفظ')}</> : saving ? t('جاري الحفظ...') : <><Paintbrush size={16} /> {t('حفظ التعديلات')}</>}
           </button>
         </div>
       </div>
@@ -210,10 +212,10 @@ export default function CustomizePage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 16 }}>
 
         {/* ═══════════ 1. Logo & Identity ═══════════ */}
-        <Section icon={<Image size={18} color="#7c5cff" />} title="الشعار والهوية">
+        <Section icon={<Image size={18} color="#7c5cff" />} title={t("الشعار والهوية")}>
           {/* Logo Upload */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>شعار المتجر</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>{t('شعار المتجر')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{
                 width: 80, height: 80, borderRadius: 14,
@@ -250,9 +252,9 @@ export default function CustomizePage() {
                     fontFamily: 'Tajawal, sans-serif', color: '#475569', marginBottom: 4,
                   }}
                 >
-                  <Upload size={12} style={{ marginLeft: 4 }} /> رفع شعار
+                  <Upload size={12} style={{ marginLeft: isRTL ? 4 : 0, marginRight: isRTL ? 0 : 4 }} /> {t('رفع شعار')}
                 </button>
-                <p style={{ fontSize: '0.68rem', color: '#94a3b8' }}>PNG, JPG, WebP, SVG — حد أقصى 2MB</p>
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{t('PNG, JPG, WebP, SVG — حد أقصى 2MB')}</p>
                 {logoError && <p style={{ fontSize: '0.7rem', color: '#ef4444', marginTop: 4, fontWeight: 600 }}>{logoError}</p>}
               </div>
             </div>
@@ -260,7 +262,7 @@ export default function CustomizePage() {
 
           {/* Store Name */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>اسم المتجر</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('اسم المتجر')}</label>
             <input
               value={theme.storeName}
               onChange={e => theme.setStoreName(e.target.value)}
@@ -271,7 +273,7 @@ export default function CustomizePage() {
           {/* Language Selector */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Globe size={14} color="#64748b" /> لغة المتجر
+              <Globe size={14} color="#64748b" /> {t('لغة المتجر')}
             </label>
             <div style={{ display: 'flex', gap: 8 }}>
               {[
@@ -298,7 +300,7 @@ export default function CustomizePage() {
 
           {/* Font Selection */}
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>الخط</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>{t('الخط')}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {FONT_OPTIONS.map(font => (
                 <button
@@ -310,11 +312,11 @@ export default function CustomizePage() {
                     border: theme.fontFamily === font.id ? '2px solid #7c5cff' : '1px solid #e2e8f0',
                     background: theme.fontFamily === font.id ? '#f5f3ff' : '#fff',
                     cursor: 'pointer', fontFamily: font.id + ', sans-serif',
-                    textAlign: 'right',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{font.label}</span>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{font.sample}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{t(font.label)}</span>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t(font.sample)}</span>
                 </button>
               ))}
             </div>
@@ -322,7 +324,7 @@ export default function CustomizePage() {
         </Section>
 
         {/* ═══════════ 2. Site Colors ═══════════ */}
-        <Section icon={<Palette size={18} color="#7c5cff" />} title="ألوان الموقع">
+        <Section icon={<Palette size={18} color="#7c5cff" />} title={t("ألوان الموقع")}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
             {COLOR_THEMES.map(ct => (
               <button
@@ -356,10 +358,10 @@ export default function CustomizePage() {
         </Section>
 
         {/* ═══════════ 3. Page Layout ═══════════ */}
-        <Section icon={<Layout size={18} color="#7c5cff" />} title="تخطيط الصفحة">
+        <Section icon={<Layout size={18} color="#7c5cff" />} title={t("تخطيط الصفحة")}>
           {/* Header Style */}
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>نمط الهيدر</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>{t('نمط الهيدر')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {HEADER_STYLES.map(hs => (
                 <button
@@ -372,14 +374,14 @@ export default function CustomizePage() {
                     cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
                     fontFamily: 'Tajawal, sans-serif', color: '#0b1020',
                   }}
-                >{hs.label}</button>
+                >{t(hs.label)}</button>
               ))}
             </div>
           </div>
 
           {/* Button Radius */}
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>انحناء الأزرار</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>{t('انحناء الأزرار')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {RADIUS_OPTIONS.map(r => (
                 <button
@@ -392,7 +394,7 @@ export default function CustomizePage() {
                     cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
                     fontFamily: 'Tajawal, sans-serif', color: '#0b1020',
                   }}
-                >{r.label}</button>
+                >{t(r.label)}</button>
               ))}
             </div>
           </div>
@@ -405,7 +407,7 @@ export default function CustomizePage() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Moon size={16} color="#64748b" />
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>الوضع الداكن</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>{t('الوضع الداكن')}</span>
               </div>
               <Toggle value={theme.darkMode} onChange={theme.setDarkMode} />
             </div>
@@ -415,7 +417,7 @@ export default function CustomizePage() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Megaphone size={16} color="#64748b" />
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>إظهار البانر</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>{t('إظهار البانر')}</span>
               </div>
               <Toggle value={theme.showBanner} onChange={theme.setShowBanner} />
             </div>
@@ -423,12 +425,12 @@ export default function CustomizePage() {
         </Section>
 
         {/* ═══════════ 4. Social Links ═══════════ */}
-        <Section icon={<Share2 size={18} color="#7c5cff" />} title="روابط التواصل الاجتماعي">
-          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 16 }}>أضف روابط حساباتك لتظهر في أسفل المتجر</p>
+        <Section icon={<Share2 size={18} color="#7c5cff" />} title={t("روابط التواصل الاجتماعي")}>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 16 }}>{t('أضف روابط حساباتك لتظهر في أسفل المتجر')}</p>
           {socialItems.map(s => (
             <div key={s.key} style={{ marginBottom: 12 }}>
               <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {s.icon} {s.label}
+                {s.icon} {t(s.label)}
               </label>
               <input
                 value={(theme.socialLinks as Record<string, string>)[s.key] || ''}
@@ -442,26 +444,26 @@ export default function CustomizePage() {
         </Section>
 
         {/* ═══════════ 5. Footer & Custom CSS ═══════════ */}
-        <Section icon={<FileText size={18} color="#7c5cff" />} title="النص السفلي و CSS مخصص">
+        <Section icon={<FileText size={18} color="#7c5cff" />} title={t("النص السفلي و CSS مخصص")}>
           {/* Footer Text */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>نص أسفل الصفحة (Footer)</label>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('نص أسفل الصفحة (Footer)')}</label>
             <textarea
               value={theme.footerText}
               onChange={e => theme.setFooterText(e.target.value)}
-              placeholder="مثال: جميع الحقوق محفوظة © 2025 — اسم متجرك"
+              placeholder={t("مثال: جميع الحقوق محفوظة © 2025 — اسم متجرك")}
               rows={2}
               style={{
                 ...inputStyle, resize: 'vertical', minHeight: 56,
               }}
             />
-            <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 4 }}>يظهر نص مخصص بدل حقوق النشر الافتراضية</p>
+            <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 4 }}>{t('يظهر نص مخصص بدل حقوق النشر الافتراضية')}</p>
           </div>
 
           {/* Custom CSS */}
           <div>
             <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Code size={14} color="#64748b" /> CSS مخصص
+              <Code size={14} color="#64748b" /> {t('CSS مخصص')}
             </label>
             <textarea
               value={theme.customCss}
@@ -482,7 +484,7 @@ export default function CustomizePage() {
         </Section>
 
         {/* ═══════════ 6. Live Preview ═══════════ */}
-        <Section icon={<Monitor size={18} color="#7c5cff" />} title="معاينة مباشرة">
+        <Section icon={<Monitor size={18} color="#7c5cff" />} title={t("معاينة مباشرة")}>
           <div style={{
             borderRadius: 14, overflow: 'hidden',
             border: '1px solid #e2e8f0',
@@ -502,11 +504,11 @@ export default function CustomizePage() {
                 ) : (
                   <Zap size={16} color="#fff" />
                 )}
-                <span style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 700 }}>{theme.storeName || 'اسم المتجر'}</span>
+                <span style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 700 }}>{theme.storeName || t('اسم المتجر')}</span>
               </div>
               {theme.headerStyle !== 'minimal' && (
                 <div style={{ display: 'flex', gap: 10 }}>
-                  {['الرئيسية', 'الخدمات'].map((l, i) => (
+                  {[t('الرئيسية'), t('الخدمات')].map((l, i) => (
                     <span key={i} style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.65rem', fontWeight: 600 }}>{l}</span>
                   ))}
                 </div>
@@ -519,8 +521,8 @@ export default function CustomizePage() {
                 background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.secondary})`,
                 padding: '1.25rem 1rem', textAlign: 'center',
               }}>
-                <p style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>مرحباً بك في {theme.storeName || 'المتجر'} 🎉</p>
-                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.68rem', marginTop: 4 }}>اكتشف أفضل الخدمات</p>
+                <p style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>{isRTL ? `مرحباً بك في ${theme.storeName || 'المتجر'} 🎉` : `Welcome to ${theme.storeName || 'Store'} 🎉`}</p>
+                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.68rem', marginTop: 4 }}>{t('اكتشف أفضل الخدمات')}</p>
               </div>
             )}
 
@@ -544,14 +546,14 @@ export default function CustomizePage() {
                     fontSize: '0.72rem', fontWeight: 700,
                     color: theme.darkMode ? '#f1f5f9' : '#0b1020',
                     marginBottom: 4,
-                  }}>منتج {i}</p>
+                  }}>{t('منتج')} {i}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.68rem', fontWeight: 700, color: currentTheme.primary }}>$9.99</span>
                     <button style={{
                       padding: '0.25rem 0.5rem', borderRadius: parseInt(theme.buttonRadius) || 14,
                       background: currentTheme.primary, color: '#fff', border: 'none',
                       fontSize: '0.6rem', fontWeight: 700, cursor: 'pointer',
-                    }}>شراء</button>
+                    }}>{t('شراء')}</button>
                   </div>
                 </div>
               ))}
@@ -583,7 +585,7 @@ export default function CustomizePage() {
               padding: '0.3rem 0.7rem', borderRadius: 20, fontSize: '0.65rem', fontWeight: 600,
               background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd',
             }}>
-              🌐 {theme.language === 'ar' ? 'العربية (RTL)' : 'English (LTR)'}
+              🌐 {theme.language === 'ar' ? t('العربية (RTL)') : 'English (LTR)'}
             </span>
             <span style={{
               padding: '0.3rem 0.7rem', borderRadius: 20, fontSize: '0.65rem', fontWeight: 600,
@@ -597,7 +599,7 @@ export default function CustomizePage() {
               color: theme.darkMode ? '#c4b5fd' : '#a16207',
               border: `1px solid ${theme.darkMode ? '#4338ca' : '#fde68a'}`,
             }}>
-              {theme.darkMode ? '🌙 داكن' : '☀️ فاتح'}
+              {theme.darkMode ? t('🌙 داكن') : t('☀️ فاتح')}
             </span>
           </div>
         </Section>

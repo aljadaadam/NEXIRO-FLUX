@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 interface SidebarProps {
   currentPage: string;
@@ -41,6 +42,7 @@ export default function Sidebar({
   currentPage, setCurrentPage, collapsed, setCollapsed,
   mobileOpen, onCloseMobile, theme, logoPreview, storeName, onLogout,
 }: SidebarProps) {
+  const { t, isRTL } = useAdminLang();
   const [chatUnread, setChatUnread] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -61,10 +63,10 @@ export default function Sidebar({
     <aside
       className={`dash-sidebar ${mobileOpen ? 'dash-sidebar-open' : ''}`}
       style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
+        position: 'fixed', top: 0, [isRTL ? 'right' : 'left']: 0, bottom: 0,
         width: collapsed ? 70 : 260,
         background: '#fff',
-        borderLeft: '1px solid #f1f5f9',
+        [isRTL ? 'borderLeft' : 'borderRight']: '1px solid #f1f5f9',
         transition: 'all 0.3s',
         zIndex: 50,
         display: 'flex', flexDirection: 'column',
@@ -107,7 +109,7 @@ export default function Sidebar({
             display: 'none',
             placeItems: 'center',
           }}
-          aria-label="إغلاق القائمة"
+          aria-label={t('إغلاق القائمة')}
         >
           <X size={14} color="#64748b" />
         </button>
@@ -117,7 +119,7 @@ export default function Sidebar({
           cursor: 'pointer', display: collapsed ? 'none' : 'grid',
           placeItems: 'center',
         }}>
-          <ChevronRight size={14} color="#94a3b8" />
+          {isRTL ? <ChevronRight size={14} color="#94a3b8" /> : <ChevronLeft size={14} color="#94a3b8" />}
         </button>
       </div>
 
@@ -141,11 +143,11 @@ export default function Sidebar({
                 transition: 'all 0.2s',
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 width: '100%',
-                textAlign: 'right',
+                textAlign: isRTL ? 'right' : 'left',
                 position: 'relative',
               }}>
                 <Icon size={18} />
-                {!collapsed && <span style={{flex:1,textAlign:'right'}}>{item.label}</span>}
+                {!collapsed && <span style={{flex:1,textAlign: isRTL ? 'right' : 'left'}}>{t(item.label)}</span>}
                 {item.id === 'chat' && chatUnread > 0 && (
                   <span style={{
                     minWidth: collapsed ? 16 : 20, height: collapsed ? 16 : 20,
@@ -175,7 +177,7 @@ export default function Sidebar({
             cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
           }}>
             <LogOut size={16} />
-            تسجيل الخروج
+            {t('تسجيل الخروج')}
           </button>
         </div>
       )}

@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { Announcement } from '@/lib/types';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 export default function AnnouncementsPage() {
+  const { t, isRTL } = useAdminLang();
   const [showAdd, setShowAdd] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function AnnouncementsPage() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>📢 الإعلانات</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>{t('📢 الإعلانات')}</h2>
         <button onClick={() => setShowAdd(!showAdd)} style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '0.6rem 1.25rem', borderRadius: 10,
@@ -61,7 +63,7 @@ export default function AnnouncementsPage() {
           border: 'none', fontSize: '0.82rem', fontWeight: 700,
           cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
         }}>
-          <Plus size={16} /> إعلان جديد
+          <Plus size={16} /> {t('إعلان جديد')}
         </button>
       </div>
 
@@ -71,12 +73,12 @@ export default function AnnouncementsPage() {
           border: '1px solid #f1f5f9', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input placeholder="عنوان الإعلان" value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{
+            <input placeholder={t('عنوان الإعلان')} value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{
               padding: '0.7rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none',
             }} />
-            <textarea rows={3} placeholder="محتوى الإعلان..." value={newContent} onChange={e => setNewContent(e.target.value)} style={{
+            <textarea rows={3} placeholder={t('محتوى الإعلان...')} value={newContent} onChange={e => setNewContent(e.target.value)} style={{
               padding: '0.7rem 1rem', borderRadius: 10,
               border: '1px solid #e2e8f0', fontSize: '0.85rem',
               fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical',
@@ -88,13 +90,13 @@ export default function AnnouncementsPage() {
                 border: 'none', fontSize: '0.82rem', fontWeight: 700,
                 cursor: saving ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
                 opacity: saving ? 0.7 : 1,
-              }}>{saving ? 'جاري النشر...' : 'نشر'}</button>
+              }}>{saving ? t('جاري النشر...') : t('نشر')}</button>
               <button onClick={() => setShowAdd(false)} style={{
                 padding: '0.6rem 1.5rem', borderRadius: 10,
                 background: '#f1f5f9', color: '#64748b',
                 border: 'none', fontSize: '0.82rem', fontWeight: 700,
                 cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
-              }}>إلغاء</button>
+              }}>{t('إلغاء')}</button>
             </div>
           </div>
         </div>
@@ -116,7 +118,7 @@ export default function AnnouncementsPage() {
                   padding: '0.2rem 0.6rem', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700,
                   background: ann.active ? '#dcfce7' : '#f1f5f9',
                   color: ann.active ? '#16a34a' : '#94a3b8',
-                }}>{ann.active ? 'نشط' : 'متوقف'}</span>
+                }}>{ann.active ? t('نشط') : t('متوقف')}</span>
                 <button style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#eff6ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Edit size={12} color="#3b82f6" /></button>
                 <button onClick={() => handleDelete(ann.id)} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: '#fee2e2', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Trash2 size={12} color="#dc2626" /></button>
               </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Zap, Save, Eye, Image, Type, Palette, Link2, Loader2, X, CheckCircle } from 'lucide-react';
 import { adminApi } from '@/lib/api';
+import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
 function getFontStyleCSS(style: string): Record<string, string | number> {
   switch (style) {
@@ -16,6 +17,7 @@ function getFontStyleCSS(style: string): Record<string, string | number> {
 }
 
 export default function FlashPopupPage() {
+  const { t, isRTL } = useAdminLang();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -79,7 +81,7 @@ export default function FlashPopupPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('حجم الصورة يجب أن يكون أقل من 5MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert(t('حجم الصورة يجب أن يكون أقل من 5MB')); return; }
     const reader = new FileReader();
     reader.onload = () => setImage(reader.result as string);
     reader.readAsDataURL(file);
@@ -98,7 +100,7 @@ export default function FlashPopupPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-          ⚡ فلاش الإعلان
+          ⚡ {t('فلاش الإعلان')}
         </h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setPreview(true)} style={{
@@ -106,7 +108,7 @@ export default function FlashPopupPage() {
             background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '.8rem', fontWeight: 600,
             cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
           }}>
-            <Eye size={14} /> معاينة
+            <Eye size={14} /> {t('معاينة')}
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', borderRadius: 10,
@@ -115,7 +117,7 @@ export default function FlashPopupPage() {
             fontFamily: 'Tajawal, sans-serif', opacity: saving ? .6 : 1, transition: 'all .2s',
           }}>
             {saving ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : saved ? <CheckCircle size={14} /> : <Save size={14} />}
-            {saving ? 'حفظ...' : saved ? 'تم الحفظ ✓' : 'حفظ'}
+            {saving ? t('حفظ...') : saved ? t('تم الحفظ ✓') : t('حفظ')}
           </button>
         </div>
       </div>
@@ -126,8 +128,8 @@ export default function FlashPopupPage() {
         padding: '16px 20px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#0b1020' }}>تفعيل الفلاش</div>
-          <div style={{ fontSize: '.72rem', color: '#94a3b8', marginTop: 2 }}>يظهر للزائر عند فتح الموقع مرة واحدة</div>
+          <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#0b1020' }}>{t('تفعيل الفلاش')}</div>
+          <div style={{ fontSize: '.72rem', color: '#94a3b8', marginTop: 2 }}>{t('يظهر للزائر عند فتح الموقع مرة واحدة')}</div>
         </div>
         <button onClick={() => setEnabled(!enabled)} style={{
           width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
@@ -150,18 +152,18 @@ export default function FlashPopupPage() {
         {/* Title */}
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-            <Type size={14} color="#7c5cff" /> العنوان
+            <Type size={14} color="#7c5cff" /> {t('العنوان')}
           </label>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="عنوان الإعلان..."
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder={t('عنوان الإعلان...')}
             style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.85rem', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
         </div>
 
         {/* Body */}
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-            <Type size={14} color="#7c5cff" /> المحتوى
+            <Type size={14} color="#7c5cff" /> {t('المحتوى')}
           </label>
-          <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="نص الإعلان... (يدعم أسطر متعددة)"
+          <textarea value={body} onChange={e => setBody(e.target.value)} placeholder={t('نص الإعلان... (يدعم أسطر متعددة)')}
             rows={3}
             style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.85rem', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
         </div>
@@ -169,10 +171,10 @@ export default function FlashPopupPage() {
         {/* Image */}
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-            <Image size={14} color="#7c5cff" /> صورة / GIF (اختياري)
+            <Image size={14} color="#7c5cff" /> {t('صورة / GIF (اختياري)')}
           </label>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input value={image} onChange={e => setImage(e.target.value)} placeholder="رابط صورة أو GIF..."
+            <input value={image} onChange={e => setImage(e.target.value)} placeholder={t('رابط صورة أو GIF...')}
               style={{ flex: 1, minWidth: 200, border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.82rem', outline: 'none', fontFamily: 'Tajawal, sans-serif' }} />
             <button onClick={() => fileRef.current?.click()} style={{
               padding: '10px 16px', borderRadius: 10, border: '1.5px dashed #d1d5db', background: '#f9fafb',
@@ -199,7 +201,7 @@ export default function FlashPopupPage() {
         <div style={{ display: 'flex', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-              <Palette size={14} color="#7c5cff" /> لون الخلفية
+              <Palette size={14} color="#7c5cff" /> {t('لون الخلفية')}
             </label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input type="color" value={bgColor} onChange={e => setBgColor(e.target.value)}
@@ -210,7 +212,7 @@ export default function FlashPopupPage() {
           </div>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-              <Palette size={14} color="#7c5cff" /> لون النص
+              <Palette size={14} color="#7c5cff" /> {t('لون النص')}
             </label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
@@ -223,7 +225,7 @@ export default function FlashPopupPage() {
 
         {/* Quick Color Presets */}
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: '.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>ألوان سريعة</div>
+          <div style={{ fontSize: '.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>{t('ألوان سريعة')}</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
               { bg: '#7c5cff', text: '#fff', name: 'بنفسجي' },
@@ -241,7 +243,7 @@ export default function FlashPopupPage() {
                   background: preset.bg, color: preset.text, fontSize: '.7rem', fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', minWidth: 60, textAlign: 'center',
                 }}>
-                {preset.name}
+                {t(preset.name)}
               </button>
             ))}
           </div>
@@ -251,14 +253,14 @@ export default function FlashPopupPage() {
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-              نص الزر
+              {t('نص الزر')}
             </label>
-            <input value={btnText} onChange={e => setBtnText(e.target.value)} placeholder="حسناً"
+            <input value={btnText} onChange={e => setBtnText(e.target.value)} placeholder={t('حسناً')}
               style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.82rem', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
           </div>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-              <Link2 size={14} color="#7c5cff" /> رابط الزر (اختياري)
+              <Link2 size={14} color="#7c5cff" /> {t('رابط الزر (اختياري)')}
             </label>
             <input value={btnUrl} onChange={e => setBtnUrl(e.target.value)} placeholder="https://..."
               style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: '.82rem', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
@@ -268,7 +270,7 @@ export default function FlashPopupPage() {
         {/* Font Style */}
         <div style={{ marginBottom: 0 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '.8rem', fontWeight: 700, color: '#374151', marginBottom: 8 }}>
-            <Type size={14} color="#7c5cff" /> تصميم الخط
+            <Type size={14} color="#7c5cff" /> {t('تصميم الخط')}
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
@@ -288,7 +290,7 @@ export default function FlashPopupPage() {
                   fontFamily: 'Tajawal, sans-serif', minWidth: 70, textAlign: 'center' as const,
                   ...s.preview,
                 }}>
-                {s.name}
+                {t(s.name)}
               </button>
             ))}
           </div>
@@ -322,7 +324,7 @@ export default function FlashPopupPage() {
                 background: `${textColor}20`, color: textColor, fontSize: '.88rem', fontWeight: 700,
                 cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
               }}>
-                {btnText || 'حسناً'}
+                {btnText || t('حسناً')}
               </button>
             </div>
           </div>
