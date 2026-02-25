@@ -289,6 +289,7 @@ function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> 
     sales: Number(p.sales) || 0,
     // حقول الباكند الأصلية
     service_type: sType,
+    service_time: p.service_time || p.TIME || null,
     group_name: p.group_name,
     external_service_key: p.external_service_key,
     source_id: p.source_id,
