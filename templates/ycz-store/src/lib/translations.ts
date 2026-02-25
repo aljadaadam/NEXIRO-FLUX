@@ -99,6 +99,7 @@ const en: Record<string, string> = {
   'سياسة الاسترجاع': 'Refund Policy',
   'تواصل معنا': 'Contact Us',
   'جميع الحقوق محفوظة — قالب من': 'All rights reserved — Template by',
+  'لم يتم إضافة روابط بعد': 'No social links added yet',
 
   // ─── Orders Page ───
   'قيد الانتظار': 'Pending',

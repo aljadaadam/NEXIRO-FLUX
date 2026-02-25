@@ -30,9 +30,15 @@ interface ThemeContextType {
   setSocialLinks: (v: { whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }) => void;
   // ─── Language support ───
   language: Language;
+  setLanguage: (v: Language) => void;
   isRTL: boolean;
   t: (key: string) => string;
   dateLocale: string;
+  // ─── Custom CSS & Footer ───
+  customCss: string;
+  setCustomCss: (v: string) => void;
+  footerText: string;
+  setFooterText: (v: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -51,8 +57,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [showBanner, setShowBanner] = useState(true);
   const [fontFamily, setFontFamily] = useState('Tajawal');
   const [socialLinks, setSocialLinks] = useState<{ whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }>({});
+  const [customCss, setCustomCss] = useState('');
+  const [footerText, setFooterText] = useState('');
   const [language, setLanguage] = useState<Language>(() => {
-    // تحديد اللغة تلقائياً من المتصفح
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem('ycz_language');
@@ -78,13 +85,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const html = document.documentElement;
     html.lang = language;
     html.dir = isRTL ? 'rtl' : 'ltr';
-    // Switch font family for language
     document.body.style.fontFamily = isRTL
       ? 'Tajawal, Cairo, sans-serif'
       : 'Inter, system-ui, -apple-system, sans-serif';
   }, [language, isRTL]);
 
-  // ─── 1. قراءة من localStorage كـ cache أولي (سريع)  ───
+  // ─── Apply custom CSS dynamically ───
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let style = document.getElementById('ycz-custom-css') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'ycz-custom-css';
+      document.head.appendChild(style);
+    }
+    style.textContent = customCss || '';
+  }, [customCss]);
+
+  // ─── 1. قراءة من localStorage كـ cache أولي (سريع) ───
   useEffect(() => {
     setThemeId(safeGet('ycz_themeId', 'purple'));
     setLogoPreview(localStorage.getItem('ycz_logo'));
@@ -94,11 +112,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setHeaderStyle(safeGet('ycz_headerStyle', 'default'));
     setShowBanner(safeGet('ycz_showBanner', 'true') !== 'false');
     setFontFamily(safeGet('ycz_fontFamily', 'Tajawal'));
+    setCustomCss(safeGet('ycz_customCss', ''));
+    setFooterText(safeGet('ycz_footerText', ''));
     const cachedLang = safeGet('ycz_language', '');
     if (cachedLang === 'en' || cachedLang === 'ar') {
       setLanguage(cachedLang);
     } else {
-      // لا يوجد كاش — كشف من المتصفح
       const bl = navigator.language || '';
       setLanguage(bl.startsWith('ar') ? 'ar' : 'en');
     }
@@ -109,13 +128,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const fetchFromServer = useCallback(async () => {
     const myId = ++fetchIdRef.current;
     try {
-      // جلب التخصيص من الباك اند — الأدمن يستخدم admin_key فقط
       const adminToken = localStorage.getItem('admin_key');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
 
-      // جلب التخصيص (ألوان، خط، تخطيط) — بدون كاش
-      // نستخدم /store (بدون مصادقة) حتى يعمل للعملاء والأدمن معاً
       const customRes = await fetch(`/api/customization/store?_t=${Date.now()}`, { headers, cache: 'no-store' });
       if (customRes.ok && myId === fetchIdRef.current) {
         const data = await customRes.json();
@@ -128,18 +144,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (c.header_style) setHeaderStyle(c.header_style);
         if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
         if (c.store_name) setStoreName(c.store_name);
+        if (c.custom_css !== undefined) setCustomCss(c.custom_css || '');
+        if (c.footer_text !== undefined) setFooterText(c.footer_text || '');
         if (c.social_links) {
           const sl = typeof c.social_links === 'string' ? JSON.parse(c.social_links) : c.social_links;
           setSocialLinks(sl);
         }
         if (c.store_language === 'en' || c.store_language === 'ar') setLanguage(c.store_language);
-        // حفظ في localStorage كـ cache
         try {
           localStorage.setItem('ycz_configTimestamp', String(Date.now()));
         } catch { /* ignore */ }
       }
     } catch {
-      // إذا فشل الـ API — نبقى على localStorage cache
       console.warn('[ThemeProvider] فشل جلب التخصيص من الخادم، استخدام الكاش المحلي');
     } finally {
       setLoaded(true);
@@ -151,7 +167,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     fetchFromServer();
   }, [mounted, fetchFromServer]);
 
-  // ─── 3. حفظ في localStorage عند التغيير (للكاش + الأدمن) ───
+  // ─── 3. حفظ في localStorage عند التغيير (للكاش) ───
   useEffect(() => {
     if (!mounted) return;
     try {
@@ -164,32 +180,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('ycz_showBanner', String(showBanner));
       localStorage.setItem('ycz_fontFamily', fontFamily);
       localStorage.setItem('ycz_language', language);
+      localStorage.setItem('ycz_customCss', customCss);
+      localStorage.setItem('ycz_footerText', footerText);
     } catch { /* ignore */ }
-  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, mounted]);
-
-  // ─── 4. حفظ التخصيص في الباك اند عند التعديل من الأدمن ───
-  const saveToServer = useCallback(async () => {
-    const token = typeof window !== 'undefined'
-      ? localStorage.getItem('admin_key')
-      : null;
-    if (!token) return; // فقط الأدمن يحفظ — بدون auth_token fallback
-    try {
-      await fetch('/api/customization', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          theme_id: themeId,
-          logo_url: logoPreview,
-          font_family: fontFamily,
-          dark_mode: darkMode,
-          button_radius: buttonRadius,
-          header_style: headerStyle,
-          show_banner: showBanner,
-          store_name: storeName,
-        }),
-      });
-    } catch { /* silent */ }
-  }, [themeId, logoPreview, fontFamily, darkMode, buttonRadius, headerStyle, showBanner, storeName]);
+  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, customCss, footerText, mounted]);
 
   const currentTheme = getTheme(themeId);
 
@@ -204,10 +198,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       showBanner, setShowBanner,
       fontFamily, setFontFamily,
       socialLinks, setSocialLinks,
+      customCss, setCustomCss,
+      footerText, setFooterText,
       colorThemes: COLOR_THEMES,
       loaded,
       refetch: fetchFromServer,
-      language, isRTL, t, dateLocale,
+      language, setLanguage, isRTL, t, dateLocale,
     }}>
       {children}
     </ThemeContext.Provider>

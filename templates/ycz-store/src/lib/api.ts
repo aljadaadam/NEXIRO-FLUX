@@ -140,6 +140,7 @@ export const adminApi = {
   togglePaymentGateway: (id: number) => adminFetch(`/payment-gateways/${id}/toggle`, { method: 'PATCH' }),
   getCustomize: () => adminFetch('/customization'),
   updateCustomize: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
+  resetCustomize: () => adminFetch('/customization', { method: 'DELETE' }),
   updateCustomerWallet: (id: number, amount: number) => adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount }) }),
   toggleBlockCustomer: (id: number, blocked: boolean) => adminFetch(`/customers/${id}/block`, { method: 'PATCH', body: JSON.stringify({ blocked }) }),
   getCustomerOrders: (customerId: number) => adminFetch(`/orders?customer_id=${customerId}&limit=200`),

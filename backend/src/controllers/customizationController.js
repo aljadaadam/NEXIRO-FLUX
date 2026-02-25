@@ -11,11 +11,12 @@ async function getCustomization(req, res) {
         theme_id: 'purple',
         primary_color: '#7c5cff',
         secondary_color: '#a78bfa',
-        dark_mode: true,
-        button_radius: 'rounded-xl',
+        dark_mode: false,
+        button_radius: '14',
         header_style: 'default',
         show_banner: true,
-        font_family: 'Tajawal'
+        font_family: 'Tajawal',
+        store_language: 'ar',
       }
     });
   } catch (error) {
@@ -69,10 +70,11 @@ async function getPublicCustomization(req, res) {
       customization: customization || {
         theme_id: 'purple',
         primary_color: '#7c5cff',
-        dark_mode: true,
-        button_radius: 'rounded-xl',
+        dark_mode: false,
+        button_radius: '14',
         show_banner: true,
-        font_family: 'Tajawal'
+        font_family: 'Tajawal',
+        store_language: 'ar',
       }
     });
   } catch (error) {
@@ -105,10 +107,11 @@ async function getStoreCustomization(req, res) {
       customization: customization || {
         theme_id: 'purple',
         primary_color: '#7c5cff',
-        dark_mode: true,
-        button_radius: 'rounded-xl',
+        dark_mode: false,
+        button_radius: '14',
         show_banner: true,
-        font_family: 'Tajawal'
+        font_family: 'Tajawal',
+        store_language: 'ar',
       }
     });
   } catch (error) {
