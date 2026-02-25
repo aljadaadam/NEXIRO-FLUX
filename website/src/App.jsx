@@ -25,7 +25,7 @@ import {
   // Admin
   AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
   AdminAnnouncements, AdminSettings, AdminPayments,
-  AdminPaymentGateways, AdminPurchaseCodes, AdminTickets,
+  AdminPaymentGateways, AdminPurchaseCodes, AdminTickets, AdminChat,
 } from './routes';
 
 // Loading fallback
@@ -146,6 +146,7 @@ function AppContent() {
           }>
             <Route index element={<AdminOverview />} />
             <Route path="tickets" element={<AdminTickets />} />
+            <Route path="chat" element={<AdminChat />} />
             <Route path="templates" element={<AdminTemplates />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="announcements" element={<AdminAnnouncements />} />

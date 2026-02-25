@@ -44,3 +44,4 @@ export const AdminPayments = lazy(() => import('../pages/admin/AdminPayments'));
 export const AdminPaymentGateways = lazy(() => import('../pages/admin/AdminPaymentGateways'));
 export const AdminPurchaseCodes = lazy(() => import('../pages/admin/AdminPurchaseCodes'));
 export const AdminTickets = lazy(() => import('../pages/admin/AdminTickets'));
+export const AdminChat = lazy(() => import('../pages/admin/AdminChat'));
