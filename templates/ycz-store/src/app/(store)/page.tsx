@@ -246,11 +246,16 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 )}
               </div>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', lineHeight: 1.4, marginBottom: 2 }}>{product.name}</h4>
-              {product.group_name && (
+              {/* Service time (priority) or Group name (fallback) */}
+              {product.service_time ? (
+                <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>⏱</span> {t('وقت الخدمة:')} {product.service_time}
+                </p>
+              ) : product.group_name ? (
                 <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>📁</span> {product.group_name}
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -266,12 +271,6 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: 4 }}>−{discountPct}%</span>
                 )}
               </>
-            )}
-            <div style={{ flex: 1 }} />
-            {product.service_time && (
-              <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                ⏱ {product.service_time}
-              </span>
             )}
           </div>
 
