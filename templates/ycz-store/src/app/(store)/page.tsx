@@ -83,16 +83,17 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
   );
 }
 
-// ─── OrderModal (يتصل بالسيرفر مع فحص الرصيد) ───
+// ─── OrderModal (Enhanced: rich product details + confirmation step) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const { currentTheme, buttonRadius, t } = useTheme();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1=form, 2=confirm, 3=success
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qty, setQty] = useState(product.minQuantity || 1);
+  const [descOpen, setDescOpen] = useState(false);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const parsePriceToNumber = (price: string): number => {
@@ -102,13 +103,16 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   };
 
   const unitPrice = parsePriceToNumber(product.price);
+  const originalPriceNum = product.originalPrice ? parsePriceToNumber(product.originalPrice) : 0;
+  const discountPct = originalPriceNum > unitPrice && originalPriceNum > 0 ? Math.round(((originalPriceNum - unitPrice) / originalPriceNum) * 100) : 0;
   const totalPrice = unitPrice * qty;
+  const serviceType = String(product.service_type || '').toUpperCase();
 
   const orderFields = (() => {
     if (Array.isArray(product.customFields) && product.customFields.length > 0) {
       return product.customFields;
     }
-    if (String(product.service_type || '').toUpperCase() === 'IMEI') {
+    if (serviceType === 'IMEI') {
       return [{ key: 'imei', label: t('رقم IMEI'), placeholder: 'مثال: 356938035643809', required: true }];
     }
     return [];
@@ -189,88 +193,152 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
       });
 
       setWalletBalance((b) => (typeof b === 'number' ? Math.max(0, b - totalPrice) : b));
-      setStep(2);
+      setStep(3);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('فشل إرسال الطلب');
       setError(msg || t('فشل إرسال الطلب'));
+      setStep(2);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filledFields = orderFields.map(f => ({ label: f.label, value: (formValues[f.key] || '').trim() })).filter(f => f.value);
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 440, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>{t('طلب المنتج')}</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>
+            {step === 1 ? t('طلب المنتج') : step === 2 ? t('تأكيد الطلب') : t('تم الطلب')}
+          </h3>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} />
           </button>
         </div>
 
-        {/* Product Info */}
-        <div style={{ display: 'flex', gap: 12, padding: '1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: '2rem', width: 50, height: 50, display: 'grid', placeItems: 'center', background: '#fff', borderRadius: 10 }}>{product.icon}</div>
-          <div>
-            <h4 style={{
-              fontSize: '0.9rem', fontWeight: 700, color: '#0b1020',
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              lineHeight: 1.4,
-            }}>{product.name}</h4>
-            <p style={{ fontSize: '1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</p>
+        {/* ─── Enhanced Product Info ─── */}
+        <div style={{
+          padding: '1rem',
+          background: `linear-gradient(135deg, ${currentTheme.primary}08 0%, ${currentTheme.primary}15 100%)`,
+          borderRadius: 14,
+          marginBottom: 16,
+          border: `1px solid ${currentTheme.primary}20`,
+        }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{
+              fontSize: '2rem', width: 56, height: 56, display: 'grid', placeItems: 'center',
+              background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexShrink: 0,
+            }}>{product.icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                <span style={{
+                  fontSize: '0.62rem', fontWeight: 700, color: currentTheme.primary,
+                  background: `${currentTheme.primary}15`, padding: '2px 8px', borderRadius: 6,
+                }}>{product.category || t('عام')}</span>
+                {serviceType && (
+                  <span style={{
+                    fontSize: '0.62rem', fontWeight: 700, color: '#fff',
+                    background: serviceType === 'IMEI' ? '#3b82f6' : '#8b5cf6',
+                    padding: '2px 8px', borderRadius: 6,
+                  }}>{serviceType}</span>
+                )}
+              </div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', lineHeight: 1.4, marginBottom: 2 }}>{product.name}</h4>
+              {product.group_name && (
+                <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>📁</span> {product.group_name}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginTop: 10,
+            padding: '0.6rem 0.8rem', background: '#fff', borderRadius: 10, border: '1px solid #f1f5f9',
+          }}>
+            <span style={{ fontSize: '1.15rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</span>
+            {product.originalPrice && (
+              <>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', textDecoration: 'line-through' }}>{product.originalPrice}</span>
+                {discountPct > 0 && (
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: 4 }}>−{discountPct}%</span>
+                )}
+              </>
+            )}
+            <div style={{ flex: 1 }} />
             {product.service_time && (
-              <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span>⏱</span> {t('وقت الخدمة:')} {product.service_time}
-              </p>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
+                ⏱ {product.service_time}
+              </span>
             )}
           </div>
-        </div>
 
-        {/* Quantity Input */}
-        {product.allowsQuantity && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 12, border: '1px solid #e2e8f0' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>{t('الكمية')}</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto' }}>
-              <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>−</button>
-              <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none' }} />
-              <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>+</button>
+          {product.desc && (
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={() => setDescOpen(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem',
+                  color: '#64748b', background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', padding: 0,
+                }}
+              >
+                <span>📋</span> {t('تفاصيل المنتج')}
+                <ChevronDown size={12} style={{ transform: descOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+              </button>
+              {descOpen && (
+                <p style={{
+                  marginTop: 6, fontSize: '0.78rem', color: '#475569', lineHeight: 1.6,
+                  background: '#fff', padding: '0.6rem 0.8rem', borderRadius: 8, border: '1px solid #f1f5f9',
+                }}>{product.desc}</p>
+              )}
             </div>
-            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: currentTheme.primary, whiteSpace: 'nowrap' }}>${totalPrice.toFixed(2)}</span>
-          </div>
-        )}
-
-        {/* Wallet Info */}
-        <div style={{
-          padding: '0.75rem 1rem', borderRadius: 12,
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          marginBottom: 12,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
-          fontSize: '0.82rem',
-        }}>
-          <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1rem' }}>💳</span> {t('الدفع بالمحفظة')}
-          </div>
-          <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
-            {loadingProfile ? t('جاري جلب الرصيد...') : walletBalance === null ? t('غير متاح') : `$${walletBalance.toFixed(2)}`}
-          </div>
+          )}
         </div>
 
-        {error && (
-          <div style={{
-            marginBottom: 12,
-            padding: '0.75rem 1rem', borderRadius: 12,
-            background: '#fef2f2', border: '1px solid #fecaca',
-            color: '#b91c1c', fontSize: '0.82rem', fontWeight: 700,
-          }}>
-            {error}
-          </div>
-        )}
-
+        {/* ─── Step 1: Form ─── */}
         {step === 1 && (
           <>
+            {product.allowsQuantity && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 12, border: '1px solid #e2e8f0' }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>{t('الكمية')}</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto' }}>
+                  <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>−</button>
+                  <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none' }} />
+                  <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>+</button>
+                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: currentTheme.primary, whiteSpace: 'nowrap' }}>${totalPrice.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div style={{
+              padding: '0.75rem 1rem', borderRadius: 12,
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              marginBottom: 12,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+              fontSize: '0.82rem',
+            }}>
+              <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '1rem' }}>💳</span> {t('الدفع بالمحفظة')}
+              </div>
+              <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
+                {loadingProfile ? t('جاري جلب الرصيد...') : walletBalance === null ? t('غير متاح') : `$${walletBalance.toFixed(2)}`}
+              </div>
+            </div>
+
+            {error && (
+              <div style={{
+                marginBottom: 12, padding: '0.75rem 1rem', borderRadius: 12,
+                background: '#fef2f2', border: '1px solid #fecaca',
+                color: '#b91c1c', fontSize: '0.82rem', fontWeight: 700,
+              }}>{error}</div>
+            )}
+
             {orderFields.length === 0 ? (
               <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.82rem' }}>
-                {t('لا توجد حقول إضافية مطلوبة لهذو المنتج.')}
+                {t('لا توجد حقول إضافية مطلوبة لهذا المنتج.')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -292,21 +360,111 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             )}
 
             <button
-              onClick={submitOrder}
-              disabled={!allRequiredFilled || submitting || loadingProfile || !isLoggedIn}
-              style={{ width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: allRequiredFilled ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: allRequiredFilled ? 1 : 0.6 }}>
-              {submitting ? t('جارٍ إرسال الطلب...') : t('تقديم الطلب')}
+              onClick={() => { setError(null); setStep(2); }}
+              disabled={!allRequiredFilled || loadingProfile || !isLoggedIn}
+              style={{
+                width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR,
+                background: currentTheme.primary, color: '#fff', border: 'none',
+                fontSize: '0.9rem', fontWeight: 700, fontFamily: 'inherit',
+                cursor: allRequiredFilled ? 'pointer' : 'not-allowed',
+                opacity: allRequiredFilled ? 1 : 0.6,
+              }}>
+              {t('متابعة')} →
             </button>
 
             {isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet && (
               <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>
-                {t('الرصيد غير كافٍ لإتمام الطلب')} (المطلوب: ${totalPrice.toFixed(2)})
+                {t('الرصيد غير كافٍ لإتمام الطلب')} (${totalPrice.toFixed(2)})
               </p>
             )}
           </>
         )}
 
+        {/* ─── Step 2: Confirmation Summary ─── */}
         {step === 2 && (
+          <>
+            <div style={{
+              background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 12,
+              border: '1px solid #e2e8f0',
+            }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                📝 {t('ملخص الطلب')}
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('المنتج')}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020', maxWidth: '60%', textAlign: 'left', lineHeight: 1.3 }}>{product.name}</span>
+              </div>
+
+              {filledFields.map(f => (
+                <div key={f.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{f.label}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', fontFamily: 'monospace' }}>{f.value}</span>
+                </div>
+              ))}
+
+              {product.allowsQuantity && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('الكمية')}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020' }}>{qty}</span>
+                </div>
+              )}
+
+              <div style={{ height: 1, background: '#e2e8f0', margin: '10px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0b1020' }}>{t('المبلغ الإجمالي')}</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: currentTheme.primary }}>${totalPrice.toFixed(2)}</span>
+              </div>
+
+              {walletBalance !== null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('الرصيد بعد الخصم')}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: (walletBalance - totalPrice) >= 0 ? '#16a34a' : '#ef4444' }}>
+                    ${Math.max(0, walletBalance - totalPrice).toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div style={{
+                marginBottom: 12, padding: '0.75rem 1rem', borderRadius: 12,
+                background: '#fef2f2', border: '1px solid #fecaca',
+                color: '#b91c1c', fontSize: '0.82rem', fontWeight: 700,
+              }}>{error}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => { setError(null); setStep(1); }}
+                style={{ flex: 1, padding: '0.75rem', borderRadius: btnR, background: '#f1f5f9', color: '#334155', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                ← {t('تعديل')}
+              </button>
+              <button
+                onClick={submitOrder}
+                disabled={submitting || !canPayWithWallet}
+                style={{
+                  flex: 2, padding: '0.75rem', borderRadius: btnR,
+                  background: canPayWithWallet ? currentTheme.primary : '#94a3b8',
+                  color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700,
+                  cursor: canPayWithWallet && !submitting ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+                  opacity: submitting ? 0.7 : 1,
+                }}>
+                {submitting ? t('جارٍ إرسال الطلب...') : `✓ ${t('تأكيد الطلب')}`}
+              </button>
+            </div>
+
+            {!canPayWithWallet && (
+              <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700, textAlign: 'center' }}>
+                {t('الرصيد غير كافٍ لإتمام الطلب')} (${totalPrice.toFixed(2)})
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ─── Step 3: Success ─── */}
+        {step === 3 && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={32} color="#16a34a" />
