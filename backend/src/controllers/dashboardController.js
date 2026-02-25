@@ -205,13 +205,13 @@ async function getPlatformStats(req, res) {
     // إحصائيات أكواد الشراء
     const purchaseCodeStats = await PurchaseCode.getStats();
 
-    // إجمالي الإيرادات (مواقع العملاء فقط)
+    // إيرادات المنصة الفعلية — من الاشتراكات المفعّلة (وليس مدفوعات المتاجر)
     const [[globalRevenue]] = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND ${ex.clause}`,
+      `SELECT COALESCE(SUM(price), 0) as total FROM subscriptions WHERE status IN ('active') AND ${ex.clause}`,
       ex.params
     );
     const [[todayRevenue]] = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND DATE(created_at) = CURDATE() AND ${ex.clause}`,
+      `SELECT COALESCE(SUM(price), 0) as total FROM subscriptions WHERE status IN ('active') AND DATE(created_at) = CURDATE() AND ${ex.clause}`,
       ex.params
     );
 
@@ -248,16 +248,17 @@ async function getPlatformStats(req, res) {
       created_at: s.created_at,
     }));
 
-    // آخر 10 مدفوعات (مواقع العملاء فقط)
-    const exPayments = buildExcludePlatformClause(platformKeys, 'p.site_key');
-    const [recentPayments] = await pool.query(
-      `SELECT p.id, p.amount, p.currency, p.status, p.type, p.site_key, p.created_at,
-              s.domain as site_domain, s.name as site_name
-       FROM payments p
-       LEFT JOIN sites s ON p.site_key = s.site_key
-       WHERE ${exPayments.clause}
-       ORDER BY p.created_at DESC LIMIT 10`,
-      exPayments.params
+    // آخر 10 اشتراكات (بيانات المنصة الحقيقية)
+    const exSubs = buildExcludePlatformClause(platformKeys, 'sub.site_key');
+    const [recentSubscriptions] = await pool.query(
+      `SELECT sub.id, sub.site_key, sub.plan_id, sub.template_id, sub.billing_cycle,
+              sub.price, sub.status, sub.trial_ends_at, sub.expires_at, sub.created_at,
+              s.domain as site_domain, s.name as site_name, s.custom_domain
+       FROM subscriptions sub
+       LEFT JOIN sites s ON sub.site_key = s.site_key
+       WHERE ${exSubs.clause}
+       ORDER BY sub.created_at DESC LIMIT 10`,
+      exSubs.params
     );
 
     res.json({
@@ -288,15 +289,18 @@ async function getPlatformStats(req, res) {
       resolvedTickets: ticketStats.resolved || 0,
       // أحدث البيانات
       recentSites,
-      recentPayments: recentPayments.map(p => ({
-        id: p.id,
-        amount: p.amount,
-        currency: p.currency,
-        status: p.status,
-        type: p.type,
-        site_domain: p.site_domain || p.site_key,
-        site_name: p.site_name,
-        created_at: p.created_at,
+      recentSubscriptions: recentSubscriptions.map(sub => ({
+        id: sub.id,
+        plan_id: sub.plan_id,
+        template_id: sub.template_id,
+        billing_cycle: sub.billing_cycle,
+        price: sub.price,
+        status: sub.status,
+        trial_ends_at: sub.trial_ends_at,
+        expires_at: sub.expires_at,
+        site_domain: sub.custom_domain || sub.site_domain || sub.site_key,
+        site_name: sub.site_name,
+        created_at: sub.created_at,
       })),
     });
   } catch (error) {

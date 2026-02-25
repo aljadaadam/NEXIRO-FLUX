@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Globe, Users, Key, CreditCard, TrendingUp,
+  Globe, Users, Key, TrendingUp,
   Loader2, RefreshCw, AlertTriangle, Clock, DollarSign,
   Ticket, CheckCircle, XCircle, Sparkles, ExternalLink,
-  BarChart3, ShieldCheck, Zap
+  ShieldCheck, Zap
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -69,7 +69,7 @@ export default function AdminOverview() {
       iconColor: '#10b981',
     },
     {
-      labelAr: 'إجمالي مبيعات المتاجر', labelEn: 'Total Store Sales',
+      labelAr: 'إيرادات المنصة', labelEn: 'Platform Revenue',
       value: `$${(stats?.totalRevenue || 0).toLocaleString()}`,
       sub: `+$${(stats?.todayRevenue || 0).toLocaleString()} ${isRTL ? 'اليوم' : 'today'}`,
       icon: DollarSign,
@@ -170,7 +170,7 @@ export default function AdminOverview() {
         })}
       </div>
 
-      {/* Two-column: Recent Sites + Recent Payments */}
+      {/* Two-column: Recent Sites + Recent Subscriptions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Sites */}
         <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
@@ -212,53 +212,62 @@ export default function AdminOverview() {
           )}
         </div>
 
-        {/* Recent Payments */}
+        {/* Recent Subscriptions */}
         <div className="bg-[#111827] rounded-2xl border border-white/5 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <h3 className="font-bold text-white flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-cyan-400" />
-              {isRTL ? 'آخر مدفوعات المتاجر' : 'Recent Store Payments'}
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              {isRTL ? 'آخر الاشتراكات' : 'Recent Subscriptions'}
             </h3>
-            <Link to="/admin/payments" className="text-primary-400 hover:text-primary-300 text-[11px] transition-colors">
-              {isRTL ? 'عرض الكل' : 'View All'}
-            </Link>
+            <span className="text-dark-600 text-[11px]">
+              {isRTL ? `${stats?.totalSubscriptions || 0} اشتراك` : `${stats?.totalSubscriptions || 0} subs`}
+            </span>
           </div>
-          {stats?.recentPayments?.length > 0 ? (
+          {stats?.recentSubscriptions?.length > 0 ? (
             <div className="divide-y divide-white/5">
-              {stats.recentPayments.map((p, i) => (
-                <div key={i} className="flex items-center gap-3 px-6 py-3 hover:bg-white/[0.02] transition-colors">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${
-                    p.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                    p.status === 'pending' ? 'bg-amber-500/10 border-amber-500/20' :
-                    'bg-red-500/10 border-red-500/20'
-                  }`}>
-                    <DollarSign className={`w-4 h-4 ${
-                      p.status === 'completed' ? 'text-emerald-400' :
-                      p.status === 'pending' ? 'text-amber-400' : 'text-red-400'
-                    }`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-white text-sm font-medium">{p.currency === 'USD' || !p.currency ? '$' : p.currency}{p.amount}</p>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        p.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
-                        p.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                        'bg-red-500/10 text-red-400'
-                      }`}>{p.status}</span>
+              {stats.recentSubscriptions.map((sub, i) => {
+                const statusColors = {
+                  active: { bg: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-400', label: isRTL ? 'نشط' : 'active' },
+                  trial: { bg: 'bg-blue-500/10 border-blue-500/20', text: 'text-blue-400', label: isRTL ? 'تجريبي' : 'trial' },
+                  cancelled: { bg: 'bg-red-500/10 border-red-500/20', text: 'text-red-400', label: isRTL ? 'ملغى' : 'cancelled' },
+                  expired: { bg: 'bg-gray-500/10 border-gray-500/20', text: 'text-gray-400', label: isRTL ? 'منتهي' : 'expired' },
+                };
+                const s = statusColors[sub.status] || statusColors.expired;
+                const cycleLabels = {
+                  monthly: isRTL ? 'شهري' : 'Monthly',
+                  yearly: isRTL ? 'سنوي' : 'Yearly',
+                  lifetime: isRTL ? 'مدى الحياة' : 'Lifetime',
+                };
+                return (
+                  <div key={i} className="flex items-center gap-3 px-6 py-3 hover:bg-white/[0.02] transition-colors">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${s.bg}`}>
+                      <ShieldCheck className={`w-4 h-4 ${s.text}`} />
                     </div>
-                    <p className="text-dark-500 text-[11px] truncate">{p.site_name || p.site_domain}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-white text-sm font-medium truncate">{sub.site_name || sub.site_domain}</p>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${s.bg.replace('border-', 'text-').split(' ')[0]} ${s.text}`}>
+                          {s.label}
+                        </span>
+                      </div>
+                      <p className="text-dark-500 text-[11px] flex items-center gap-2">
+                        <span>${sub.price || 0}/{cycleLabels[sub.billing_cycle] || sub.billing_cycle}</span>
+                        <span className="text-dark-600">•</span>
+                        <span>{sub.plan_id || sub.template_id}</span>
+                      </p>
+                    </div>
+                    <div className="text-dark-600 text-[11px] flex items-center gap-1 flex-shrink-0">
+                      <Clock className="w-3 h-3" />
+                      {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '-'}
+                    </div>
                   </div>
-                  <div className="text-dark-600 text-[11px] flex items-center gap-1 flex-shrink-0">
-                    <Clock className="w-3 h-3" />
-                    {p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
-              <CreditCard className="w-8 h-8 text-dark-600 mx-auto mb-2" />
-              <p className="text-dark-500 text-xs">{isRTL ? 'لا توجد مدفوعات بعد' : 'No payments yet'}</p>
+              <ShieldCheck className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+              <p className="text-dark-500 text-xs">{isRTL ? 'لا توجد اشتراكات بعد' : 'No subscriptions yet'}</p>
             </div>
           )}
         </div>
@@ -275,7 +284,7 @@ export default function AdminOverview() {
             { labelAr: 'إدارة المستخدمين', labelEn: 'Manage Users', icon: Users, to: '/admin/users', color: 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30', iconColor: 'text-indigo-400' },
             { labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes', icon: Key, to: '/admin/purchase-codes', color: 'from-amber-500/10 to-amber-500/5 border-amber-500/10 hover:border-amber-500/30', iconColor: 'text-amber-400' },
             { labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets', icon: Ticket, to: '/admin/tickets', color: 'from-rose-500/10 to-rose-500/5 border-rose-500/10 hover:border-rose-500/30', iconColor: 'text-rose-400' },
-            { labelAr: 'المدفوعات', labelEn: 'Payments', icon: CreditCard, to: '/admin/payments', color: 'from-cyan-500/10 to-cyan-500/5 border-cyan-500/10 hover:border-cyan-500/30', iconColor: 'text-cyan-400' },
+            { labelAr: 'إدارة المواقع', labelEn: 'Manage Sites', icon: Globe, to: '/admin/sites', color: 'from-violet-500/10 to-violet-500/5 border-violet-500/10 hover:border-violet-500/30', iconColor: 'text-violet-400' },
           ].map((action, i) => {
             const Icon = action.icon;
             return (
