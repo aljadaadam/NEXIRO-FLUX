@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Users, Search, Shield, Crown, Loader2,
   RefreshCw, AlertTriangle, UserPlus,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Globe, Filter
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -11,6 +11,7 @@ const roleConfig = {
   admin:       { labelAr: 'مدير',          labelEn: 'Admin',       color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   super_admin: { labelAr: 'مدير أعلى',     labelEn: 'Super Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
   user:        { labelAr: 'مستخدم',        labelEn: 'User',        color: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
+  customer:    { labelAr: 'عميل',          labelEn: 'Customer',    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   moderator:   { labelAr: 'مشرف',          labelEn: 'Moderator',   color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
 };
 
@@ -19,19 +20,23 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({ totalUsers: 0, admins: 0, regularUsers: 0, newToday: 0 });
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const perPage = 20;
 
-  useEffect(() => { loadData(); }, [currentPage, search]);
+  useEffect(() => { loadData(); }, [currentPage, search, roleFilter]);
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getPlatformUsers({ page: currentPage, limit: perPage, search: search || undefined });
+      const params = { page: currentPage, limit: perPage };
+      if (search) params.search = search;
+      if (roleFilter) params.role = roleFilter;
+      const data = await api.getPlatformUsers(params);
       setUsers(data.users || []);
       setTotalCount(data.total || 0);
       if (data.stats) setStats(data.stats);
@@ -117,16 +122,31 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#111827] border border-white/5">
-        <Search className="w-4 h-4 text-dark-500" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-          placeholder={isRTL ? 'ابحث بالاسم أو الإيميل...' : 'Search by name or email...'}
-          className="bg-transparent border-none outline-none text-sm text-white placeholder:text-dark-500 w-full"
-        />
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#111827] border border-white/5 flex-1">
+          <Search className="w-4 h-4 text-dark-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+            placeholder={isRTL ? 'ابحث بالاسم أو الإيميل...' : 'Search by name or email...'}
+            className="bg-transparent border-none outline-none text-sm text-white placeholder:text-dark-500 w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#111827] border border-white/5 min-w-[160px]">
+          <Filter className="w-4 h-4 text-dark-500" />
+          <select
+            value={roleFilter}
+            onChange={e => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+            className="bg-transparent border-none outline-none text-sm text-white w-full cursor-pointer appearance-none"
+          >
+            <option value="" className="bg-[#111827]">{isRTL ? 'كل الأدوار' : 'All Roles'}</option>
+            <option value="admin" className="bg-[#111827]">{isRTL ? 'مدير' : 'Admin'}</option>
+            <option value="user" className="bg-[#111827]">{isRTL ? 'مستخدم' : 'User'}</option>
+            <option value="customer" className="bg-[#111827]">{isRTL ? 'عميل' : 'Customer'}</option>
+          </select>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -137,6 +157,7 @@ export default function AdminUsers() {
               <tr className="border-b border-white/5">
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'المستخدم' : 'User'}</th>
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'الدور' : 'Role'}</th>
+                <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs hidden sm:table-cell">{isRTL ? 'الموقع' : 'Site'}</th>
                 <th className="text-start px-5 py-3 text-dark-500 font-medium text-xs">{isRTL ? 'التاريخ' : 'Joined'}</th>
               </tr>
             </thead>
@@ -164,6 +185,14 @@ export default function AdminUsers() {
                         {isRTL ? rc.labelAr : rc.labelEn}
                       </span>
                     </td>
+                    <td className="px-5 py-3 hidden sm:table-cell">
+                      <div className="flex items-center gap-1.5">
+                        <Globe className="w-3 h-3 text-dark-600" />
+                        <span className="text-dark-400 text-xs truncate max-w-[140px]" title={user.site_domain}>
+                          {user.site_name || user.site_domain || user.site_key}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-5 py-3 text-dark-400 text-xs">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') : '-'}
                     </td>
@@ -172,7 +201,7 @@ export default function AdminUsers() {
               })}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center py-12 text-dark-500 text-sm">
+                  <td colSpan={4} className="text-center py-12 text-dark-500 text-sm">
                     {isRTL ? 'لا توجد نتائج' : 'No results'}
                   </td>
                 </tr>

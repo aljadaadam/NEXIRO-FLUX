@@ -569,15 +569,21 @@ async function getPlatformUsers(req, res) {
     if (!requirePlatformAdmin(req, res)) return;
 
     const pool = getPool();
-    const { page = 1, limit = 50, search } = req.query;
+    const { page = 1, limit = 50, search, role, site_key: filterSiteKey } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // مستخدمو المنصة فقط (المسجلون في موقع المنصة نفسه)
-    const platformKeys = await resolvePlatformSiteKeys(pool);
-    const inc = buildIncludePlatformClause(platformKeys, 'u.site_key');
+    // جلب جميع المستخدمين عبر كل المواقع (مع بيانات الموقع)
+    let where = 'WHERE 1=1';
+    const params = [];
 
-    let where = `WHERE ${inc.clause}`;
-    const params = [...inc.params];
+    if (filterSiteKey) {
+      where += ' AND u.site_key = ?';
+      params.push(filterSiteKey);
+    }
+    if (role) {
+      where += ' AND u.role = ?';
+      params.push(role);
+    }
     if (search) {
       where += ' AND (u.name LIKE ? OR u.email LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
@@ -587,21 +593,21 @@ async function getPlatformUsers(req, res) {
       `SELECT COUNT(*) as total FROM users u ${where}`, params
     );
 
-    // إحصائيات مستخدمي المنصة
-    const incStats = buildIncludePlatformClause(platformKeys);
+    // إحصائيات شاملة لكل المستخدمين
     const [[statsRow]] = await pool.query(`
       SELECT
         COUNT(*) as totalUsers,
         SUM(CASE WHEN role = 'admin' OR role = 'super_admin' THEN 1 ELSE 0 END) as admins,
-        SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as regularUsers,
+        SUM(CASE WHEN role = 'user' OR role = 'customer' THEN 1 ELSE 0 END) as regularUsers,
         SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as newToday
       FROM users
-      WHERE ${incStats.clause}
-    `, incStats.params);
+    `);
 
     const [users] = await pool.query(
-      `SELECT u.id, u.name, u.email, u.role, u.site_key, u.created_at
+      `SELECT u.id, u.name, u.email, u.role, u.site_key, u.created_at,
+              s.name as site_name, s.domain as site_domain, s.custom_domain
        FROM users u
+       LEFT JOIN sites s ON u.site_key = s.site_key
        ${where}
        ORDER BY u.created_at DESC
        LIMIT ? OFFSET ?`,
@@ -615,6 +621,8 @@ async function getPlatformUsers(req, res) {
         email: u.email,
         role: u.role,
         site_key: u.site_key,
+        site_name: u.site_name || u.site_key,
+        site_domain: u.custom_domain || u.site_domain || u.site_key,
         created_at: u.created_at,
       })),
       total,
