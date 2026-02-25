@@ -74,11 +74,12 @@ async function provisionSite(req, res) {
       codeData = codeResult;
     }
 
-    // ─── التحقق من حالة الدفع (إن كان عبر بوابة دفع) ───
+    // ─── التحقق من حالة الدفع (إن كان عبر بوابة دفع) — تحقق أولي سريع ───
     let verifiedPayment = null;
+    let paymentId = null;
     if (!codeData && payment_reference && payment_reference !== 'manual') {
       // استخراج payment_id من المرجع
-      const paymentId = parseInt(payment_reference) || parseInt(payment_reference.replace(/\D/g, ''));
+      paymentId = parseInt(payment_reference) || parseInt(payment_reference.replace(/\D/g, ''));
       if (paymentId) {
         const paymentRecord = await Payment.findById(paymentId);
         if (!paymentRecord) {
@@ -88,7 +89,7 @@ async function provisionSite(req, res) {
           });
         }
 
-        // ─── ⛔ منع إعادة استخدام مرجع الدفع لإنشاء مواقع متعددة ───
+        // ─── ⛔ منع إعادة استخدام مرجع الدفع لإنشاء مواقع متعددة (تحقق أولي سريع) ───
         if (paymentRecord.meta) {
           const meta = typeof paymentRecord.meta === 'string' ? JSON.parse(paymentRecord.meta) : paymentRecord.meta;
           if (meta.provisioned_site_key) {
@@ -189,6 +190,37 @@ async function provisionSite(req, res) {
     try {
       await connection.beginTransaction();
 
+      // ─── ⛔ قفل ذري: منع إعادة استخدام الدفعة (SELECT FOR UPDATE يمنع أي طلب متزامن) ───
+      if (verifiedPayment && paymentId) {
+        const [lockedRows] = await connection.query(
+          'SELECT id, meta FROM payments WHERE id = ? FOR UPDATE',
+          [paymentId]
+        );
+        if (lockedRows[0]?.meta) {
+          const lockedMeta = typeof lockedRows[0].meta === 'string' ? JSON.parse(lockedRows[0].meta) : lockedRows[0].meta;
+          if (lockedMeta.provisioned_site_key) {
+            await connection.rollback();
+            connection.release();
+            return res.status(409).json({
+              error: 'تم استخدام هذه الدفعة لإنشاء موقع بالفعل. لا يمكن إنشاء موقع آخر بنفس الدفعة',
+              errorEn: 'This payment has already been used to provision a site. Cannot create another site with the same payment',
+              already_provisioned: true,
+              existing_site_key: lockedMeta.provisioned_site_key,
+            });
+          }
+        }
+        // ─── تعليم الدفعة فوراً بعد القفل لمنع أي طلب متزامن ───
+        const [payMetaRows] = await connection.query('SELECT meta FROM payments WHERE id = ?', [paymentId]);
+        let existingPayMeta = {};
+        if (payMetaRows[0]?.meta) {
+          existingPayMeta = typeof payMetaRows[0].meta === 'string' ? JSON.parse(payMetaRows[0].meta) : payMetaRows[0].meta;
+        }
+        await connection.query(
+          'UPDATE payments SET meta = ? WHERE id = ?',
+          [JSON.stringify({ ...existingPayMeta, provisioned_site_key: site_key, provisioning_started_at: new Date().toISOString() }), paymentId]
+        );
+      }
+
       // ─── 1. إنشاء الموقع ───
       await connection.query(
         `INSERT INTO sites (site_key, domain, custom_domain, name, template_id, plan, status, owner_email, settings)
@@ -276,6 +308,7 @@ async function provisionSite(req, res) {
       finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
       try {
         if (verifiedPayment) {
+          // تحديث meta الدفعة (provisioned_site_key كُتب سابقاً عند القفل — نضيف البيانات المتبقية)
           const [payRows] = await connection.query('SELECT meta FROM payments WHERE id = ? AND site_key = ?', [verifiedPayment.id, verifiedPayment.site_key]);
           let existingMeta = {};
           if (payRows[0]?.meta) {

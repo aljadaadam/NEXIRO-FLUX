@@ -69,6 +69,7 @@ export default function SetupWizardPage() {
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [provisioningStarted, setProvisioningStarted] = useState(false);
 
   // Dynamic gateways from server
   const [enabledGateways, setEnabledGateways] = useState([]);
@@ -201,6 +202,18 @@ export default function SetupWizardPage() {
   };
 
   const handleSubmit = async () => {
+    // ─── منع الإرسال المزدوج (نافذتين في نفس الوقت) ───
+    if (provisioningStarted) return;
+    const provisionKey = `provisioning_${form.payment_reference}`;
+    if (form.payment_reference && sessionStorage.getItem(provisionKey)) {
+      setError(isRTL ? 'تم بدء عملية التثبيت بالفعل. لا يمكن التثبيت مرتين بنفس الدفعة' : 'Installation already started. Cannot install twice with the same payment');
+      return;
+    }
+    setProvisioningStarted(true);
+    if (form.payment_reference) {
+      sessionStorage.setItem(provisionKey, Date.now().toString());
+    }
+
     setError('');
     setLoading(true);
     try {
@@ -236,7 +249,17 @@ export default function SetupWizardPage() {
       setResult(data);
       setStep(4); // الانتقال لخطوة "تم"
     } catch (err) {
-      setError(err.error || (isRTL ? 'حدث خطأ أثناء الإعداد' : 'Setup failed'));
+      // إذا كانت الدفعة مستخدمة بالفعل (409) لا نعيد المحاولة
+      if (err.already_provisioned) {
+        setError(isRTL ? 'تم استخدام هذه الدفعة لإنشاء موقع بالفعل' : 'This payment was already used to provision a site');
+      } else {
+        setError(err.error || (isRTL ? 'حدث خطأ أثناء الإعداد' : 'Setup failed'));
+        // السماح بإعادة المحاولة فقط في حالة الأخطاء غير المتعلقة بالدفع المكرر
+        setProvisioningStarted(false);
+        if (form.payment_reference) {
+          sessionStorage.removeItem(`provisioning_${form.payment_reference}`);
+        }
+      }
     } finally {
       setLoading(false);
     }
