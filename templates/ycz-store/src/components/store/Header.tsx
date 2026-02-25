@@ -20,13 +20,14 @@ export default function Header() {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100,
-      background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(0,0,0,0.06)',
-      boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
+      background: 'var(--nav-bg)', backdropFilter: 'blur(20px)',
+      borderBottom: '1px solid var(--nav-border)',
+      boxShadow: 'var(--shadow-nav)',
+      transition: 'background 0.3s, border-color 0.3s',
     }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
         {/* Mobile: notification icon */}
-        <button className="store-mobile-toggle" style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: '#0b1020', padding: 4, position: 'relative' }}>
+        <button className="store-mobile-toggle" style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: 4, position: 'relative' }}>
           <Bell size={20} />
           <div style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />
         </button>
@@ -43,7 +44,7 @@ export default function Header() {
                 border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
                 fontFamily: 'inherit',
                 background: isActive ? currentTheme.primary : 'transparent',
-                color: isActive ? '#fff' : '#64748b',
+                color: isActive ? '#fff' : 'var(--text-secondary)',
                 transition: 'all 0.3s',
               }}>
                 <Icon size={16} />
@@ -62,16 +63,16 @@ export default function Header() {
               <Zap size={18} color="#fff" />
             </div>
           )}
-          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', fontFamily: 'inherit' }}>{storeName}</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'inherit' }}>{storeName}</span>
         </Link>
 
         {/* Profile */}
         <Link href="/profile" style={{
           width: 38, height: 38, borderRadius: '50%',
-          border: pathname === '/profile' ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
-          background: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer',
+          border: pathname === '/profile' ? `2px solid ${currentTheme.primary}` : '1px solid var(--border-default)',
+          background: 'var(--bg-card)', display: 'grid', placeItems: 'center', cursor: 'pointer',
         }}>
-          <User size={16} color="#64748b" />
+          <User size={16} color="var(--text-secondary)" />
         </Link>
       </div>
     </header>

@@ -90,6 +90,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       : 'Inter, system-ui, -apple-system, sans-serif';
   }, [language, isRTL]);
 
+  // ─── Apply dark mode class on <html> ───
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const html = document.documentElement;
+    if (darkMode) {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   // ─── Apply custom CSS dynamically ───
   useEffect(() => {
     if (typeof document === 'undefined') return;

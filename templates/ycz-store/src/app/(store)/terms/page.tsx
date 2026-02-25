@@ -47,7 +47,7 @@ export default function TermsPage() {
         canonical="/terms"
       />
       {/* Back */}
-      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
+      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
         <ArrowRight size={16} /> {t('العودة للرئيسية')}
       </Link>
 
@@ -59,8 +59,8 @@ export default function TermsPage() {
       </div>
 
       {/* Intro */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginBottom: 16 }}>
-        <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.8 }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)', marginBottom: 16 }}>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.8 }}>
           {isRTL
             ? <>مرحباً بك في {storeName}. يُرجى قراءة الشروط والأحكام التالية بعناية قبل استخدام المنصة، حيث تُنظّم هذه الشروط العلاقة بينك وبين المنصة.</>
             : <>Welcome to {storeName}. Please read the following terms and conditions carefully before using the platform, as these terms govern the relationship between you and the platform.</>}
@@ -70,20 +70,20 @@ export default function TermsPage() {
       {/* Sections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {sections.map((s, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9' }}>
+          <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: `${currentTheme.primary}15`, color: currentTheme.primary, display: 'grid', placeItems: 'center' }}>{s.icon}</div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>{t(s.title)}</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t(s.title)}</h3>
             </div>
-            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.8 }}>{t(s.content)}</p>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.8 }}>{t(s.content)}</p>
           </div>
         ))}
       </div>
 
       {/* Contact */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginTop: 16, textAlign: 'center' }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)', marginTop: 16, textAlign: 'center' }}>
         <Mail size={20} color={currentTheme.primary} style={{ margin: '0 auto 8px' }} />
-        <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('لأي استفسارات حول الشروط والأحكام، تواصل معنا عبر صفحة الدعم.')}</p>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t('لأي استفسارات حول الشروط والأحكام، تواصل معنا عبر صفحة الدعم.')}</p>
         <Link href="/support" style={{ color: currentTheme.primary, fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>{t('مركز الدعم ←')}</Link>
       </div>
     </div>

@@ -1,5 +1,41 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #f8fafc; }
+
+/* ─── Light / Dark CSS Variables ─── */
+:root {
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8fafc;
+  --bg-input: #f8fafc;
+  --bg-muted: #f1f5f9;
+  --border-default: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text-primary: #0b1020;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --nav-bg: rgba(255,255,255,0.95);
+  --nav-border: rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-nav: 0 2px 20px rgba(0,0,0,0.04);
+}
+
+html.dark {
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-subtle: #1e293b;
+  --bg-input: #0f172a;
+  --bg-muted: #334155;
+  --border-default: #334155;
+  --border-light: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --nav-bg: rgba(15,23,42,0.95);
+  --nav-border: rgba(255,255,255,0.06);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.2);
+  --shadow-nav: 0 2px 20px rgba(0,0,0,0.2);
+}
+
+body { background: var(--bg-page); color: var(--text-primary); transition: background 0.3s, color 0.3s; }
 a { text-decoration: none; color: inherit; }
 input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 

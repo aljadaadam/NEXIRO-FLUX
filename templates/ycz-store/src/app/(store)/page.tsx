@@ -241,22 +241,22 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
 
   return (
     <div onClick={onClick} className="store-product-card" style={{
-      background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', padding: '1rem',
-      cursor: 'pointer', transition: 'all 0.3s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)', padding: '1rem',
+      cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--shadow-sm)',
     }}>
-      <div style={{ fontSize: '1.8rem', textAlign: 'center', marginBottom: 8, height: 48, display: 'grid', placeItems: 'center', background: '#f8fafc', borderRadius: 10 }}>
+      <div style={{ fontSize: '1.8rem', textAlign: 'center', marginBottom: 8, height: 48, display: 'grid', placeItems: 'center', background: 'var(--bg-subtle)', borderRadius: 10 }}>
         {product.icon}
       </div>
       <p style={{ fontSize: '0.7rem', color: currentTheme.primary, fontWeight: 600, marginBottom: 4 }}>{t(product.category)}</p>
       <h4 style={{
-        fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.4,
+        fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.4,
         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         minHeight: '2.52rem',
       }}>{product.name}</h4>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <span style={{ fontSize: '1.1rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</span>
-          {product.originalPrice && <span style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: 6 }}>{product.originalPrice}</span>}
+          {product.originalPrice && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'line-through', marginRight: 6 }}>{product.originalPrice}</span>}
         </div>
         <div style={{ padding: '0.35rem 0.75rem', borderRadius: btnR, background: '#dcfce7', color: '#16a34a', fontSize: '0.7rem', fontWeight: 700 }}>
           {t('متاح')}
@@ -390,13 +390,13 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 440, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 440, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {step === 1 ? t('طلب المنتج') : step === 2 ? t('تأكيد الطلب') : t('تم الطلب')}
           </h3>
-          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+          <button onClick={onClose} style={{ background: 'var(--bg-muted)', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -412,7 +412,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{
               fontSize: '2rem', width: 56, height: 56, display: 'grid', placeItems: 'center',
-              background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexShrink: 0,
+              background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', flexShrink: 0,
             }}>{product.icon}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -428,14 +428,14 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                   }}>{serviceType}</span>
                 )}
               </div>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', lineHeight: 1.4, marginBottom: 2 }}>{product.name}</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 2 }}>{product.name}</h4>
               {/* Service time (priority) or Group name (fallback) */}
               {product.service_time ? (
-                <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>⏱</span> {t('وقت الخدمة:')} {product.service_time}
                 </p>
               ) : product.group_name ? (
-                <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>📁</span> {product.group_name}
                 </p>
               ) : null}
@@ -444,12 +444,12 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8, marginTop: 10,
-            padding: '0.6rem 0.8rem', background: '#fff', borderRadius: 10, border: '1px solid #f1f5f9',
+            padding: '0.6rem 0.8rem', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border-light)',
           }}>
             <span style={{ fontSize: '1.15rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</span>
             {product.originalPrice && (
               <>
-                <span style={{ fontSize: '0.78rem', color: '#94a3b8', textDecoration: 'line-through' }}>{product.originalPrice}</span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{product.originalPrice}</span>
                 {discountPct > 0 && (
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: 4 }}>−{discountPct}%</span>
                 )}
@@ -463,7 +463,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 onClick={() => setDescOpen(v => !v)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem',
-                  color: '#64748b', background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer',
                   fontFamily: 'inherit', padding: 0,
                 }}
               >
@@ -472,8 +472,8 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
               </button>
               {descOpen && (
                 <p style={{
-                  marginTop: 6, fontSize: '0.78rem', color: '#475569', lineHeight: 1.6,
-                  background: '#fff', padding: '0.6rem 0.8rem', borderRadius: 8, border: '1px solid #f1f5f9',
+                  marginTop: 6, fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6,
+                  background: 'var(--bg-card)', padding: '0.6rem 0.8rem', borderRadius: 8, border: '1px solid var(--border-light)',
                 }}>{product.desc}</p>
               )}
             </div>
@@ -484,12 +484,12 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         {step === 1 && (
           <>
             {product.allowsQuantity && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: 12, marginBottom: 12, border: '1px solid #e2e8f0' }}>
-                <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>{t('الكمية')}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 1rem', background: 'var(--bg-subtle)', borderRadius: 12, marginBottom: 12, border: '1px solid var(--border-default)' }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('الكمية')}</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto' }}>
-                  <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>−</button>
-                  <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none' }} />
-                  <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center' }}>+</button>
+                  <button onClick={() => setQty(q => Math.max(product.minQuantity || 1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-default)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center', color: 'var(--text-primary)' }}>−</button>
+                  <input type="number" value={qty} min={product.minQuantity || 1} max={product.maxQuantity || 100} onChange={e => { const v = Math.max(product.minQuantity || 1, Math.min(product.maxQuantity || 100, Number(e.target.value) || 1)); setQty(v); }} style={{ width: 50, textAlign: 'center', padding: '0.4rem', borderRadius: 8, border: '1px solid var(--border-default)', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                  <button onClick={() => setQty(q => Math.min(product.maxQuantity || 100, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-default)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'grid', placeItems: 'center', color: 'var(--text-primary)' }}>+</button>
                 </div>
                 <span style={{ fontSize: '0.85rem', fontWeight: 800, color: currentTheme.primary, whiteSpace: 'nowrap' }}>${totalPrice.toFixed(2)}</span>
               </div>
@@ -519,14 +519,14 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             )}
 
             {orderFields.length === 0 ? (
-              <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.82rem' }}>
+              <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: 'var(--bg-subtle)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
                 {t('لا توجد حقول إضافية مطلوبة لهذا المنتج.')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {orderFields.map((field) => (
                   <div key={field.key}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
                       {t(field.label)}
                       {field.required !== false && <span style={{ color: '#ef4444' }}> *</span>}
                     </label>
@@ -534,7 +534,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                       value={formValues[field.key] || ''}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={`${t('أدخل')} ${t(field.label)}`}
-                      style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid var(--border-default)', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                     />
                   </div>
                 ))}
@@ -566,42 +566,42 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         {step === 2 && (
           <>
             <div style={{
-              background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 12,
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg-subtle)', borderRadius: 12, padding: '1rem', marginBottom: 12,
+              border: '1px solid var(--border-default)',
             }}>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 📝 {t('ملخص الطلب')}
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('المنتج')}</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020', maxWidth: '60%', textAlign: 'left', lineHeight: 1.3 }}>{product.name}</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('المنتج')}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '60%', textAlign: 'left', lineHeight: 1.3 }}>{product.name}</span>
               </div>
 
               {filledFields.map(f => (
                 <div key={f.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{f.label}</span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', fontFamily: 'monospace' }}>{f.value}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{f.label}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', direction: 'ltr', fontFamily: 'monospace' }}>{f.value}</span>
                 </div>
               ))}
 
               {product.allowsQuantity && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('الكمية')}</span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020' }}>{qty}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('الكمية')}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{qty}</span>
                 </div>
               )}
 
-              <div style={{ height: 1, background: '#e2e8f0', margin: '10px 0' }} />
+              <div style={{ height: 1, background: 'var(--border-default)', margin: '10px 0' }} />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0b1020' }}>{t('المبلغ الإجمالي')}</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('المبلغ الإجمالي')}</span>
                 <span style={{ fontSize: '1.1rem', fontWeight: 800, color: currentTheme.primary }}>${totalPrice.toFixed(2)}</span>
               </div>
 
               {walletBalance !== null && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('الرصيد بعد الخصم')}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('الرصيد بعد الخصم')}</span>
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, color: (walletBalance - totalPrice) >= 0 ? '#16a34a' : '#ef4444' }}>
                     ${Math.max(0, walletBalance - totalPrice).toFixed(2)}
                   </span>
@@ -620,7 +620,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => { setError(null); setStep(1); }}
-                style={{ flex: 1, padding: '0.75rem', borderRadius: btnR, background: '#f1f5f9', color: '#334155', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, padding: '0.75rem', borderRadius: btnR, background: 'var(--bg-muted)', color: 'var(--text-primary)', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {isRTL ? `→ ${t('تعديل')}` : `← ${t('تعديل')}`}
               </button>
               <button
@@ -651,10 +651,10 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={32} color="#16a34a" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('تم إرسال الطلب بنجاح!')}</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>{t('سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة "طلباتي".')}</p>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>{t('تم إرسال الطلب بنجاح!')}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة "طلباتي".')}</p>
             {walletBalance !== null && (
-              <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>{t('الرصيد المتبقي:')} <strong style={{ color: '#0b1020' }}>${walletBalance.toFixed(2)}</strong></p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 6 }}>{t('الرصيد المتبقي:')} <strong style={{ color: 'var(--text-primary)' }}>${walletBalance.toFixed(2)}</strong></p>
             )}
             <button onClick={onClose} style={{ marginTop: 20, padding: '0.65rem 2rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('حسناً')}</button>
           </div>
@@ -727,14 +727,14 @@ export default function HomePage() {
       {/* المنتجات المميزة */}
       <section style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020' }}>{t('🔥 المنتجات المميزة')}</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{t('🔥 المنتجات المميزة')}</h3>
           <Link href="/services" style={{ background: 'none', border: 'none', color: currentTheme.primary, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('عرض الكل ←')}</Link>
         </div>
         <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', gridColumn: '1 / -1' }}>{t('جاري التحميل...')}</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>{t('جاري التحميل...')}</div>
           ) : products.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
               <p style={{ fontSize: '2rem', marginBottom: 8 }}>📦</p>
               <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 4 }}>{t('لا توجد منتجات بعد')}</p>
               <p style={{ fontSize: '0.8rem' }}>{t('سيتم عرض المنتجات هنا بعد إضافتها من لوحة التحكم')}</p>
@@ -747,14 +747,14 @@ export default function HomePage() {
 
       {/* كيف تطلب */}
       <section style={{ marginBottom: '3rem' }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>{t('كيف تطلب؟')}</h3>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '1.5rem' }}>{t('كيف تطلب؟')}</h3>
         <div className="store-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {STEPS_DATA.map((step, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '1.5rem 1rem', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div key={i} style={{ textAlign: 'center', padding: '1.5rem 1rem', background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2rem', marginBottom: 10 }}>{step.icon}</div>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: currentTheme.primary, color: '#fff', display: 'grid', placeItems: 'center', margin: '0 auto 8px', fontSize: '0.8rem', fontWeight: 800 }}>{i + 1}</div>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 4 }}>{t(step.title)}</h4>
-              <p style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>{t(step.desc)}</p>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{t(step.title)}</h4>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t(step.desc)}</p>
             </div>
           ))}
         </div>
@@ -762,7 +762,7 @@ export default function HomePage() {
 
       {/* لماذا نحن */}
       <section style={{ marginBottom: '2rem' }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', textAlign: 'center', marginBottom: '1.5rem' }}>{t('لماذا نحن؟')}</h3>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '1.5rem' }}>{t('لماذا نحن؟')}</h3>
         <div className="store-about-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {[
             { icon: <Zap size={24} />, title: t('تنفيذ سريع'), desc: t('طلباتك تُنفَّذ خلال دقائق'), color: '#f59e0b' },
@@ -770,12 +770,12 @@ export default function HomePage() {
             { icon: <DollarSign size={24} />, title: t('أسعار منافسة'), desc: t('أفضل أسعار في السوق'), color: '#22c55e' },
             { icon: <Headphones size={24} />, title: t('دعم مستمر'), desc: t('فريق دعم متاح على مدار الساعة'), color: '#8b5cf6' },
           ].map((item, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '1.5rem', background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
+            <div key={i} style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-light)' }}>
               <div style={{ width: 48, height: 48, borderRadius: 14, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center', margin: '0 auto 12px' }}>
                 {item.icon}
               </div>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020', marginBottom: 4 }}>{item.title}</h4>
-              <p style={{ fontSize: '0.78rem', color: '#64748b' }}>{item.desc}</p>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{item.title}</h4>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{item.desc}</p>
             </div>
           ))}
         </div>

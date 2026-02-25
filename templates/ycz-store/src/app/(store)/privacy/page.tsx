@@ -45,7 +45,7 @@ export default function PrivacyPage() {
         canonical="/privacy"
       />
       {/* Back */}
-      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
+      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}>
         <ArrowRight size={16} /> {t('العودة للرئيسية')}
       </Link>
 
@@ -57,8 +57,8 @@ export default function PrivacyPage() {
       </div>
 
       {/* Intro */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginBottom: 16 }}>
-        <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.8 }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)', marginBottom: 16 }}>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.8 }}>
           {isRTL
             ? <>نحن في {storeName} نلتزم بحماية خصوصيتك وبياناتك الشخصية. توضح هذه السياسة كيفية جمع واستخدام وحماية المعلومات التي تقدمها لنا عند استخدام خدماتنا.</>
             : <>At {storeName}, we are committed to protecting your privacy and personal data. This policy explains how we collect, use, and protect the information you provide when using our services.</>}
@@ -68,20 +68,20 @@ export default function PrivacyPage() {
       {/* Sections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {sections.map((s, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9' }}>
+          <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: `${currentTheme.primary}15`, color: currentTheme.primary, display: 'grid', placeItems: 'center' }}>{s.icon}</div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>{t(s.title)}</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t(s.title)}</h3>
             </div>
-            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.8 }}>{t(s.content)}</p>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.8 }}>{t(s.content)}</p>
           </div>
         ))}
       </div>
 
       {/* Contact */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', border: '1px solid #f1f5f9', marginTop: 16, textAlign: 'center' }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '1.25rem', border: '1px solid var(--border-light)', marginTop: 16, textAlign: 'center' }}>
         <Mail size={20} color={currentTheme.primary} style={{ margin: '0 auto 8px' }} />
-        <p style={{ fontSize: '0.82rem', color: '#64748b' }}>{t('لأي استفسارات حول سياسة الخصوصية، تواصل معنا عبر صفحة الدعم.')}</p>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t('لأي استفسارات حول سياسة الخصوصية، تواصل معنا عبر صفحة الدعم.')}</p>
         <Link href="/support" style={{ color: currentTheme.primary, fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>{t('مركز الدعم ←')}</Link>
       </div>
     </div>

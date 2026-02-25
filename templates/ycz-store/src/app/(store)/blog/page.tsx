@@ -184,9 +184,9 @@ export default function BlogPage() {
           <button key={cat} onClick={() => { setSelectedCategory(cat); setExpandedPost(null); }}
             style={{
               padding: '0.45rem 1rem', borderRadius: 20,
-              border: selectedCategory === cat ? 'none' : '1px solid #e2e8f0',
-              background: selectedCategory === cat ? currentTheme.primary : '#fff',
-              color: selectedCategory === cat ? '#fff' : '#64748b',
+              border: selectedCategory === cat ? 'none' : '1px solid var(--border-default)',
+              background: selectedCategory === cat ? currentTheme.primary : 'var(--bg-card)',
+              color: selectedCategory === cat ? '#fff' : 'var(--text-secondary)',
               fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit',
             }}>{t(cat)}</button>
         ))}
@@ -196,11 +196,11 @@ export default function BlogPage() {
       {loading && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
           {[1, 2, 3].map(i => (
-            <div key={i} style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-              <div style={{ height: 120, background: '#f1f5f9', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-light)', overflow: 'hidden' }}>
+              <div style={{ height: 120, background: 'var(--bg-muted)', animation: 'pulse 1.5s infinite' }} />
               <div style={{ padding: '1.25rem' }}>
-                <div style={{ height: 16, background: '#f1f5f9', borderRadius: 8, marginBottom: 8, animation: 'pulse 1.5s infinite' }} />
-                <div style={{ height: 12, background: '#f8fafc', borderRadius: 6, width: '70%', animation: 'pulse 1.5s infinite' }} />
+                <div style={{ height: 16, background: 'var(--bg-muted)', borderRadius: 8, marginBottom: 8, animation: 'pulse 1.5s infinite' }} />
+                <div style={{ height: 12, background: 'var(--bg-subtle)', borderRadius: 6, width: '70%', animation: 'pulse 1.5s infinite' }} />
               </div>
             </div>
           ))}
@@ -212,7 +212,7 @@ export default function BlogPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
           {filtered.map(post => (
             <article key={post.id}
-              style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden', transition: 'box-shadow 0.3s, transform 0.3s', cursor: 'pointer' }}
+              style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-light)', overflow: 'hidden', transition: 'box-shadow 0.3s, transform 0.3s', cursor: 'pointer' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
               onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
@@ -222,20 +222,20 @@ export default function BlogPage() {
                 <span style={{ position: 'absolute', top: 12, [isRTL ? 'left' : 'right']: 12, padding: '0.25rem 0.7rem', borderRadius: 12, background: post.category_color, color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>{t(post.category)}</span>
               </div>
               <div style={{ padding: '1.25rem' }}>
-                <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, lineHeight: 1.6 }}>{t(isRTL ? post.title : (post.title_en || post.title))}</h2>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.7, marginBottom: 12 }}>{t(isRTL ? post.excerpt : (post.excerpt_en || post.excerpt))}</p>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: '0.73rem', color: '#94a3b8' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.6 }}>{t(isRTL ? post.title : (post.title_en || post.title))}</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 12 }}>{t(isRTL ? post.excerpt : (post.excerpt_en || post.excerpt))}</p>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: '0.73rem', color: 'var(--text-muted)' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={13} /> {new Date(post.published_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {post.read_time} {t('دقائق قراءة')}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={13} /> {(post.views || 0).toLocaleString()}</span>
                 </div>
               </div>
               {expandedPost === post.id && (
-                <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #f1f5f9', paddingTop: '1.25rem' }}>
+                <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
                   {(Array.isArray(post.content) ? post.content : []).map((paragraph, i) => (
-                    <p key={i} style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.9, marginBottom: 10 }}>{paragraph}</p>
+                    <p key={i} style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.9, marginBottom: 10 }}>{paragraph}</p>
                   ))}
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-light)', textAlign: 'center' }}>
                     <Link href="/services" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.6rem 1.5rem', borderRadius: 12, background: currentTheme.primary, color: '#fff', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}>
                       {t('تصفّح خدماتنا')} {isRTL ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
                     </Link>
@@ -248,14 +248,14 @@ export default function BlogPage() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
           <BookOpen size={48} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
           <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{t('لا توجد مقالات في هذا التصنيف')}</p>
         </div>
       )}
 
       {!loading && posts.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: '2rem', padding: '1.25rem', background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: '2rem', padding: '1.25rem', background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)', flexWrap: 'wrap' }}>
           {[
             { label: t('مقالات'), value: posts.length, icon: '📝' },
             { label: t('تصنيفات'), value: categories.length - 1, icon: '📂' },
@@ -263,8 +263,8 @@ export default function BlogPage() {
           ].map((stat, i) => (
             <div key={i} style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontSize: '1.3rem' }}>{stat.icon}</span>
-              <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', margin: '4px 0 2px' }}>{stat.value}</p>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{stat.label}</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0 2px' }}>{stat.value}</p>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{stat.label}</p>
             </div>
           ))}
         </div>

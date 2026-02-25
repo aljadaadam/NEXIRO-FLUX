@@ -22,25 +22,25 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="store-footer" style={{ background: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: '1.75rem 0 5.5rem', borderTop: '1px solid #f1f5f9', marginTop: '2rem' }}>
+    <footer className="store-footer" style={{ background: 'var(--bg-card)', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: '1.75rem 0 5.5rem', borderTop: '1px solid var(--border-light)', marginTop: '2rem', transition: 'background 0.3s' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem' }}>
         <div className="store-footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', textAlign: 'center', marginBottom: '1.5rem' }}>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('نحن نقبل')}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{t('نحن نقبل')}</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               {['Binance', 'PayPal', 'Bank'].map(m => (
-                <span key={m} style={{ padding: '0.3rem 0.75rem', borderRadius: 20, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>{m}</span>
+                <span key={m} style={{ padding: '0.3rem 0.75rem', borderRadius: 20, background: 'var(--bg-subtle)', border: '1px solid var(--border-default)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{m}</span>
               ))}
             </div>
           </div>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('روابط مهمة')}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{t('روابط مهمة')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {legalLinks.map(({ label, href }) => (
                 <Link
                   key={label}
                   href={href}
-                  style={{ fontSize: '0.78rem', color: '#64748b', cursor: 'pointer', textDecoration: 'none' }}
+                  style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer', textDecoration: 'none' }}
                 >
                   {label}
                 </Link>
@@ -48,7 +48,7 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0b1020', marginBottom: 8 }}>{t('تواصل معنا')}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{t('تواصل معنا')}</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               {allSocialItems.filter(s => s.url).map(s => (
                 <a key={s.key} href={s.url!} target="_blank" rel="noopener noreferrer" aria-label={s.label}
@@ -58,15 +58,15 @@ export default function Footer() {
                 >{s.icon}</a>
               ))}
               {allSocialItems.filter(s => s.url).length === 0 && (
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('لم يتم إضافة روابط بعد')}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t('لم يتم إضافة روابط بعد')}</span>
               )}
             </div>
           </div>
         </div>
-        <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-          <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {footerText || <>© 2026 {storeName}. {t('جميع الحقوق محفوظة — قالب من')}{' '}
-            <a href="https://www.nexiroflux.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>
+            <a href="https://www.nexiroflux.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>
               NEXIRO-FLUX
             </a></>}
           </p>

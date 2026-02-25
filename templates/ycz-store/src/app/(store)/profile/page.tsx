@@ -311,12 +311,12 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 480, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 480, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {step === 1 ? t('💰 شحن المحفظة') : step === 2 ? t('📋 إتمام الدفع') : step === 3 ? t('📎 رفع الإيصال') : t('✅ تم الإرسال')}
           </h3>
-          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+          <button onClick={onClose} style={{ background: 'var(--bg-muted)', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -324,23 +324,23 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
         {/* Step 1: Amount + Method */}
         {step === 1 && (
           <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 10, display: 'block' }}>{t('المبلغ ($)')}</label>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10, display: 'block' }}>{t('المبلغ ($)')}</label>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
               {presetAmounts.map(a => (
                 <button key={a} onClick={() => setAmount(String(a))} style={{
-                  padding: '0.5rem 1rem', borderRadius: 10, border: amount === String(a) ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
-                  background: amount === String(a) ? `${currentTheme.primary}10` : '#f8fafc', color: amount === String(a) ? currentTheme.primary : '#64748b',
+                  padding: '0.5rem 1rem', borderRadius: 10, border: amount === String(a) ? `2px solid ${currentTheme.primary}` : '1px solid var(--border-default)',
+                  background: amount === String(a) ? `${currentTheme.primary}10` : 'var(--bg-subtle)', color: amount === String(a) ? currentTheme.primary : 'var(--text-secondary)',
                   fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', minWidth: 48,
                 }}>${a}</button>
               ))}
             </div>
-            <input value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('أو أدخل مبلغ مخصص')} type="number" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none', marginBottom: 20, boxSizing: 'border-box' }} />
+            <input value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('أو أدخل مبلغ مخصص')} type="number" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid var(--border-default)', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none', marginBottom: 20, boxSizing: 'border-box' }} />
 
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 10, display: 'block' }}>{t('طريقة الدفع')}</label>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10, display: 'block' }}>{t('طريقة الدفع')}</label>
             {gatewaysLoading ? (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: currentTheme.primary, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
-                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{t('جاري تحميل بوابات الدفع...')}</p>
+                <div style={{ width: 28, height: 28, border: '3px solid var(--border-default)', borderTopColor: currentTheme.primary, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('جاري تحميل بوابات الدفع...')}</p>
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : gateways.length === 0 ? (
@@ -357,16 +357,16 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     <button key={gw.id} onClick={() => setMethod(gw.type)} style={{
                       display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem',
                       borderRadius: 12, cursor: 'pointer', width: '100%', fontFamily: 'inherit', textAlign: isRTL ? 'right' : 'left',
-                      border: method === gw.type ? `2px solid ${currentTheme.primary}` : '1px solid #e2e8f0',
-                      background: method === gw.type ? `${currentTheme.primary}08` : '#fff',
+                      border: method === gw.type ? `2px solid ${currentTheme.primary}` : '1px solid var(--border-default)',
+                      background: method === gw.type ? `${currentTheme.primary}08` : 'var(--bg-card)',
                     }}>
                       {gw.config?.image_url ? (
-                        <img src={gw.config.image_url} alt={gw.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain', flexShrink: 0, background: '#f8fafc' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid'); }} />
+                        <img src={gw.config.image_url} alt={gw.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain', flexShrink: 0, background: 'var(--bg-subtle)' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid'); }} />
                       ) : null}
                       <div style={{ width: 40, height: 40, borderRadius: 10, background: `${meta.color}15`, color: meta.color, display: gw.config?.image_url ? 'none' : 'grid', placeItems: 'center', fontSize: '1.2rem', fontWeight: 800, flexShrink: 0 }}>{meta.icon}</div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020' }}>{gw.name}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t(meta.desc)}</p>
+                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{gw.name}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t(meta.desc)}</p>
                       </div>
                       {method === gw.type && <CheckCircle size={18} color={currentTheme.primary} />}
                       {gw.is_default && <span style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 4, background: '#dbeafe', color: '#2563eb', fontWeight: 700 }}>{t('افتراضي')}</span>}
@@ -380,7 +380,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
             <button onClick={handleStartCheckout} disabled={!amount || !method || submitting} style={{
               width: '100%', marginTop: 20, padding: '0.75rem', borderRadius: btnR,
-              background: amount && method && !submitting ? currentTheme.primary : '#e2e8f0', color: amount && method && !submitting ? '#fff' : '#94a3b8',
+              background: amount && method && !submitting ? currentTheme.primary : 'var(--border-default)', color: amount && method && !submitting ? '#fff' : 'var(--text-muted)',
               border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: amount && method && !submitting ? 'pointer' : 'not-allowed',
               fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -411,8 +411,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                 <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#003087', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
                   <span style={{ fontSize: '1.8rem' }}>💳</span>
                 </div>
-                <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>{t('تم توجيهك إلى PayPal')}</p>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: 16 }}>{t('أكمل الدفع في صفحة PayPal ثم عد هنا')}</p>
+                <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>{t('تم توجيهك إلى PayPal')}</p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16 }}>{t('أكمل الدفع في صفحة PayPal ثم عد هنا')}</p>
                 <button onClick={handleCheckStatus} disabled={usdtChecking} style={{
                   padding: '0.7rem 2rem', borderRadius: btnR, background: '#003087', color: '#fff',
                   border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
@@ -431,9 +431,9 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   <p style={{ fontSize: '0.82rem', color: '#854d0e', fontWeight: 600 }}>{t('ادفع عبر Binance Pay')}</p>
                 </div>
                 {checkoutData.qrContent && (
-                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 12, wordBreak: 'break-all' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 6 }}>{t('رابط الدفع:')}</p>
-                    <p style={{ fontSize: '0.78rem', color: '#0b1020', fontWeight: 600, fontFamily: 'monospace' }}>{checkoutData.qrContent}</p>
+                  <div style={{ background: 'var(--bg-subtle)', borderRadius: 12, padding: '1rem', marginBottom: 12, wordBreak: 'break-all' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 6 }}>{t('رابط الدفع:')}</p>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'monospace' }}>{checkoutData.qrContent}</p>
                   </div>
                 )}
                 {checkoutData.checkoutUrl && (
@@ -462,12 +462,12 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <div style={{ width: 24, height: 24, borderRadius: '50%', background: currentTheme.primary, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>1</div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 1 ? 700 : 400, color: usdtSubStep === 1 ? '#0b1020' : '#94a3b8' }}>{t('إرسال')}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 1 ? 700 : 400, color: usdtSubStep === 1 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{t('إرسال')}</span>
                     </div>
-                    <div style={{ width: 20, height: 1, background: '#e2e8f0' }} />
+                    <div style={{ width: 20, height: 1, background: 'var(--border-default)' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: usdtSubStep === 2 ? currentTheme.primary : '#e2e8f0', color: usdtSubStep === 2 ? '#fff' : '#94a3b8', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>2</div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 2 ? 700 : 400, color: usdtSubStep === 2 ? '#0b1020' : '#94a3b8' }}>{t('تحقق')}</span>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: usdtSubStep === 2 ? currentTheme.primary : 'var(--border-default)', color: usdtSubStep === 2 ? '#fff' : 'var(--text-muted)', display: 'grid', placeItems: 'center', fontSize: '0.7rem', fontWeight: 800 }}>2</div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: usdtSubStep === 2 ? 700 : 400, color: usdtSubStep === 2 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{t('تحقق')}</span>
                     </div>
                   </div>
                   {usdtCountdown > 0 && (
@@ -509,8 +509,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
                     {/* QR + Address compact card */}
                     <div style={{
-                      background: '#fff',
-                      border: '1px solid #e2e8f0',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-default)',
                       borderRadius: 14,
                       padding: '1rem',
                       marginBottom: 14,
@@ -520,7 +520,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     }}>
                       {/* QR Code - smaller */}
                       {checkoutData.walletAddress && (
-                        <div style={{ flexShrink: 0, background: '#fff', borderRadius: 10, padding: 6, border: '1px solid #f1f5f9' }}>
+                        <div style={{ flexShrink: 0, background: 'var(--bg-card)', borderRadius: 10, padding: 6, border: '1px solid var(--border-light)' }}>
                           <img
                             src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(checkoutData.walletAddress)}&bgcolor=ffffff&color=000000&margin=4`}
                             alt="QR"
@@ -532,8 +532,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       )}
                       {/* Address + Copy */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 4 }}>{t('عنوان المحفظة')}</p>
-                        <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0b1020', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.4, direction: 'ltr', textAlign: 'left' }}>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{t('عنوان المحفظة')}</p>
+                        <p style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.4, direction: 'ltr', textAlign: 'left' }}>
                           {checkoutData.walletAddress}
                         </p>
                         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
@@ -544,7 +544,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                               if (el) { el.textContent = '✓ ' + t('تم النسخ'); setTimeout(() => { el.textContent = '📋 ' + t('نسخ العنوان'); }, 1500); }
                             }}
                             id="copy-addr-btn"
-                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', color: '#334155', fontFamily: 'inherit' }}
+                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-subtle)', cursor: 'pointer', color: 'var(--text-primary)', fontFamily: 'inherit' }}
                           >📋 {t('نسخ العنوان')}</button>
                           <button
                             onClick={() => {
@@ -553,7 +553,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                               if (el) { el.textContent = '✓'; setTimeout(() => { el.textContent = '📋 ' + t('نسخ المبلغ'); }, 1500); }
                             }}
                             id="copy-amt-btn"
-                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', color: '#334155', fontFamily: 'inherit' }}
+                            style={{ fontSize: '0.72rem', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-subtle)', cursor: 'pointer', color: 'var(--text-primary)', fontFamily: 'inherit' }}
                           >📋 {t('نسخ المبلغ')}</button>
                         </div>
                       </div>
@@ -575,7 +575,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       disabled={usdtCountdown <= 0}
                       style={{
                         width: '100%', padding: '0.75rem', borderRadius: btnR,
-                        background: usdtCountdown <= 0 ? '#e2e8f0' : currentTheme.primary, color: usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                        background: usdtCountdown <= 0 ? 'var(--border-default)' : currentTheme.primary, color: usdtCountdown <= 0 ? 'var(--text-muted)' : '#fff',
                         border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtCountdown <= 0 ? 'not-allowed' : 'pointer',
                         fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       }}
@@ -600,11 +600,11 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       justifyContent: 'space-between',
                     }}>
                       <div>
-                        <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('المبلغ المرسل')}</p>
-                        <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', fontFamily: 'monospace' }}>{checkoutData.amount} USDT</p>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('المبلغ المرسل')}</p>
+                        <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{checkoutData.amount} USDT</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{t('الشبكة')}</p>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('الشبكة')}</p>
                         <p style={{ fontSize: '0.82rem', fontWeight: 700, color: currentTheme.primary }}>{checkoutData.network}</p>
                       </div>
                     </div>
@@ -621,7 +621,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                         <label style={{ fontSize: '0.82rem', fontWeight: 700, color: currentTheme.primary, display: 'block', marginBottom: 6 }}>
                           {t('هاش المعاملة (Transaction Hash)')}
                         </label>
-                        <p style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: 8, lineHeight: 1.4 }}>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.4 }}>
                           {t('انسخ TX Hash من محفظتك والصقه هنا')}
                         </p>
                         <input
@@ -637,8 +637,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                             border: `1px solid ${currentTheme.primary}40`,
                             fontSize: '0.82rem',
                             fontFamily: 'monospace',
-                            background: '#fff',
-                            color: '#0b1020',
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
                             outline: 'none',
                             boxSizing: 'border-box',
                           }}
@@ -652,7 +652,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                         <p style={{ fontSize: '0.82rem', color: currentTheme.primary, fontWeight: 600 }}>
                           {t('سيتم الكشف عن التحويل تلقائياً')}
                         </p>
-                        <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 4 }}>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: 4 }}>
                           {t('اضغط زر التحقق بعد إتمام التحويل')}
                         </p>
                       </div>
@@ -663,7 +663,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     {/* Verify button */}
                     <button onClick={handleCheckUsdt} disabled={usdtChecking || usdtCountdown <= 0} style={{
                       width: '100%', padding: '0.75rem', borderRadius: btnR,
-                      background: usdtChecking || usdtCountdown <= 0 ? '#e2e8f0' : currentTheme.primary, color: usdtChecking || usdtCountdown <= 0 ? '#94a3b8' : '#fff',
+                      background: usdtChecking || usdtCountdown <= 0 ? 'var(--border-default)' : currentTheme.primary, color: usdtChecking || usdtCountdown <= 0 ? 'var(--text-muted)' : '#fff',
                       border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: usdtChecking ? 'not-allowed' : 'pointer',
                       fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       marginBottom: 10,
@@ -678,8 +678,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                       onClick={() => setUsdtSubStep(1)}
                       style={{
                         width: '100%', padding: '0.55rem', borderRadius: btnR,
-                        background: 'transparent', color: '#64748b',
-                        border: '1px solid #e2e8f0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                        background: 'transparent', color: 'var(--text-secondary)',
+                        border: '1px solid var(--border-default)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
                         fontFamily: 'inherit',
                       }}
                     >
@@ -693,8 +693,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             {/* ── Bank Transfer: show details + go to receipt ── */}
             {checkoutData.method === 'manual_bank' && (
               <div>
-                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
-                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ background: 'var(--bg-subtle)', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Lock size={14} color={currentTheme.primary} /> {t('بيانات التحويل')}
                   </h4>
                   {[
@@ -705,9 +705,9 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     ...(checkoutData.bankDetails?.currency ? [{ label: t('العملة'), value: checkoutData.bankDetails.currency }] : []),
                     ...(checkoutData.referenceId ? [{ label: t('رقم المرجع'), value: checkoutData.referenceId }] : []),
                   ].map((item, i, arr) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.label}</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -720,7 +720,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
+                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
                   <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     <Upload size={14} /> {t('رفع الإيصال')}
                   </button>
@@ -734,17 +734,17 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                 {/* Image/Logo */}
                 {checkoutData.walletConfig.image_url && (
                   <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                    <img src={checkoutData.walletConfig.image_url} alt={selectedGw?.name || ''} style={{ maxWidth: 140, maxHeight: 80, borderRadius: 12, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
+                    <img src={checkoutData.walletConfig.image_url} alt={selectedGw?.name || ''} style={{ maxWidth: 140, maxHeight: 80, borderRadius: 12, border: '1px solid var(--border-default)' }} onError={e => (e.currentTarget.style.display = 'none')} />
                   </div>
                 )}
 
                 {/* Instructions */}
                 {checkoutData.walletConfig.instructions && (
-                  <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ background: 'var(--bg-subtle)', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                       📋 {t('تعليمات الشحن')}
                     </h4>
-                    <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{checkoutData.walletConfig.instructions}</p>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{checkoutData.walletConfig.instructions}</p>
                   </div>
                 )}
 
@@ -754,7 +754,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                       📞 {t('أرقام التواصل للشحن')}
                     </h4>
-                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020', direction: 'ltr', letterSpacing: 1 }}>{checkoutData.walletConfig.contact_numbers}</p>
+                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', letterSpacing: 1 }}>{checkoutData.walletConfig.contact_numbers}</p>
                   </div>
                 )}
 
@@ -765,8 +765,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                 </div>
 
                 <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{
-                  width: '100%', padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9',
-                  color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  width: '100%', padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)',
+                  color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                 }}>{t('← رجوع')}</button>
               </div>
             )}
@@ -798,8 +798,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                 </div>
 
                 {/* Account details */}
-                <div style={{ background: '#f8fafc', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
-                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ background: 'var(--bg-subtle)', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     🏛️ {t('بيانات الحساب')}
                   </h4>
                   {[
@@ -807,11 +807,11 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     { label: t('رقم الحساب'), value: checkoutData.bankakDetails.account_number || '' },
                     ...(checkoutData.referenceId ? [{ label: t('رقم المرجع'), value: checkoutData.referenceId }] : []),
                   ].map((item, i, arr) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.label}</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.label}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020', direction: 'ltr' }}>{item.value}</span>
-                        <button onClick={() => { navigator.clipboard.writeText(item.value); }} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#64748b' }}>📋</button>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', direction: 'ltr' }}>{item.value}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(item.value); }} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border-default)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)' }}>📋</button>
                       </div>
                     </div>
                   ))}
@@ -827,7 +827,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
+                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
                   <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: '#0891b2', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     <Upload size={14} /> {t('رفع إشعار التحويل')}
                   </button>
@@ -838,8 +838,8 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
             {checkoutData.method !== 'manual_bank' && checkoutData.method !== 'info_wallet' && checkoutData.method !== 'manual_bankak' && (
               <button onClick={() => { setStep(1); setCheckoutData(null); setSubmitError(''); }} style={{
-                width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: '#f1f5f9',
-                color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: 'var(--bg-muted)',
+                color: 'var(--text-secondary)', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
               }}>{t('← رجوع')}</button>
             )}
           </div>
@@ -857,7 +857,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               onChange={handleFileSelect}
             />
             <div
-              style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: receiptPreview ? '1rem' : '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receiptPreview ? '#f0fdf4' : '#fafafa', overflow: 'hidden' }}
+              style={{ border: '2px dashed var(--border-default)', borderRadius: 16, padding: receiptPreview ? '1rem' : '2.5rem 1rem', textAlign: 'center', marginBottom: 20, cursor: 'pointer', background: receiptPreview ? '#f0fdf4' : 'var(--bg-subtle)', overflow: 'hidden' }}
               onClick={() => fileInputRef.current?.click()}
             >
               {receiptPreview ? (
@@ -867,13 +867,13 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     <CheckCircle size={16} color="#16a34a" />
                     <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#16a34a' }}>{checkoutData?.method === 'manual_bankak' ? t('تم رفع إشعار التحويل بنجاح') : t('تم رفع الإيصال بنجاح')}</p>
                   </div>
-                  <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>{receiptFile?.name || 'receipt.jpg'} — {t('اضغط لتغيير الصورة')}</p>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: 2 }}>{receiptFile?.name || 'receipt.jpg'} — {t('اضغط لتغيير الصورة')}</p>
                 </>
               ) : (
                 <>
-                  <Upload size={36} color="#94a3b8" style={{ margin: '0 auto 12px', display: 'block' }} />
-                  <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>{t('اضغط لرفع صورة الإيصال')}</p>
-                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 6 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
+                  <Upload size={36} color="var(--text-muted)" style={{ margin: '0 auto 12px', display: 'block' }} />
+                  <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('اضغط لرفع صورة الإيصال')}</p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 6 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
                 </>
               )}
             </div>
@@ -882,16 +882,16 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               placeholder={t('ملاحظات إضافية (اختياري)')}
               value={receiptNotes}
               onChange={(e) => setReceiptNotes(e.target.value)}
-              style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
             />
 
             {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginBottom: 10 }}>{submitError}</p>}
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setStep(2)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
+              <button onClick={() => setStep(2)} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
               <button onClick={handleSubmitReceipt} disabled={!receiptPreview || submitting} style={{
                 flex: 2, padding: '0.7rem', borderRadius: btnR,
-                background: receiptPreview && !submitting ? currentTheme.primary : '#e2e8f0', color: receiptPreview && !submitting ? '#fff' : '#94a3b8',
+                background: receiptPreview && !submitting ? currentTheme.primary : 'var(--border-default)', color: receiptPreview && !submitting ? '#fff' : 'var(--text-muted)',
                 border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: receiptPreview ? 'pointer' : 'not-allowed',
                 fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}><Send size={14} /> {submitting ? t('جاري الإرسال...') : t('إرسال للمراجعة')}</button>
@@ -905,10 +905,10 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#dcfce7', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <CheckCircle size={36} color="#16a34a" />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b1020', marginBottom: 8 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
               {paymentConfirmed ? t('تم تأكيد الدفع!') : t('تم إرسال طلب الشحن!')}
             </h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 6 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 6 }}>
               {paymentConfirmed
                 ? t('تم تأكيد الدفع وإضافة الرصيد لمحفظتك.')
                 : t('سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك خلال دقائق.')}
@@ -1191,12 +1191,12 @@ export default function ProfilePage() {
     if (otpStep) {
       return (
         <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}22, ${currentTheme.primary}11)`, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <Shield size={26} color={currentTheme.primary} />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 8, fontFamily: 'inherit' }}>{t('كود التحقق')}</h3>
-            <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 20, fontFamily: 'inherit' }}>{t('تم إرسال كود التحقق إلى')} <strong style={{ color: '#0b1020' }}>{otpEmail}</strong></p>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'inherit' }}>{t('كود التحقق')}</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 20, fontFamily: 'inherit' }}>{t('تم إرسال كود التحقق إلى')} <strong style={{ color: 'var(--text-primary)' }}>{otpEmail}</strong></p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input
                 value={otpCode}
@@ -1205,12 +1205,12 @@ export default function ProfilePage() {
                 maxLength={6}
                 inputMode="numeric"
                 autoFocus
-                style={{ padding: '0.85rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '1.1rem', fontFamily: 'inherit', outline: 'none', textAlign: 'center', letterSpacing: 8, fontWeight: 700 }}
+                style={{ padding: '0.85rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '1.1rem', fontFamily: 'inherit', outline: 'none', textAlign: 'center', letterSpacing: 8, fontWeight: 700 }}
               />
               <button onClick={handleVerifyOtp} disabled={authLoading || otpCode.length < 6} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: (authLoading || otpCode.length < 6) ? 0.6 : 1 }}>
                 {authLoading ? t('جاري التحقق...') : t('تأكيد')}
               </button>
-              <button onClick={() => { setOtpStep(false); setOtpCode(''); setAuthError(''); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => { setOtpStep(false); setOtpCode(''); setAuthError(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {t('← رجوع لتسجيل الدخول')}
               </button>
               {authError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{authError}</p>}
@@ -1222,11 +1222,11 @@ export default function ProfilePage() {
 
     return (
       <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
-        <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#f1f5f9', borderRadius: 10, padding: 4 }}>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--bg-muted)', borderRadius: 10, padding: 4 }}>
             {(['login', 'register'] as const).map(t2 => (
-              <button key={t2} onClick={() => setTab(t2)} style={{ flex: 1, padding: '0.6rem', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 600, background: tab === t2 ? '#fff' : 'transparent', color: tab === t2 ? currentTheme.primary : '#94a3b8', boxShadow: tab === t2 ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
+              <button key={t2} onClick={() => setTab(t2)} style={{ flex: 1, padding: '0.6rem', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 600, background: tab === t2 ? 'var(--bg-card)' : 'transparent', color: tab === t2 ? currentTheme.primary : 'var(--text-muted)', boxShadow: tab === t2 ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
                 {t2 === 'login' ? t('تسجيل الدخول') : t('إنشاء حساب')}
               </button>
             ))}
@@ -1234,12 +1234,12 @@ export default function ProfilePage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {tab === 'register' && (
-              <input value={name} onChange={e => setName(e.target.value)} placeholder={t('الاسم الكامل')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder={t('الاسم الكامل')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
             )}
-            <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t('البريد الإلكتروني')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t('البريد الإلكتروني')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
             <div style={{ position: 'relative' }}>
-              <input value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} placeholder={t('كلمة المرور')} style={{ padding: '0.7rem 1rem', paddingLeft: '2.5rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
+              <input value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} placeholder={t('كلمة المرور')} style={{ padding: '0.7rem 1rem', paddingLeft: '2.5rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
@@ -1260,7 +1260,7 @@ export default function ProfilePage() {
         <button onClick={() => setView('menu')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: currentTheme.primary, fontSize: '0.88rem', fontWeight: 600, fontFamily: 'inherit', marginBottom: 20, padding: 0 }}>
           <ChevronRight size={18} /> {t('رجوع')}
         </button>
-        <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, display: 'grid', placeItems: 'center', margin: '0 auto 12px', position: 'relative' }}>
               <User size={30} color="#fff" />
@@ -1268,7 +1268,7 @@ export default function ProfilePage() {
                 <Upload size={10} color="#fff" />
               </button>
             </div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{t('البيانات الشخصية')}</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('البيانات الشخصية')}</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {[
@@ -1278,18 +1278,18 @@ export default function ProfilePage() {
               { key: 'country', label: t('الدولة'), type: 'text' },
             ].map(field => (
               <div key={field.key}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{field.label}</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>{field.label}</label>
                 <input
                   type={field.type}
                   value={personalData[field.key as keyof typeof personalData]}
                   onChange={e => { setPersonalData(d => ({ ...d, [field.key]: e.target.value })); setPersonalSaved(false); }}
-                  style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             ))}
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('كلمة المرور الجديدة')}</label>
-              <input type="password" value={personalData.password} onChange={e => { setPersonalData(d => ({ ...d, password: e.target.value })); setPersonalSaved(false); }} placeholder={t('اتركه فارغاً إذا لم ترد تغييرها')} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>{t('كلمة المرور الجديدة')}</label>
+              <input type="password" value={personalData.password} onChange={e => { setPersonalData(d => ({ ...d, password: e.target.value })); setPersonalSaved(false); }} placeholder={t('اتركه فارغاً إذا لم ترد تغييرها')} style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <button onClick={handleSavePersonal} disabled={personalSaving} style={{
               padding: '0.75rem', borderRadius: btnR,
@@ -1335,27 +1335,27 @@ export default function ProfilePage() {
             { label: t('إجمالي الشراء'), value: `$${walletStats.totalPurchases.toFixed(2)}`, color: '#f59e0b' },
             { label: t('المسترجع'), value: `$${walletStats.totalRefunded.toFixed(2)}`, color: '#3b82f6' },
           ].map((s, i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '1rem 0.75rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+            <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '1rem 0.75rem', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <p style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color }}>{s.value}</p>
-              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 4 }}>{s.label}</p>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Transactions */}
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', marginBottom: 12 }}>{t('سجل العمليات')}</h3>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>{t('سجل العمليات')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {transactions.map(tx => (
-            <div key={tx.id} style={{ background: '#fff', borderRadius: 12, padding: '1rem 1.1rem', border: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={tx.id} style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '1rem 1.1rem', border: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{tx.type}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{tx.id}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{tx.type}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{tx.id}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{tx.method}</span>
-                  <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>•</span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{tx.date}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{tx.method}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>•</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{tx.date}</span>
                 </div>
               </div>
               <div style={{ textAlign: 'left' }}>
@@ -1378,8 +1378,8 @@ export default function ProfilePage() {
         <button onClick={() => setView('menu')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: currentTheme.primary, fontSize: '0.88rem', fontWeight: 600, fontFamily: 'inherit', marginBottom: 20, padding: 0 }}>
           <ChevronRight size={18} /> {t('رجوع')}
         </button>
-        <div style={{ background: '#fff', borderRadius: 20, padding: '2rem', border: '1px solid #f1f5f9' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b1020', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Shield size={20} color={currentTheme.primary} /> {t('التحقق من الهوية')}
           </h3>
 
@@ -1396,7 +1396,7 @@ export default function ProfilePage() {
 
           {/* Benefits */}
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 10 }}>{t('مميزات التوثيق:')}</p>
+            <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{t('مميزات التوثيق:')}</p>
             {[
               t('رفع حد السحب والشحن'),
               t('أولوية في معالجة الطلبات'),
@@ -1405,17 +1405,17 @@ export default function ProfilePage() {
             ].map((b, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                 <CheckCircle size={14} color="#22c55e" />
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{b}</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{b}</span>
               </div>
             ))}
           </div>
 
           {/* Upload ID */}
-          <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 10 }}>{t('رفع صورة الهوية')}</p>
-          <div style={{ border: '2px dashed #e2e8f0', borderRadius: 14, padding: '2rem', textAlign: 'center', cursor: 'pointer', marginBottom: 16 }}>
-            <Upload size={28} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
-            <p style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>{t('اضغط لرفع صورة بطاقة الهوية')}</p>
-            <p style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: 4 }}>JPG, PNG — حد أقصى 5MB</p>
+          <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{t('رفع صورة الهوية')}</p>
+          <div style={{ border: '2px dashed var(--border-default)', borderRadius: 14, padding: '2rem', textAlign: 'center', cursor: 'pointer', marginBottom: 16 }}>
+            <Upload size={28} color="var(--text-muted)" style={{ margin: '0 auto 10px', display: 'block' }} />
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{t('اضغط لرفع صورة بطاقة الهوية')}</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG — حد أقصى 5MB</p>
           </div>
 
           <button style={{ width: '100%', padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -1438,8 +1438,8 @@ export default function ProfilePage() {
         <div style={{ width: 80, height: 80, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, display: 'grid', placeItems: 'center', margin: '0 auto 12px' }}>
           <User size={36} color="#fff" />
         </div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0b1020' }}>{displayName}</h3>
-        <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{displayEmail}</p>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{displayName}</h3>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{displayEmail}</p>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '0.3rem 0.75rem', borderRadius: 20, background: '#fffbeb', border: '1px solid #fde68a' }}>
           <Clock size={12} color="#f59e0b" />
           <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>{t('غير متحقق')}</span>
@@ -1477,10 +1477,10 @@ export default function ProfilePage() {
           { icon: <Settings size={18} />, label: t('الإعدادات'), color: '#64748b', action: () => {} },
           { icon: <LogOut size={18} />, label: t('تسجيل الخروج'), color: '#ef4444', action: handleLogout },
         ].map((item, i) => (
-          <button key={i} onClick={item.action} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem', background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9', cursor: 'pointer', width: '100%', fontFamily: 'inherit', textAlign: isRTL ? 'right' : 'left' }}>
+          <button key={i} onClick={item.action} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.85rem 1rem', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-light)', cursor: 'pointer', width: '100%', fontFamily: 'inherit', textAlign: isRTL ? 'right' : 'left' }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center' }}>{item.icon}</div>
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: item.color === '#ef4444' ? '#ef4444' : '#0b1020', flex: 1 }}>{item.label}</span>
-            <ChevronLeft size={16} color="#cbd5e1" />
+            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: item.color === '#ef4444' ? '#ef4444' : 'var(--text-primary)', flex: 1 }}>{item.label}</span>
+            <ChevronLeft size={16} color="var(--text-muted)" />
           </button>
         ))}
       </div>
