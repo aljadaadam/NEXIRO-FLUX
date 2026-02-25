@@ -57,9 +57,7 @@ const en: Record<string, string> = {
   'أدخل رقم IMEI': 'Enter IMEI Number',
   'مثال: 356938035643809': 'Example: 356938035643809',
   'معلومات': 'Information',
-  'اسم المستخدم': 'Username',
   'أدخل اسم المستخدم': 'Enter Username',
-  'كلمة المرور': 'Password',
   'أدخل كلمة المرور': 'Enter Password',
 
   // ─── Featured Products ───
