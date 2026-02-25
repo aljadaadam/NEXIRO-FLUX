@@ -434,9 +434,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
     return products.filter(p => {
       if (p.id === editId) return false;
       // فلتر حسب المصدر المختار
-      if (editSelectedSourceId && p.source_id !== editSelectedSourceId) return false;
-      // فلتر حسب نوع الخدمة (IMEI/SERVER/REMOTE)
-      if (editingType && (p.service_type || '').toUpperCase() !== editingType) return false;
+      if (editSelectedSourceId && Number(p.source_id) !== editSelectedSourceId) return false;
+      // فلتر حسب نوع الخدمة فقط إذا لم يتم تحديد مصدر
+      if (!editSelectedSourceId && editingType && (p.service_type || '').toUpperCase() !== editingType) return false;
       return true;
     });
   }, [products, editId, editSelectedSourceId, editServiceType]);
@@ -720,8 +720,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
                         {(() => {
                           const q = newLinkSearch.toLowerCase();
                           const filtered = products.filter(p => {
-                            if (newSourceId && p.source_id !== newSourceId) return false;
-                            if (newServiceType && (p.service_type || '').toUpperCase() !== newServiceType.toUpperCase()) return false;
+                            if (newSourceId && Number(p.source_id) !== newSourceId) return false;
+                            if (!newSourceId && newServiceType && (p.service_type || '').toUpperCase() !== newServiceType.toUpperCase()) return false;
                             if (q && !(p.arabic_name || '').toLowerCase().includes(q) && !(p.name || '').toLowerCase().includes(q) && !String(p.id).includes(q)) return false;
                             return true;
                           });
