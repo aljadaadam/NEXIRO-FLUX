@@ -164,7 +164,7 @@ export const adminApi = {
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
-function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
+export function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
   type ProductCustomField = { key: string; label: string; placeholder: string; required: boolean };
   const parseMaybeJson = (v: unknown): unknown => {
     if (typeof v !== 'string') return v;

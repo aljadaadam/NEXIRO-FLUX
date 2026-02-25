@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, X, Star, Unlink, Link2, CheckSquare, AlertCircle, Check, Package, CheckCircle, Smartphone, Monitor, FolderOpen, RefreshCw, Type, Settings2, FileText, DollarSign, Gamepad2, Globe, ToggleLeft, Save, Database, ArrowRightLeft, ListOrdered, Plus as PlusIcon, Minus } from 'lucide-react';
-import { adminApi } from '@/lib/api';
+import { adminApi, mapBackendProduct } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
@@ -88,8 +88,9 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   async function loadProducts() {
     try {
       const res = await adminApi.getProducts();
-      if (Array.isArray(res)) setProducts(res);
-      else if (res?.products && Array.isArray(res.products)) setProducts(res.products);
+      const raw = Array.isArray(res) ? res : (res?.products && Array.isArray(res.products) ? res.products : []);
+      const mapped = raw.map((p: Record<string, unknown>) => mapBackendProduct(p)) as Product[];
+      setProducts(mapped);
     } catch { /* keep fallback */ }
     finally { setLoading(false); }
   }
