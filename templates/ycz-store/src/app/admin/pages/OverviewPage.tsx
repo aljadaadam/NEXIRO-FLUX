@@ -219,46 +219,139 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
       {/* Banner Card */}
       <div className="dash-banner-card" style={{
         marginBottom: 16,
-        borderRadius: 16,
-        padding: '1rem 1.25rem',
-        background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+        borderRadius: 20,
+        padding: 0,
+        position: 'relative',
+        overflow: 'hidden',
         color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        boxShadow: '0 10px 24px rgba(124,92,255,0.18)',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)',
+        minHeight: 140,
       }}>
-        <div>
-          <p style={{ fontSize: '0.78rem', opacity: 0.9, marginBottom: 4 }}>{t('لوحة التحكم')}</p>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.5 }}>{t('إدارة المتجر ومتابعة الأداء من مكان واحد')}</h3>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing}
-            style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: 'rgba(255,255,255,0.18)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              cursor: refreshing ? 'wait' : 'pointer',
-              display: 'grid', placeItems: 'center',
-              color: '#fff',
-            }}
-            title={t('تحديث البيانات')}
-          >
-            <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
-          </button>
-          <div style={{
-            padding: '0.35rem 0.75rem',
-            borderRadius: 999,
-            background: 'rgba(255,255,255,0.2)',
-            border: '1px solid rgba(255,255,255,0.35)',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-          }}>
-            {t('المتجر نشط')} ✅
+        {/* Background Image Layer */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: `linear-gradient(135deg, #0f172a 0%, #1e293b 40%, ${theme.primary}88 100%)`,
+        }} />
+
+        {/* Decorative SVG Shapes */}
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.12 }} preserveAspectRatio="none">
+          <defs>
+            <pattern id="dash-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dash-grid)" />
+        </svg>
+
+        {/* Floating Decorative Circles */}
+        <div style={{
+          position: 'absolute', top: -30, right: -20,
+          width: 160, height: 160, borderRadius: '50%',
+          background: `radial-gradient(circle, ${theme.primary}44 0%, transparent 70%)`,
+        }} />
+        <div style={{
+          position: 'absolute', bottom: -40, left: '30%',
+          width: 200, height: 200, borderRadius: '50%',
+          background: `radial-gradient(circle, ${theme.secondary}33 0%, transparent 70%)`,
+        }} />
+        <div style={{
+          position: 'absolute', top: '50%', right: '15%',
+          width: 80, height: 80, borderRadius: '50%',
+          background: `radial-gradient(circle, ${theme.accent || theme.primary}22 0%, transparent 70%)`,
+          transform: 'translateY(-50%)',
+        }} />
+
+        {/* Decorative Lines */}
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.08 }}>
+          <line x1="0" y1="100%" x2="60%" y2="0" stroke="white" strokeWidth="1" />
+          <line x1="40%" y1="100%" x2="100%" y2="0" stroke="white" strokeWidth="0.5" />
+          <line x1="70%" y1="100%" x2="100%" y2="30%" stroke="white" strokeWidth="0.5" />
+        </svg>
+
+        {/* Small Dot Decoration */}
+        <svg style={{ position: 'absolute', top: 12, left: 16, opacity: 0.3 }}>
+          <circle cx="4" cy="4" r="2" fill="white" />
+          <circle cx="14" cy="4" r="2" fill="white" />
+          <circle cx="24" cy="4" r="2" fill="white" />
+          <circle cx="4" cy="14" r="1.5" fill="white" />
+          <circle cx="14" cy="14" r="1.5" fill="white" />
+        </svg>
+
+        {/* Content */}
+        <div style={{
+          position: 'relative', zIndex: 2,
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          minHeight: 140,
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '0.2rem 0.65rem',
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              marginBottom: 10,
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              letterSpacing: '0.03em',
+              textTransform: 'uppercase' as const,
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+              {t('لوحة التحكم')}
+            </div>
+            <h3 style={{
+              fontSize: '1.15rem',
+              fontWeight: 800,
+              lineHeight: 1.6,
+              textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              maxWidth: 420,
+            }}>
+              {t('إدارة المتجر ومتابعة الأداء من مكان واحد')}
+            </h3>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              style={{
+                width: 38, height: 38, borderRadius: 12,
+                background: 'rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                cursor: refreshing ? 'wait' : 'pointer',
+                display: 'grid', placeItems: 'center',
+                color: '#fff',
+                transition: 'all 0.2s',
+              }}
+              title={t('تحديث البيانات')}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            </button>
+            <div style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: 999,
+              background: 'rgba(34,197,94,0.15)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: '#bbf7d0',
+            }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px #22c55e55' }} />
+              {t('المتجر نشط')} ✅
+            </div>
           </div>
         </div>
       </div>

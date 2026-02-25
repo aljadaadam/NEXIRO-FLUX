@@ -351,7 +351,7 @@ export default function CustomizePage() {
                   <div style={{ width: 20, height: 20, borderRadius: 6, background: ct.secondary }} />
                   <div style={{ width: 20, height: 20, borderRadius: 6, background: ct.accent }} />
                 </div>
-                <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020' }}>{ct.name}</p>
+                <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0b1020' }}>{t(ct.name)}</p>
               </button>
             ))}
           </div>
@@ -591,7 +591,7 @@ export default function CustomizePage() {
               padding: '0.3rem 0.7rem', borderRadius: 20, fontSize: '0.65rem', fontWeight: 600,
               background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0',
             }}>
-              🎨 {currentTheme.name}
+              🎨 {t(currentTheme.name)}
             </span>
             <span style={{
               padding: '0.3rem 0.7rem', borderRadius: 20, fontSize: '0.65rem', fontWeight: 600,

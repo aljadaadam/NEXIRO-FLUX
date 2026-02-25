@@ -524,8 +524,8 @@ export default function ServicesPage() {
   const servicesJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'خدمات المتجر',
-    description: 'جميع خدمات فتح الشبكات وإزالة iCloud وأدوات السوفتوير وشحن الألعاب',
+    name: t('خدمات المتجر'),
+    description: t('تصفّح جميع خدماتنا'),
     numberOfItems: filtered.length,
     itemListElement: filtered.slice(0, 30).map((p, i) => ({
       '@type': 'ListItem',
@@ -533,7 +533,7 @@ export default function ServicesPage() {
       item: {
         '@type': 'Product',
         name: p.name,
-        description: p.category || 'خدمة رقمية',
+        description: p.category || t('خدمة رقمية'),
         offers: {
           '@type': 'Offer',
           price: String(p.price || '').replace(/[^0-9.]/g, ''),
@@ -547,9 +547,9 @@ export default function ServicesPage() {
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <SeoHead
-        title="جميع الخدمات — فتح شبكات، إزالة iCloud، أدوات سوفتوير، شحن ألعاب"
-        description="تصفّح جميع خدماتنا: إزالة iCloud لجميع أجهزة iPhone و iPad، فتح شبكات Samsung و Xiaomi و Motorola، أدوات سوفتوير مثل Unlocktool و Z3X و Chimera و Octoplus و Sigma Plus و NCK، إزالة FRP، فحص IMEI، شحن PUBG و Free Fire، بطاقات Google Play و PlayStation و Xbox و TikTok Coins."
-        keywords="iCloud remove, iPhone unlock, Samsung unlock, Samsung FRP remove, Xiaomi Mi Account remove, Unlocktool, Z3X, EFT Pro, Chimera Tool, Octoplus, Sigma Plus, NCK Box, UMT Box, Hydra Tool, Griffin Unlocker, Borneo Schematics, DC Unlocker, HCU, Cheetah Tool, DFT Pro, Halabtech, iRemoval Pro, TSM Tool, PUBG UC, Free Fire diamonds, AT&T unlock, T-Mobile unlock, Verizon unlock, Google Play gift card, PlayStation card, Xbox card, TikTok coins, Telegram Premium, فتح شبكات, إزالة iCloud, أدوات صيانة, شحن ألعاب, فحص IMEI, إزالة FRP, بطاقات هدايا, أدوات سوفتوير"
+        title={t('جميع الخدمات')}
+        description={t('تصفّح جميع خدماتنا')}
+        keywords="iCloud remove, iPhone unlock, Samsung unlock, Samsung FRP remove, Xiaomi Mi Account remove, Unlocktool, Z3X, EFT Pro, Chimera Tool, Octoplus, Sigma Plus, NCK Box, UMT Box, PUBG UC, Free Fire diamonds, AT&T unlock, T-Mobile unlock, Google Play gift card, PlayStation card"
         canonical="/services"
       />
       <JsonLd data={servicesJsonLd} />

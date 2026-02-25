@@ -45,6 +45,7 @@ const en: Record<string, string> = {
   'الرصيد غير كافٍ لإتمام الطلب': 'Insufficient balance to complete the order',
   'تم إرسال الطلب بنجاح!': 'Order submitted successfully!',
   'سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة \u201Cطلباتي\u201D.': 'Your order will be processed within minutes. You can track the order from "My Orders" page.',
+  'سيتم معالجة طلبك خلال دقائق. يمكنك متابعة حالة الطلب من صفحة "طلباتي".': 'Your order will be processed within minutes. You can track the order from "My Orders" page.',
   'الرصيد المتبقي:': 'Remaining balance:',
   'حسناً': 'OK',
   'عام': 'General',
@@ -385,6 +386,85 @@ const en: Record<string, string> = {
   'المتجر': 'Store',
   'المتجر — خدمات رقمية': 'Store — Digital Services',
   'متجر الخدمات الرقمية — فتح شبكات، كريدت، شحن ألعاب والمزيد': 'Digital services store — Unlocks, credits, game top-ups & more',
+
+  // ─── Blog Page ───
+  'المدونة': 'Blog',
+  'مقالات ونصائح تقنية في عالم الهواتف والبرمجيات': 'Tech articles and tips about phones and software',
+  'دقائق قراءة': 'min read',
+  'تصفّح خدماتنا': 'Browse Our Services',
+  'لا توجد مقالات في هذا التصنيف': 'No articles in this category',
+  'مقالات': 'Articles',
+  'تصنيفات': 'Categories',
+  'إجمالي القراءات': 'Total Views',
+  'iCloud': 'iCloud',
+  'فتح شبكات': 'Network Unlock',
+  'FRP': 'FRP',
+  'فحص IMEI': 'IMEI Check',
+  'شحن ألعاب': 'Game Top-up',
+
+  // ─── Chat Widget ───
+  'فتح الدردشة': 'Open Chat',
+  'الدعم المباشر': 'Live Support',
+  'متصل الآن': 'Online Now',
+  'مرحباً بك!': 'Welcome!',
+  'أدخل اسمك لبدء المحادثة مع فريق الدعم': 'Enter your name to start a conversation with support',
+  'اسمك...': 'Your name...',
+  'ابدأ المحادثة': 'Start Chat',
+  'كيف يمكننا مساعدتك اليوم؟': 'How can we help you today?',
+  'اكتب رسالتك وسنرد عليك في أقرب وقت ⚡': 'Type your message and we\'ll reply soon ⚡',
+  'اكتب رسالتك...': 'Type your message...',
+  'إغلاق': 'Close',
+
+  // ─── Profile – Wallet – Identity Verification ───
+  'عبر': 'via',
+  'حجم الملف يتجاوز 5MB': 'File size exceeds 5MB',
+  'يرجى رفع صورة الإيصال أولاً': 'Please upload the receipt image first',
+  'بيانات الحساب': 'Account Details',
+  'حوّل المبلغ بالعملة المحلية إلى الحساب أعلاه. بعد التحويل ارفع صورة الإشعار للتأكيد.': 'Transfer the amount in local currency to the above account. After transferring, upload the receipt image for confirmation.',
+  'رفع إشعار التحويل': 'Upload Transfer Receipt',
+  'تم رفع إشعار التحويل بنجاح': 'Transfer receipt uploaded successfully',
+  'اضغط لتغيير الصورة': 'Click to change image',
+  'حد أقصى': 'Max',
+  'غير مصرح': 'Unauthorized',
+  'يرجى رفع بطاقة هوية لتوثيق حسابك': 'Please upload an ID card to verify your account',
+  'مميزات التوثيق:': 'Verification Benefits:',
+  'رفع حد السحب والشحن': 'Increase withdrawal and top-up limits',
+  'أولوية في معالجة الطلبات': 'Priority order processing',
+  'الوصول لعروض حصرية': 'Access to exclusive offers',
+  'حماية إضافية للحساب': 'Additional account protection',
+  'رفع صورة الهوية': 'Upload ID Photo',
+  'اضغط لرفع صورة بطاقة الهوية': 'Click to upload ID card photo',
+  'إرسال للتوثيق': 'Submit for Verification',
+  'USDT — تيثر': 'USDT — Tether',
+  'دفع عبر بنكك — تحويل محلي': 'Pay via your bank — Local transfer',
+  '🔗 فتح صفحة الدفع': '🔗 Open Payment Page',
+  '🔄 تحقق من حالة الدفع': '🔄 Check Payment Status',
+  'تأكد من إرسال المبلغ الصحيح عبر الشبكة الصحيحة': 'Make sure to send the correct amount via the correct network',
+
+  // ─── Support Page SEO ───
+  'مركز الدعم الفني': 'Technical Support Center',
+  'تواصل معنا عبر واتساب أو البريد الإلكتروني للحصول على دعم فني سريع': 'Contact us via WhatsApp or email for quick technical support',
+
+  // ─── Services Page ───
+  'منتجات سوفت وير': 'Software Products',
+  'خدمات المتجر': 'Store Services',
+
+  // ─── Refund Page ───
+  'سياسة الاسترجاع والاستبدال': 'Return & Refund Policy',
+
+  // ─── SEO Keywords ───
+  'متجر خدمات رقمية': 'Digital Services Store',
+  'الرئيسية — متجر خدمات رقمية': 'Home — Digital Services Store',
+  'الدعم الفني': 'Technical Support',
+  'جميع الخدمات': 'All Services',
+  'خدمة رقمية': 'Digital Service',
+
+  // ─── Terms Page ───
+  'مرحباً بك في': 'Welcome to',
+  'يُرجى قراءة الشروط والأحكام التالية بعناية قبل استخدام المنصة، حيث تُنظّم هذه الشروط العلاقة بينك وبين المنصة.': 'Please read the following terms and conditions carefully before using the platform, as these terms govern the relationship between you and the platform.',
+
+  // ─── Privacy Page ───
+  'نلتزم بحماية خصوصيتك وبياناتك الشخصية. توضح هذه السياسة كيفية جمع واستخدام وحماية المعلومات التي تقدمها لنا عند استخدام خدماتنا.': 'We are committed to protecting your privacy and personal data. This policy explains how we collect, use, and protect the information you provide when using our services.',
 };
 
 export type Language = 'ar' | 'en';

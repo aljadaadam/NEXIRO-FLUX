@@ -41,17 +41,17 @@ export default function SupportPage() {
   const supportJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
-    name: 'مركز الدعم الفني',
-    description: 'تواصل معنا عبر واتساب أو البريد الإلكتروني للحصول على دعم فني سريع',
+    name: t('مركز الدعم الفني'),
+    description: t('تواصل معنا عبر واتساب أو البريد الإلكتروني للحصول على دعم فني سريع'),
     url: typeof window !== 'undefined' ? `${window.location.origin}/support` : '/support',
   };
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <SeoHead
-        title="الدعم الفني — تواصل معنا للمساعدة"
-        description="مركز الدعم الفني — تواصل معنا عبر واتساب أو البريد الإلكتروني أو الهاتف. نحن هنا لمساعدتك في جميع استفساراتك حول خدمات فتح الشبكات وإزالة iCloud وأدوات السوفتوير وشحن الألعاب."
-        keywords="دعم فني, تواصل معنا, واتساب, بريد إلكتروني, مساعدة, support, contact us"
+        title={t('الدعم الفني') + ' — ' + t('تواصل معنا')}
+        description={t('تواصل معنا عبر واتساب أو البريد الإلكتروني للحصول على دعم فني سريع')}
+        keywords="support, contact us, WhatsApp, email, help"
         canonical="/support"
       />
       <JsonLd data={supportJsonLd} />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { storeApi } from '@/lib/api';
+import { useTheme } from '@/providers/ThemeProvider';
 import type { ChatMsg } from '@/lib/types';
 
 /* ════════════════════════════════════════════
@@ -39,6 +40,7 @@ function playNotifSound() {
 }
 
 export default function ChatWidget() {
+  const { t, isRTL } = useTheme();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
@@ -131,7 +133,7 @@ export default function ChatWidget() {
   };
 
   const formatTime = (d: string) => {
-    try { return new Date(d).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; }
+    try { return new Date(d).toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; }
   };
 
   return (
@@ -195,7 +197,7 @@ export default function ChatWidget() {
 
       {/* ─── FAB Button ─── */}
       {!open && (
-        <button className="nxr-chat-fab" onClick={() => setOpen(true)} aria-label="فتح الدردشة">
+        <button className="nxr-chat-fab" onClick={() => setOpen(true)} aria-label={t('فتح الدردشة')}>
           <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
           {unread > 0 && <span className="nxr-chat-badge">{unread}</span>}
         </button>
@@ -203,7 +205,7 @@ export default function ChatWidget() {
 
       {/* ─── Chat Panel ─── */}
       {open && (
-        <div className="nxr-chat-panel" dir="rtl">
+        <div className="nxr-chat-panel" dir={isRTL ? 'rtl' : 'ltr'}>
           {/* Header */}
           <div className="nxr-chat-header">
             <div className="nxr-chat-header-avatar" style={{position:'relative'}}>
@@ -211,10 +213,10 @@ export default function ChatWidget() {
               <span className="nxr-chat-online" />
             </div>
             <div className="nxr-chat-header-info">
-              <h4>الدعم المباشر</h4>
-              <p>متصل الآن</p>
+              <h4>{t('الدعم المباشر')}</h4>
+              <p>{t('متصل الآن')}</p>
             </div>
-            <button className="nxr-chat-close" onClick={() => setOpen(false)} aria-label="إغلاق">
+            <button className="nxr-chat-close" onClick={() => setOpen(false)} aria-label={t('إغلاق')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -223,24 +225,24 @@ export default function ChatWidget() {
           {!nameSubmitted ? (
             <div className="nxr-chat-welcome">
               <div style={{ fontSize: '2.5rem' }}>👋</div>
-              <h3>مرحباً بك!</h3>
-              <p>أدخل اسمك لبدء المحادثة مع فريق الدعم</p>
-              <input className="nxr-chat-name-input" placeholder="اسمك..." value={name}
+              <h3>{t('مرحباً بك!')}</h3>
+              <p>{t('أدخل اسمك لبدء المحادثة مع فريق الدعم')}</p>
+              <input className="nxr-chat-name-input" placeholder={t('اسمك...')} value={name}
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submitName()} />
-              <button className="nxr-chat-name-btn" onClick={submitName} disabled={!name.trim()}>ابدأ المحادثة</button>
+              <button className="nxr-chat-name-btn" onClick={submitName} disabled={!name.trim()}>{t('ابدأ المحادثة')}</button>
             </div>
           ) : (
             <>
               <div className="nxr-chat-body" ref={scrollRef}>
                 {/* رسالة ترحيب */}
                 <div className="nxr-msg nxr-msg-admin">
-                  <div>مرحباً {name || 'بك'}! 👋<br />كيف يمكننا مساعدتك اليوم؟</div>
-                  <span className="nxr-msg-time">الدعم</span>
+                  <div>{t('مرحباً بك')} {name ? name : ''} 👋<br />{t('كيف يمكننا مساعدتك اليوم؟')}</div>
+                  <span className="nxr-msg-time">{t('الدعم')}</span>
                 </div>
 
                 {messages.length === 0 && (
-                  <div className="nxr-chat-empty">اكتب رسالتك وسنرد عليك في أقرب وقت ⚡</div>
+                  <div className="nxr-chat-empty">{t('اكتب رسالتك وسنرد عليك في أقرب وقت ⚡')}</div>
                 )}
 
                 {messages.map(msg => (
@@ -253,10 +255,10 @@ export default function ChatWidget() {
 
               {/* Input */}
               <div className="nxr-chat-input-area">
-                <input ref={inputRef} className="nxr-chat-input" placeholder="اكتب رسالتك..."
+                <input ref={inputRef} className="nxr-chat-input" placeholder={t('اكتب رسالتك...')}
                   value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && send()} />
-                <button className="nxr-chat-send" onClick={send} disabled={!input.trim() || sending} aria-label="إرسال">
+                <button className="nxr-chat-send" onClick={send} disabled={!input.trim() || sending} aria-label={t('إرسال')}>
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </button>
               </div>

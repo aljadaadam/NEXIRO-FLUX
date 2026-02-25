@@ -311,6 +311,19 @@ const adminEn: Record<string, string> = {
   'سعر الصرف (1 دولار = ؟ جنيه سوداني)': 'Exchange Rate (1 USD = ? SDG)',
   'رمز العملة المحلية': 'Local Currency Code',
   'رابط صورة/لوغو بنكك': 'Your Bank Image/Logo URL',
+  // ─── CONFIG_FIELDS — Placeholders ───
+  'مفتاح BscScan / Etherscan / TronGrid': 'BscScan / Etherscan / TronGrid Key',
+  'مثال: البنك المركزي': 'Example: Central Bank',
+  'الاسم الكامل': 'Full Name',
+  'اكتب تعليمات الشحن عبر هذه المحفظة...': 'Write top-up instructions for this wallet...',
+  'أدخل رقم الحساب البنكي': 'Enter bank account number',
+  'مثال: أحمد محمد علي': 'Example: John Doe',
+  'مثال: 600': 'Example: 600',
+  'مثال: 07701234567': 'Example: 07701234567',
+  // ─── CONFIG_FIELDS — Option Labels ───
+  'IQD (د.ع)': 'IQD',
+  'SAR (ر.س)': 'SAR',
+  'SDG (ج.س)': 'SDG',
   'غير مُهيأة': 'Not Configured',
   'افتراضي': 'Default',
   'إعداد البوابة': 'Set Up Gateway',
@@ -509,6 +522,14 @@ const adminEn: Record<string, string> = {
   'العربية (RTL)': 'Arabic (RTL)',
   '🌙 داكن': '🌙 Dark',
   '☀️ فاتح': '☀️ Light',
+
+  // ─── Customize — Color Theme Names ───
+  'بنفسجي كلاسيكي': 'Classic Purple',
+  'أزرق محيطي': 'Ocean Blue',
+  'أخضر زمردي': 'Emerald Green',
+  'وردي أنيق': 'Elegant Rose',
+  'ذهبي فاخر': 'Luxury Gold',
+  'رمادي عصري': 'Modern Gray',
 
   // ─── Customize — Font Options ───
   'تجوال': 'Tajawal',

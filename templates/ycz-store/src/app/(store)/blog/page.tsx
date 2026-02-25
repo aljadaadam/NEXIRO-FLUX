@@ -143,8 +143,8 @@ export default function BlogPage() {
   const blogJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Blog',
-    name: `مدونة ${storeName}`,
-    description: 'مقالات ونصائح حول فتح الشبكات وإزالة iCloud وأدوات السوفتوير وشحن الألعاب',
+    name: `${t('المدونة')} — ${storeName}`,
+    description: t('مقالات ونصائح تقنية في عالم الهواتف والبرمجيات'),
     url: typeof window !== 'undefined' ? `${window.location.origin}/blog` : '/blog',
     blogPost: posts.slice(0, 10).map(post => ({
       '@type': 'BlogPosting', headline: post.title, description: post.excerpt,
@@ -155,9 +155,9 @@ export default function BlogPage() {
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <SeoHead
-        title="المدونة — مقالات ونصائح تقنية"
-        description="مدونة متخصصة في شروحات فتح الشبكات، إزالة iCloud، أدوات السوفتوير، إزالة FRP، فحص IMEI، وشحن ألعاب PUBG و Free Fire."
-        keywords="مدونة, مقالات تقنية, شرح iCloud, فتح شبكة Samsung, أدوات سوفتوير, FRP, فحص IMEI, شحن PUBG, blog"
+        title={t('المدونة') + ' — ' + t('مقالات ونصائح تقنية في عالم الهواتف والبرمجيات')}
+        description={t('مقالات ونصائح تقنية في عالم الهواتف والبرمجيات')}
+        keywords="blog, tech articles, iCloud, Samsung unlock, software tools, FRP, IMEI check, PUBG top-up"
         canonical="/blog"
       />
       <JsonLd data={blogJsonLd} />

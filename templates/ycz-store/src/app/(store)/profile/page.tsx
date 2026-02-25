@@ -1415,7 +1415,7 @@ export default function ProfilePage() {
           <div style={{ border: '2px dashed var(--border-default)', borderRadius: 14, padding: '2rem', textAlign: 'center', cursor: 'pointer', marginBottom: 16 }}>
             <Upload size={28} color="var(--text-muted)" style={{ margin: '0 auto 10px', display: 'block' }} />
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{t('اضغط لرفع صورة بطاقة الهوية')}</p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG — حد أقصى 5MB</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG — {t('حد أقصى')} 5MB</p>
           </div>
 
           <button style={{ width: '100%', padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>

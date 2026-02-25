@@ -41,9 +41,9 @@ export default function TermsPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <SeoHead
-        title="الشروط والأحكام"
-        description="الشروط والأحكام الخاصة باستخدام المتجر. يُرجى قراءة الشروط بعناية قبل استخدام خدماتنا لفتح الشبكات وإزالة iCloud وأدوات السوفتوير."
-        keywords="شروط وأحكام, terms and conditions, سياسة الاستخدام, قوانين المتجر"
+        title={t('الشروط والأحكام')}
+        description={t('الشروط والأحكام')}
+        keywords="terms and conditions, terms of service"
         canonical="/terms"
       />
       {/* Back */}

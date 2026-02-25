@@ -375,7 +375,7 @@ export default function PaymentsPage() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>
-                        {gw?.name || meta.label}
+                        {isRTL ? (gw?.name || meta.label) : (gw?.name_en || meta.labelEn)}
                       </h4>
                       {gw?.is_default && (
                         <span style={{
@@ -597,7 +597,9 @@ export default function PaymentsPage() {
                 {paginated.map(tx => {
                   const isPending = tx.status === 'pending';
                   const hasReceipt = !!tx.meta?.receipt_url;
-                  const methodLabel = GATEWAY_META[tx.payment_method as GatewayType]?.label || tx.payment_method;
+                  const methodLabel = isRTL
+                    ? (GATEWAY_META[tx.payment_method as GatewayType]?.label || tx.payment_method)
+                    : (GATEWAY_META[tx.payment_method as GatewayType]?.labelEn || tx.payment_method);
                   const methodColor = GATEWAY_META[tx.payment_method as GatewayType]?.color || '#64748b';
                   const statusConfig = {
                     pending: { label: t('معلّقة'), bg: '#fef3c7', color: '#92400e', icon: '⏳' },
@@ -742,7 +744,7 @@ export default function PaymentsPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
                 <span style={{ color: '#64748b' }}>{t('البوابة')}</span>
-                <span style={{ fontWeight: 600, color: '#334155' }}>{GATEWAY_META[receiptModal.payment_method as GatewayType]?.label || receiptModal.payment_method}</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{isRTL ? (GATEWAY_META[receiptModal.payment_method as GatewayType]?.label || receiptModal.payment_method) : (GATEWAY_META[receiptModal.payment_method as GatewayType]?.labelEn || receiptModal.payment_method)}</span>
               </div>
               {receiptModal.meta?.receipt_uploaded_at && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
@@ -854,14 +856,14 @@ export default function PaymentsPage() {
                           style={inputStyle}
                         >
                           {field.options.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            <option key={opt.value} value={opt.value}>{t(opt.label)}</option>
                           ))}
                         </select>
                       ) : field.type === 'textarea' ? (
                         <textarea
                           value={formConfig[field.key] || ''}
                           onChange={e => setFormConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
-                          placeholder={field.placeholder}
+                          placeholder={t(field.placeholder)}
                           rows={4}
                           style={{ ...inputStyle, resize: 'vertical' as const, minHeight: 80 }}
                         />
@@ -870,7 +872,7 @@ export default function PaymentsPage() {
                           type={field.type || 'text'}
                           value={formConfig[field.key] || ''}
                           onChange={e => setFormConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
-                          placeholder={field.placeholder}
+                          placeholder={t(field.placeholder)}
                           style={inputStyle}
                         />
                       )}

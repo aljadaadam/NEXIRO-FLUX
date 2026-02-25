@@ -11,9 +11,9 @@ export default function RefundPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <SeoHead
-        title="سياسة الاسترجاع والاستبدال"
-        description="سياسة الاسترجاع — تعرّف على شروط استرجاع الأموال واستبدال الخدمات. جميع الخدمات الرقمية غير قابلة للاسترجاع بعد التنفيذ."
-        keywords="سياسة الاسترجاع, refund policy, استرجاع الأموال, استبدال, إلغاء الطلب"
+        title={t('سياسة الاسترجاع والاستبدال')}
+        description={t('سياسة الاسترجاع')}
+        keywords="refund policy, return policy"
         canonical="/refund"
       />
       {/* Back */}
