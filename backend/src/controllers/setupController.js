@@ -178,132 +178,159 @@ async function provisionSite(req, res) {
       }
     }
 
-    // ─── 1. إنشاء الموقع ───
+    // ─── بدء المعاملة (Transaction) لضمان تكامل البيانات ───
     const { getPool } = require('../config/db');
     const pool = getPool();
-
-    await pool.query(
-      `INSERT INTO sites (site_key, domain, custom_domain, name, template_id, plan, status, owner_email, settings)
-       VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
-      [
-        site_key,
-        clientDomain || internalDomain,
-        clientDomain || null,
-        store_name,
-        template_id,
-        cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
-        owner_email,
-        JSON.stringify({
-          smtp: smtp_host ? { host: smtp_host, port: smtp_port || 587, user: smtp_user, pass: smtp_pass, from: smtp_from || owner_email } : null,
-          setup_completed: true,
-          setup_date: new Date().toISOString(),
-          payment_method: payment_method || (purchase_code ? 'purchase_code' : 'manual'),
-          payment_reference: payment_reference || null,
-          payment_status: paymentStatus,
-        })
-      ]
-    );
-
-    // ─── 2. إنشاء حساب الأدمن ───
-    const admin = await User.create({
-      site_key,
-      name: owner_name,
-      email: owner_email,
-      password: owner_password,
-      role: 'admin'
-    });
-
-    // ─── 3. إنشاء الاشتراك ───
-    const subscription = await Subscription.create({
-      site_key,
-      plan_id: cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
-      template_id,
-      billing_cycle: cycle,
-      price
-    });
-
-    // ─── 4. تفعيل الاشتراك (مع فترة تجريبية 14 يوم) ───
-    // الاشتراك يبدأ بحالة trial تلقائياً
-    // إذا تم الدفع بكود أو بوابة دفع → تفعيل مباشر
-    if (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') {
-      await Subscription.activate(subscription.id, site_key);
-    }
-
-    // ─── 4.5 تسجيل استخدام كود الشراء ───
-    if (codeData && purchase_code) {
-      await PurchaseCode.markUsed(purchase_code, owner_email, site_key);
-    }
-
-    // ─── 4.6 تسجيل عملية الدفع في جدول المدفوعات ───
-    const finalPaymentMethod = verifiedPayment?.payment_method || payment_method || (codeData ? 'purchase_code' : 'manual');
-    const finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
+    const connection = await pool.getConnection();
+    
+    let admin, subscription, token, admin_slug, finalPaymentMethod, finalPaymentRef;
+    
     try {
-      if (verifiedPayment) {
-        // ربط الدفعة المؤكدة بالموقع الجديد
-        await Payment.updateMeta(verifiedPayment.id, verifiedPayment.site_key, {
-          provisioned_site_key: site_key,
-          provisioned_store: store_name,
-          provisioned_at: new Date().toISOString(),
-        });
-      } else {
-        await Payment.create({
+      await connection.beginTransaction();
+
+      // ─── 1. إنشاء الموقع ───
+      await connection.query(
+        `INSERT INTO sites (site_key, domain, custom_domain, name, template_id, plan, status, owner_email, settings)
+         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
+        [
           site_key,
-          customer_id: null,
-          order_id: null,
-          type: 'subscription',
-          amount: price,
-          currency: 'USD',
-          payment_method: finalPaymentMethod,
-          payment_gateway_id: null,
-          status: (paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
-          description: `Site provisioning: ${store_name} (${cycle})`,
-        });
-      }
-    } catch (payErr) {
-      console.error('Payment record creation failed (non-blocking):', payErr.message);
-    }
-
-    // ─── 4.7 تسجيل النشاط في سجل الأنشطة ───
-    try {
-      await ActivityLog.log({
-        site_key,
-        user_id: admin.id,
-        action: 'site_created',
-        entity_type: 'site',
-        entity_id: site_key,
-        details: {
+          clientDomain || internalDomain,
+          clientDomain || null,
           store_name,
-          domain,
           template_id,
-          billing_cycle: cycle,
-          payment_method: finalPaymentMethod,
-          payment_status: paymentStatus,
-          price,
-        },
-        ip_address: req.ip || req.connection?.remoteAddress,
-      });
-    } catch (logErr) {
-      console.error('Activity log failed (non-blocking):', logErr.message);
-    }
+          cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
+          owner_email,
+          JSON.stringify({
+            smtp: smtp_host ? { host: smtp_host, port: smtp_port || 587, user: smtp_user, pass: smtp_pass, from: smtp_from || owner_email } : null,
+            setup_completed: true,
+            setup_date: new Date().toISOString(),
+            payment_method: payment_method || (purchase_code ? 'purchase_code' : 'manual'),
+            payment_reference: payment_reference || null,
+            payment_status: paymentStatus,
+          })
+        ]
+      );
 
-    // ─── 5. إنشاء التخصيصات الافتراضية + مفتاح الأدمن ───
-    const crypto = require('crypto');
-    const admin_slug = crypto.randomBytes(6).toString('hex');
-    await Customization.upsert(site_key, {
-      store_name,
-      primary_color: primary_color || '#7c5cff',
-      secondary_color: '#a78bfa',
-      logo_url: logo_url || null,
-      dark_mode: true,
-      button_radius: 'rounded-xl',
-      header_style: 'default',
-      show_banner: true,
+      // ─── 2. إنشاء حساب الأدمن ───
+      admin = await User.create({
+        site_key,
+        name: owner_name,
+        email: owner_email,
+        password: owner_password,
+        role: 'admin'
+      });
+
+      // ─── 3. إنشاء الاشتراك ───
+      subscription = await Subscription.create({
+        site_key,
+        plan_id: cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
+        template_id,
+        billing_cycle: cycle,
+        price
+      });
+
+      // ─── 4. تفعيل الاشتراك إذا تم الدفع ───
+      if (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') {
+        await Subscription.activate(subscription.id, site_key);
+      }
+
+      // ─── 4.5 تسجيل استخدام كود الشراء (ذري — يفشل إذا استُخدم الكود بالتزامن) ───
+      if (codeData && purchase_code) {
+        const codeUsed = await PurchaseCode.markUsed(purchase_code, owner_email, site_key);
+        if (!codeUsed) {
+          throw new Error('PURCHASE_CODE_RACE');
+        }
+      }
+
+      // ─── 4.6 تسجيل عملية الدفع ───
+      finalPaymentMethod = verifiedPayment?.payment_method || payment_method || (codeData ? 'purchase_code' : 'manual');
+      finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
+      try {
+        if (verifiedPayment) {
+          await Payment.updateMeta(verifiedPayment.id, verifiedPayment.site_key, {
+            provisioned_site_key: site_key,
+            provisioned_store: store_name,
+            provisioned_at: new Date().toISOString(),
+          });
+        } else {
+          await Payment.create({
+            site_key,
+            customer_id: null,
+            order_id: null,
+            type: 'subscription',
+            amount: price,
+            currency: 'USD',
+            payment_method: finalPaymentMethod,
+            payment_gateway_id: null,
+            status: (paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
+            description: `Site provisioning: ${store_name} (${cycle})`,
+          });
+        }
+      } catch (payErr) {
+        console.error('Payment record creation failed (non-blocking):', payErr.message);
+      }
+
+      // ─── 4.7 تسجيل النشاط ───
+      try {
+        await ActivityLog.log({
+          site_key,
+          user_id: admin.id,
+          action: 'site_created',
+          entity_type: 'site',
+          entity_id: site_key,
+          details: {
+            store_name, domain, template_id,
+            billing_cycle: cycle, payment_method: finalPaymentMethod,
+            payment_status: paymentStatus, price,
+          },
+          ip_address: req.ip || req.connection?.remoteAddress,
+        });
+      } catch (logErr) {
+        console.error('Activity log failed (non-blocking):', logErr.message);
+      }
+
+      // ─── 5. إنشاء التخصيصات الافتراضية + مفتاح الأدمن ───
+      admin_slug = crypto.randomBytes(6).toString('hex');
+      await Customization.upsert(site_key, {
+        store_name,
+        primary_color: primary_color || '#7c5cff',
+        secondary_color: '#a78bfa',
+        logo_url: logo_url || null,
+        dark_mode: true,
+        button_radius: 'rounded-xl',
+        header_style: 'default',
+        show_banner: true,
       font_family: 'Tajawal',
       admin_slug,
     });
 
+      // ─── COMMIT ───
+      await connection.commit();
+    } catch (txError) {
+      await connection.rollback();
+      
+      if (txError.message === 'PURCHASE_CODE_RACE') {
+        return res.status(409).json({
+          error: 'تم استخدام كود الشراء بالكامل. يرجى استخدام كود آخر',
+          errorEn: 'Purchase code has been fully used. Please use another code',
+        });
+      }
+      
+      // التحقق من تكرار البريد الإلكتروني
+      if (txError.code === 'ER_DUP_ENTRY' && txError.message?.includes('email')) {
+        return res.status(409).json({
+          error: 'البريد الإلكتروني مستخدم بالفعل. جرّب بريد آخر',
+          errorEn: 'This email is already in use. Try a different email',
+        });
+      }
+      
+      throw txError; // re-throw للـ catch الخارجي
+    } finally {
+      connection.release();
+    }
+
     // ─── 6. إنشاء توكن ───
-    const token = generateToken(admin.id, admin.role, site_key);
+    token = generateToken(admin.id, admin.role, site_key);
 
     // ─── 7. إرسال بريد ترحيبي + بدء تجريبية ───
     emailService.sendSiteCreated({
@@ -338,18 +365,25 @@ async function provisionSite(req, res) {
     // ─── 8. إعداد Nginx + SSL تلقائياً (دومين مخصص) ───
     let infrastructureResult = null;
     if (domain && !domain.endsWith('.nexiroflux.com')) {
-      try {
-        const { execSync } = require('child_process');
-        const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
-        const output = execSync(`python3 ${scriptPath} ${domain}`, {
-          timeout: 150000, // 2.5 min (certbot may take time)
-          encoding: 'utf-8'
-        });
-        infrastructureResult = JSON.parse(output.trim());
-        console.log(`✅ Infrastructure provisioned for ${domain}:`, infrastructureResult);
-      } catch (infraErr) {
-        console.error(`⚠️ Infrastructure provisioning failed for ${domain} (non-blocking):`, infraErr.message);
-        infrastructureResult = { success: false, error: infraErr.message };
+      // التحقق من أن الدومين آمن (حروف وأرقام ونقاط وشرطات فقط)
+      const safeDomainRegex = /^[a-z0-9][a-z0-9.-]{1,253}[a-z0-9]$/;
+      if (safeDomainRegex.test(domain)) {
+        try {
+          const { execSync } = require('child_process');
+          const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
+          const output = execSync(`python3 ${scriptPath} ${domain}`, {
+            timeout: 150000,
+            encoding: 'utf-8'
+          });
+          infrastructureResult = JSON.parse(output.trim());
+          console.log(`✅ Infrastructure provisioned for ${domain}:`, infrastructureResult);
+        } catch (infraErr) {
+          console.error(`⚠️ Infrastructure provisioning failed for ${domain} (non-blocking):`, infraErr.message);
+          infrastructureResult = { success: false, error: infraErr.message };
+        }
+      } else {
+        console.error(`⚠️ Domain rejected by safety check: ${domain}`);
+        infrastructureResult = { success: false, error: 'Domain contains invalid characters' };
       }
     }
 

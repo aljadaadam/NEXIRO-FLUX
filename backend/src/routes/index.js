@@ -31,7 +31,7 @@ const chatRoutes = require('./chatRoutes');
  * @param {Function} limiters.resetLimiter
  * @param {Function} limiters.otpLimiter
  */
-function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter }) {
+function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimiter, codeLimiter }) {
   // ─── Rate limiting for sensitive paths ───
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
@@ -41,6 +41,8 @@ function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter }) {
   app.use('/api/customers/login', authLimiter);
   app.use('/api/customers/register', authLimiter);
   app.use('/api/customers/verify-otp', otpLimiter);
+  app.use('/api/setup/provision', provisionLimiter);
+  app.use('/api/purchase-codes/validate', codeLimiter);
 
   // ─── API Routes ───
   app.use('/api/auth', authRoutes);

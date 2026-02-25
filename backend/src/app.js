@@ -55,6 +55,22 @@ const otpLimiter = rateLimit({
   message: { error: 'محاولات OTP كثيرة، حاول لاحقاً', errorEn: 'Too many OTP attempts' },
 });
 
+// إنشاء موقع: 3 محاولات / ساعة لكل IP
+const provisionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  validate: false,
+  message: { error: 'تم تجاوز الحد المسموح لإنشاء المواقع. حاول بعد ساعة', errorEn: 'Too many site creation attempts. Try again in 1 hour' },
+});
+
+// التحقق من أكواد الشراء: 10 محاولات / 15 دقيقة
+const codeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  validate: false,
+  message: { error: 'محاولات كثيرة للتحقق من الأكواد', errorEn: 'Too many code validation attempts' },
+});
+
 app.use(globalLimiter);
 
 // ─── CORS (multi-tenant — يقبل نطاقات النظام + نطاقات Tenant المخصصة) ───
@@ -89,7 +105,7 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(resolveTenant);
 
 // ─── Mount all API routes ───
-mountRoutes(app, { authLimiter, resetLimiter, otpLimiter });
+mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimiter, codeLimiter });
 
 // ─── Domain verification endpoint (used by HTTP check) ───
 app.get('/api/health/nexiro-verify', (req, res) => {

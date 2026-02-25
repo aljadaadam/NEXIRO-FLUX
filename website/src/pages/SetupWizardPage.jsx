@@ -87,9 +87,13 @@ export default function SetupWizardPage() {
   // Detect return from PayPal / Binance redirect
   useEffect(() => {
     const paymentStatus = searchParams.get('payment_status');
-    const paymentId = searchParams.get('payment_id');
+    const paymentId = searchParams.get('payment_id') || searchParams.get('payment_ref');
     const returnedGateway = searchParams.get('gateway') || 'paypal';
-    if (paymentStatus === 'success' && paymentId) {
+    const urlPurchaseCode = searchParams.get('purchase_code');
+    if (urlPurchaseCode) {
+      setPaymentConfirmed(true);
+      setForm(prev => ({ ...prev, payment_reference: `CODE-${urlPurchaseCode}` }));
+    } else if (paymentStatus === 'success' && paymentId) {
       setPaymentConfirmed(true);
       setForm(prev => ({ ...prev, payment_reference: `${returnedGateway.toUpperCase()}-${paymentId}` }));
     } else if (paymentStatus === 'cancelled') {
@@ -211,6 +215,7 @@ export default function SetupWizardPage() {
         primary_color: form.primary_color,
         payment_method: form.payment_method,
         payment_reference: form.payment_reference,
+        purchase_code: searchParams.get('purchase_code') || undefined,
         amount: templatePrice,
         ...(form.smtp_host ? {
           smtp_host: form.smtp_host,

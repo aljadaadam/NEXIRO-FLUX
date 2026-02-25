@@ -1,4 +1,5 @@
 const { getPool } = require('../config/db');
+const crypto = require('crypto');
 
 class PurchaseCode {
   // ─── إنشاء جدول أكواد الشراء (يُنادى من db.js) ───
@@ -60,16 +61,16 @@ class PurchaseCode {
     const pc = await this.findByCode(code);
 
     if (!pc) {
-      return { valid: false, error: 'الكود غير موجود', errorEn: 'Code not found' };
+      return { valid: false, error: 'الكود غير صالح أو منتهي الصلاحية', errorEn: 'Invalid or expired code' };
     }
     if (!pc.is_active) {
-      return { valid: false, error: 'الكود معطل', errorEn: 'Code is disabled' };
+      return { valid: false, error: 'الكود غير صالح أو منتهي الصلاحية', errorEn: 'Invalid or expired code' };
     }
     if (pc.max_uses > 0 && pc.used_count >= pc.max_uses) {
-      return { valid: false, error: 'الكود تم استخدامه بالكامل', errorEn: 'Code has been fully used' };
+      return { valid: false, error: 'الكود غير صالح أو منتهي الصلاحية', errorEn: 'Invalid or expired code' };
     }
     if (pc.expires_at && new Date(pc.expires_at) < new Date()) {
-      return { valid: false, error: 'الكود منتهي الصلاحية', errorEn: 'Code has expired' };
+      return { valid: false, error: 'الكود غير صالح أو منتهي الصلاحية', errorEn: 'Invalid or expired code' };
     }
     if (pc.template_id && templateId && pc.template_id !== templateId) {
       return { valid: false, error: 'الكود لا ينطبق على هذا القالب', errorEn: 'Code does not apply to this template' };
@@ -85,19 +86,26 @@ class PurchaseCode {
     };
   }
 
-  // ─── تسجيل استخدام الكود ───
+  // ─── تسجيل استخدام الكود (ذري — مع قفل لمنع الاستخدام المتزامن) ───
   static async markUsed(code, email, siteKey) {
     const pool = getPool();
+    
+    // تحديث ذري: used_count < max_uses في شرط ال WHERE — إذا فشل فالكود مستخدم بالكامل
     const pc = await this.findByCode(code);
     if (!pc) return false;
 
     const usedBy = pc.used_by ? JSON.parse(pc.used_by) : [];
     usedBy.push({ email, site_key: siteKey, used_at: new Date().toISOString() });
 
-    await pool.query(
-      `UPDATE purchase_codes SET used_count = used_count + 1, used_by = ? WHERE id = ?`,
+    const [result] = await pool.query(
+      `UPDATE purchase_codes SET used_count = used_count + 1, used_by = ? WHERE id = ? AND (max_uses = 0 OR used_count < max_uses)`,
       [JSON.stringify(usedBy), pc.id]
     );
+    
+    // إذا affectedRows = 0 فهذا يعني أن شخص آخر استخدمه بالتزامن
+    if (result.affectedRows === 0) {
+      return false;
+    }
 
     return true;
   }
@@ -185,13 +193,14 @@ class PurchaseCode {
     return stats;
   }
 
-  // ─── توليد كود عشوائي ───
+  // ─── توليد كود عشوائي (آمن كربتوغرافياً) ───
   static generateCode(prefix = 'NX', length = 12) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // بدون حروف مشابهة (O,0,I,1)
+    const bytes = crypto.randomBytes(length);
     let code = prefix + '-';
     for (let i = 0; i < length; i++) {
       if (i > 0 && i % 4 === 0) code += '-';
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars.charAt(bytes[i] % chars.length);
     }
     return code;
   }
