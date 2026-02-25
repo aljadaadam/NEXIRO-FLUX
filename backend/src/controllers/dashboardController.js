@@ -261,39 +261,35 @@ async function getPlatformStats(req, res) {
       exSubs.params
     );
 
-    // ─── DEBUG: التحقق من بيانات الداشبورد ───
-    console.log('[DEBUG-DASHBOARD] platformKeys:', platformKeys);
-    console.log('[DEBUG-DASHBOARD] excludeClause:', ex);
-    console.log('[DEBUG-DASHBOARD] subStats:', JSON.stringify(subStats));
-    console.log('[DEBUG-DASHBOARD] totalSites:', totalSites, 'totalUsers:', totalUsers);
-    console.log('[DEBUG-DASHBOARD] purchaseCodeStats:', JSON.stringify(purchaseCodeStats));
+    // ─── Helper: MySQL SUM/COUNT may return strings — normalize to int ───
+    const int = (v) => parseInt(v, 10) || 0;
 
     res.json({
       // المواقع
-      totalSites,
-      newSitesToday: newSitesToday || 0,
+      totalSites: int(totalSites),
+      newSitesToday: int(newSitesToday),
       // الاشتراكات
-      totalSubscriptions: subStats.totalSubscriptions || 0,
-      activeSubscriptions: subStats.activeSubscriptions || 0,
-      trialSubscriptions: subStats.trialSubscriptions || 0,
-      inactiveSubscriptions: subStats.inactiveSubscriptions || 0,
+      totalSubscriptions: int(subStats.totalSubscriptions),
+      activeSubscriptions: int(subStats.activeSubscriptions),
+      trialSubscriptions: int(subStats.trialSubscriptions),
+      inactiveSubscriptions: int(subStats.inactiveSubscriptions),
       // أكواد الشراء
       purchaseCodes: {
-        total: purchaseCodeStats.total || 0,
-        active: purchaseCodeStats.active || 0,
-        fullyUsed: purchaseCodeStats.fully_used || 0,
-        totalUses: purchaseCodeStats.total_uses || 0,
+        total: int(purchaseCodeStats.total),
+        active: int(purchaseCodeStats.active),
+        fullyUsed: int(purchaseCodeStats.fully_used),
+        totalUses: int(purchaseCodeStats.total_uses),
       },
       // الإيرادات
-      totalRevenue: parseFloat(globalRevenue.total),
-      todayRevenue: parseFloat(todayRevenue.total),
+      totalRevenue: parseFloat(globalRevenue.total) || 0,
+      todayRevenue: parseFloat(todayRevenue.total) || 0,
       // المستخدمين
-      totalUsers,
-      newUsersToday: newUsersToday || 0,
+      totalUsers: int(totalUsers),
+      newUsersToday: int(newUsersToday),
       // التذاكر
-      totalTickets: ticketStats.total || 0,
-      openTickets: ticketStats.open || 0,
-      resolvedTickets: ticketStats.resolved || 0,
+      totalTickets: int(ticketStats.total),
+      openTickets: int(ticketStats.open),
+      resolvedTickets: int(ticketStats.resolved),
       // أحدث البيانات
       recentSites,
       recentSubscriptions: recentSubscriptions.map(sub => ({
@@ -371,12 +367,12 @@ async function getPlatformPayments(req, res) {
       })),
       total,
       stats: {
-        total: stats.total || 0,
+        total: parseInt(stats.total, 10) || 0,
         totalRevenue: parseFloat(stats.totalRevenue) || 0,
         todayRevenue: parseFloat(stats.todayRevenue) || 0,
-        pending: stats.pending || 0,
-        completed: stats.completed || 0,
-        failed: stats.failed || 0,
+        pending: parseInt(stats.pending, 10) || 0,
+        completed: parseInt(stats.completed, 10) || 0,
+        failed: parseInt(stats.failed, 10) || 0,
       },
       page: parseInt(page),
       limit: parseInt(limit),
@@ -469,10 +465,10 @@ async function getPlatformTickets(req, res) {
       })),
       total,
       stats: {
-        total: stats.total || 0,
-        open: stats.open || 0,
-        replied: stats.replied || 0,
-        resolved: stats.resolved || 0,
+        total: parseInt(stats.total, 10) || 0,
+        open: parseInt(stats.open, 10) || 0,
+        replied: parseInt(stats.replied, 10) || 0,
+        resolved: parseInt(stats.resolved, 10) || 0,
       },
       page: parseInt(page),
       limit: parseInt(limit),
@@ -623,10 +619,10 @@ async function getPlatformUsers(req, res) {
       })),
       total,
       stats: {
-        totalUsers: statsRow.totalUsers || 0,
-        admins: statsRow.admins || 0,
-        regularUsers: statsRow.regularUsers || 0,
-        newToday: statsRow.newToday || 0,
+        totalUsers: parseInt(statsRow.totalUsers, 10) || 0,
+        admins: parseInt(statsRow.admins, 10) || 0,
+        regularUsers: parseInt(statsRow.regularUsers, 10) || 0,
+        newToday: parseInt(statsRow.newToday, 10) || 0,
       },
       page: parseInt(page),
       limit: parseInt(limit),
