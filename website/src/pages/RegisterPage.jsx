@@ -8,15 +8,15 @@ import SEO from '../components/common/SEO';
 
 export default function RegisterPage() {
   const { t, isRTL } = useLanguage();
-  const { register, googleLogin, error: authError, setError, isAuthenticated, isAdmin } = useAuth();
+  const { register, googleLogin, error: authError, setError, isAuthenticated, isPlatformAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(isAdmin ? '/admin' : '/templates', { replace: true });
+      navigate(isPlatformAdmin ? '/admin' : '/templates', { replace: true });
     }
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isPlatformAdmin, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);

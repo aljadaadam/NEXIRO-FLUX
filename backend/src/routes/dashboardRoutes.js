@@ -13,19 +13,19 @@ const {
   getPlatformUsers,
   getPlatformSites,
 } = require('../controllers/dashboardController');
-const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole, requirePlatformAdmin } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
-// ─── إحصائيات وبيانات المنصة الرئيسية (بدون validateSite — عالمي, أدمن فقط) ───
-router.get('/platform-stats', authenticateToken, requireRole('admin'), getPlatformStats);
-router.get('/platform-payments', authenticateToken, requireRole('admin'), getPlatformPayments);
-router.patch('/platform-payments/:id/status', authenticateToken, requireRole('admin'), updatePlatformPaymentStatus);
-router.get('/platform-tickets', authenticateToken, requireRole('admin'), getPlatformTickets);
-router.get('/platform-tickets/:id/messages', authenticateToken, requireRole('admin'), getPlatformTicketMessages);
-router.post('/platform-tickets/:id/reply', authenticateToken, requireRole('admin'), replyPlatformTicket);
-router.patch('/platform-tickets/:id/status', authenticateToken, requireRole('admin'), updatePlatformTicketStatus);
-router.get('/platform-users', authenticateToken, requireRole('admin'), getPlatformUsers);
-router.get('/platform-sites', authenticateToken, requireRole('admin'), getPlatformSites);
+// ─── إحصائيات وبيانات المنصة الرئيسية (بدون validateSite — أدمن المنصة فقط) ───
+router.get('/platform-stats', authenticateToken, requirePlatformAdmin, getPlatformStats);
+router.get('/platform-payments', authenticateToken, requirePlatformAdmin, getPlatformPayments);
+router.patch('/platform-payments/:id/status', authenticateToken, requirePlatformAdmin, updatePlatformPaymentStatus);
+router.get('/platform-tickets', authenticateToken, requirePlatformAdmin, getPlatformTickets);
+router.get('/platform-tickets/:id/messages', authenticateToken, requirePlatformAdmin, getPlatformTicketMessages);
+router.post('/platform-tickets/:id/reply', authenticateToken, requirePlatformAdmin, replyPlatformTicket);
+router.patch('/platform-tickets/:id/status', authenticateToken, requirePlatformAdmin, updatePlatformTicketStatus);
+router.get('/platform-users', authenticateToken, requirePlatformAdmin, getPlatformUsers);
+router.get('/platform-sites', authenticateToken, requirePlatformAdmin, getPlatformSites);
 
 // ─── بيانات أدمن الموقع (بعد validateSite — مفلتر بـ site_key) ───
 router.use(validateSite);

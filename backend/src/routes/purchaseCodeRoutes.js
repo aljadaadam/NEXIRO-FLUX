@@ -9,16 +9,14 @@ const {
   deleteCode,
   getCodeStats,
 } = require('../controllers/purchaseCodeController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requirePlatformAdmin } = require('../middlewares/authMiddleware');
 
 // ─── عام (بدون مصادقة) — للتحقق من الكود أثناء الشراء ───
 router.post('/validate', validateCode);
 
-const { requireRole } = require('../middlewares/authMiddleware');
-
-// ─── باقي الطلبات تحتاج مصادقة + صلاحيات أدمن ───
+// ─── باقي الطلبات تحتاج مصادقة + أدمن المنصة فقط ───
 router.use(authenticateToken);
-router.use(requireRole('admin'));
+router.use(requirePlatformAdmin);
 
 // جلب جميع الأكواد
 router.get('/', getAllCodes);

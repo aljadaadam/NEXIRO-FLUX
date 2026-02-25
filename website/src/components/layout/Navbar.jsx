@@ -8,7 +8,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t, toggleLang, lang, isRTL } = useLanguage();
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isPlatformAdmin, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -81,7 +81,7 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
-                  to={isAdmin ? '/admin' : '/my-dashboard'}
+                  to={isPlatformAdmin ? '/admin' : '/my-dashboard'}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-dark-300 hover:text-white transition-colors duration-300"
                 >
                   <LayoutDashboard className="w-4 h-4" />
@@ -153,7 +153,7 @@ export default function Navbar() {
           </div>
           {isAuthenticated ? (
             <>
-              <Link to={isAdmin ? '/admin' : '/my-dashboard'} className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-dark-300 hover:text-white rounded-xl hover:bg-white/5">
+              <Link to={isPlatformAdmin ? '/admin' : '/my-dashboard'} className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-dark-300 hover:text-white rounded-xl hover:bg-white/5">
                 <LayoutDashboard className="w-4 h-4" />
                 {isRTL ? 'لوحة التحكم' : 'Dashboard'}
               </Link>

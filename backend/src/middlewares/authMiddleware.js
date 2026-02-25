@@ -54,7 +54,26 @@ function requireRole(...allowedRoles) {
   };
 }
 
+// ─── التحقق من أن المستخدم أدمن المنصة (nexiroflux) وليس أدمن موقع عادي ───
+// يُستخدم لحماية مسارات المنصة الرئيسية (platform routes) من وصول أدمن المواقع الفرعية
+const PLATFORM_SITE_KEY = process.env.SITE_KEY || 'nexiroflux';
+
+function requirePlatformAdmin(req, res, next) {
+  if (!req.user || !req.user.role) {
+    return res.status(401).json({ error: 'غير مصرح — يرجى تسجيل الدخول' });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'غير مصرح بالوصول لهذا المسار' });
+  }
+  if (req.user.site_key !== PLATFORM_SITE_KEY) {
+    console.warn(`[authMiddleware] ⚠ Non-platform admin attempted platform access: user_id=${req.user.id}, site_key=${req.user.site_key}`);
+    return res.status(403).json({ error: 'غير مصرح — هذا المسار متاح فقط لأدمن المنصة' });
+  }
+  next();
+}
+
 module.exports = {
   authenticateToken,
-  requireRole
+  requireRole,
+  requirePlatformAdmin
 };

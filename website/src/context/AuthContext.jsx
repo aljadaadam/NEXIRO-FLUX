@@ -93,6 +93,8 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
   const hasSite = !!site?.site_key;
+  // أدمن المنصة فقط — وليس أدمن أي موقع فرعي
+  const isPlatformAdmin = isAdmin && site?.site_key === 'nexiroflux';
 
   return (
     <AuthContext.Provider value={{
@@ -103,6 +105,7 @@ export function AuthProvider({ children }) {
       setError,
       isAuthenticated,
       isAdmin,
+      isPlatformAdmin,
       hasSite,
       login,
       register,
