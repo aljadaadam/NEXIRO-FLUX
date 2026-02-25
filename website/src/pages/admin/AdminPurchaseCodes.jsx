@@ -7,6 +7,19 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
 
+const templateOptions = [
+  { id: 'digital-services-store', ar: 'متجر خدمات رقمية', en: 'Digital Services Store' },
+  { id: 'game-topup-store',       ar: 'متجر شحن ألعاب',  en: 'Game Top-Up Store' },
+  { id: 'hardware-tools-store',   ar: 'متجر أدوات صيانة', en: 'Hardware Tools Store' },
+  { id: 'car-dealership-store',   ar: 'معرض سيارات',      en: 'Car Dealership Store' },
+  { id: 'ecommerce-pro',          ar: 'متجر إلكتروني',    en: 'E-Commerce Pro' },
+  { id: 'restaurant-starter',     ar: 'موقع مطعم',        en: 'Restaurant Starter' },
+  { id: 'portfolio-creative',     ar: 'بورتفوليو إبداعي', en: 'Creative Portfolio' },
+  { id: 'saas-dashboard',         ar: 'لوحة تحكم SaaS',   en: 'SaaS Dashboard' },
+  { id: 'landing-starter',        ar: 'صفحة هبوط',        en: 'Marketing Landing' },
+  { id: 'medical-clinic',         ar: 'عيادة طبية',       en: 'Medical Clinic' },
+];
+
 const discountLabels = {
   full:       { ar: 'مجاني بالكامل', en: 'Full Access',       color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   percentage: { ar: 'خصم نسبة %',    en: 'Percentage Off',    color: 'text-blue-400',    bg: 'bg-blue-500/10' },
@@ -73,12 +86,15 @@ export default function AdminPurchaseCodes() {
   useEffect(() => { fetchCodes(); }, [fetchCodes]);
 
   const handleCreate = async () => {
+    if (!form.template_id) {
+      alert(isRTL ? 'يجب تحديد القالب' : 'Template is required');
+      return;
+    }
     setCreating(true);
     try {
       const result = await api.createPurchaseCode({
         ...form,
         code: form.code || undefined,
-        template_id: form.template_id || null,
         expires_at: form.expires_at || null,
         note: form.note || null,
       });
@@ -94,11 +110,14 @@ export default function AdminPurchaseCodes() {
   };
 
   const handleBatchCreate = async () => {
+    if (!batchForm.template_id) {
+      alert(isRTL ? 'يجب تحديد القالب' : 'Template is required');
+      return;
+    }
     setCreating(true);
     try {
       const result = await api.createPurchaseCodesBatch({
         ...batchForm,
-        template_id: batchForm.template_id || null,
         expires_at: batchForm.expires_at || null,
         note: batchForm.note || null,
       });
@@ -419,14 +438,17 @@ export default function AdminPurchaseCodes() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-dark-400 text-xs mb-1 block">{isRTL ? 'القالب (اتركه فارغاً للجميع)' : 'Template (empty = all)'}</label>
-                  <input
-                    type="text"
+                  <label className="text-dark-400 text-xs mb-1 block">{isRTL ? 'القالب' : 'Template'} <span className="text-red-400">*</span></label>
+                  <select
                     value={form.template_id}
                     onChange={e => setForm({...form, template_id: e.target.value})}
-                    placeholder="digital-services-store"
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm placeholder:text-dark-600 focus:border-primary-500/30 outline-none"
-                  />
+                    className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 px-3 text-white text-sm focus:border-primary-500/30 outline-none"
+                  >
+                    <option value="">{isRTL ? '— اختر القالب —' : '— Select Template —'}</option>
+                    {templateOptions.map(t => (
+                      <option key={t.id} value={t.id}>{isRTL ? t.ar : t.en}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="text-dark-400 text-xs mb-1 block">{isRTL ? 'تاريخ الانتهاء' : 'Expires At'}</label>
@@ -496,6 +518,20 @@ export default function AdminPurchaseCodes() {
                     className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm font-mono placeholder:text-dark-600 focus:border-primary-500/30 outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-dark-400 text-xs mb-1 block">{isRTL ? 'القالب' : 'Template'} <span className="text-red-400">*</span></label>
+                <select
+                  value={batchForm.template_id}
+                  onChange={e => setBatchForm({...batchForm, template_id: e.target.value})}
+                  className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 px-3 text-white text-sm focus:border-primary-500/30 outline-none"
+                >
+                  <option value="">{isRTL ? '— اختر القالب —' : '— Select Template —'}</option>
+                  {templateOptions.map(t => (
+                    <option key={t.id} value={t.id}>{isRTL ? t.ar : t.en}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

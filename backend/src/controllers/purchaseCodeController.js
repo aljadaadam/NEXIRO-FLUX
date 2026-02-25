@@ -66,6 +66,11 @@ async function createCode(req, res) {
       note,
     } = req.body;
 
+    // ─── التحقق من وجود القالب ───
+    if (!template_id) {
+      return res.status(400).json({ error: 'يجب تحديد القالب', errorEn: 'Template is required' });
+    }
+
     const finalCode = code || PurchaseCode.generateCode();
 
     // التحقق من عدم تكرار الكود
@@ -111,6 +116,11 @@ async function createBatch(req, res) {
 
     if (count < 1 || count > 100) {
       return res.status(400).json({ error: 'العدد يجب أن يكون بين 1 و 100', errorEn: 'Count must be between 1 and 100' });
+    }
+
+    // ─── التحقق من وجود القالب ───
+    if (!template_id) {
+      return res.status(400).json({ error: 'يجب تحديد القالب', errorEn: 'Template is required' });
     }
 
     const codes = await PurchaseCode.generateBatch(count, {

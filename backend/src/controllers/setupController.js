@@ -6,6 +6,7 @@ const PurchaseCode = require('../models/PurchaseCode');
 const Payment = require('../models/Payment');
 const ActivityLog = require('../models/ActivityLog');
 const { generateToken } = require('../utils/token');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const emailService = require('../services/email');
 
@@ -211,34 +212,62 @@ async function provisionSite(req, res) {
         ]
       );
 
-      // ─── 2. إنشاء حساب الأدمن ───
-      admin = await User.create({
-        site_key,
-        name: owner_name,
-        email: owner_email,
-        password: owner_password,
-        role: 'admin'
-      });
+      // ─── 2. إنشاء حساب الأدمن (مباشرة عبر connection لتجنب Lock Wait) ───
+      const hashedPassword = await bcrypt.hash(owner_password, 12);
+      const [userResult] = await connection.query(
+        'INSERT INTO users (site_key, name, email, password, role) VALUES (?, ?, ?, ?, ?)',
+        [site_key, owner_name, owner_email, hashedPassword, 'admin']
+      );
+      const [adminRows] = await connection.query(
+        'SELECT id, site_key, name, email, role, created_at FROM users WHERE id = ?',
+        [userResult.insertId]
+      );
+      admin = adminRows[0];
 
       // ─── 3. إنشاء الاشتراك ───
-      subscription = await Subscription.create({
-        site_key,
-        plan_id: cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic'),
-        template_id,
-        billing_cycle: cycle,
-        price
-      });
+      const planId = cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic');
+      const trial_ends = new Date();
+      trial_ends.setDate(trial_ends.getDate() + 14);
+      const [subResult] = await connection.query(
+        `INSERT INTO subscriptions (site_key, plan_id, template_id, billing_cycle, price, status, trial_ends_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, 'trial', ?, NULL)`,
+        [site_key, planId, template_id, cycle, price, trial_ends]
+      );
+      const [subRows] = await connection.query('SELECT * FROM subscriptions WHERE id = ?', [subResult.insertId]);
+      subscription = subRows[0];
 
       // ─── 4. تفعيل الاشتراك إذا تم الدفع ───
       if (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') {
-        await Subscription.activate(subscription.id, site_key);
+        let subExpiresAt = null;
+        const now = new Date();
+        if (cycle === 'monthly') {
+          subExpiresAt = new Date(now);
+          subExpiresAt.setMonth(subExpiresAt.getMonth() + 1);
+        } else if (cycle === 'yearly') {
+          subExpiresAt = new Date(now);
+          subExpiresAt.setFullYear(subExpiresAt.getFullYear() + 1);
+        }
+        // lifetime = null (لا ينتهي)
+        await connection.query(
+          "UPDATE subscriptions SET status = 'active', starts_at = NOW(), expires_at = ? WHERE id = ? AND site_key = ?",
+          [subExpiresAt, subscription.id, site_key]
+        );
       }
 
       // ─── 4.5 تسجيل استخدام كود الشراء (ذري — يفشل إذا استُخدم الكود بالتزامن) ───
       if (codeData && purchase_code) {
-        const codeUsed = await PurchaseCode.markUsed(purchase_code, owner_email, site_key);
-        if (!codeUsed) {
-          throw new Error('PURCHASE_CODE_RACE');
+        const [pcRows] = await connection.query('SELECT * FROM purchase_codes WHERE code = ?', [purchase_code]);
+        if (pcRows[0]) {
+          const pc = pcRows[0];
+          const usedBy = pc.used_by ? (typeof pc.used_by === 'string' ? JSON.parse(pc.used_by) : pc.used_by) : [];
+          usedBy.push({ email: owner_email, site_key, used_at: new Date().toISOString() });
+          const [markResult] = await connection.query(
+            'UPDATE purchase_codes SET used_count = used_count + 1, used_by = ? WHERE id = ? AND (max_uses = 0 OR used_count < max_uses)',
+            [JSON.stringify(usedBy), pc.id]
+          );
+          if (markResult.affectedRows === 0) {
+            throw new Error('PURCHASE_CODE_RACE');
+          }
         }
       }
 
@@ -247,24 +276,19 @@ async function provisionSite(req, res) {
       finalPaymentRef = payment_reference || (codeData ? `CODE-${purchase_code}` : `SETUP-${Date.now()}`);
       try {
         if (verifiedPayment) {
-          await Payment.updateMeta(verifiedPayment.id, verifiedPayment.site_key, {
-            provisioned_site_key: site_key,
-            provisioned_store: store_name,
-            provisioned_at: new Date().toISOString(),
-          });
+          const [payRows] = await connection.query('SELECT meta FROM payments WHERE id = ? AND site_key = ?', [verifiedPayment.id, verifiedPayment.site_key]);
+          let existingMeta = {};
+          if (payRows[0]?.meta) {
+            existingMeta = typeof payRows[0].meta === 'string' ? JSON.parse(payRows[0].meta) : payRows[0].meta;
+          }
+          const mergedMeta = { ...existingMeta, provisioned_site_key: site_key, provisioned_store: store_name, provisioned_at: new Date().toISOString() };
+          await connection.query('UPDATE payments SET meta = ? WHERE id = ? AND site_key = ?', [JSON.stringify(mergedMeta), verifiedPayment.id, verifiedPayment.site_key]);
         } else {
-          await Payment.create({
-            site_key,
-            customer_id: null,
-            order_id: null,
-            type: 'subscription',
-            amount: price,
-            currency: 'USD',
-            payment_method: finalPaymentMethod,
-            payment_gateway_id: null,
-            status: (paymentStatus === 'paid_by_code') ? 'completed' : 'pending',
-            description: `Site provisioning: ${store_name} (${cycle})`,
-          });
+          await connection.query(
+            `INSERT INTO payments (site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [site_key, null, null, 'subscription', price, 'USD', finalPaymentMethod, null, (paymentStatus === 'paid_by_code') ? 'completed' : 'pending', `Site provisioning: ${store_name} (${cycle})`]
+          );
         }
       } catch (payErr) {
         console.error('Payment record creation failed (non-blocking):', payErr.message);
@@ -272,37 +296,26 @@ async function provisionSite(req, res) {
 
       // ─── 4.7 تسجيل النشاط ───
       try {
-        await ActivityLog.log({
-          site_key,
-          user_id: admin.id,
-          action: 'site_created',
-          entity_type: 'site',
-          entity_id: site_key,
-          details: {
+        await connection.query(
+          'INSERT INTO activity_log (site_key, user_id, customer_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [site_key, admin.id, null, 'site_created', 'site', site_key, JSON.stringify({
             store_name, domain, template_id,
             billing_cycle: cycle, payment_method: finalPaymentMethod,
             payment_status: paymentStatus, price,
-          },
-          ip_address: req.ip || req.connection?.remoteAddress,
-        });
+          }), req.ip || req.connection?.remoteAddress]
+        );
       } catch (logErr) {
         console.error('Activity log failed (non-blocking):', logErr.message);
       }
 
       // ─── 5. إنشاء التخصيصات الافتراضية + مفتاح الأدمن ───
       admin_slug = crypto.randomBytes(6).toString('hex');
-      await Customization.upsert(site_key, {
-        store_name,
-        primary_color: primary_color || '#7c5cff',
-        secondary_color: '#a78bfa',
-        logo_url: logo_url || null,
-        dark_mode: true,
-        button_radius: 'rounded-xl',
-        header_style: 'default',
-        show_banner: true,
-      font_family: 'Tajawal',
-      admin_slug,
-    });
+      await connection.query(
+        `INSERT INTO customizations (site_key, store_name, primary_color, secondary_color, logo_url, dark_mode, button_radius, header_style, show_banner, font_family, admin_slug)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE store_name=VALUES(store_name), primary_color=VALUES(primary_color), secondary_color=VALUES(secondary_color), logo_url=VALUES(logo_url), dark_mode=VALUES(dark_mode), button_radius=VALUES(button_radius), header_style=VALUES(header_style), show_banner=VALUES(show_banner), font_family=VALUES(font_family), admin_slug=VALUES(admin_slug)`,
+        [site_key, store_name, primary_color || '#7c5cff', '#a78bfa', logo_url || null, 1, 'rounded-xl', 'default', 1, 'Tajawal', admin_slug]
+      );
 
       // ─── COMMIT ───
       await connection.commit();
