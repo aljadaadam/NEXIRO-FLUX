@@ -13,7 +13,6 @@ const {
   getPublicProduct,
   getProductCategories,
   seedTemplateProducts,
-  debugProducts,
   toggleFeatured,
   renameGroup,
   deleteGroup
@@ -33,9 +32,6 @@ router.use(validateSite);
 
 // ─── تعبئة القوالب الافتراضية (محمي — أدمن فقط) ───
 router.get('/seed-templates', authenticateToken, requireRole('admin'), seedTemplateProducts);
-
-// ─── تشخيص (debug) — محمي بمصادقة أدمن ───
-router.get('/debug', authenticateToken, requireRole('admin'), debugProducts);
 
 // جلب جميع منتجات الموقع (يحتاج صلاحية products:read)
 router.get('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getAllProducts);

@@ -3,6 +3,9 @@ const crypto = require('crypto');
 function getSecret() {
   const secret = process.env.API_KEY_ENCRYPTION_SECRET || process.env.JWT_SECRET;
   if (!secret || secret.includes('CHANGE-THIS') || secret === 'your-secret-key-change-in-production') {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CRITICAL: API_KEY_ENCRYPTION_SECRET or a strong JWT_SECRET must be set in production. Refusing to use weak fallback.');
+    }
     console.warn('⚠️ API key encryption using weak fallback secret. Set API_KEY_ENCRYPTION_SECRET in .env');
     return 'dev-fallback-' + require('os').hostname();
   }

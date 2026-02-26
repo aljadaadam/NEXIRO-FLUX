@@ -762,9 +762,8 @@ async function updateCustomDomain(req, res) {
     let infrastructureResult = null;
     if (domain && !domain.endsWith('.nexiroflux.com')) {
       try {
-        const { execSync } = require('child_process');
-        const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
         const { execFileSync } = require('child_process');
+        const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
         const output = execFileSync('python3', [scriptPath, domain], {
           timeout: 150000,
           encoding: 'utf-8'

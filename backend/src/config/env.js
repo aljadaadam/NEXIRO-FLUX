@@ -8,6 +8,18 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-chang
   if (process.env.NODE_ENV === 'production') process.exit(1);
 }
 
+// ─── حماية إضافية في الإنتاج ───
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DB_PASSWORD) {
+    console.error('\n❌ خطأ أمني: يجب تعيين DB_PASSWORD في ملف .env للإنتاج');
+    process.exit(1);
+  }
+  if (!process.env.SITE_KEY || process.env.SITE_KEY === 'default-site-key') {
+    console.error('\n❌ خطأ أمني: يجب تعيين SITE_KEY في ملف .env للإنتاج');
+    process.exit(1);
+  }
+}
+
 module.exports = {
   PORT: process.env.PORT || 3000,
   DB_HOST: process.env.DB_HOST || 'localhost',

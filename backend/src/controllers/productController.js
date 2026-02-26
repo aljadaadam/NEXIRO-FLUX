@@ -950,32 +950,6 @@ async function getProductCategories(req, res) {
   }
 }
 
-// ─── تشخيص المنتجات (debug) ───
-async function debugProducts(req, res) {
-  try {
-    const pool = getPool();
-    const siteKey = req.siteKey;
-
-    // Only show products for THIS site (tenant-scoped)
-    const [siteProducts] = await pool.query('SELECT id, name, price, status FROM products WHERE site_key = ? LIMIT 20', [siteKey]);
-    
-    // Column info (non-sensitive)
-    const [columns] = await pool.query(
-      `SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
-    );
-
-    res.json({
-      site_key: siteKey,
-      forThisSite: siteProducts.length,
-      siteProducts: siteProducts,
-      columns: columns.map(c => `${c.COLUMN_NAME} (${c.DATA_TYPE})`),
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'حدث خطأ في التشخيص' });
-  }
-}
-
 // ─── تعبئة المنتجات الافتراضية (القوالب) ───
 async function seedTemplateProducts(req, res) {
   try {
@@ -1204,7 +1178,6 @@ module.exports = {
   getPublicProduct,
   getProductCategories,
   seedTemplateProducts,
-  debugProducts,
   toggleFeatured,
   invalidatePublicProductsCache,
   renameGroup,
