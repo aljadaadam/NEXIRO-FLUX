@@ -12,10 +12,16 @@ const chatLimiter = rateLimit({
   message: { error: 'طلبات كثيرة جداً، حاول لاحقاً' },
 });
 
-/* ─── نقاط عامة (الزبون) ─── */
-router.post('/public/start', chatLimiter, chatController.startConversation);
-router.post('/public/send', chatLimiter, chatController.sendCustomerMessage);
-router.get('/public/messages', chatLimiter, chatController.getCustomerMessages);
+/* ─── نقاط عامة (الزبون) — يجب أن يكون siteKey محدداً ─── */
+const requireSiteKey = (req, res, next) => {
+  if (!req.siteKey) {
+    return res.status(400).json({ error: 'لم يتم تحديد الموقع' });
+  }
+  next();
+};
+router.post('/public/start', chatLimiter, requireSiteKey, chatController.startConversation);
+router.post('/public/send', chatLimiter, requireSiteKey, chatController.sendCustomerMessage);
+router.get('/public/messages', chatLimiter, requireSiteKey, chatController.getCustomerMessages);
 
 /* ─── نقاط إدارية ─── */
 router.use(validateSite);

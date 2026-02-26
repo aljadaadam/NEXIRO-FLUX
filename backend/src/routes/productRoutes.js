@@ -28,14 +28,14 @@ router.get('/public', getPublicProducts);
 router.get('/public/:id', getPublicProduct);
 router.get('/categories', getProductCategories);
 
+// التحقق من الموقع قبل أي عملية
+router.use(validateSite);
+
 // ─── تعبئة القوالب الافتراضية (محمي — أدمن فقط) ───
 router.get('/seed-templates', authenticateToken, requireRole('admin'), seedTemplateProducts);
 
 // ─── تشخيص (debug) — محمي بمصادقة أدمن ───
 router.get('/debug', authenticateToken, requireRole('admin'), debugProducts);
-
-// التحقق من الموقع قبل أي عملية
-router.use(validateSite);
 
 // جلب جميع منتجات الموقع (يحتاج صلاحية products:read)
 router.get('/', authenticateToken, requireRole('admin', 'user'), checkPermission('products:read'), getAllProducts);

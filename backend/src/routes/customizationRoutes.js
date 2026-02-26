@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const {
   getCustomization,
   updateCustomization,
@@ -18,10 +19,17 @@ const {
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
+// Rate limiter for slug verification to prevent brute-force
+const slugLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'طلبات كثيرة جداً، حاول لاحقاً' },
+});
+
 // ===== واجهة عامة (للمتجر بدون مصادقة) =====
 router.get('/public/:site_key', getPublicCustomization);
 router.get('/store', getStoreCustomization);
-router.get('/verify-slug/:slug', verifyAdminSlug);
+router.get('/verify-slug/:slug', slugLimiter, verifyAdminSlug);
 router.get('/banners/active', getActiveBanners);
 
 // ===== واجهة الأدمن =====

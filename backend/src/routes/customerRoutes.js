@@ -46,8 +46,8 @@ router.post('/payments', authenticateToken, requireRole('customer'), createPayme
 
 // ===== واجهة الأدمن لإدارة الزبائن =====
 router.get('/', authenticateToken, requireRole('admin', 'user'), getAllCustomers);
-router.patch('/:id/block', authenticateToken, requireRole('admin', 'user'), toggleBlockCustomer);
-router.patch('/:id/wallet', authenticateToken, requireRole('admin', 'user'), updateCustomerWallet);
-router.patch('/:id/verification', authenticateToken, requireRole('admin', 'user'), updateCustomerVerification);
+router.patch('/:id/block', authenticateToken, requireRole('admin'), toggleBlockCustomer);
+router.patch('/:id/wallet', authenticateToken, requireRole('admin'), updateCustomerWallet);
+router.patch('/:id/verification', authenticateToken, requireRole('admin'), updateCustomerVerification);
 
 module.exports = router;

@@ -206,8 +206,16 @@ async function provisionSite(req, res) {
     const cycle = (codeData?.billing_cycle) || billing_cycle || 'monthly';
     let price = templatePrices[cycle] || templatePrices.monthly;
 
+    // ─── ⛔ يجب توفير كود شراء صالح أو دفعة مؤكدة لإنشاء موقع ───
+    if (!codeData && !verifiedPayment) {
+      return res.status(402).json({
+        error: 'يجب توفير كود شراء صالح أو إتمام عملية دفع قبل إنشاء الموقع',
+        errorEn: 'A valid purchase code or completed payment is required to provision a site',
+      });
+    }
+
     // ─── تطبيق خصم الكود ───
-    let paymentStatus = 'trial'; // الحالة الافتراضية تجريبية
+    let paymentStatus = 'pending';
     if (verifiedPayment && verifiedPayment.status === 'completed') {
       paymentStatus = 'paid_by_gateway';
     } else if (verifiedPayment && verifiedPayment.payment_method === 'bank_transfer') {

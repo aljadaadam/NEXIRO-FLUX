@@ -4,7 +4,10 @@ const { SITE_KEY } = require('../config/env');
 // ─── جلب جميع بوابات الدفع ───
 async function getAllGateways(req, res) {
   try {
-    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
+    const siteKey = req.siteKey || req.user?.site_key;
+    if (!siteKey) {
+      return res.status(400).json({ error: 'لم يتم تحديد الموقع' });
+    }
     const gateways = await PaymentGateway.findBySiteKey(siteKey);
     res.json({ gateways });
   } catch (error) {
@@ -17,7 +20,10 @@ async function getAllGateways(req, res) {
 async function getEnabledGateways(req, res) {
   try {
     const { country } = req.query;
-    const siteKey = req.siteKey || req.user?.site_key || SITE_KEY;
+    const siteKey = req.siteKey || req.user?.site_key;
+    if (!siteKey) {
+      return res.status(400).json({ error: 'لم يتم تحديد الموقع' });
+    }
     const gateways = await PaymentGateway.findEnabled(siteKey, country || null);
 
     // إخفاء البيانات الحساسة للعرض العام

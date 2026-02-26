@@ -20,11 +20,11 @@ router.use(validateSite);
 // جلب جميع المصادر
 router.get('/', authenticateToken, requireRole('admin', 'user'), getAllSources);
 
-// إنشاء مصدر جديد
-router.post('/', authenticateToken, requireRole('admin', 'user'), createSource);
+// إنشاء مصدر جديد (أدمن فقط — عملية حساسة)
+router.post('/', authenticateToken, requireRole('admin'), createSource);
 
 // تحديث مصدر
-router.put('/:id', authenticateToken, requireRole('admin', 'user'), updateSource);
+router.put('/:id', authenticateToken, requireRole('admin'), updateSource);
 
 // إحصائيات مصدر (عدد المنتجات + حالة الاتصال)
 router.get('/:id/stats', authenticateToken, requireRole('admin', 'user'), getSourceStats);
@@ -32,14 +32,14 @@ router.get('/:id/stats', authenticateToken, requireRole('admin', 'user'), getSou
 // اختبار اتصال المصدر (يرفع lastConnection* في DB)
 router.post('/:id/test', authenticateToken, requireRole('admin', 'user'), testSourceConnection);
 
-// حذف مصدر
-router.delete('/:id', authenticateToken, requireRole('admin', 'user'), deleteSource);
+// حذف مصدر (أدمن فقط)
+router.delete('/:id', authenticateToken, requireRole('admin'), deleteSource);
 
 // مزامنة منتجات مصدر
 router.post('/:id/sync', authenticateToken, requireRole('admin', 'user'), syncSourceProducts);
 
-// تطبيق نسبة ربح جديدة على كل منتجات المصدر (بدون تراكم)
-router.post('/:id/apply-profit', authenticateToken, requireRole('admin', 'user'), applyProfitToSourceProducts);
+// تطبيق نسبة ربح جديدة (أدمن فقط — يؤثر على الأسعار)
+router.post('/:id/apply-profit', authenticateToken, requireRole('admin'), applyProfitToSourceProducts);
 
 // تبديل وضع المزامنة فقط (إخفاء/إظهار المنتجات للزبائن)
 router.patch('/:id/sync-only', authenticateToken, requireRole('admin', 'user'), toggleSyncOnly);

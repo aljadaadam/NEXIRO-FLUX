@@ -63,14 +63,8 @@ function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimi
   app.use('/api/blogs', blogRoutes);
   app.use('/api/chat', chatRoutes);
 
-  // ─── Compatibility: Binance webhook legacy path ───
-  try {
-    const { binanceWebhook } = require('../controllers/checkoutController');
-    app.post('/payments/binance-webhook', binanceWebhook);
-    app.post('/api/payments/binance-webhook', binanceWebhook);
-  } catch (e) {
-    // ignore
-  }
+  // ─── Binance webhook: use ONLY /api/checkout/webhooks/binance (with rate limiting) ───
+  // Legacy paths removed for security — they bypassed rate limiting
 
   app.use('/api/setup', setupRoutes);
   app.use('/api/purchase-codes', purchaseCodeRoutes);

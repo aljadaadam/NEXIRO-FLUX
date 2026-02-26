@@ -51,66 +51,90 @@ async function registerAdmin(req, res) {
       });
     }
 
-    // ─── حماية: لا يمكن تسجيل أدمن إذا كان هنالك أدمن موجود مسبقاً ───
-    const existingAdmins = await User.findBySiteKey(siteKey);
-    const hasAdmin = existingAdmins.some(u => u.role === 'admin');
-    if (hasAdmin) {
-      return res.status(403).json({ 
-        error: 'يوجد أدمن مسجل بالفعل لهذا الموقع',
-        errorEn: 'An admin is already registered for this site'
-      });
-    }
-
-    // التحقق من أن البريد الإلكتروني غير مستخدم في نفس الموقع
-    const existingUser = await User.findByEmailAndSite(email, siteKey);
-    if (existingUser) {
-      return res.status(400).json({ 
-        error: 'البريد الإلكتروني مستخدم بالفعل في هذا الموقع' 
-      });
-    }
-
-    // إنشاء الأدمن
-    const admin = await User.create({
-      site_key: siteKey,
-      name,
-      email,
-      password,
-      role: 'admin'
-    });
-
-    // إنشاء التوكن
-    const token = generateToken(admin.id, admin.role, siteKey);
-
-    // إنشاء admin_slug تلقائياً
-    const Customization = require('../models/Customization');
-    let adminSlug = '';
+    // ─── حماية ذرية: لا يمكن تسجيل أدمن إذا كان هنالك أدمن موجود مسبقاً ───
+    // نستخدم SELECT FOR UPDATE لمنع race condition (طلبين متزامنين)
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const connection = await pool.getConnection();
     try {
-      adminSlug = require('crypto').randomBytes(6).toString('hex');
-      await Customization.upsert(siteKey, { admin_slug: adminSlug });
-    } catch (e) { /* ignore */ }
-
-    // إرسال بريد ترحيبي
-    emailService.sendWelcomeAdmin({ to: admin.email, name: admin.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
-
-    res.status(201).json({
-      message: 'تم إنشاء حساب الأدمن بنجاح',
-      token,
-      admin_slug: adminSlug,
-      site_key: siteKey,
-      user: {
-        id: admin.id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
-        site_key: admin.site_key
-      },
-      site: {
-        id: site.id,
-        name: site.name,
-        domain: site.domain,
-        site_key: site.site_key
+      await connection.beginTransaction();
+      const [lockedUsers] = await connection.query(
+        'SELECT id, role FROM users WHERE site_key = ? FOR UPDATE',
+        [siteKey]
+      );
+      const hasAdmin = lockedUsers.some(u => u.role === 'admin');
+      if (hasAdmin) {
+        await connection.rollback();
+        connection.release();
+        return res.status(403).json({ 
+          error: 'يوجد أدمن مسجل بالفعل لهذا الموقع',
+          errorEn: 'An admin is already registered for this site'
+        });
       }
-    });
+
+      // التحقق من أن البريد الإلكتروني غير مستخدم في نفس الموقع
+      const [existingEmails] = await connection.query(
+        'SELECT id FROM users WHERE email = ? AND site_key = ?',
+        [email, siteKey]
+      );
+      if (existingEmails.length > 0) {
+        await connection.rollback();
+        connection.release();
+        return res.status(400).json({ 
+          error: 'البريد الإلكتروني مستخدم بالفعل في هذا الموقع' 
+        });
+      }
+
+      // إنشاء الأدمن داخل المعاملة
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const [result] = await connection.query(
+        'INSERT INTO users (site_key, name, email, password, role) VALUES (?, ?, ?, ?, ?)',
+        [siteKey, name, email, hashedPassword, 'admin']
+      );
+
+      await connection.commit();
+      connection.release();
+
+      const admin = await User.findById(result.insertId);
+
+      // إنشاء التوكن
+      const token = generateToken(admin.id, admin.role, siteKey);
+
+      // إنشاء admin_slug تلقائياً
+      const Customization = require('../models/Customization');
+      let adminSlug = '';
+      try {
+        adminSlug = require('crypto').randomBytes(6).toString('hex');
+        await Customization.upsert(siteKey, { admin_slug: adminSlug });
+      } catch (e) { /* ignore */ }
+
+      // إرسال بريد ترحيبي
+      emailService.sendWelcomeAdmin({ to: admin.email, name: admin.name, siteName: site.name }).catch(e => console.error('Email error:', e.message));
+
+      return res.status(201).json({
+        message: 'تم إنشاء حساب الأدمن بنجاح',
+        token,
+        admin_slug: adminSlug,
+        site_key: siteKey,
+        user: {
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          site_key: admin.site_key
+        },
+        site: {
+          id: site.id,
+          name: site.name,
+          domain: site.domain,
+          site_key: site.site_key
+        }
+      });
+    } catch (txError) {
+      try { await connection.rollback(); } catch(e) {}
+      try { connection.release(); } catch(e) {}
+      throw txError;
+    }
   } catch (error) {
     console.error('Error in registerAdmin:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء حساب الأدمن' });
@@ -576,17 +600,10 @@ async function googleLogin(req, res) {
       });
     }
 
-    // Find or create user — platform users get 'user' role
-    // Site users default to 'user' unless no admin exists yet (first user becomes admin)
-    const isPlatformSite = !site.template_id;
-    let defaultRole = 'user';
-    if (!isPlatformSite) {
-      // تحقق إذا يوجد أدمن مسبقاً لهذا الموقع
-      const existingAdmin = await User.findByRole(siteKey, 'admin');
-      if (!existingAdmin) {
-        defaultRole = 'admin'; // أول مستخدم فقط يصبح أدمن
-      }
-    }
+    // Find or create user — Google OAuth NEVER creates admin accounts
+    // Admin creation must be explicit via registerAdmin or provisionSite only
+    // هذا يمنع أي مستخدم عشوائي من الحصول على صلاحيات أدمن عبر Google
+    const defaultRole = 'user';
 
     const { user, isNew } = await User.findOrCreateByGoogle({
       site_key: siteKey,

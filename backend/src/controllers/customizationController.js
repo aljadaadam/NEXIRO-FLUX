@@ -154,15 +154,29 @@ async function verifyAdminSlug(req, res) {
     const siteKey = req.siteKey;
     const { slug } = req.params;
     if (!siteKey || !slug) {
+      // تأخير ثابت لمنع timing attack
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 100));
       return res.json({ valid: false });
     }
 
     const customization = await Customization.findBySiteKey(siteKey);
-    const valid = customization && customization.admin_slug === slug;
-
-    res.json({ valid: !!valid });
+    
+    // مقارنة آمنة ضد هجمات التوقيت (timing-safe comparison)
+    let valid = false;
+    if (customization && customization.admin_slug) {
+      const crypto = require('crypto');
+      const a = Buffer.from(String(customization.admin_slug));
+      const b = Buffer.from(String(slug));
+      if (a.length === b.length) {
+        valid = crypto.timingSafeEqual(a, b);
+      }
+    }
+    // تأخير ثابت لمنع timing attack
+    await new Promise(r => setTimeout(r, 200 + Math.random() * 100));
+    res.json({ valid });
   } catch (error) {
     console.error('Error in verifyAdminSlug:', error);
+    await new Promise(r => setTimeout(r, 200 + Math.random() * 100));
     res.json({ valid: false });
   }
 }

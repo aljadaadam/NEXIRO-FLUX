@@ -4,19 +4,19 @@ function authorizeTenant(req, res, next) {
     return res.status(401).json({ error: 'يجب المصادقة أولاً' });
   }
 
-  const userSiteId = req.user.site_id;
+  const userSiteKey = req.user.site_key;
   
-  if (!userSiteId) {
+  if (!userSiteKey) {
     return res.status(403).json({ error: 'لا يمكن الوصول: غير مرتبط بموقع' });
   }
 
   // تحقق من أن المستخدم يحاول الوصول إلى بيانات موقعه فقط
-  if (req.params.site_id && parseInt(req.params.site_id) !== userSiteId) {
+  if (req.params.site_key && req.params.site_key !== userSiteKey) {
     return res.status(403).json({ error: 'غير مصرح بالوصول إلى بيانات هذا الموقع' });
   }
 
-  // تمرير site_id إلى الـ controller
-  req.site_id = userSiteId;
+  // تمرير site_key إلى الـ controller
+  req.site_key = userSiteKey;
   
   next();
 }
