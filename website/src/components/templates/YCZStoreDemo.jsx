@@ -4,16 +4,18 @@ import {
   ChevronLeft, ShoppingCart, 
   Users, Package, Wallet, Shield, Headphones, Zap, Star,
   CreditCard, TrendingUp, Globe, CheckCircle,
-  ShoppingBag, BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift
+  ShoppingBag, BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift, CalendarCheck
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { templates as staticTemplates } from '../../data/templates';
 import api from '../../services/api';
+import ReservationModal from '../common/ReservationModal';
 
 export default function YCZStoreDemo() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('yearly');
+  const [showReservation, setShowReservation] = useState(false);
 
   // Fetch real price from database
   const staticT = staticTemplates.find(tp => tp.id === 'digital-services-store');
@@ -58,6 +60,7 @@ export default function YCZStoreDemo() {
   ];
 
   return (
+    <>
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back */}
@@ -275,6 +278,17 @@ export default function YCZStoreDemo() {
                   </div>
                 </button>
 
+                {/* Reservation Button */}
+                <button
+                  onClick={() => setShowReservation(true)}
+                  className="w-full py-3 rounded-xl border-2 border-primary-500/30 hover:border-primary-500/60 text-primary-400 hover:text-primary-300 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <CalendarCheck className="w-4 h-4" />
+                    {isRTL ? 'احجز الآن' : 'Book Now'}
+                  </div>
+                </button>
+
                 {/* Trust Badges */}
                 <div className="mt-4 flex items-center justify-center gap-4 text-dark-500 text-xs">
                   <span className="flex items-center gap-1">
@@ -350,5 +364,14 @@ export default function YCZStoreDemo() {
         </div>
       </div>
     </div>
+
+    {/* Reservation Modal */}
+    <ReservationModal
+      isOpen={showReservation}
+      onClose={() => setShowReservation(false)}
+      templateId="digital-services-store"
+      templateName={isRTL ? staticT?.name : staticT?.nameEn}
+    />
+    </>
   );
 }

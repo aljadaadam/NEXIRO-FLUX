@@ -16,7 +16,7 @@ export default function Footer() {
     ],
     company: [
       { label: isRTL ? 'الرئيسية' : 'Home', to: '/' },
-      { label: isRTL ? 'سجّل مجاناً' : 'Get Started', to: isAuthenticated ? '/templates' : '/register' },
+      { label: isRTL ? 'احجز الآن' : 'Book Now', to: isAuthenticated ? '/templates' : '/register' },
       { label: isRTL ? 'تسجيل الدخول' : 'Login', to: '/login' },
       { label: isRTL ? 'تواصل معنا' : 'Contact', to: 'mailto:info@nexiro-flux.com' },
     ],

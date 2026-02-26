@@ -4,16 +4,18 @@ import {
   ChevronLeft, ShoppingCart, Gamepad2,
   Users, Package, Shield, Headphones, Zap, Star,
   CreditCard, Globe, CheckCircle,
-  BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift, Palette
+  BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift, Palette, CalendarCheck
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { templates as staticTemplates } from '../../data/templates';
 import api from '../../services/api';
+import ReservationModal from '../common/ReservationModal';
 
 export default function GxVaultDemo() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('yearly');
+  const [showReservation, setShowReservation] = useState(false);
 
   const staticT = staticTemplates.find(tp => tp.id === 'game-topup-store');
   const [basePrice, setBasePrice] = useState(staticT?.price?.monthly || 39);
@@ -66,6 +68,7 @@ export default function GxVaultDemo() {
   ];
 
   return (
+    <>
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back */}
@@ -299,6 +302,17 @@ export default function GxVaultDemo() {
                   </div>
                 </button>
 
+                {/* Reservation Button */}
+                <button
+                  onClick={() => setShowReservation(true)}
+                  className="w-full py-3 rounded-xl border-2 border-violet-500/30 hover:border-violet-500/60 text-violet-400 hover:text-violet-300 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <CalendarCheck className="w-4 h-4" />
+                    {isRTL ? 'احجز الآن' : 'Book Now'}
+                  </div>
+                </button>
+
                 <div className="mt-4 flex items-center justify-center gap-4 text-dark-500 text-xs">
                   <span className="flex items-center gap-1">
                     <Shield className="w-3.5 h-3.5" />
@@ -373,5 +387,14 @@ export default function GxVaultDemo() {
         </div>
       </div>
     </div>
+
+    {/* Reservation Modal */}
+    <ReservationModal
+      isOpen={showReservation}
+      onClose={() => setShowReservation(false)}
+      templateId="game-topup-store"
+      templateName={isRTL ? staticT?.name : staticT?.nameEn}
+    />
+    </>
   );
 }

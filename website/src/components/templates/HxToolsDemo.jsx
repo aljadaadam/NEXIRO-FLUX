@@ -5,16 +5,18 @@ import {
   Users, Package, Shield, Headphones, Zap, Star,
   CreditCard, Globe, CheckCircle,
   BarChart3, Sparkles, ArrowUpRight, BadgeCheck, Clock, Gift, Palette,
-  Truck, MapPin, DollarSign
+  Truck, MapPin, DollarSign, CalendarCheck
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { templates as staticTemplates } from '../../data/templates';
 import api from '../../services/api';
+import ReservationModal from '../common/ReservationModal';
 
 export default function HxToolsDemo() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('yearly');
+  const [showReservation, setShowReservation] = useState(false);
 
   const staticT = staticTemplates.find(tp => tp.id === 'hardware-tools-store');
   const [basePrice, setBasePrice] = useState(staticT?.price?.monthly || 39);
@@ -67,6 +69,7 @@ export default function HxToolsDemo() {
   ];
 
   return (
+    <>
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back */}
@@ -329,6 +332,17 @@ export default function HxToolsDemo() {
                   </div>
                 </button>
 
+                {/* Reservation Button */}
+                <button
+                  onClick={() => setShowReservation(true)}
+                  className="w-full py-3 rounded-xl border-2 border-blue-500/30 hover:border-blue-500/60 text-blue-400 hover:text-blue-300 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <CalendarCheck className="w-4 h-4" />
+                    {isRTL ? 'احجز الآن' : 'Book Now'}
+                  </div>
+                </button>
+
                 <div className="mt-4 flex items-center justify-center gap-4 text-dark-500 text-xs">
                   <span className="flex items-center gap-1">
                     <Shield className="w-3.5 h-3.5" />
@@ -403,5 +417,14 @@ export default function HxToolsDemo() {
         </div>
       </div>
     </div>
+
+    {/* Reservation Modal */}
+    <ReservationModal
+      isOpen={showReservation}
+      onClose={() => setShowReservation(false)}
+      templateId="hardware-tools-store"
+      templateName={isRTL ? staticT?.name : staticT?.nameEn}
+    />
+    </>
   );
 }

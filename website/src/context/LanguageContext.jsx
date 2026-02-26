@@ -10,7 +10,7 @@ const translations = {
       pricing: 'الأسعار',
       about: 'من نحن',
       login: 'تسجيل الدخول',
-      register: 'سجّل مجاناً',
+      register: 'احجز الآن',
       demo: 'شاهد الديمو',
     },
     hero: {
@@ -19,7 +19,7 @@ const translations = {
       title2: 'جاهز في دقائق',
       title3: 'ليس أيام.',
       subtitle: 'اختر قالبك، خصّصه بلمسة، وانطلق. NEXIRO-FLUX يحوّل فكرتك إلى واقع رقمي مذهل بدون كود، بدون تعقيد، بدون حدود.',
-      cta: 'ابدأ مجاناً الآن',
+      cta: 'احجز الآن',
       ctaSecondary: 'شاهد القوالب',
       trustedBy: 'موثوق من قبل أكثر من 2,500 عميل',
     },
@@ -307,7 +307,7 @@ const translations = {
     cta: {
       title: 'جاهز تبدأ رحلتك الرقمية؟',
       subtitle: 'انضم لآلاف العملاء السعداء. أول 14 يوم مجاناً، بدون بطاقة ائتمان.',
-      button: 'ابدأ الآن مجاناً',
+      button: 'احجز الآن',
     },
     footer: {
       description: 'منصة رائدة لبناء المواقع الإلكترونية الاحترافية بأسهل وأسرع طريقة.',
@@ -352,7 +352,7 @@ const translations = {
       pricing: 'Pricing',
       about: 'About',
       login: 'Login',
-      register: 'Get Started Free',
+      register: 'Book Now',
       demo: 'View Demo',
     },
     hero: {
@@ -361,7 +361,7 @@ const translations = {
       title2: 'Ready in Minutes',
       title3: 'Not Days.',
       subtitle: 'Pick your template, customize it with a touch, and launch. NEXIRO-FLUX turns your idea into a stunning digital reality — no code, no complexity, no limits.',
-      cta: 'Start Free Now',
+      cta: 'Book Now',
       ctaSecondary: 'View Templates',
       trustedBy: 'Trusted by over 2,500 clients',
     },
@@ -649,7 +649,7 @@ const translations = {
     cta: {
       title: 'Ready to Start Your Digital Journey?',
       subtitle: 'Join thousands of happy clients. First 14 days free, no credit card required.',
-      button: 'Start Free Now',
+      button: 'Book Now',
     },
     footer: {
       description: 'A leading platform for building professional websites the easiest and fastest way.',
