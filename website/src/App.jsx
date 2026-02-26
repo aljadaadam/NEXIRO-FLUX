@@ -1,7 +1,7 @@
 import { useEffect, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -23,7 +23,7 @@ import {
   HxToolsStoreLiveDemo, HxToolsDashboardLiveDemo,
   CarStoreLiveDemo, CarDashboardLiveDemo,
   // Admin
-  AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
+  AdminLoginPage, AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
   AdminAnnouncements, AdminSettings, AdminPayments,
   AdminPaymentGateways, AdminPurchaseCodes, AdminTickets, AdminChat,
   AdminReservations,
@@ -39,6 +39,24 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+// ─── بوابة الأدمن ───
+// تعرض شاشة تسجيل دخول مستقلة إذا لم يكن مسجل أو ليس أدمن منصة
+// منفصلة تماماً عن الواجهة الأمامية
+function AdminGate({ children }) {
+  const { isAuthenticated, isPlatformAdmin, loading } = useAuth();
+
+  if (loading) {
+    return <PageLoader />;
+  }
+
+  // غير مسجل أو ليس أدمن منصة → أظهر شاشة تسجيل الدخول المستقلة
+  if (!isAuthenticated || !isPlatformAdmin) {
+    return <AdminLoginPage />;
+  }
+
+  return children;
 }
 
 function AppContent() {
@@ -139,25 +157,23 @@ function AppContent() {
   if (isAdminPage) {
     return (
       <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/aljadadm654" element={
-            <ProtectedRoute requireAdmin>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<AdminOverview />} />
-            <Route path="reservations" element={<AdminReservations />} />
-            <Route path="tickets" element={<AdminTickets />} />
-            <Route path="chat" element={<AdminChat />} />
-            <Route path="templates" element={<AdminTemplates />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="announcements" element={<AdminAnnouncements />} />
-            <Route path="payments" element={<AdminPayments />} />
-            <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
-            <Route path="payment-gateways" element={<AdminPaymentGateways />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-        </Routes>
+        <AdminGate>
+          <Routes>
+            <Route path="/aljadadm654" element={<AdminLayout />}>
+              <Route index element={<AdminOverview />} />
+              <Route path="reservations" element={<AdminReservations />} />
+              <Route path="tickets" element={<AdminTickets />} />
+              <Route path="chat" element={<AdminChat />} />
+              <Route path="templates" element={<AdminTemplates />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
+              <Route path="payments" element={<AdminPayments />} />
+              <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
+              <Route path="payment-gateways" element={<AdminPaymentGateways />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+          </Routes>
+        </AdminGate>
       </Suspense>
     );
   }

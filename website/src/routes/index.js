@@ -33,6 +33,7 @@ export const CarStoreLiveDemo = lazy(() => import('../pages/demo/CarStoreLiveDem
 export const CarDashboardLiveDemo = lazy(() => import('../pages/demo/CarDashboardLiveDemo'));
 
 // ─── Admin Dashboard ───
+export const AdminLoginPage = lazy(() => import('../pages/admin/AdminLoginPage'));
 export const AdminLayout = lazy(() => import('../pages/admin/AdminLayout'));
 export const AdminOverview = lazy(() => import('../pages/admin/AdminOverview'));
 export const AdminTemplates = lazy(() => import('../pages/admin/AdminTemplates'));
