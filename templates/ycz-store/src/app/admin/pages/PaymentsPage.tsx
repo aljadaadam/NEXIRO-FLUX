@@ -149,7 +149,7 @@ export default function PaymentsPage() {
   // Transaction log state
   const [transactions, setTransactions] = useState<PaymentTx[]>([]);
   const [txLoading, setTxLoading] = useState(true);
-  const [txFilter, setTxFilter] = useState<'all' | 'pending' | 'completed' | 'failed'>('all');
+  const [txFilter, setTxFilter] = useState<'all' | 'pending' | 'awaiting_receipt' | 'completed' | 'failed'>('all');
   const [txPage, setTxPage] = useState(1);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [receiptModal, setReceiptModal] = useState<PaymentTx | null>(null);
