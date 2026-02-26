@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { COLOR_THEMES } from '@/lib/themes';
-import { adminApi } from '@/lib/api';
+import { adminApi, isDemoMode } from '@/lib/api';
 import {
   Image, Upload, Palette, Layout, Monitor, Moon,
   Megaphone, Zap, Check, Paintbrush, ShoppingCart, Share2,
@@ -101,7 +101,10 @@ export default function CustomizePage() {
         custom_css: theme.customCss,
         footer_text: theme.footerText,
       });
-      await theme.refetch();
+      // في وضع الديمو لا نستدعي refetch لأنه يعيد البيانات الافتراضية ويمسح تغييرات الزائر
+      if (!isDemoMode()) {
+        await theme.refetch();
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -118,7 +121,21 @@ export default function CustomizePage() {
     setResetting(true);
     try {
       await adminApi.resetCustomize();
-      await theme.refetch();
+      // في وضع الديمو نعيد القيم يدوياً للافتراضية
+      if (isDemoMode()) {
+        theme.setThemeId('purple');
+        theme.setLogoPreview(null);
+        theme.setFontFamily('Tajawal');
+        theme.setDarkMode(false);
+        theme.setButtonRadius('14');
+        theme.setHeaderStyle('default');
+        theme.setShowBanner(true);
+        theme.setStoreName('المتجر');
+        theme.setSocialLinks({});
+        theme.setLanguage('ar');
+      } else {
+        await theme.refetch();
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
