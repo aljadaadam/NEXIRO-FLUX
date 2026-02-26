@@ -141,17 +141,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const fetchFromServer = useCallback(async () => {
     const myId = ++fetchIdRef.current;
     try {
-      // في وضع الديمو نستخدم البيانات الوهمية مباشرة
+      // في وضع الديمو نستخدم البيانات الوهمية — فقط مرة واحدة عند أول تحميل
+      // بعدها نعتمد على localStorage الذي يُحدَّث تلقائياً مع كل تغيير
       if (isDemoMode()) {
-        const c = demoSettings;
-        if (c.theme_id) setThemeId(c.theme_id);
-        if (c.logo_url) setLogoPreview(c.logo_url);
-        if (c.font_family) setFontFamily(c.font_family);
-        if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
-        if (c.button_radius) setButtonRadius(c.button_radius);
-        if (c.header_style) setHeaderStyle(c.header_style);
-        if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
-        if (c.store_name) setStoreName(c.store_name);
+        const alreadyLoaded = typeof window !== 'undefined' && sessionStorage.getItem('demo_customized') === '1';
+        if (!alreadyLoaded) {
+          const c = demoSettings;
+          if (c.theme_id) setThemeId(c.theme_id);
+          if (c.logo_url) setLogoPreview(c.logo_url);
+          if (c.font_family) setFontFamily(c.font_family);
+          if (c.dark_mode !== undefined) setDarkMode(!!c.dark_mode);
+          if (c.button_radius) setButtonRadius(c.button_radius);
+          if (c.header_style) setHeaderStyle(c.header_style);
+          if (c.show_banner !== undefined) setShowBanner(!!c.show_banner);
+          if (c.store_name) setStoreName(c.store_name);
+          sessionStorage.setItem('demo_customized', '1');
+        }
         setLoaded(true);
         return;
       }
