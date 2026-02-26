@@ -21,6 +21,7 @@ const usersTable = `
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user',
+    is_platform_admin BOOLEAN DEFAULT FALSE COMMENT 'TRUE = أدمن المنصة الرئيسية NEXIRO-FLUX, FALSE = مستخدم عادي أو أدمن موقع فرعي',
     google_id VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_email_site (email, site_key),

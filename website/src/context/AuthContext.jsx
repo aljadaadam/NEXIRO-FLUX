@@ -93,8 +93,10 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
   const hasSite = !!site?.site_key;
-  // أدمن المنصة فقط — وليس أدمن أي موقع فرعي
-  const isPlatformAdmin = isAdmin && site?.site_key === 'nexiroflux';
+  // ─── أدمن المنصة الرئيسية ───
+  // يعتمد على حقل is_platform_admin من قاعدة البيانات (يأتي في response من الباك)
+  // لا يعتمد على site_key — لأن أدمن موقع فرعي يملك role=admin لكن is_platform_admin=false
+  const isPlatformAdmin = !!user?.is_platform_admin;
 
   return (
     <AuthContext.Provider value={{

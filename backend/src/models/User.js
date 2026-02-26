@@ -16,7 +16,7 @@ class User {
 
   static async findById(id, site_key = null) {
     const pool = getPool();
-    let query = 'SELECT id, site_key, name, email, role, created_at FROM users WHERE id = ?';
+    let query = 'SELECT id, site_key, name, email, role, is_platform_admin, created_at FROM users WHERE id = ?';
     const params = [id];
     if (site_key) {
       query += ' AND site_key = ?';
@@ -38,7 +38,7 @@ class User {
   static async findBySiteKey(site_key) {
     const pool = getPool();
     const [rows] = await pool.query(
-      'SELECT id, site_key, name, email, role, created_at FROM users WHERE site_key = ?', 
+      'SELECT id, site_key, name, email, role, is_platform_admin, created_at FROM users WHERE site_key = ?', 
       [site_key]
     );
     return rows;

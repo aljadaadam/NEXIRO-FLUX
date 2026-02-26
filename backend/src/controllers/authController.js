@@ -97,8 +97,9 @@ async function registerAdmin(req, res) {
 
       const admin = await User.findById(result.insertId);
 
-      // إنشاء التوكن
-      const token = generateToken(admin.id, admin.role, siteKey);
+      // إنشاء التوكن — registerAdmin ينشئ أدمن موقع فرعي وليس أدمن منصة
+      // is_platform_admin = false دائماً هنا
+      const token = generateToken(admin.id, admin.role, siteKey, false);
 
       // إنشاء admin_slug تلقائياً
       const Customization = require('../models/Customization');
@@ -121,6 +122,7 @@ async function registerAdmin(req, res) {
           name: admin.name,
           email: admin.email,
           role: admin.role,
+          is_platform_admin: !!admin.is_platform_admin,
           site_key: admin.site_key
         },
         site: {
@@ -187,7 +189,8 @@ async function registerUser(req, res) {
       role: 'customer'
     });
 
-    const token = generateToken(user.id, user.role, siteKey);
+    // registerUser = مستخدم عادي، ليس أدمن منصة أبداً
+    const token = generateToken(user.id, user.role, siteKey, false);
 
     // إرسال بريد ترحيبي للمستخدم العادي (ليس أدمن)
     emailService.sendWelcomeUser({ to: user.email, name: user.name }).catch(e => console.error('Email error:', e.message));
@@ -201,6 +204,7 @@ async function registerUser(req, res) {
         name: user.name,
         email: user.email,
         role: user.role,
+        is_platform_admin: false,
         site_key: user.site_key
       },
       site: {
@@ -258,8 +262,8 @@ async function login(req, res) {
       });
     }
 
-    // إنشاء التوكن
-    const token = generateToken(user.id, user.role, siteKey);
+    // إنشاء التوكن — is_platform_admin يأتي من قاعدة البيانات مباشرة
+    const token = generateToken(user.id, user.role, siteKey, user.is_platform_admin);
 
     // جلب admin_slug
     const Customization = require('../models/Customization');
@@ -292,6 +296,7 @@ async function login(req, res) {
         name: user.name,
         email: user.email,
         role: user.role,
+        is_platform_admin: !!user.is_platform_admin,
         site_key: user.site_key
       },
       site: {
@@ -387,6 +392,7 @@ async function getMyProfile(req, res) {
         name: user.name,
         email: user.email,
         role: user.role,
+        is_platform_admin: !!user.is_platform_admin,
         site_key: user.site_key
       },
       site_key: user.site_key // إضافة site_key
@@ -613,8 +619,8 @@ async function googleLogin(req, res) {
       defaultRole,
     });
 
-    // Generate JWT token
-    const token = generateToken(user.id, user.role, siteKey);
+    // Generate JWT token — Google OAuth لا ينشئ أدمن منصة أبداً
+    const token = generateToken(user.id, user.role, siteKey, user.is_platform_admin || false);
 
     // بريد ترحيبي للمستخدمين الجدد عبر Google
     if (isNew) {
@@ -634,6 +640,7 @@ async function googleLogin(req, res) {
         name: user.name,
         email: user.email,
         role: user.role,
+        is_platform_admin: !!user.is_platform_admin,
         site_key: user.site_key,
         picture: picture || null,
       },
