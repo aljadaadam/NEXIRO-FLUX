@@ -48,7 +48,7 @@ async function getAllOrders(req, res) {
 
     const orders = await Order.findBySiteKey(site_key, {
       page: parseInt(page) || 1,
-      limit: parseInt(limit) || 50,
+      limit: Math.min(parseInt(limit) || 50, 200),
       status,
       customer_id: effectiveCustomerId
     });
@@ -80,18 +80,29 @@ async function createOrder(req, res) {
     }
 
     // ─── حماية: جلب السعر الحقيقي من قاعدة البيانات — لا نثق بسعر الكلاينت ───
-    let verifiedPrice = parseFloat(unit_price);
+    let verifiedPrice;
+    const pool = getPool();
+
+    // الزبون يجب أن يرسل product_id — لا نقبل سعر يدوي من الزبون
+    if (role === 'customer' && !product_id) {
+      return res.status(400).json({ error: 'product_id مطلوب' });
+    }
+
     if (product_id) {
-      const pool = getPool();
       const [productRows] = await pool.query(
         'SELECT price FROM products WHERE id = ? AND site_key = ?',
         [product_id, site_key]
       );
-      if (productRows.length > 0 && productRows[0].price > 0) {
-        verifiedPrice = parseFloat(productRows[0].price);
+      if (!productRows.length || !productRows[0].price || productRows[0].price <= 0) {
+        return res.status(404).json({ error: 'المنتج غير موجود أو بدون سعر' });
       }
+      verifiedPrice = parseFloat(productRows[0].price);
+    } else {
+      // فقط الأدمن يمكنه تحديد سعر يدوي
+      verifiedPrice = parseFloat(unit_price);
     }
-    if (!verifiedPrice || verifiedPrice <= 0) {
+
+    if (!Number.isFinite(verifiedPrice) || verifiedPrice <= 0) {
       return res.status(400).json({ error: 'السعر غير صالح' });
     }
 
@@ -368,16 +379,23 @@ async function updateOrderStatus(req, res) {
       } catch (e) { /* ignore */ }
     }
 
-    // استرجاع المبلغ في حالة الإلغاء
+    // استرجاع المبلغ في حالة الإلغاء — بشكل ذري لمنع الاسترجاع المزدوج
     if (status === 'refunded' && order.payment_status === 'paid') {
-      await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
-      await Payment.create({
-        site_key, customer_id: order.customer_id, order_id: order.id,
-        type: 'refund', amount: parseFloat(order.total_price),
-        payment_method: 'wallet', status: 'completed',
-        description: `استرجاع: طلب #${order.order_number}`
-      });
-      await Order.updatePaymentStatus(id, site_key, 'refunded');
+      const pool = getPool();
+      const [refundResult] = await pool.query(
+        "UPDATE orders SET payment_status = 'refunded' WHERE id = ? AND site_key = ? AND payment_status = 'paid'",
+        [id, site_key]
+      );
+      // فقط إذا تم التحديث فعلاً (لم يسبق الاسترجاع)
+      if (refundResult.affectedRows > 0) {
+        await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
+        await Payment.create({
+          site_key, customer_id: order.customer_id, order_id: order.id,
+          type: 'refund', amount: parseFloat(order.total_price),
+          payment_method: 'wallet', status: 'completed',
+          description: `استرجاع: طلب #${order.order_number}`
+        });
+      }
     }
 
     res.json({ message: 'تم تحديث حالة الطلب', order });
@@ -408,6 +426,11 @@ async function placeExternalOrder(req, res) {
     const order = await Order.findById(id);
     if (!order || order.site_key !== site_key) {
       return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+
+    // حماية من إعادة الإرسال المكرر
+    if (order.external_reference_id) {
+      return res.status(409).json({ error: 'تم إرسال هذا الطلب مسبقاً', referenceId: order.external_reference_id });
     }
 
     if (!order.product_id) {

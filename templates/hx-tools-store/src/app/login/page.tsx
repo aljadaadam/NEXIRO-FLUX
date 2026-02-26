@@ -10,8 +10,30 @@ export default function HxLoginPage() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
-      localStorage.setItem('hx_auth_token', token);
-      router.replace('/profile');
+      // Security: clear token from URL immediately
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+
+      // Validate token with backend before storing
+      (async () => {
+        try {
+          const verifyRes = await fetch('/api/customization', {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+          });
+          if (!verifyRes.ok) {
+            router.replace('/profile');
+            return;
+          }
+          localStorage.setItem('hx_auth_token', token);
+          router.replace('/profile');
+        } catch {
+          router.replace('/profile');
+        }
+      })();
     } else {
       router.replace('/profile');
     }

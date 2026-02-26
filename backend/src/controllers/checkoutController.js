@@ -268,8 +268,8 @@ async function initCheckout(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ Checkout error:', error.message, error.response?.data || '');
-    res.status(500).json({ error: 'فشل في بدء عملية الدفع', details: error.message });
+    console.error('❌ Checkout error:', error.message);
+    res.status(500).json({ error: 'فشل في بدء عملية الدفع' });
   }
 }
 
@@ -597,7 +597,7 @@ async function checkUsdtPayment(req, res) {
 
   } catch (error) {
     console.error('❌ USDT check error:', error);
-    res.status(500).json({ error: 'فشل في التحقق من الدفع', details: error.message });
+    res.status(500).json({ error: 'فشل في التحقق من الدفع' });
   }
 }
 

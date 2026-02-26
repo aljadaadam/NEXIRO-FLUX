@@ -13,7 +13,7 @@ async function getAllPayments(req, res) {
 
     const payments = await Payment.findBySiteKey(siteKey, {
       page: parseInt(page),
-      limit: parseInt(limit),
+      limit: Math.min(parseInt(limit) || 50, 200),
       type,
       customer_id: effectiveCustomerId
     });
@@ -42,6 +42,13 @@ async function createPayment(req, res) {
       return res.status(400).json({ error: 'المبلغ يجب أن يكون أكبر من 0' });
     }
 
+    // Security: customers cannot create deposit payments directly — must use checkout flow
+    const validTypes = ['purchase', 'deposit', 'subscription', 'refund'];
+    const paymentType = validTypes.includes(type) ? type : 'purchase';
+    if (req.user?.role === 'customer' && paymentType === 'deposit') {
+      return res.status(403).json({ error: 'يرجى استخدام بوابة الدفع لشحن المحفظة' });
+    }
+
     const validMethods = ['wallet', 'binance', 'paypal', 'bank_transfer', 'e_wallet', 'credit_card', 'crypto'];
     if (!validMethods.includes(payment_method)) {
       return res.status(400).json({ error: `طريقة الدفع غير صالحة. الطرق المتاحة: ${validMethods.join(', ')}` });
@@ -51,7 +58,7 @@ async function createPayment(req, res) {
       site_key: siteKey,
       customer_id: effectiveCustomerId,
       order_id,
-      type: type || 'purchase',
+      type: paymentType,
       amount: parseFloat(amount),
       currency: currency || 'USD',
       payment_method,

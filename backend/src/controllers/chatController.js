@@ -24,6 +24,8 @@ exports.sendCustomerMessage = async (req, res) => {
     const site_key = req.siteKey;
     const { conversation_id, message, customer_name, customer_email } = req.body;
     if (!conversation_id || !message?.trim()) return res.status(400).json({ error: 'بيانات ناقصة' });
+    // Security: limit message length to prevent abuse
+    if (message.length > 5000) return res.status(400).json({ error: 'الرسالة طويلة جداً (حد 5000 حرف)' });
     // تأكد من وجود المحادثة
     await ChatMessage.getOrCreateConversation(site_key, conversation_id, customer_name, customer_email);
     const msgId = await ChatMessage.addMessage(site_key, conversation_id, 'customer', message.trim());

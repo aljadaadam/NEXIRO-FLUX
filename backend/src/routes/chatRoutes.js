@@ -1,13 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const chatController = require('../controllers/chatController');
 
+// Rate limiter for public chat endpoints — prevent spam
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 15,
+  message: { error: 'طلبات كثيرة جداً، حاول لاحقاً' },
+});
+
 /* ─── نقاط عامة (الزبون) ─── */
-router.post('/public/start', chatController.startConversation);
-router.post('/public/send', chatController.sendCustomerMessage);
-router.get('/public/messages', chatController.getCustomerMessages);
+router.post('/public/start', chatLimiter, chatController.startConversation);
+router.post('/public/send', chatLimiter, chatController.sendCustomerMessage);
+router.get('/public/messages', chatLimiter, chatController.getCustomerMessages);
 
 /* ─── نقاط إدارية ─── */
 router.use(validateSite);

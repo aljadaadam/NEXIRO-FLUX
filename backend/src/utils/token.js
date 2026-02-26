@@ -15,7 +15,7 @@ function generateToken(userId, role, site_key) {
 
 function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
   } catch (error) {
     return null;
   }

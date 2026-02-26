@@ -94,14 +94,12 @@ export default function GxvProfilePage() {
       }
       const res = await gxvStoreApi.chargeWallet({ amount, gateway_id: selectedGateway, type: 'deposit' });
       if (res.error) throw new Error(res.error);
-      // Handle different payment methods
+      // Handle different payment methods — validate URL protocol
       if (res.redirectUrl) {
-        window.location.href = res.redirectUrl;
-        return;
+        try { const u = new URL(res.redirectUrl); if (u.protocol === 'https:' || u.protocol === 'http:') { window.location.href = u.href; return; } } catch {}
       }
       if (res.checkoutUrl) {
-        window.location.href = res.checkoutUrl;
-        return;
+        try { const u = new URL(res.checkoutUrl); if (u.protocol === 'https:' || u.protocol === 'http:') { window.location.href = u.href; return; } } catch {}
       }
       // Manual payment (USDT/bank) - show instructions
       if (res.method === 'manual_crypto') {

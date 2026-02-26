@@ -24,8 +24,30 @@ function GxvLoginHandler() {
 
     const token = searchParams.get('token');
     if (token) {
-      localStorage.setItem('admin_key', token);
-      router.replace('/admin');
+      // Security: clear token from URL immediately to prevent leaking in history/logs/Referer
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+
+      // Validate token with backend before storing
+      (async () => {
+        try {
+          const verifyRes = await fetch('/api/customization', {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+          });
+          if (!verifyRes.ok) {
+            router.replace('/');
+            return;
+          }
+          localStorage.setItem('admin_key', token);
+          router.replace('/admin');
+        } catch {
+          router.replace('/');
+        }
+      })();
     }
   }, [searchParams, router]);
 

@@ -79,7 +79,15 @@ async function getPost(req, res) {
 async function createPost(req, res) {
   try {
     const { site_key } = req.user;
-    const data = { ...req.body };
+    // Security: whitelist allowed fields to prevent mass assignment
+    const allowedFields = ['title', 'slug', 'content', 'excerpt', 'cover_image', 'is_published', 'category', 'tags', 'meta_title', 'meta_description'];
+    const data = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    // Length limits
+    if (data.title && data.title.length > 500) return res.status(400).json({ error: 'العنوان طويل جداً (حد 500 حرف)' });
+    if (data.excerpt && data.excerpt.length > 2000) return res.status(400).json({ error: 'المقتطف طويل جداً (حد 2000 حرف)' });
     if (Array.isArray(data.content)) {
       data.content = JSON.stringify(data.content);
     }
@@ -97,7 +105,14 @@ async function updatePost(req, res) {
   try {
     const { site_key } = req.user;
     const { id } = req.params;
-    const data = { ...req.body };
+    // Security: whitelist allowed fields
+    const allowedFields = ['title', 'slug', 'content', 'excerpt', 'cover_image', 'is_published', 'category', 'tags', 'meta_title', 'meta_description'];
+    const data = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    if (data.title && data.title.length > 500) return res.status(400).json({ error: 'العنوان طويل جداً' });
+    if (data.excerpt && data.excerpt.length > 2000) return res.status(400).json({ error: 'المقتطف طويل جداً' });
     if (Array.isArray(data.content)) {
       data.content = JSON.stringify(data.content);
     }

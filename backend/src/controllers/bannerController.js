@@ -31,7 +31,15 @@ async function getActiveBanners(req, res) {
 async function createBanner(req, res) {
   try {
     const { site_key } = req.user;
-    const banner = await Banner.create(site_key, req.body);
+    // Security: whitelist allowed fields
+    const allowedFields = ['title', 'subtitle', 'image_url', 'link', 'icon', 'is_active', 'sort_order', 'background_color', 'text_color'];
+    const data = {};
+    for (const f of allowedFields) { if (req.body[f] !== undefined) data[f] = req.body[f]; }
+    if (data.title && data.title.length > 200) return res.status(400).json({ error: 'العنوان طويل جداً' });
+    if (data.link) {
+      try { const u = new URL(data.link); if (!['http:', 'https:'].includes(u.protocol)) throw 0; } catch { return res.status(400).json({ error: 'رابط غير صالح' }); }
+    }
+    const banner = await Banner.create(site_key, data);
     res.status(201).json({ message: 'تم إنشاء البانر', banner });
   } catch (error) {
     console.error('Error in createBanner:', error);
@@ -44,7 +52,15 @@ async function updateBanner(req, res) {
   try {
     const { site_key } = req.user;
     const { id } = req.params;
-    const banner = await Banner.update(id, site_key, req.body);
+    // Security: whitelist allowed fields
+    const allowedFields = ['title', 'subtitle', 'image_url', 'link', 'icon', 'is_active', 'sort_order', 'background_color', 'text_color'];
+    const data = {};
+    for (const f of allowedFields) { if (req.body[f] !== undefined) data[f] = req.body[f]; }
+    if (data.title && data.title.length > 200) return res.status(400).json({ error: 'العنوان طويل جداً' });
+    if (data.link) {
+      try { const u = new URL(data.link); if (!['http:', 'https:'].includes(u.protocol)) throw 0; } catch { return res.status(400).json({ error: 'رابط غير صالح' }); }
+    }
+    const banner = await Banner.update(id, site_key, data);
     if (!banner) {
       return res.status(404).json({ error: 'البانر غير موجود' });
     }

@@ -829,8 +829,7 @@ async function importFromExternalApi(req, res) {
   } catch (error) {
     console.error('❌ Error in importFromExternalApi:', error);
     res.status(500).json({ 
-      error: 'حدث خطأ أثناء الاستيراد من API الخارجي',
-      details: error.message
+      error: 'حدث خطأ أثناء الاستيراد من API الخارجي'
     });
   }
 }
@@ -899,9 +898,7 @@ async function getPublicProducts(req, res) {
   } catch (error) {
     console.error('❌ Error in getPublicProducts:', error);
     res.status(500).json({ 
-      error: 'حدث خطأ أثناء جلب المنتجات', 
-      details: error.message,
-      version: 'v3'
+      error: 'حدث خطأ أثناء جلب المنتجات'
     });
   }
 }
@@ -1131,7 +1128,7 @@ async function seedTemplateProducts(req, res) {
     });
   } catch (error) {
     console.error('Error in seedTemplateProducts:', error);
-    res.status(500).json({ error: 'حدث خطأ أثناء تعبئة المنتجات', details: error.message });
+    res.status(500).json({ error: 'حدث خطأ أثناء تعبئة المنتجات' });
   }
 }
 

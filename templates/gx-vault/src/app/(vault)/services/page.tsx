@@ -63,8 +63,12 @@ export default function GxvServicesPage() {
         ...(selectedGateway ? { gateway_id: selectedGateway } : {}),
       });
       if (res.error) throw new Error(res.error);
-      if (res.redirectUrl) { window.location.href = res.redirectUrl; return; }
-      if (res.checkoutUrl) { window.location.href = res.checkoutUrl; return; }
+      if (res.redirectUrl) {
+        try { const u = new URL(res.redirectUrl); if (u.protocol === 'https:' || u.protocol === 'http:') { window.location.href = u.href; return; } } catch {}
+      }
+      if (res.checkoutUrl) {
+        try { const u = new URL(res.checkoutUrl); if (u.protocol === 'https:' || u.protocol === 'http:') { window.location.href = u.href; return; } } catch {}
+      }
       if (res.method === 'manual_crypto') {
         setOrderResult({ ok: true, msg: `تم إنشاء الطلب! أرسل ${res.amount} USDT إلى: ${res.walletAddress} (${res.network})` });
       } else if (res.method === 'manual_bank') {

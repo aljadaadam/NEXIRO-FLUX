@@ -102,8 +102,8 @@ async function checkSubscriptionStrict(req, res, next) {
     next();
   } catch (error) {
     console.error('[checkSubscription] Error:', error.message);
-    // في حالة خطأ — نسمح بالمرور (fail open)
-    next();
+    // Security: fail closed — don't allow access on DB error
+    return res.status(503).json({ error: 'خدمة غير متاحة مؤقتاً' });
   }
 }
 
