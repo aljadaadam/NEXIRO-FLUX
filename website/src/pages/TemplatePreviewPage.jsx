@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft, Loader2 } from 'lucide-react';
+import { Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { templates as staticTemplates } from '../data/templates';
 import api from '../services/api';

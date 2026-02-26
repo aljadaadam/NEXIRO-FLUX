@@ -21,9 +21,9 @@ export default function Footer() {
       { label: isRTL ? 'تواصل معنا' : 'Contact', to: 'mailto:info@nexiro-flux.com' },
     ],
     support: [
-      { label: isRTL ? 'الأسئلة الشائعة' : 'FAQ', to: '/pricing' },
+      { label: isRTL ? 'الأسعار والخطط' : 'Pricing & Plans', to: '/pricing' },
       { label: isRTL ? 'الدعم الفني' : 'Technical Support', to: 'mailto:support@nexiro-flux.com' },
-      { label: isRTL ? 'التوثيق' : 'Documentation', to: '/templates' },
+      { label: isRTL ? 'القوالب' : 'Templates', to: '/templates' },
     ],
     legal: [
       { label: isRTL ? 'الشروط والأحكام' : 'Terms of Service', to: '/terms' },
@@ -56,10 +56,17 @@ export default function Footer() {
               {t('footer.description')}
             </p>
             <div className="flex items-center gap-3">
-              {[Twitter, Instagram, Linkedin, Github].map((Icon, i) => (
+              {[
+                { Icon: Twitter, href: 'https://x.com/nexiroflux' },
+                { Icon: Instagram, href: 'https://instagram.com/nexiroflux' },
+                { Icon: Linkedin, href: 'https://linkedin.com/company/nexiroflux' },
+                { Icon: Github, href: 'https://github.com/nexiroflux' },
+              ].map(({ Icon, href }, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-500/20 border border-white/5 hover:border-primary-500/30 flex items-center justify-center text-dark-400 hover:text-primary-400 transition-all duration-300"
                 >
                   <Icon className="w-4 h-4" />

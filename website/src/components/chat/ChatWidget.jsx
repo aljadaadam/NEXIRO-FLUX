@@ -142,8 +142,8 @@ function playNotifSound() {
 
 
 export default function ChatWidget() {
-  const { language, isRTL } = useLanguage();
-  const t = chatT[language] || chatT.en;
+  const { lang, isRTL } = useLanguage();
+  const t = chatT[lang] || chatT.en;
 
   // ── State ──
   const [isOpen, setIsOpen] = useState(false);

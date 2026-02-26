@@ -379,7 +379,7 @@ export default function MyDashboardPage() {
                   disabled={saving}
                   className="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-bold disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="w-3, h-3 animate-spin" /> : (isRTL ? 'حفظ' : 'Save')}
+                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : (isRTL ? 'حفظ' : 'Save')}
                 </button>
               </div>
             )}

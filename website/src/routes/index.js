@@ -11,7 +11,6 @@ export const PricingPage = lazy(() => import('../pages/PricingPage'));
 export const TemplatePreviewPage = lazy(() => import('../pages/TemplatePreviewPage'));
 export const LoginPage = lazy(() => import('../pages/LoginPage'));
 export const RegisterPage = lazy(() => import('../pages/RegisterPage'));
-export const SetupWizardPage = lazy(() => import('../pages/SetupWizardPage'));
 export const MyDashboardPage = lazy(() => import('../pages/MyDashboardPage'));
 export const TermsPage = lazy(() => import('../pages/TermsPage'));
 export const PrivacyPage = lazy(() => import('../pages/PrivacyPage'));

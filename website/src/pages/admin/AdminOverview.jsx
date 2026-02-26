@@ -179,7 +179,7 @@ export default function AdminOverview() {
               <Globe className="w-4 h-4 text-violet-400" />
               {isRTL ? 'أحدث المواقع' : 'Recent Sites'}
             </h3>
-            <Link to="/admin/sites" className="text-primary-400 hover:text-primary-300 text-[11px] transition-colors">
+            <Link to="/admin/users" className="text-primary-400 hover:text-primary-300 text-[11px] transition-colors">
               {isRTL ? `عرض الكل (${stats?.totalSites || 0})` : `View All (${stats?.totalSites || 0})`}
             </Link>
           </div>
@@ -284,7 +284,7 @@ export default function AdminOverview() {
             { labelAr: 'إدارة المستخدمين', labelEn: 'Manage Users', icon: Users, to: '/admin/users', color: 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30', iconColor: 'text-indigo-400' },
             { labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes', icon: Key, to: '/admin/purchase-codes', color: 'from-amber-500/10 to-amber-500/5 border-amber-500/10 hover:border-amber-500/30', iconColor: 'text-amber-400' },
             { labelAr: 'تذاكر الدعم', labelEn: 'Support Tickets', icon: Ticket, to: '/admin/tickets', color: 'from-rose-500/10 to-rose-500/5 border-rose-500/10 hover:border-rose-500/30', iconColor: 'text-rose-400' },
-            { labelAr: 'إدارة المواقع', labelEn: 'Manage Sites', icon: Globe, to: '/admin/sites', color: 'from-violet-500/10 to-violet-500/5 border-violet-500/10 hover:border-violet-500/30', iconColor: 'text-violet-400' },
+            { labelAr: 'إدارة المواقع', labelEn: 'Manage Sites', icon: Globe, to: '/admin/users', color: 'from-violet-500/10 to-violet-500/5 border-violet-500/10 hover:border-violet-500/30', iconColor: 'text-violet-400' },
           ].map((action, i) => {
             const Icon = action.icon;
             return (

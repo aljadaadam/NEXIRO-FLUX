@@ -46,7 +46,7 @@ export default function AdminLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-50 w-72 bg-[#0d1221] border-${isRTL ? 'l' : 'r'} border-white/5 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+      <aside className={`fixed lg:static inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-50 w-72 bg-[#0d1221] ${isRTL ? 'border-l' : 'border-r'} border-white/5 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')
       }`}>
         {/* Logo */}

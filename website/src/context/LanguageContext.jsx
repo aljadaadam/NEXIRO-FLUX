@@ -647,6 +647,7 @@ const translations = {
       },
     },
     cta: {
+      title: 'Ready to Start Your Digital Journey?',
       subtitle: 'Join thousands of happy clients. First 14 days free, no credit card required.',
       button: 'Start Free Now',
     },

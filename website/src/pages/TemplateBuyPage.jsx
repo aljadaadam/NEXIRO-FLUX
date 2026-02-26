@@ -175,7 +175,7 @@ export default function TemplateBuyPage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [usdtTimeLeft !== null && usdtTimeLeft > 0]); // eslint-disable-line
+  }, [usdtTimeLeft]);
 
   // Copy to clipboard
   const copyText = (text, label) => {
