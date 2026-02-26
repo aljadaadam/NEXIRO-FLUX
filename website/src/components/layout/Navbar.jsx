@@ -10,7 +10,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showReservation, setShowReservation] = useState(false);
   const { t, toggleLang, lang, isRTL } = useLanguage();
-  const { user, isAuthenticated, isPlatformAdmin, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -84,7 +84,7 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
-                  to={isPlatformAdmin ? '/admin' : '/my-dashboard'}
+                  to="/my-dashboard"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-dark-300 hover:text-white transition-colors duration-300"
                 >
                   <LayoutDashboard className="w-4 h-4" />
@@ -156,7 +156,7 @@ export default function Navbar() {
           </div>
           {isAuthenticated ? (
             <>
-              <Link to={isPlatformAdmin ? '/admin' : '/my-dashboard'} className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-dark-300 hover:text-white rounded-xl hover:bg-white/5">
+              <Link to="/my-dashboard" className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-dark-300 hover:text-white rounded-xl hover:bg-white/5">
                 <LayoutDashboard className="w-4 h-4" />
                 {isRTL ? 'لوحة التحكم' : 'Dashboard'}
               </Link>

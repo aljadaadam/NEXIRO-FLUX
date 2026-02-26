@@ -17,10 +17,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (!isAuthenticated) {
-    // On dash.nexiroflux.com, redirect to main site login instead of local /login
+    // On dash.nexiroflux.com, redirect to main site login
     const isDashSubdomain = typeof window !== 'undefined' && window.location.hostname === 'dash.nexiroflux.com';
     if (isDashSubdomain) {
-      window.location.href = `https://nexiroflux.com/login?redirect=${encodeURIComponent(location.pathname)}`;
+      window.location.href = `https://nexiroflux.com/login`;
       return (
         <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
@@ -33,9 +33,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Admin routes require platform admin (role=admin + site_key=nexiroflux)
+  // Admin routes require platform admin (is_platform_admin=true)
   if (requireAdmin && !isPlatformAdmin) {
-    return <Navigate to="/my-dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

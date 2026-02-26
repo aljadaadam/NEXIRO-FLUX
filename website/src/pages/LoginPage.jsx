@@ -53,14 +53,7 @@ export default function LoginPage() {
       clearMessages();
       try {
         const data = await googleLogin({ access_token: tokenResponse.access_token });
-        const redirectParam = searchParams.get('redirect');
-        if (data.user?.role === 'admin' && redirectParam) {
-          window.location.href = `https://dash.nexiroflux.com${redirectParam}`;
-        } else if (data.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/my-dashboard');
-        }
+        navigate('/my-dashboard');
       } catch (err) {
         setLocalError(err.error || (isRTL ? 'فشل تسجيل الدخول عبر Google' : 'Google login failed'));
       } finally {
@@ -84,14 +77,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(email, password);
-      const redirectParam = searchParams.get('redirect');
-      if (data.user?.role === 'admin' && redirectParam) {
-        window.location.href = `https://dash.nexiroflux.com${redirectParam}`;
-      } else if (data.user?.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/my-dashboard');
-      }
+      navigate('/my-dashboard');
     } catch (err) {
       setLocalError(err.error || (isRTL ? 'البريد أو كلمة المرور غير صحيحة' : 'Invalid email or password'));
     } finally {

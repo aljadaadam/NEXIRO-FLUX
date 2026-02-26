@@ -9,17 +9,17 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/admin', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview', exact: true },
-  { to: '/admin/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
-  { to: '/admin/reservations', icon: CalendarCheck, labelAr: 'الحجوزات', labelEn: 'Reservations' },
-  { to: '/admin/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
-  { to: '/admin/chat', icon: MessagesSquare, labelAr: 'الدردشة المباشرة', labelEn: 'Live Chat' },
-  { to: '/admin/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
-  { to: '/admin/templates', icon: Layers, labelAr: 'القوالب', labelEn: 'Templates' },
-  { to: '/admin/purchase-codes', icon: Key, labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes' },
-  { to: '/admin/payment-gateways', icon: Landmark, labelAr: 'بوابات الدفع', labelEn: 'Payment Gateways' },
-  { to: '/admin/announcements', icon: Megaphone, labelAr: 'الإشعارات', labelEn: 'Notifications' },
-  { to: '/admin/settings', icon: Settings, labelAr: 'الإعدادات', labelEn: 'Settings' },
+  { to: '/aljadadm654', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview', exact: true },
+  { to: '/aljadadm654/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
+  { to: '/aljadadm654/reservations', icon: CalendarCheck, labelAr: 'الحجوزات', labelEn: 'Reservations' },
+  { to: '/aljadadm654/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
+  { to: '/aljadadm654/chat', icon: MessagesSquare, labelAr: 'الدردشة المباشرة', labelEn: 'Live Chat' },
+  { to: '/aljadadm654/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
+  { to: '/aljadadm654/templates', icon: Layers, labelAr: 'القوالب', labelEn: 'Templates' },
+  { to: '/aljadadm654/purchase-codes', icon: Key, labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes' },
+  { to: '/aljadadm654/payment-gateways', icon: Landmark, labelAr: 'بوابات الدفع', labelEn: 'Payment Gateways' },
+  { to: '/aljadadm654/announcements', icon: Megaphone, labelAr: 'الإشعارات', labelEn: 'Notifications' },
+  { to: '/aljadadm654/settings', icon: Settings, labelAr: 'الإعدادات', labelEn: 'Settings' },
 ];
 
 export default function AdminLayout() {

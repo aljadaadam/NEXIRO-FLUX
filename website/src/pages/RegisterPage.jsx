@@ -8,15 +8,15 @@ import SEO from '../components/common/SEO';
 
 export default function RegisterPage() {
   const { t, isRTL } = useLanguage();
-  const { register, googleLogin, error: authError, setError, isAuthenticated, isPlatformAdmin } = useAuth();
+  const { register, googleLogin, error: authError, setError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(isPlatformAdmin ? '/admin' : '/templates', { replace: true });
+      navigate('/templates', { replace: true });
     }
-  }, [isAuthenticated, isPlatformAdmin, navigate]);
+  }, [isAuthenticated, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
@@ -33,11 +33,7 @@ export default function RegisterPage() {
       setError(null);
       try {
         const data = await googleLogin({ access_token: tokenResponse.access_token });
-        if (data.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/my-dashboard');
-        }
+        navigate('/my-dashboard');
       } catch (err) {
         setLocalError(err.error || (isRTL ? 'فشل التسجيل عبر Google' : 'Google registration failed'));
       } finally {

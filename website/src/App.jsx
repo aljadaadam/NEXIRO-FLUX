@@ -51,14 +51,14 @@ function AppContent() {
   }, [location.pathname]);
 
   const isDemoPage = location.pathname.startsWith('/demo/');
-  const isAdminPage = location.pathname.startsWith('/admin');
+  const isAdminPage = location.pathname.startsWith('/aljadadm654');
   const isSetupPage = location.pathname === '/setup';
   const isTerminalSetup = location.pathname === '/terminal-setup';
   const isBuyPage = location.pathname === '/buy';
   const isMyDashboard = location.pathname === '/my-dashboard';
   const isCheckoutPage = location.pathname.startsWith('/checkout');
 
-  // dash.nexiroflux.com should ONLY show /admin routes
+  // dash.nexiroflux.com should ONLY show /aljadadm654 routes
   // Redirect any non-admin route on dash subdomain to nexiroflux.com
   const isDashSubdomain = typeof window !== 'undefined' && window.location.hostname === 'dash.nexiroflux.com';
   useEffect(() => {
@@ -140,7 +140,7 @@ function AppContent() {
     return (
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/admin" element={
+          <Route path="/aljadadm654" element={
             <ProtectedRoute requireAdmin>
               <AdminLayout />
             </ProtectedRoute>
