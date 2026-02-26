@@ -151,10 +151,16 @@ async function provisionSite(req, res) {
 
     // ─── تحديد السعر حسب الخطة ───
     const prices = {
-      'digital-services-store': { monthly: 39, yearly: 349, lifetime: 899 },
-      'ecommerce-pro': { monthly: 29, yearly: 249, lifetime: 599 },
-      'restaurant-starter': { monthly: 19, yearly: 159, lifetime: 399 },
-      'portfolio-developer': { monthly: 15, yearly: 129, lifetime: 299 },
+      'digital-services-store': { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+      'game-topup-store': { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+      'hardware-tools-store': { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+      'car-dealership-store': { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+      'ecommerce-pro': { monthly: 29.9, yearly: 299, lifetime: 747.5 },
+      'restaurant-starter': { monthly: 19.9, yearly: 199, lifetime: 497.5 },
+      'portfolio-creative': { monthly: 14.9, yearly: 149, lifetime: 372.5 },
+      'saas-dashboard': { monthly: 39.9, yearly: 399, lifetime: 997.5 },
+      'landing-starter': { monthly: 14.9, yearly: 149, lifetime: 372.5 },
+      'medical-clinic': { monthly: 34.9, yearly: 349, lifetime: 872.5 },
     };
 
     const templatePrices = prices[template_id] || { monthly: 29, yearly: 249, lifetime: 599 };
