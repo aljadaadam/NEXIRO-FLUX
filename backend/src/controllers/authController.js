@@ -570,11 +570,17 @@ async function googleLogin(req, res) {
       });
     }
 
-    // Find or create user — platform users get 'user' role, site-specific get 'admin'
-    // Determine default role: if this is a provisioned site (has template_id), new users are admin
-    // Otherwise on the main platform, new users are regular users
+    // Find or create user — platform users get 'user' role
+    // Site users default to 'user' unless no admin exists yet (first user becomes admin)
     const isPlatformSite = !site.template_id;
-    const defaultRole = isPlatformSite ? 'user' : 'admin';
+    let defaultRole = 'user';
+    if (!isPlatformSite) {
+      // تحقق إذا يوجد أدمن مسبقاً لهذا الموقع
+      const existingAdmin = await User.findByRole(siteKey, 'admin');
+      if (!existingAdmin) {
+        defaultRole = 'admin'; // أول مستخدم فقط يصبح أدمن
+      }
+    }
 
     const { user, isNew } = await User.findOrCreateByGoogle({
       site_key: siteKey,

@@ -28,8 +28,8 @@ router.get('/public', getPublicProducts);
 router.get('/public/:id', getPublicProduct);
 router.get('/categories', getProductCategories);
 
-// ─── تعبئة القوالب الافتراضية (بدون مصادقة — يُنفَّذ مرة واحدة) ───
-router.get('/seed-templates', seedTemplateProducts);
+// ─── تعبئة القوالب الافتراضية (محمي — أدمن فقط) ───
+router.get('/seed-templates', authenticateToken, requireRole('admin'), seedTemplateProducts);
 
 // ─── تشخيص (debug) — محمي بمصادقة أدمن ───
 router.get('/debug', authenticateToken, requireRole('admin'), debugProducts);

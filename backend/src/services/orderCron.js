@@ -128,7 +128,7 @@ async function checkPendingOrders() {
           });
 
           sourceCache[srcId] = { client, type: 'dhru' };
-          siteSourceMap[siteKey][srcId].client = client;
+          siteSourceMap[siteKey][srcId].client = sourceCache[srcId];
         } catch (err) {
           console.error(`[OrderCron] ❌ خطأ بناء client للمصدر ${srcId}:`, err.message);
         }
@@ -142,6 +142,15 @@ async function checkPendingOrders() {
       for (const srcId of Object.keys(siteSourceMap[siteKey])) {
         const { client: clientInfo, orders } = siteSourceMap[siteKey][srcId];
         if (!clientInfo) continue;
+
+        // حماية: التأكد من وجود method الفحص قبل الاستخدام
+        const actualClient = clientInfo.client || clientInfo;
+        const hasGetOrderStatus = typeof actualClient.getOrderStatus === 'function';
+        const hasGetOrderHistory = typeof actualClient.getOrderHistory === 'function' || (clientInfo.type === 'imeicheck' && typeof actualClient.getOrderHistory === 'function');
+        if (!hasGetOrderStatus && !hasGetOrderHistory) {
+          console.warn(`[OrderCron] ⚠️ تخطي مصدر ${srcId} (${siteKey}) — لا يملك getOrderStatus/getOrderHistory`);
+          continue;
+        }
 
         for (const order of orders) {
           try {

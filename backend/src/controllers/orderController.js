@@ -75,12 +75,28 @@ async function createOrder(req, res) {
       ? requesterId
       : customer_id;
 
-    if (!effectiveCustomerId || !product_name || !unit_price) {
+    if (!effectiveCustomerId || !product_name) {
       return res.status(400).json({ error: 'بيانات الطلب غير مكتملة' });
     }
 
+    // ─── حماية: جلب السعر الحقيقي من قاعدة البيانات — لا نثق بسعر الكلاينت ───
+    let verifiedPrice = parseFloat(unit_price);
+    if (product_id) {
+      const pool = getPool();
+      const [productRows] = await pool.query(
+        'SELECT price FROM products WHERE id = ? AND site_key = ?',
+        [product_id, site_key]
+      );
+      if (productRows.length > 0 && productRows[0].price > 0) {
+        verifiedPrice = parseFloat(productRows[0].price);
+      }
+    }
+    if (!verifiedPrice || verifiedPrice <= 0) {
+      return res.status(400).json({ error: 'السعر غير صالح' });
+    }
+
     const qty = quantity || 1;
-    const total_price = parseFloat(unit_price) * qty;
+    const total_price = verifiedPrice * qty;
 
     // التحقق من رصيد المحفظة وخصمه بأمان (transaction + row lock)
     const pool = getPool();

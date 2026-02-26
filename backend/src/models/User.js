@@ -44,6 +44,16 @@ class User {
     return rows;
   }
 
+  // بحث عن مستخدم بدور محدد في موقع
+  static async findByRole(site_key, role) {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      'SELECT id FROM users WHERE site_key = ? AND role = ? LIMIT 1',
+      [site_key, role]
+    );
+    return rows[0] || null;
+  }
+
   static async update(id, site_key, { name, email }) {
     const pool = getPool();
     

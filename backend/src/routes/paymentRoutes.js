@@ -27,7 +27,7 @@ router.get('/:id', authenticateToken, requireRole('admin', 'user'), getPaymentBy
 // إنشاء عملية دفع (أدمن)
 router.post('/', authenticateToken, requireRole('admin', 'user'), createPayment);
 
-// تحديث حالة الدفع
-router.patch('/:id/status', authenticateToken, requireRole('admin', 'user'), updatePaymentStatus);
+// تحديث حالة الدفع (أدمن فقط — لا يسمح للمستخدم العادي)
+router.patch('/:id/status', authenticateToken, requireRole('admin'), updatePaymentStatus);
 
 module.exports = router;

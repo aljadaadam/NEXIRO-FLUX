@@ -93,9 +93,14 @@ async function getStoreCustomization(req, res) {
 
     const customization = await Customization.findBySiteKey(siteKey);
 
-    // Strip admin_slug from public response
+    // Strip sensitive fields from public response
     if (customization) {
       delete customization.admin_slug;
+      delete customization.smtp_host;
+      delete customization.smtp_port;
+      delete customization.smtp_user;
+      delete customization.smtp_pass;
+      delete customization.smtp_from;
 
       // إذا store_name فارغ — نجلبه من جدول sites
       if (!customization.store_name && req.site && req.site.name) {

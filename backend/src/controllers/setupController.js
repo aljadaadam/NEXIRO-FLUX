@@ -460,9 +460,9 @@ async function provisionSite(req, res) {
       const safeDomainRegex = /^[a-z0-9][a-z0-9.-]{1,253}[a-z0-9]$/;
       if (safeDomainRegex.test(domain)) {
         try {
-          const { execSync } = require('child_process');
+          const { execFileSync } = require('child_process');
           const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
-          const output = execSync(`python3 ${scriptPath} ${domain}`, {
+          const output = execFileSync('python3', [scriptPath, domain], {
             timeout: 150000,
             encoding: 'utf-8'
           });
@@ -730,7 +730,13 @@ async function updateCustomDomain(req, res) {
       return res.status(400).json({ error: 'الدومين المخصص مطلوب' });
     }
 
-    const domain = custom_domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const domain = custom_domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+
+    // ─── حماية من Command Injection — التحقق من صيغة الدومين ───
+    const safeDomainRegex = /^[a-z0-9][a-z0-9.-]{1,253}[a-z0-9]$/;
+    if (!safeDomainRegex.test(domain)) {
+      return res.status(400).json({ error: 'صيغة الدومين غير صالحة. استخدم أحرف وأرقام ونقاط فقط', errorEn: 'Invalid domain format. Use only letters, numbers, dots and hyphens' });
+    }
 
     // التحقق من أن الدومين غير مستخدم
     const existing = await Site.findByCustomDomain(domain);
@@ -750,7 +756,8 @@ async function updateCustomDomain(req, res) {
       try {
         const { execSync } = require('child_process');
         const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
-        const output = execSync(`python3 ${scriptPath} ${domain}`, {
+        const { execFileSync } = require('child_process');
+        const output = execFileSync('python3', [scriptPath, domain], {
           timeout: 150000,
           encoding: 'utf-8'
         });
