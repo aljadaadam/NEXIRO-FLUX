@@ -205,6 +205,9 @@ const en: Record<string, string> = {
   'شراء': 'Purchase',
   'عملية': 'Transaction',
   'قيد المراجعة': 'Under Review',
+  'بانتظار رفع الإيصال': 'Awaiting Receipt Upload',
+  'بانتظار المراجعة': 'Pending Review',
+  'بانتظار الإيصال': 'Awaiting Receipt',
   'فشل': 'Failed',
 
   // ─── Wallet Charge Modal ───

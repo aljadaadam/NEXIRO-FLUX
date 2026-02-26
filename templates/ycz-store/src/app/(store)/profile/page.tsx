@@ -1101,6 +1101,7 @@ export default function ProfilePage() {
         const statusMap: Record<string, { label: string; color: string; bg: string }> = {
           completed: { label: t('مكتمل'), color: '#16a34a', bg: '#dcfce7' },
           pending: { label: t('قيد المراجعة'), color: '#f59e0b', bg: '#fffbeb' },
+          awaiting_receipt: { label: t('بانتظار رفع الإيصال'), color: '#6366f1', bg: '#eef2ff' },
           failed: { label: t('فشل'), color: '#ef4444', bg: '#fee2e2' },
           refunded: { label: t('مسترجع'), color: '#2563eb', bg: '#dbeafe' },
           cancelled: { label: t('ملغي'), color: '#64748b', bg: '#f1f5f9' },

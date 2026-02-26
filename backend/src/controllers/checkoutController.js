@@ -89,7 +89,10 @@ async function initCheckout(req, res) {
       return res.status(401).json({ error: 'يلزم تسجيل دخول الزبون لشحن المحفظة' });
     }
 
-    // إنشاء سجل الدفع بحالة pending
+    // تحديد الحالة الأولية: بوابات البنك تبدأ بـ awaiting_receipt حتى يرفع الإيصال
+    const manualGateways = ['bank_transfer', 'bankak'];
+    const initialStatus = manualGateways.includes(gateway.type) ? 'awaiting_receipt' : 'pending';
+
     const payment = await Payment.create({
       site_key: getSiteKey(req),
       customer_id: customerId,
@@ -99,7 +102,7 @@ async function initCheckout(req, res) {
       currency: currency || 'USD',
       payment_method: gateway.type,
       payment_gateway_id: gateway.id,
-      status: 'pending',
+      status: initialStatus,
       description: description || `Payment for product #${product_id}`,
     });
 
@@ -626,13 +629,18 @@ async function uploadBankReceipt(req, res) {
       return res.status(404).json({ error: 'الدفعة غير موجودة' });
     }
 
+    // فقط الدفعات التي بانتظار الإيصال أو المعلقة يمكن رفع إيصال لها
+    if (!['awaiting_receipt', 'pending'].includes(payment.status)) {
+      return res.status(400).json({ error: 'لا يمكن رفع إيصال لهذه الدفعة' });
+    }
+
     await Payment.updateMeta(payment.id, getSiteKey(req), {
       receipt_url,
       receipt_notes: notes,
       receipt_uploaded_at: new Date().toISOString(),
     });
 
-    // تغير الحالة إلى "بانتظار المراجعة"
+    // الآن فقط تصبح الدفعة تحت المراجعة
     await Payment.updateStatus(payment.id, getSiteKey(req), 'pending');
 
     // تنبيه بريدي بالإيصال البنكي

@@ -539,7 +539,7 @@ export default function PaymentsPage() {
 
         {/* Filter Tabs */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-          {([['all', 'الكل'], ['pending', 'معلّقة'], ['completed', 'مكتملة'], ['failed', 'مرفوضة']] as const).map(([key, label]) => {
+          {([['all', 'الكل'], ['pending', 'بانتظار المراجعة'], ['awaiting_receipt', 'بانتظار الإيصال'], ['completed', 'مكتملة'], ['failed', 'مرفوضة']] as const).map(([key, label]) => {
             const count = key === 'all' ? transactions.length : transactions.filter(t => t.status === key).length;
             const isActive = txFilter === key;
             return (
@@ -602,7 +602,8 @@ export default function PaymentsPage() {
                     : (GATEWAY_META[tx.payment_method as GatewayType]?.labelEn || tx.payment_method);
                   const methodColor = GATEWAY_META[tx.payment_method as GatewayType]?.color || '#64748b';
                   const statusConfig = {
-                    pending: { label: t('معلّقة'), bg: '#fef3c7', color: '#92400e', icon: '⏳' },
+                    pending: { label: t('بانتظار المراجعة'), bg: '#fef3c7', color: '#92400e', icon: '⏳' },
+                    awaiting_receipt: { label: t('بانتظار الإيصال'), bg: '#eef2ff', color: '#4338ca', icon: '📄' },
                     completed: { label: t('مكتملة'), bg: '#dcfce7', color: '#166534', icon: '✅' },
                     failed: { label: t('مرفوضة'), bg: '#fee2e2', color: '#b91c1c', icon: '❌' },
                     refunded: { label: t('مستردة'), bg: '#e0e7ff', color: '#4338ca', icon: '↩️' },
