@@ -110,7 +110,6 @@ async function createOrder(req, res) {
     const total_price = verifiedPrice * qty;
 
     // التحقق من رصيد المحفظة وخصمه بأمان (transaction + row lock)
-    const pool = getPool();
     if (payment_method === 'wallet') {
       const conn = await pool.getConnection();
       try {
