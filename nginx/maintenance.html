@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>صيانة مؤقتة</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+    body {
+      font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      color: #e2e8f0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+      animation: bgShift 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgShift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-3%, 3%); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2.5rem;
+      max-width: 520px;
+      width: 90%;
+    }
+
+    /* Animated gear icon */
+    .icon-wrap {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 2rem;
+      position: relative;
+    }
+
+    .gear {
+      width: 100px;
+      height: 100px;
+      animation: spin 4s linear infinite;
+    }
+
+    .gear path { fill: #6366f1; }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Pulse ring behind gear */
+    .icon-wrap::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.1);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    /* Countdown section */
+    .countdown-wrap {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .countdown-label {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
+    .countdown {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #a5b4fc;
+      font-variant-numeric: tabular-nums;
+      direction: ltr;
+    }
+
+    .countdown .unit {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #64748b;
+      margin: 0 2px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #818cf8, #6366f1);
+      background-size: 200% 100%;
+      border-radius: 4px;
+      animation: progressAnim 2s ease-in-out infinite;
+      width: 40%;
+    }
+
+    @keyframes progressAnim {
+      0% { background-position: 200% 0; width: 20%; }
+      50% { width: 60%; }
+      100% { background-position: -200% 0; width: 20%; }
+    }
+
+    .note {
+      font-size: 0.8rem;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .note svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Auto-reload dot */
+    .reload-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: blink 1.5s ease-in-out infinite;
+      margin-inline-end: 4px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem; }
+      h1 { font-size: 1.4rem; }
+      .countdown { font-size: 1.8rem; }
+      .icon-wrap { width: 80px; height: 80px; }
+      .gear { width: 80px; height: 80px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Animated Gear Icon -->
+    <div class="icon-wrap">
+      <svg class="gear" viewBox="0 0 24 24">
+        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64L19.43 12.97Z"/>
+      </svg>
+    </div>
+
+    <h1>جاري تحديث الموقع</h1>
+    <p class="subtitle">
+      نقوم بتحسينات سريعة لتقديم تجربة أفضل.<br>
+      سيعود الموقع للعمل خلال لحظات.
+    </p>
+
+    <!-- Countdown -->
+    <div class="countdown-wrap">
+      <div class="countdown-label">الوقت المتوقع للعودة</div>
+      <div class="countdown" id="countdown">
+        <span id="minutes">01</span><span class="unit">:</span><span id="seconds">00</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+
+    <div class="note">
+      <span class="reload-dot"></span>
+      <span>سيتم إعادة تحميل الصفحة تلقائياً عند جاهزية الموقع</span>
+    </div>
+  </div>
+
+  <script>
+    // Countdown from 60 seconds
+    const TOTAL = 60;
+    let remaining = TOTAL;
+    const mEl = document.getElementById('minutes');
+    const sEl = document.getElementById('seconds');
+
+    const tick = () => {
+      if (remaining <= 0) {
+        remaining = 0;
+      }
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      mEl.textContent = String(m).padStart(2, '0');
+      sEl.textContent = String(s).padStart(2, '0');
+      if (remaining > 0) remaining--;
+    };
+
+    tick();
+    setInterval(tick, 1000);
+
+    // Auto-check if site is back every 5 seconds
+    const checkSite = async () => {
+      try {
+        const r = await fetch(window.location.href, {
+          method: 'HEAD',
+          cache: 'no-store',
+          headers: { 'X-Maintenance-Check': '1' }
+        });
+        // If we get a non-502/503/504 response, site is back
+        if (r.ok || (r.status < 500)) {
+          window.location.reload();
+        }
+      } catch (e) {
+        // Network error, still down
+      }
+    };
+
+    setInterval(checkSite, 5000);
+  </script>
+</body>
+</html>
