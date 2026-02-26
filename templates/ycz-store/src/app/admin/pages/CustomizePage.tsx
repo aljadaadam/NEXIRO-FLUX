@@ -7,7 +7,7 @@ import { adminApi } from '@/lib/api';
 import {
   Image, Upload, Palette, Layout, Monitor, Moon,
   Megaphone, Zap, Check, Paintbrush, ShoppingCart, Share2,
-  Trash2, RotateCcw, Globe, Code, FileText, X,
+  Trash2, RotateCcw, Globe, X,
 } from 'lucide-react';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
@@ -443,47 +443,7 @@ export default function CustomizePage() {
           ))}
         </Section>
 
-        {/* ═══════════ 5. Footer & Custom CSS ═══════════ */}
-        <Section icon={<FileText size={18} color="#7c5cff" />} title={t("النص السفلي و CSS مخصص")}>
-          {/* Footer Text */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>{t('نص أسفل الصفحة (Footer)')}</label>
-            <textarea
-              value={theme.footerText}
-              onChange={e => theme.setFooterText(e.target.value)}
-              placeholder={t("مثال: جميع الحقوق محفوظة © 2025 — اسم متجرك")}
-              rows={2}
-              style={{
-                ...inputStyle, resize: 'vertical', minHeight: 56,
-              }}
-            />
-            <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 4 }}>{t('يظهر نص مخصص بدل حقوق النشر الافتراضية')}</p>
-          </div>
-
-          {/* Custom CSS */}
-          <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Code size={14} color="#64748b" /> {t('CSS مخصص')}
-            </label>
-            <textarea
-              value={theme.customCss}
-              onChange={e => theme.setCustomCss(e.target.value)}
-              placeholder={`.my-class {\n  color: red;\n}`}
-              rows={5}
-              dir="ltr"
-              spellCheck={false}
-              style={{
-                ...inputStyle,
-                fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
-                fontSize: '0.75rem', resize: 'vertical', minHeight: 100,
-                lineHeight: 1.6, whiteSpace: 'pre',
-              }}
-            />
-            <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 4 }}>أضف CSS مخصص — يُطبق فورياً على المتجر بالكامل</p>
-          </div>
-        </Section>
-
-        {/* ═══════════ 6. Live Preview ═══════════ */}
+        {/* ═══════════ 5. Live Preview ═══════════ */}
         <Section icon={<Monitor size={18} color="#7c5cff" />} title={t("معاينة مباشرة")}>
           <div style={{
             borderRadius: 14, overflow: 'hidden',
