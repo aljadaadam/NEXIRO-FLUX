@@ -1,21 +1,34 @@
 import { useState } from 'react';
-import { X, Send, Loader2, CheckCircle2, CalendarCheck, User, Mail, Phone, MessageSquare } from 'lucide-react';
+import { X, Send, Loader2, CheckCircle2, CalendarCheck, User, Mail, Phone, MessageSquare, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { templates as staticTemplates } from '../../data/templates';
 import api from '../../services/api';
 
 export default function ReservationModal({ isOpen, onClose, templateId, templateName, plan }) {
   const { isRTL } = useLanguage();
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
+  const [selectedTemplate, setSelectedTemplate] = useState(templateId || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const hasTemplate = !!templateId;
+
   if (!isOpen) return null;
+
+  const getTemplateName = () => {
+    if (templateName) return templateName;
+    const tpl = staticTemplates.find(t => t.id === selectedTemplate);
+    return tpl ? (isRTL ? tpl.name : tpl.nameEn) : '';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim()) {
-      setError(isRTL ? 'الاسم والبريد الإلكتروني مطلوبان' : 'Name and email are required');
+    const finalTemplateId = templateId || selectedTemplate;
+    const finalTemplateName = getTemplateName();
+
+    if (!form.name.trim() || !form.email.trim() || !finalTemplateId) {
+      setError(isRTL ? 'الاسم والبريد الإلكتروني والقالب مطلوبين' : 'Name, email and template are required');
       return;
     }
 
@@ -26,8 +39,8 @@ export default function ReservationModal({ isOpen, onClose, templateId, template
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim() || null,
-        template_id: templateId,
-        template_name: templateName,
+        template_id: finalTemplateId,
+        template_name: finalTemplateName,
         plan: plan || 'monthly',
         message: form.message.trim() || null,
       });
@@ -41,6 +54,7 @@ export default function ReservationModal({ isOpen, onClose, templateId, template
 
   const handleClose = () => {
     setForm({ name: '', email: '', phone: '', message: '' });
+    setSelectedTemplate(templateId || '');
     setError('');
     setSuccess(false);
     onClose();
@@ -105,10 +119,32 @@ export default function ReservationModal({ isOpen, onClose, templateId, template
             )}
 
             {/* Template info */}
-            <div className="px-3 py-2 rounded-lg bg-primary-500/5 border border-primary-500/10 text-xs">
-              <span className="text-dark-400">{isRTL ? 'القالب: ' : 'Template: '}</span>
-              <span className="text-primary-400 font-medium">{templateName}</span>
-            </div>
+            {hasTemplate ? (
+              <div className="px-3 py-2 rounded-lg bg-primary-500/5 border border-primary-500/10 text-xs">
+                <span className="text-dark-400">{isRTL ? 'القالب: ' : 'Template: '}</span>
+                <span className="text-primary-400 font-medium">{templateName}</span>
+              </div>
+            ) : (
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-dark-400 mb-1.5">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  {isRTL ? 'اختر القالب' : 'Select Template'} <span className="text-red-400">*</span>
+                </label>
+                <select
+                  className={`${inputClass} appearance-none cursor-pointer`}
+                  value={selectedTemplate}
+                  onChange={e => setSelectedTemplate(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>{isRTL ? '-- اختر القالب --' : '-- Select Template --'}</option>
+                  {staticTemplates.map(tpl => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {isRTL ? tpl.name : tpl.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Name */}
             <div>
