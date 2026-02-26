@@ -76,8 +76,8 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        // If token expired/invalid, logout
-        if (response.status === 401 || response.status === 403) {
+        // If token expired/invalid, logout (401 only — 403 means forbidden, not session-invalid)
+        if (response.status === 401) {
           if (this.getToken()) {
             this.removeToken();
             window.dispatchEvent(new Event('auth:logout'));

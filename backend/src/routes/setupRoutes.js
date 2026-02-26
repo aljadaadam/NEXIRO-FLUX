@@ -20,7 +20,7 @@ router.get('/check-dns/:domain', checkDomainDNS);
 router.use(validateSite);
 
 // جلب بيانات الموقع الخاص بالمستخدم
-router.get('/my-site', authenticateToken, requireRole('admin'), getMySite);
+router.get('/my-site', authenticateToken, requireRole('admin', 'user'), getMySite);
 
 // تحديث إعدادات الموقع
 router.put('/my-site', authenticateToken, requireRole('admin'), updateSiteSettings);

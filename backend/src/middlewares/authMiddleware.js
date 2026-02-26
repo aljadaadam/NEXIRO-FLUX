@@ -11,7 +11,7 @@ function authenticateToken(req, res, next) {
   const decoded = verifyToken(token);
   
   if (!decoded) {
-    return res.status(403).json({ error: 'Token غير صالح أو منتهي' });
+    return res.status(401).json({ error: 'Token غير صالح أو منتهي' });
   }
 
   // ─── Dynamic tenant check ───
