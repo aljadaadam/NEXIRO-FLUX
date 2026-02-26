@@ -11,30 +11,40 @@ function LoginHandler() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
-      // Auto-login from platform dashboard
-      localStorage.setItem('admin_key', token);
+      // Security: clear the token from URL immediately to prevent leaking in history/logs/Referer
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
 
+      // Validate token with backend before storing
       (async () => {
-        let slug = searchParams.get('slug') || '';
+        try {
+          const verifyRes = await fetch('/api/customization', {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+          });
+          if (!verifyRes.ok) {
+            // Invalid token — redirect to profile
+            router.replace('/profile');
+            return;
+          }
+          // Token is valid — store it
+          localStorage.setItem('admin_key', token);
 
-        if (!slug) {
-          try {
-            const res = await fetch('/api/customization', {
-              headers: { Authorization: `Bearer ${token}` },
-              cache: 'no-store',
-            });
-            if (res.ok) {
-              const data = await res.json();
-              slug = data.admin_slug || data.customization?.admin_slug || '';
-            }
-          } catch { /* ignore */ }
-        }
+          const data = await verifyRes.json();
+          const slug = searchParams.get('slug') || data.admin_slug || data.customization?.admin_slug || '';
 
-        if (slug) {
-          sessionStorage.setItem('admin_slug', slug);
-          router.replace(`/admin?key=${slug}`);
-        } else {
-          router.replace('/admin');
+          if (slug) {
+            sessionStorage.setItem('admin_slug', slug);
+            router.replace(`/admin?key=${slug}`);
+          } else {
+            router.replace('/admin');
+          }
+        } catch {
+          // Network error — redirect to profile
+          router.replace('/profile');
         }
       })();
     } else {

@@ -15,6 +15,7 @@ export default function OrdersPage() {
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'range'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // تحويل حالات الباك اند إلى عربي مع ألوان
   const statusMap: Record<string, { label: string; color: string }> = {
@@ -61,6 +62,16 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
+    // Security: auth guard — redirect to profile if not logged in
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/profile';
+      }
+      return;
+    }
+    setIsAuthenticated(true);
+
     async function load() {
       setLoading(true);
       try {
@@ -130,6 +141,15 @@ export default function OrdersPage() {
   };
 
   const hasActiveFilters = searchQuery.trim() || dateFilter !== 'all';
+
+  // Security: don't render page content if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '3rem 1rem', textAlign: 'center' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>{t('يرجى تسجيل الدخول لعرض الطلبات')}</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>

@@ -426,7 +426,13 @@ export const storeApi = {
       const demo = getDemoResponse(`/checkout/status/${id}`, 'GET');
       if (demo) return demo;
     }
-    const res = await fetch(`${API_BASE}/checkout/status/${id}`);
+    const token = getAuthToken();
+    const res = await fetch(`${API_BASE}/checkout/status/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+    });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err?.error || `HTTP ${res.status}`);
@@ -439,9 +445,13 @@ export const storeApi = {
       const demo = getDemoResponse(`/checkout/check-usdt/${id}`, 'POST');
       if (demo) return demo;
     }
+    const token = getAuthToken();
     const res = await fetch(`${API_BASE}/checkout/check-usdt/${id}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ txHash: txHash || undefined }),
     });
     if (!res.ok) {

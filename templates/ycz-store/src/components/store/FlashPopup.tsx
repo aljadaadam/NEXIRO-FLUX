@@ -35,7 +35,13 @@ export default function FlashPopup() {
   const handleBtnClick = () => {
     const url = data?.flash_btn_url as string;
     if (url) {
-      window.open(url, '_blank');
+      // Security: validate URL protocol to prevent javascript: and data: injection
+      try {
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+          window.open(parsed.href, '_blank', 'noopener,noreferrer');
+        }
+      } catch { /* invalid URL — ignore */ }
     }
     handleClose();
   };

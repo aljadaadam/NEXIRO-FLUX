@@ -103,6 +103,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [darkMode]);
 
+  // ─── Sanitize CSS to prevent CSS injection attacks ───
+  function sanitizeCss(css: string): string {
+    if (!css) return '';
+    // Remove dangerous CSS directives that can exfiltrate data or load remote resources
+    return css
+      .replace(/@import\b[^;]*;?/gi, '/* @import blocked */')
+      .replace(/expression\s*\(/gi, '/* expression blocked */(')
+      .replace(/behavior\s*:/gi, '/* behavior blocked */:')
+      .replace(/-moz-binding\s*:/gi, '/* -moz-binding blocked */:')
+      .replace(/javascript\s*:/gi, '/* javascript blocked */:')
+      .replace(/url\s*\(\s*(['"]?)\s*(?:https?:|\/\/|data:(?!image\/(png|jpe?g|gif|svg\+xml|webp)))/gi, '/* url blocked */(')
+      .replace(/<\/?script/gi, '');
+  }
+
   // ─── Apply custom CSS dynamically ───
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -112,7 +126,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       style.id = 'ycz-custom-css';
       document.head.appendChild(style);
     }
-    style.textContent = customCss || '';
+    style.textContent = sanitizeCss(customCss);
   }, [customCss]);
 
   // ─── 1. قراءة من localStorage كـ cache أولي (سريع) ───

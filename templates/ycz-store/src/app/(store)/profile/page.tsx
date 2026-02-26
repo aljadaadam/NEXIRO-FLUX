@@ -193,13 +193,27 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 
       // Handle based on payment method
       if (result.method === 'redirect' && result.redirectUrl && !result.redirectUrl.startsWith('#')) {
-        // PayPal: redirect to payment page
-        window.location.href = result.redirectUrl;
+        // Security: validate redirect URL is HTTPS and not javascript:/data:
+        try {
+          const parsed = new URL(result.redirectUrl);
+          if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            window.location.href = parsed.href;
+          } else {
+            setSubmitError(t('رابط الدفع غير صالح'));
+          }
+        } catch {
+          setSubmitError(t('رابط الدفع غير صالح'));
+        }
         return;
       }
       if (result.method === 'qr_or_redirect' && result.checkoutUrl && !result.checkoutUrl.startsWith('#')) {
-        // Binance: open checkout in new tab, show waiting screen
-        window.open(result.checkoutUrl, '_blank');
+        // Security: validate checkout URL
+        try {
+          const parsed = new URL(result.checkoutUrl);
+          if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            window.open(parsed.href, '_blank', 'noopener,noreferrer');
+          }
+        } catch { /* invalid URL */ }
       }
       // For all methods: show step 2 with payment details
       setStep(2);
@@ -1046,7 +1060,7 @@ export default function ProfilePage() {
         }));
       }
     } catch (err: any) {
-      console.error('[Profile] فشل جلب الملف الشخصي:', err?.message);
+      // Security: don't log error details to console in production
       // إذا كان خطأ مصادقة — أخرج المستخدم
       if (err?.message?.includes('غير مصرح') || err?.message?.includes('Token')) {
         localStorage.removeItem('auth_token');
