@@ -149,8 +149,23 @@ async function provisionSite(req, res) {
       }
     }
 
-    // ─── تحديد السعر حسب الخطة ───
-    const prices = {
+    // ─── تحديد السعر حسب الخطة (من قاعدة البيانات أولاً، ثم الافتراضي) ───
+    // ربط template_id بالتصنيف في جدول products
+    const templateCategoryMap = {
+      'digital-services-store': 'digital-services',
+      'game-topup-store': 'game-topup',
+      'hardware-tools-store': 'hardware-tools',
+      'car-dealership-store': 'car-dealership',
+      'ecommerce-pro': 'e-commerce',
+      'restaurant-starter': 'restaurant',
+      'portfolio-creative': 'portfolio',
+      'saas-dashboard': 'dashboard',
+      'landing-starter': 'landing',
+      'medical-clinic': 'medical',
+    };
+
+    // الأسعار الافتراضية (fallback إذا لم يوجد سعر في قاعدة البيانات)
+    const fallbackPrices = {
       'digital-services-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
       'game-topup-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
       'hardware-tools-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
@@ -163,7 +178,31 @@ async function provisionSite(req, res) {
       'medical-clinic': { monthly: 34.9, yearly: 349, lifetime: 872.5 },
     };
 
-    const templatePrices = prices[template_id] || { monthly: 29, yearly: 249, lifetime: 599 };
+    // محاولة قراءة السعر من قاعدة البيانات (أسعار الأدمن)
+    let templatePrices = fallbackPrices[template_id] || { monthly: 29, yearly: 249, lifetime: 599 };
+    try {
+      const { getPool } = require('../config/db');
+      const dbPool = getPool();
+      const category = templateCategoryMap[template_id];
+      if (category) {
+        const [dbRows] = await dbPool.query(
+          `SELECT price, price_yearly, price_lifetime FROM products
+           WHERE site_key = 'nexiroflux' AND service_type = 'TEMPLATE' AND category = ?
+           LIMIT 1`,
+          [category]
+        );
+        if (dbRows.length > 0 && dbRows[0].price > 0) {
+          const row = dbRows[0];
+          templatePrices = {
+            monthly: parseFloat(row.price) || templatePrices.monthly,
+            yearly: parseFloat(row.price_yearly) || templatePrices.yearly,
+            lifetime: parseFloat(row.price_lifetime) || templatePrices.lifetime,
+          };
+        }
+      }
+    } catch (dbErr) {
+      console.warn('⚠️ Failed to read template prices from DB, using fallback:', dbErr.message);
+    }
     const cycle = (codeData?.billing_cycle) || billing_cycle || 'monthly';
     let price = templatePrices[cycle] || templatePrices.monthly;
 
