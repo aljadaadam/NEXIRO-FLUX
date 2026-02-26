@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import ReservationModal from '../common/ReservationModal';
 
 function useInView(ref) {
   const [visible, setVisible] = useState(false);
@@ -20,6 +21,7 @@ export default function CTASection() {
   const ref = useRef();
   const visible = useInView(ref);
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
+  const [showReservation, setShowReservation] = useState(false);
 
   return (
     <section className="section-padding relative overflow-hidden" ref={ref}>
@@ -45,13 +47,25 @@ export default function CTASection() {
               {t('cta.subtitle')}
             </p>
 
-            <Link to={isAuthenticated ? '/templates' : '/register'} className="btn-primary text-lg gap-2 group">
-              {t('cta.button')}
-              <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/templates" className="btn-primary text-lg gap-2 group">
+                {t('cta.button')}
+                <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <button onClick={() => setShowReservation(true)} className="btn-primary text-lg gap-2 group">
+                {t('cta.button')}
+                <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      <ReservationModal
+        isOpen={showReservation}
+        onClose={() => setShowReservation(false)}
+      />
     </section>
   );
 }

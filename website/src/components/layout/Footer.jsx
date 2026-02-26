@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Github, Twitter, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import ReservationModal from '../common/ReservationModal';
 
 export default function Footer() {
   const { t, isRTL } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const [showReservation, setShowReservation] = useState(false);
 
   const footerLinks = {
     product: [
@@ -16,7 +19,7 @@ export default function Footer() {
     ],
     company: [
       { label: isRTL ? 'الرئيسية' : 'Home', to: '/' },
-      { label: isRTL ? 'احجز الآن' : 'Book Now', to: isAuthenticated ? '/templates' : '/register' },
+      { label: isRTL ? 'احجز الآن' : 'Book Now', to: isAuthenticated ? '/templates' : '#reservation', action: !isAuthenticated ? () => setShowReservation(true) : null },
       { label: isRTL ? 'تسجيل الدخول' : 'Login', to: '/login' },
       { label: isRTL ? 'تواصل معنا' : 'Contact', to: 'mailto:info@nexiro-flux.com' },
     ],
@@ -33,6 +36,7 @@ export default function Footer() {
   };
 
   return (
+    <>
     <footer className="relative bg-dark-950 border-t border-white/5">
       {/* Gradient top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
@@ -91,6 +95,13 @@ export default function Footer() {
                       >
                         {link.label}
                       </a>
+                    ) : link.action ? (
+                      <button
+                        onClick={link.action}
+                        className="text-dark-400 hover:text-primary-400 text-sm transition-colors duration-300"
+                      >
+                        {link.label}
+                      </button>
                     ) : (
                       <Link
                         to={link.to}
@@ -120,5 +131,11 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+
+    <ReservationModal
+      isOpen={showReservation}
+      onClose={() => setShowReservation(false)}
+    />
+    </>
   );
 }

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, ChevronDown, Sparkles, LayoutDashboard, LogOut, User } from 'lucide-react';
+import { Menu, X, Globe, ChevronDown, Sparkles, LayoutDashboard, LogOut, User, CalendarCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import ReservationModal from '../common/ReservationModal';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showReservation, setShowReservation] = useState(false);
   const { t, toggleLang, lang, isRTL } = useLanguage();
   const { user, isAuthenticated, isPlatformAdmin, logout } = useAuth();
   const location = useLocation();
@@ -29,6 +31,7 @@ export default function Navbar() {
   ];
 
   return (
+    <>
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
       scrolled 
         ? 'bg-dark-950/80 backdrop-blur-xl border-b border-white/5 shadow-2xl' 
@@ -106,12 +109,12 @@ export default function Navbar() {
                 >
                   {t('nav.login')}
                 </Link>
-                <Link
-                  to="/register"
+                <button
+                  onClick={() => setShowReservation(true)}
                   className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl hover:from-primary-500 hover:to-primary-400 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-primary-500/25"
                 >
                   {t('nav.register')}
-                </Link>
+                </button>
               </>
             )}
           </div>
@@ -170,13 +173,20 @@ export default function Navbar() {
               <Link to="/login" className="block px-4 py-3 text-center text-sm font-medium text-dark-300 hover:text-white rounded-xl hover:bg-white/5">
                 {t('nav.login')}
               </Link>
-              <Link to="/register" className="block px-4 py-3 text-center text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl">
+              <button onClick={() => { setShowReservation(true); setMobileOpen(false); }} className="block w-full px-4 py-3 text-center text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl">
                 {t('nav.register')}
-              </Link>
+              </button>
             </>
           )}
         </div>
       </div>
     </nav>
+
+    {/* Reservation Modal */}
+    <ReservationModal
+      isOpen={showReservation}
+      onClose={() => setShowReservation(false)}
+    />
+    </>
   );
 }

@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Play, Star, Zap, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { stats } from '../../data/templates';
+import ReservationModal from '../common/ReservationModal';
 
 export default function HeroSection() {
   const { t, isRTL } = useLanguage();
   const { isAuthenticated } = useAuth();
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
+  const [showReservation, setShowReservation] = useState(false);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -42,10 +45,17 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <Link to={isAuthenticated ? '/templates' : '/register'} className="btn-primary group gap-2 text-lg w-full sm:w-auto">
-              {t('hero.cta')}
-              <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/templates" className="btn-primary group gap-2 text-lg w-full sm:w-auto">
+                {t('hero.cta')}
+                <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <button onClick={() => setShowReservation(true)} className="btn-primary group gap-2 text-lg w-full sm:w-auto">
+                {t('hero.cta')}
+                <Arrow className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+              </button>
+            )}
             <Link to="/templates" className="btn-secondary gap-2 text-lg w-full sm:w-auto">
               <Play className="w-5 h-5" />
               {t('hero.ctaSecondary')}
@@ -80,6 +90,11 @@ export default function HeroSection() {
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-dark-950 to-transparent" />
+
+      <ReservationModal
+        isOpen={showReservation}
+        onClose={() => setShowReservation(false)}
+      />
     </section>
   );
 }
