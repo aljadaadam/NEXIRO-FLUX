@@ -24,7 +24,6 @@ export default function MyDashboardPage() {
 
   const [form, setForm] = useState({
     store_name: '',
-    domain_slug: '',
   });
 
   useEffect(() => {
@@ -86,7 +85,6 @@ export default function MyDashboardPage() {
 
       setForm({
         store_name: data.site?.name || '',
-        domain_slug: data.site?.domain?.replace('.nexiroflux.com', '') || '',
       });
     } catch (err) {
       console.error('Failed to fetch site:', err);
@@ -99,7 +97,7 @@ export default function MyDashboardPage() {
     setSaving(true);
     setSaveMessage('');
     try {
-      const payload = { store_name: form.store_name, domain_slug: form.domain_slug };
+      const payload = { store_name: form.store_name };
 
       await api.updateSiteSettings(payload);
       setSaveMessage(isRTL ? 'تم الحفظ بنجاح ✓' : 'Saved successfully ✓');
@@ -345,7 +343,7 @@ export default function MyDashboardPage() {
             { labelAr: 'حالة الموقع', labelEn: 'Site Status', value: site?.status === 'active' ? (isRTL ? 'نشط ✓' : 'Active ✓') : (isRTL ? 'معلق' : 'Suspended'), icon: Globe, color: site?.status === 'active' ? 'text-emerald-400' : 'text-red-400', bg: site?.status === 'active' ? 'bg-emerald-500/10' : 'bg-red-500/10' },
             { labelAr: 'القالب', labelEn: 'Template', value: site?.template_id?.replace(/-/g, ' ') || '—', icon: LayoutDashboard, color: 'text-primary-400', bg: 'bg-primary-500/10' },
             { labelAr: 'الخطة', labelEn: 'Plan', value: site?.plan || 'trial', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-            { labelAr: 'الدومين', labelEn: 'Domain', value: site?.domain || '—', icon: Globe, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+
           ].map((card, i) => {
             const Icon = card.icon;
             return (
@@ -387,26 +385,13 @@ export default function MyDashboardPage() {
             )}
           </div>
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'اسم المتجر' : 'Store Name'}</label>
-                {editing === 'store' ? (
-                  <input value={form.store_name} onChange={e => setForm(f => ({ ...f, store_name: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30" />
-                ) : (
-                  <p className="text-white text-sm font-medium py-2.5">{site?.name || '—'}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'النطاق' : 'Domain'}</label>
-                {editing === 'store' ? (
-                  <div className="flex items-center">
-                    <input value={form.domain_slug} onChange={e => setForm(f => ({ ...f, domain_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} className="flex-1 bg-white/5 border border-white/10 rounded-s-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30" dir="ltr" />
-                    <span className="bg-white/10 border border-white/10 border-s-0 rounded-e-xl px-3 py-2.5 text-dark-400 text-sm">.nexiroflux.com</span>
-                  </div>
-                ) : (
-                  <p className="text-primary-400 text-sm font-mono py-2.5">{site?.domain || '—'}</p>
-                )}
-              </div>
+            <div>
+              <label className="block text-xs text-dark-400 mb-1.5">{isRTL ? 'اسم المتجر' : 'Store Name'}</label>
+              {editing === 'store' ? (
+                <input value={form.store_name} onChange={e => setForm(f => ({ ...f, store_name: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-primary-500/30" />
+              ) : (
+                <p className="text-white text-sm font-medium py-2.5">{site?.name || '—'}</p>
+              )}
             </div>
           </div>
         </div>
@@ -416,37 +401,17 @@ export default function MyDashboardPage() {
           <h2 className="text-white font-bold mb-4">{isRTL ? 'روابط سريعة' : 'Quick Links'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Admin Dashboard Link */}
-            {site?.domain && adminSlug && (
-              <div className="bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-xl border border-primary-500/10 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <LayoutDashboard className="w-4 h-4 text-primary-400" />
-                  <span className="text-white text-sm font-bold">{isRTL ? 'لوحة تحكم المتجر' : 'Store Dashboard'}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <code dir="ltr" className="flex-1 text-xs text-dark-300 bg-white/5 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
-                    {`https://${site.domain}/admin?key=${adminSlug}`}
-                  </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`https://${site.domain}/admin?key=${adminSlug}`);
-                      setCopiedAdminUrl(true);
-                      setTimeout(() => setCopiedAdminUrl(false), 2000);
-                    }}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all flex-shrink-0"
-                  >
-                    {copiedAdminUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-dark-400" />}
-                  </button>
-                </div>
-                <a
-                  href={`https://${site.domain}/admin?key=${adminSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500/10 text-primary-400 text-xs font-bold hover:bg-primary-500/20 transition-all"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  {isRTL ? 'فتح لوحة التحكم' : 'Open Dashboard'}
-                </a>
-              </div>
+            {site?.domain && (
+              <a
+                href={adminSlug ? `https://${site.domain}/admin?key=${adminSlug}` : `https://${site.domain}/admin`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-500/5 hover:bg-primary-500/10 border border-white/5 transition-all"
+              >
+                <LayoutDashboard className="w-5 h-5 text-primary-400" />
+                <span className="text-white text-sm font-medium">{isRTL ? 'لوحة تحكم المتجر' : 'Store Dashboard'}</span>
+                <ChevronRight className={`w-4 h-4 text-dark-500 ${isRTL ? 'mr-auto rotate-180' : 'ml-auto'}`} />
+              </a>
             )}
 
             {/* Visit Store */}
