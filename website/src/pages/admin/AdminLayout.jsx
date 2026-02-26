@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
   Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark, Key,
-  MessageSquare, MessagesSquare
+  MessageSquare, MessagesSquare, CalendarCheck
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview', exact: true },
   { to: '/admin/users', icon: Users, labelAr: 'المستخدمين', labelEn: 'Users' },
+  { to: '/admin/reservations', icon: CalendarCheck, labelAr: 'الحجوزات', labelEn: 'Reservations' },
   { to: '/admin/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
   { to: '/admin/chat', icon: MessagesSquare, labelAr: 'الدردشة المباشرة', labelEn: 'Live Chat' },
   { to: '/admin/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },

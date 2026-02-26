@@ -3,12 +3,14 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   CreditCard, Landmark, Bitcoin, Wallet, Loader2, CheckCircle2,
   XCircle, Clock, Copy, ExternalLink, ArrowRight, Shield, Key,
-  Globe, RefreshCw, Upload, AlertCircle, ChevronLeft, QrCode, Sparkles, Check
+  Globe, RefreshCw, Upload, AlertCircle, ChevronLeft, QrCode, Sparkles, Check,
+  CalendarCheck
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { templates as staticTemplates } from '../data/templates';
+import ReservationModal from '../components/common/ReservationModal';
 
 const gatewayIcons = {
   paypal: Wallet,
@@ -100,6 +102,7 @@ export default function TemplateBuyPage() {
   const [usdtTimeLeft, setUsdtTimeLeft] = useState(null); // seconds remaining
   const [usdtSubStep, setUsdtSubStep] = useState(1); // 1=send, 2=verify
   const [usdtTxHash, setUsdtTxHash] = useState('');
+  const [showReservation, setShowReservation] = useState(false);
 
   // Country detection
   const [country, setCountry] = useState(null);
@@ -876,12 +879,30 @@ export default function TemplateBuyPage() {
           )}
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/5 flex items-center justify-center gap-2 text-dark-600 text-[11px]">
-            <Shield className="w-3 h-3" />
-            {isRTL ? 'مدفوعات مشفرة ومحمية — NEXIRO-FLUX' : 'Encrypted & Secure — NEXIRO-FLUX'}
+          <div className="px-6 py-4 border-t border-white/5 space-y-3">
+            <button
+              onClick={() => setShowReservation(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary-500/20 text-primary-400 hover:bg-primary-500/10 transition-all text-xs font-medium"
+            >
+              <CalendarCheck className="w-3.5 h-3.5" />
+              {isRTL ? 'لست مستعداً؟ احجز الآن وسنتواصل معك' : 'Not ready? Book now and we\'ll contact you'}
+            </button>
+            <div className="flex items-center justify-center gap-2 text-dark-600 text-[11px]">
+              <Shield className="w-3 h-3" />
+              {isRTL ? 'مدفوعات مشفرة ومحمية — NEXIRO-FLUX' : 'Encrypted & Secure — NEXIRO-FLUX'}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Reservation Modal */}
+      <ReservationModal
+        isOpen={showReservation}
+        onClose={() => setShowReservation(false)}
+        templateId={templateId}
+        templateName={templateName}
+        plan={plan}
+      />
     </div>
   );
 }

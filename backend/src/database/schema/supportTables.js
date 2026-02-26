@@ -67,9 +67,28 @@ const activityLogTable = `
   )
 `;
 
+const reservationsTable = `
+  CREATE TABLE IF NOT EXISTS reservations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NULL,
+    template_id VARCHAR(100) NOT NULL,
+    template_name VARCHAR(255) NOT NULL,
+    plan VARCHAR(50) NULL DEFAULT 'monthly',
+    message TEXT NULL,
+    status ENUM('pending', 'contacted', 'completed', 'cancelled') DEFAULT 'pending',
+    admin_notes TEXT NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`;
+
 module.exports = {
   ticketsTable,
   ticketMessagesTable,
   notificationsTable,
   activityLogTable,
+  reservationsTable,
 };

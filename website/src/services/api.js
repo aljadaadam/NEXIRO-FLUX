@@ -379,6 +379,31 @@ class ApiService {
     });
   }
 
+  // ─── Reservations (حجوزات) ───
+
+  async createReservation(data) {
+    return this.request('/reservations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getReservations(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/reservations${query ? '?' + query : ''}`);
+  }
+
+  async updateReservationStatus(id, status, admin_notes) {
+    return this.request(`/reservations/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, admin_notes }),
+    });
+  }
+
+  async deleteReservation(id) {
+    return this.request(`/reservations/${id}`, { method: 'DELETE' });
+  }
+
   // ─── Customization ───
 
   async getCustomization() {

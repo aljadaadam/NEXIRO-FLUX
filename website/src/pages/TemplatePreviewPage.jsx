@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft, Loader2 } from 'lucide-react';
+import { Check, ExternalLink, Monitor, Tablet, Smartphone, ChevronLeft, Loader2, CalendarCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { templates as staticTemplates } from '../data/templates';
 import api from '../services/api';
+import ReservationModal from '../components/common/ReservationModal';
 import YCZStoreDemo from '../components/templates/YCZStoreDemo';
 import GxVaultDemo from '../components/templates/GxVaultDemo';
 import HxToolsDemo from '../components/templates/HxToolsDemo';
@@ -25,6 +26,7 @@ export default function TemplatePreviewPage() {
   const [previewDevice, setPreviewDevice] = useState('desktop');
   const [template, setTemplate] = useState(() => staticTemplates.find(tp => tp.id === id));
   const [loading, setLoading] = useState(true);
+  const [showReservation, setShowReservation] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -207,6 +209,15 @@ export default function TemplatePreviewPage() {
                 >
                   {t('preview.buyNow')} — ${prices[billingCycle].price}
                 </button>
+
+                {/* Reserve Button */}
+                <button
+                  onClick={() => setShowReservation(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-primary-500/30 text-primary-400 hover:bg-primary-500/10 transition-all text-sm font-medium mt-3"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  {isRTL ? 'احجز الآن — نتواصل معك' : 'Book Now — We\'ll Contact You'}
+                </button>
               </div>
 
               {/* Features */}
@@ -225,6 +236,15 @@ export default function TemplatePreviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Reservation Modal */}
+      <ReservationModal
+        isOpen={showReservation}
+        onClose={() => setShowReservation(false)}
+        templateId={template.id}
+        templateName={isRTL ? template.name : template.nameEn}
+        plan={billingCycle}
+      />
     </div>
   );
 }
