@@ -34,6 +34,12 @@ class Notification {
     await pool.query('UPDATE notifications SET is_read = 1 WHERE id = ? AND site_key = ?', [id, site_key]);
   }
 
+  // قراءة إشعار مع التحقق من المالك (IDOR protection)
+  static async markAsReadForRecipient(id, site_key, recipient_id) {
+    const pool = getPool();
+    await pool.query('UPDATE notifications SET is_read = 1 WHERE id = ? AND site_key = ? AND (recipient_id = ? OR recipient_id IS NULL)', [id, site_key, recipient_id]);
+  }
+
   // قراءة الكل
   static async markAllAsRead(site_key, recipient_type, recipient_id) {
     const pool = getPool();

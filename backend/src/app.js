@@ -116,11 +116,9 @@ app.get('/api/health/nexiro-verify', (req, res) => {
   res.json({ platform: 'nexiro-flux', verified: true, ts: Date.now() });
 });
 
-// Root route - إظهار الحالة فقط (بدون تفاصيل API)
+// Root route - إظهار الحالة فقط (بدون تفاصيل)
 app.get('/', async (req, res) => {
   res.json({ 
-    platform: 'NEXIRO-FLUX',
-    version: '4.0.0',
     status: 'running',
     ts: Date.now(),
   });
@@ -157,9 +155,7 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`✅ السيرفر يعمل على http://localhost:${PORT}`);
       console.log(`📁 قاعدة البيانات المركزية: ${process.env.DB_NAME || 'nexiro_flux_central'}`);
-      console.log(`🔑 Site Key (fallback): ${SITE_KEY}`);
       console.log(`🏢 نظام Multi-Tenant مفعل — Domain-based tenant resolution`);
-      console.log(`🌐 يدعم: X-Site-Key header | *.nexiroflux.com | Custom Domains`);
     });
   } catch (error) {
     console.error('❌ فشل تشغيل السيرفر:', error);

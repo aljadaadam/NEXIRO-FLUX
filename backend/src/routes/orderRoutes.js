@@ -35,7 +35,7 @@ router.post('/cron-run', authenticateToken, requireRole('admin'), async (req, re
     await checkPendingOrders();
     res.json({ success: true, message: 'تم تشغيل فحص الطلبات', ...getCronStatus() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'حدث خطأ في فحص الطلبات' });
   }
 });
 

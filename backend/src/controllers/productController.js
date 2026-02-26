@@ -412,6 +412,27 @@ async function syncProducts(req, res) {
       });
     }
 
+    // SSRF Protection: validate URL is safe
+    try {
+      const parsedUrl = new URL(sourceUrl);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return res.status(400).json({ error: 'فقط HTTP/HTTPS مسموح' });
+      }
+      const hostname = parsedUrl.hostname.toLowerCase();
+      // Block private/local IPs and metadata endpoints
+      const blocked = [
+        /^localhost$/i, /^127\./, /^10\./, /^192\.168\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^169\.254\./, /^0\.0\.0\.0$/, /^::1$/, /^\[::1\]$/,
+        /\.local$/i, /\.internal$/i,
+      ];
+      if (blocked.some(p => p.test(hostname))) {
+        return res.status(400).json({ error: 'عنوان URL غير مسموح (عناوين داخلية)' });
+      }
+    } catch {
+      return res.status(400).json({ error: 'عنوان URL غير صالح' });
+    }
+
     // محاولة جلب البيانات من API الخارجي
     let externalData;
     try {
@@ -628,6 +649,26 @@ async function importFromExternalApi(req, res) {
       return res.status(400).json({ 
         error: 'يجب إرسال بيانات API صالحة (apiConfig)' 
       });
+    }
+
+    // SSRF Protection: validate URL
+    try {
+      const parsedUrl = new URL(apiConfig.url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return res.status(400).json({ error: 'فقط HTTP/HTTPS مسموح' });
+      }
+      const hostname = parsedUrl.hostname.toLowerCase();
+      const blocked = [
+        /^localhost$/i, /^127\./, /^10\./, /^192\.168\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^169\.254\./, /^0\.0\.0\.0$/, /^::1$/, /^\[::1\]$/,
+        /\.local$/i, /\.internal$/i,
+      ];
+      if (blocked.some(p => p.test(hostname))) {
+        return res.status(400).json({ error: 'عنوان URL غير مسموح (عناوين داخلية)' });
+      }
+    } catch {
+      return res.status(400).json({ error: 'عنوان URL غير صالح' });
     }
 
     // إعداد البيانات للإرسال للـ API الخارجي
@@ -918,28 +959,23 @@ async function debugProducts(req, res) {
     const pool = getPool();
     const siteKey = req.siteKey;
 
-    // عدد المنتجات الكلي
-    const [allProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products LIMIT 20');
+    // Only show products for THIS site (tenant-scoped)
+    const [siteProducts] = await pool.query('SELECT id, name, price, status FROM products WHERE site_key = ? LIMIT 20', [siteKey]);
     
-    // عدد المنتجات لهذا الموقع
-    const [siteProducts] = await pool.query('SELECT id, name, price, status, site_key FROM products WHERE site_key = ?', [siteKey]);
-    
-    // الأعمدة الموجودة
+    // Column info (non-sensitive)
     const [columns] = await pool.query(
-      `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS 
+      `SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
     );
 
     res.json({
       site_key: siteKey,
-      totalInDB: allProducts.length,
       forThisSite: siteProducts.length,
-      allProducts: allProducts,
       siteProducts: siteProducts,
-      columns: columns.map(c => `${c.COLUMN_NAME} (${c.DATA_TYPE}, default: ${c.COLUMN_DEFAULT})`),
+      columns: columns.map(c => `${c.COLUMN_NAME} (${c.DATA_TYPE})`),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'حدث خطأ في التشخيص' });
   }
 }
 

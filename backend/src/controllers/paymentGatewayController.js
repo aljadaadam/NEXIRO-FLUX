@@ -111,7 +111,15 @@ async function updateGateway(req, res) {
   try {
     const { id } = req.params;
     const siteKey = req.siteKey || req.user?.site_key;
-    const gateway = await PaymentGateway.update(parseInt(id), siteKey, req.body);
+
+    // Whitelist allowed fields to prevent mass assignment
+    const allowedFields = ['name', 'type', 'is_enabled', 'is_default', 'config', 'countries', 'display_order', 'instructions'];
+    const safeBody = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+
+    const gateway = await PaymentGateway.update(parseInt(id), siteKey, safeBody);
 
     if (!gateway) {
       return res.status(404).json({ error: 'بوابة الدفع غير موجودة' });

@@ -34,13 +34,16 @@ async function createTicket(req, res) {
       return res.status(400).json({ error: 'الموضوع والرسالة مطلوبان' });
     }
 
-    const ticket = await Ticket.create({ site_key, customer_id, subject, priority, category });
+    // IDOR fix: customers can only create tickets for themselves
+    const safeCustomerId = (req.user.role === 'customer') ? req.user.id : customer_id;
+
+    const ticket = await Ticket.create({ site_key, customer_id: safeCustomerId, subject, priority, category });
 
     // إضافة الرسالة الأولى
     await Ticket.addMessage({
       ticket_id: ticket.id,
-      sender_type: customer_id ? 'customer' : 'admin',
-      sender_id: customer_id || req.user.id,
+      sender_type: safeCustomerId ? 'customer' : 'admin',
+      sender_id: safeCustomerId || req.user.id,
       message
     });
 
@@ -55,9 +58,9 @@ async function createTicket(req, res) {
     res.status(201).json({ message: 'تم إنشاء التذكرة', ticket });
 
     // بريد تنبيه بالتذكرة الجديدة
-    if (customer_id) {
+    if (safeCustomerId) {
       try {
-        const cust = await Customer.findById(customer_id);
+        const cust = await Customer.findById(safeCustomerId);
         emailService.sendNewTicketAlert({
           to: cust?.email, ticketId: ticket.ticket_number,
           subject, customerName: cust?.name, siteKey: site_key
@@ -78,6 +81,11 @@ async function getTicketMessages(req, res) {
 
     if (!ticket || ticket.site_key !== req.user.site_key) {
       return res.status(404).json({ error: 'التذكرة غير موجودة' });
+    }
+
+    // IDOR fix: customers can only see their own tickets
+    if (req.user.role === 'customer' && ticket.customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'لا يمكنك عرض هذه التذكرة' });
     }
 
     const messages = await Ticket.getMessages(id);
@@ -104,20 +112,28 @@ async function replyToTicket(req, res) {
       return res.status(404).json({ error: 'التذكرة غير موجودة' });
     }
 
+    // IDOR fix: customers can only reply to their own tickets
+    if (req.user.role === 'customer' && ticket.customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'لا يمكنك الرد على هذه التذكرة' });
+    }
+
+    // Fix sender_type spoofing: enforce based on actual role
+    const actualSenderType = (req.user.role === 'customer') ? 'customer' : 'admin';
+
     const reply = await Ticket.addMessage({
       ticket_id: id,
-      sender_type: sender_type || 'admin',
+      sender_type: actualSenderType,
       sender_id: req.user.id,
       message
     });
 
     // تحديث الحالة
-    if (sender_type === 'admin' || !sender_type) {
+    if (actualSenderType === 'admin') {
       await Ticket.updateStatus(id, site_key, 'waiting');
     }
 
     // إشعار
-    if (ticket.customer_id && (sender_type === 'admin' || !sender_type)) {
+    if (ticket.customer_id && actualSenderType === 'admin') {
       await Notification.create({
         site_key, recipient_type: 'customer', recipient_id: ticket.customer_id,
         title: 'رد على تذكرتك',

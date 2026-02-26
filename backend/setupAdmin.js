@@ -5,10 +5,17 @@ const Permission = require('./src/models/Permission');
 const { initializeDatabase, getPool } = require('./src/config/db'); 
 // const { SITE_KEY } = require('./src/config/env'); // قد تحتاج لاستيراد المتغيرات هنا
 
-// بيانات الأدمن الجديدة
-const ADMIN_EMAIL = 'aljadadm654@gmail.com';
-const ADMIN_PASSWORD = '12345678';
-const SITE_KEY = 'local-dev'; // نستخدم القيمة الثابتة
+// بيانات الأدمن الجديدة (تؤخذ من متغيرات البيئة أو arguments)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.argv[2];
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.argv[3];
+const SITE_KEY = process.env.SITE_KEY || process.argv[4] || 'local-dev';
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('يجب تحديد بيانات الأدمن:');
+  console.error('  node setupAdmin.js <email> <password> [site_key]');
+  console.error('  أو عبر متغيرات البيئة: ADMIN_EMAIL, ADMIN_PASSWORD');
+  process.exit(1);
+}
 
 async function setupAdmin() {
     let pool; // تعريف البول هنا لغرض الإغلاق

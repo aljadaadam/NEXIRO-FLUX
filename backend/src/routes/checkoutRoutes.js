@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const {
   initCheckout,
   paypalCallback,
@@ -10,25 +11,33 @@ const {
   checkPaymentStatus,
 } = require('../controllers/checkoutController');
 
-// ─── Public Routes (بدون مصادقة) ───
+// Rate limit for checkout to prevent abuse
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  validate: false,
+  message: { error: 'طلبات كثيرة، حاول لاحقاً' },
+});
 
-// بدء عملية الدفع
-router.post('/init', initCheckout);
+// ─── Public Routes (مع حماية) ───
 
-// PayPal callback بعد موافقة/إلغاء العميل
+// بدء عملية الدفع (محدود بـ rate limit)
+router.post('/init', checkoutLimiter, initCheckout);
+
+// PayPal callback بعد موافقة/إلغاء العميل (PayPal يرسل token للتحقق)
 router.get('/callback/:id', paypalCallback);
 router.get('/cancel/:id', cancelCallback);
 
-// Binance Pay Webhook
+// Binance Pay Webhook (يحتوي على توقيع Binance)
 router.post('/webhooks/binance', binanceWebhook);
 
-// التحقق من دفع USDT
-router.post('/check-usdt/:id', checkUsdtPayment);
+// التحقق من دفع USDT (محدود)
+router.post('/check-usdt/:id', checkoutLimiter, checkUsdtPayment);
 
-// رفع إيصال بنكي
-router.post('/receipt/:id', uploadBankReceipt);
+// رفع إيصال بنكي (محدود — لا يكشف بيانات حساسة)
+router.post('/receipt/:id', checkoutLimiter, uploadBankReceipt);
 
-// حالة الدفع
-router.get('/status/:id', checkPaymentStatus);
+// حالة الدفع (محدود — بيانات محمية)
+router.get('/status/:id', checkoutLimiter, checkPaymentStatus);
 
 module.exports = router;

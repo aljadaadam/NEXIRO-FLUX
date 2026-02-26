@@ -120,14 +120,11 @@ async function seedDatabase() {
     console.log('');
     console.log('🏪 الموقع 1: ahmed-store.nexiro.com');
     console.log('   SITE_KEY: ahmed-store-2024');
-    console.log('   الأدمن: admin@ahmed-store.com / admin123');
-    console.log('   الموظف: staff@ahmed-store.com / user123');
-    console.log('   زبون: khaled@email.com / customer123');
+    console.log('   [استخدم كلمات السر المحددة في .env]');
     console.log('');
     console.log('🏪 الموقع 2: mohamed-tech.nexiro.com');
     console.log('   SITE_KEY: mohamed-tech-2024');
-    console.log('   الأدمن: admin@mohamed-tech.com / admin456');
-    console.log('   زبون: abdullah@email.com / customer123');
+    console.log('   [استخدم كلمات السر المحددة في .env]');
     console.log('');
     console.log('🚀 شغّل السيرفر: npm start');
     console.log('   مع: SITE_KEY=ahmed-store-2024 في ملف .env');

@@ -152,13 +152,15 @@ async function registerUser(req, res) {
       });
     }
 
-    // إنشاء مستخدم عادي (ليس أدمن)
+    // إنشاء مستخدم عادي (زبون — ليس موظف أو أدمن)
+    // Public registration creates 'customer' role only
+    // 'user' role (employee) can only be created by admin via createUser
     const user = await User.create({
       site_key: siteKey,
       name,
       email,
       password,
-      role: 'user'
+      role: 'customer'
     });
 
     const token = generateToken(user.id, user.role, siteKey);
@@ -303,6 +305,10 @@ async function createUser(req, res) {
       });
     }
 
+    // Whitelist allowed roles
+    const allowedRoles = ['user', 'customer'];
+    const safeRole = allowedRoles.includes(role) ? role : 'user';
+
     // التحقق من أن البريد الإلكتروني غير مستخدم في نفس الموقع
     const existingUser = await User.findByEmailAndSite(email, site_key);
     if (existingUser) {
@@ -317,7 +323,7 @@ async function createUser(req, res) {
       name, 
       email, 
       password,
-      role
+      role: safeRole
     });
 
     res.status(201).json({

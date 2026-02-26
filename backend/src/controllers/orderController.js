@@ -561,7 +561,7 @@ async function placeExternalOrder(req, res) {
         error: `خطأ من IMEI Check: ${error.message}`
       });
     }
-    res.status(500).json({ error: error.message || 'حدث خطأ أثناء إرسال الطلب' });
+    res.status(500).json({ error: 'حدث خطأ أثناء إرسال الطلب' });
   }
 }
 
@@ -683,7 +683,7 @@ async function checkExternalOrderStatus(req, res) {
         fullDescription: error.fullDescription
       });
     }
-    res.status(500).json({ error: error.message || 'حدث خطأ أثناء فحص حالة الطلب' });
+    res.status(500).json({ error: 'حدث خطأ أثناء فحص حالة الطلب' });
   }
 }
 

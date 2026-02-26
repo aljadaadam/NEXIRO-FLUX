@@ -127,10 +127,8 @@ async function resolveTenant(req, res, next) {
 
   } catch (error) {
     console.error('Tenant resolution error:', error.message);
-    // Don't block the request, just continue without tenant
-    req.siteKey = null;
-    req.site = null;
-    next();
+    // Block the request on tenant resolution failure — don't continue with null tenant
+    return res.status(500).json({ error: 'خطأ في تحديد الموقع' });
   }
 }
 

@@ -182,6 +182,15 @@ async function updateCustomerWallet(req, res) {
       return res.status(400).json({ error: 'المبلغ مطلوب' });
     }
 
+    // Prevent negative amounts (wallet drain attack)
+    if (parseFloat(amount) < 0) {
+      return res.status(400).json({ error: 'المبلغ يجب أن يكون موجباً' });
+    }
+    // Cap maximum single top-up
+    if (parseFloat(amount) > 10000) {
+      return res.status(400).json({ error: 'الحد الأقصى للشحن هو $10,000' });
+    }
+
     const success = await Customer.updateWallet(id, site_key, parseFloat(amount));
     if (!success) {
       return res.status(404).json({ error: 'الزبون غير موجود' });
@@ -377,7 +386,8 @@ async function markCustomerNotificationRead(req, res) {
     if (id === 'all') {
       await Notification.markAllAsRead(req.user.site_key, 'customer', req.user.id);
     } else {
-      await Notification.markAsRead(id, req.user.site_key);
+      // IDOR fix: verify notification belongs to this customer
+      await Notification.markAsReadForRecipient(id, req.user.site_key, req.user.id);
     }
     res.json({ message: 'تم' });
   } catch (error) {

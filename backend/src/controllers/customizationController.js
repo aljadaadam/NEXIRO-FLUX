@@ -29,7 +29,30 @@ async function getCustomization(req, res) {
 async function updateCustomization(req, res) {
   try {
     const { site_key } = req.user;
-    const customization = await Customization.upsert(site_key, req.body);
+
+    // Whitelist allowed fields to prevent mass assignment
+    const allowedFields = [
+      'theme_id', 'primary_color', 'secondary_color', 'dark_mode',
+      'button_radius', 'header_style', 'show_banner', 'font_family',
+      'store_language', 'store_name', 'store_description', 'logo_url',
+      'favicon_url', 'currency', 'currency_symbol', 'currency_position',
+      'whatsapp_number', 'telegram_link', 'facebook_link', 'twitter_link',
+      'instagram_link', 'tiktok_link', 'youtube_link',
+      'meta_title', 'meta_description', 'ga_id', 'pixel_id',
+      'show_prices', 'allow_guest_checkout', 'maintenance_mode',
+      'custom_css', 'announcement_bar', 'announcement_bar_text',
+      'announcement_bar_color', 'announcement_bar_link',
+    ];
+    // Only admin can update SMTP and admin_slug
+    if (req.user.role === 'admin') {
+      allowedFields.push('admin_slug', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from');
+    }
+    const safeBody = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+
+    const customization = await Customization.upsert(site_key, safeBody);
 
     res.json({ message: 'تم تحديث التخصيصات', customization });
   } catch (error) {

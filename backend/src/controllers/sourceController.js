@@ -41,8 +41,12 @@ const COMMON_API_PATHS = [
 async function resolveApiUrl(inputUrl, apiKey, username) {
   let base = inputUrl.trim().replace(/\/+$/, '');
 
-  // إذا كان الرابط يحتوي بالفعل على مسار API، جرّبه أولاً
+  // SSRF Protection: Block private/local URLs
   const parsed = new URL(base);
+  if (isPrivateOrLocalHostname(parsed.hostname)) {
+    throw new Error('عنوان URL غير مسموح (عناوين داخلية)');
+  }
+
   const hasApiPath = parsed.pathname && parsed.pathname !== '/' && parsed.pathname.length > 1;
 
   // جرّب الرابط كما هو أولاً
@@ -272,6 +276,18 @@ async function createSource(req, res) {
       return res.status(400).json({ 
         error: `النوع يجب أن يكون أحد: ${validTypes.join(', ')}` 
       });
+    }
+
+    // SSRF Protection: validate finalUrl
+    if (finalUrl) {
+      try {
+        const urlParsed = new URL(finalUrl);
+        if (isPrivateOrLocalHostname(urlParsed.hostname)) {
+          return res.status(400).json({ error: 'عنوان URL غير مسموح (عناوين داخلية)' });
+        }
+      } catch {
+        return res.status(400).json({ error: 'عنوان URL غير صالح' });
+      }
     }
 
     // ─── IMEI Check: اختبار الاتصال عبر PHP API (الرصيد) + DHRU API (الخدمات) ───

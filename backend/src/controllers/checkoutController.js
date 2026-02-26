@@ -13,6 +13,19 @@ const { SITE_KEY } = require('../config/env');
 const { verifyToken } = require('../utils/token');
 const { creditWalletOnce } = require('../services/walletCredit');
 
+// Validate redirect URL to prevent open redirect
+function getSafeRedirectUrl(frontendReturn, fallbackPath) {
+  const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
+  if (!frontendReturn) return `${frontendUrl}${fallbackPath}`;
+  try {
+    const parsed = new URL(frontendReturn);
+    // Only allow redirects to known domains
+    const allowedPatterns = [/\.nexiroflux\.com$/, /^localhost$/, /^127\.0\.0\.1$/];
+    if (allowedPatterns.some(p => p.test(parsed.hostname))) return frontendReturn;
+  } catch { /* invalid URL */ }
+  return `${frontendUrl}${fallbackPath}`;
+}
+
 // Helper: get siteKey from request (fallback to platform SITE_KEY for setup checkout)
 function getSiteKey(req) {
   return req.siteKey || req.user?.site_key || SITE_KEY;
@@ -306,12 +319,9 @@ async function paypalCallback(req, res) {
 
       // ✅ إعادة توجيه لصفحة نجاح
       const frontendReturn = req.query.frontend_return;
-      if (frontendReturn) {
-        const sep = frontendReturn.includes('?') ? '&' : '?';
-        return res.redirect(`${frontendReturn}${sep}payment_id=${payment.id}&payment_status=success`);
-      }
-      const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
-      return res.redirect(`${frontendUrl}/checkout/success?payment_id=${payment.id}`);
+      const safeUrl = getSafeRedirectUrl(frontendReturn, `/checkout/success?payment_id=${payment.id}`);
+      const sep = safeUrl.includes('?') ? '&' : '?';
+      return res.redirect(`${safeUrl}${sep}payment_id=${payment.id}&payment_status=success`);
     } else {
       await Payment.updateStatus(payment.id, getSiteKey(req), 'failed');
 
@@ -329,22 +339,16 @@ async function paypalCallback(req, res) {
       } catch (e) { /* ignore */ }
 
       const frontendReturn = req.query.frontend_return;
-      if (frontendReturn) {
-        const sep = frontendReturn.includes('?') ? '&' : '?';
-        return res.redirect(`${frontendReturn}${sep}payment_id=${payment.id}&payment_status=failed`);
-      }
-      const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
-      return res.redirect(`${frontendUrl}/checkout/failed?payment_id=${payment.id}`);
+      const safeUrl = getSafeRedirectUrl(frontendReturn, `/checkout/failed?payment_id=${payment.id}`);
+      const sep = safeUrl.includes('?') ? '&' : '?';
+      return res.redirect(`${safeUrl}${sep}payment_id=${payment.id}&payment_status=failed`);
     }
   } catch (error) {
     console.error('❌ PayPal callback error:', error);
     const frontendReturn = req.query.frontend_return;
-    if (frontendReturn) {
-      const sep = frontendReturn.includes('?') ? '&' : '?';
-      return res.redirect(`${frontendReturn}${sep}payment_status=failed&error=${encodeURIComponent(error.message)}`);
-    }
-    const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
-    return res.redirect(`${frontendUrl}/checkout/failed?error=${encodeURIComponent(error.message)}`);
+    const safeUrl = getSafeRedirectUrl(frontendReturn, '/checkout/failed');
+    const sep = safeUrl.includes('?') ? '&' : '?';
+    return res.redirect(`${safeUrl}${sep}payment_status=failed`);
   }
 }
 
@@ -352,14 +356,21 @@ async function paypalCallback(req, res) {
 async function cancelCallback(req, res) {
   try {
     const { id } = req.params;
+    // Only cancel if payment is still pending (not completed/failed)
+    const payment = await Payment.findById(parseInt(id));
+    if (!payment || payment.site_key !== getSiteKey(req)) {
+      return res.status(404).json({ error: 'الدفعة غير موجودة' });
+    }
+    if (payment.status !== 'pending') {
+      const frontendReturn = req.query.frontend_return;
+      const safeUrl = getSafeRedirectUrl(frontendReturn, `/checkout/cancelled?payment_id=${id}`);
+      return res.redirect(safeUrl);
+    }
     await Payment.updateStatus(parseInt(id), getSiteKey(req), 'cancelled');
     const frontendReturn = req.query.frontend_return;
-    if (frontendReturn) {
-      const sep = frontendReturn.includes('?') ? '&' : '?';
-      return res.redirect(`${frontendReturn}${sep}payment_id=${id}&payment_status=cancelled`);
-    }
-    const frontendUrl = process.env.FRONTEND_URL || 'https://nexiroflux.com';
-    return res.redirect(`${frontendUrl}/checkout/cancelled?payment_id=${id}`);
+    const safeUrl = getSafeRedirectUrl(frontendReturn, `/checkout/cancelled?payment_id=${id}`);
+    const sep = safeUrl.includes('?') ? '&' : '?';
+    return res.redirect(`${safeUrl}${sep}payment_id=${id}&payment_status=cancelled`);
   } catch (error) {
     console.error('❌ Cancel callback error:', error);
     res.redirect('/?payment=cancelled');
@@ -594,7 +605,21 @@ async function checkUsdtPayment(req, res) {
 async function uploadBankReceipt(req, res) {
   try {
     const { id } = req.params;
-    const { receipt_url, notes } = req.body;
+    let { receipt_url, notes } = req.body;
+
+    // Validate receipt_url is a proper HTTP(S) URL
+    if (receipt_url) {
+      try {
+        const parsedUrl = new URL(receipt_url);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          return res.status(400).json({ error: 'رابط الإيصال يجب أن يكون HTTP أو HTTPS' });
+        }
+      } catch {
+        return res.status(400).json({ error: 'رابط الإيصال غير صالح' });
+      }
+    }
+    // Sanitize notes
+    if (notes && typeof notes === 'string') notes = notes.substring(0, 500);
 
     const payment = await Payment.findById(parseInt(id));
     if (!payment || payment.site_key !== getSiteKey(req)) {
@@ -680,16 +705,12 @@ async function checkPaymentStatus(req, res) {
       }
     }
 
-    const meta = await Payment.getMeta(payment.id, getSiteKey(req));
-
+    // Only return non-sensitive fields — strip PII from public response
     res.json({
       paymentId: payment.id,
       status: payment.status,
-      amount: payment.amount,
-      currency: payment.currency,
       method: payment.payment_method,
       created_at: payment.created_at,
-      meta: meta || {},
     });
   } catch (error) {
     console.error('❌ Payment status error:', error);

@@ -4,7 +4,7 @@ const {
   provisionSite, getMySite, updateSiteSettings,
   updateCustomDomain, removeCustomDomain, verifyDomainDNS, checkDomainDNS, getSiteByDomain
 } = require('../controllers/setupController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // ─── إنشاء موقع جديد (بدون مصادقة — أول خطوة بعد الشراء) ───
@@ -20,14 +20,14 @@ router.get('/check-dns/:domain', checkDomainDNS);
 router.use(validateSite);
 
 // جلب بيانات الموقع الخاص بالمستخدم
-router.get('/my-site', authenticateToken, getMySite);
+router.get('/my-site', authenticateToken, requireRole('admin'), getMySite);
 
 // تحديث إعدادات الموقع
-router.put('/my-site', authenticateToken, updateSiteSettings);
+router.put('/my-site', authenticateToken, requireRole('admin'), updateSiteSettings);
 
 // ─── إدارة الدومين المخصص ───
-router.put('/my-site/domain', authenticateToken, updateCustomDomain);
-router.delete('/my-site/domain', authenticateToken, removeCustomDomain);
-router.get('/my-site/verify-dns', authenticateToken, verifyDomainDNS);
+router.put('/my-site/domain', authenticateToken, requireRole('admin'), updateCustomDomain);
+router.delete('/my-site/domain', authenticateToken, requireRole('admin'), removeCustomDomain);
+router.get('/my-site/verify-dns', authenticateToken, requireRole('admin'), verifyDomainDNS);
 
 module.exports = router;
