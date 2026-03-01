@@ -6,7 +6,9 @@ const {
   markAllAsRead,
   createNotification,
   updateNotification,
-  deleteNotification
+  deleteNotification,
+  sendEmailBroadcast,
+  getBroadcastRecipientCount
 } = require('../controllers/notificationController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
@@ -30,5 +32,9 @@ router.put('/:id/read', authenticateToken, requireRole('admin', 'user'), markAsR
 
 // حذف إشعار
 router.delete('/:id', authenticateToken, requireRole('admin', 'user'), deleteNotification);
+
+// ─── إعلانات بريدية (Email Broadcasts) ───
+router.post('/broadcast/send', authenticateToken, requireRole('admin', 'user'), sendEmailBroadcast);
+router.get('/broadcast/recipients-count', authenticateToken, requireRole('admin', 'user'), getBroadcastRecipientCount);
 
 module.exports = router;

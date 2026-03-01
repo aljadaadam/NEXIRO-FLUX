@@ -125,11 +125,106 @@ async function deleteNotification(req, res) {
   }
 }
 
+// ─── إرسال إعلان بريدي جماعي لزبائن المتجر ───
+async function sendEmailBroadcast(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { subject, message, recipient_type } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: 'العنوان والرسالة مطلوبان', errorEn: 'Subject and message are required' });
+    }
+
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const emailService = require('../services/email');
+    const emailTemplates = require('../services/emailTemplates');
+
+    // جلب زبائن المتجر
+    let emailList = [];
+    if (recipient_type === 'all_customers') {
+      const [rows] = await pool.query(
+        `SELECT DISTINCT email, name FROM customers WHERE site_key = ? AND email IS NOT NULL AND email != '' AND is_blocked = 0`,
+        [site_key]
+      );
+      emailList = rows;
+    } else {
+      return res.status(400).json({ error: 'نوع المستلمين غير صالح' });
+    }
+
+    if (emailList.length === 0) {
+      return res.status(400).json({ error: 'لا يوجد زبائن لإرسال البريد', errorEn: 'No customers found' });
+    }
+
+    // جلب اسم المتجر
+    const [custRows] = await pool.query('SELECT store_name FROM customizations WHERE site_key = ? LIMIT 1', [site_key]);
+    const storeName = custRows?.[0]?.store_name || 'المتجر';
+
+    // إرسال الإيميلات
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const recipient of emailList) {
+      try {
+        const html = emailTemplates.broadcast({
+          name: recipient.name,
+          subject,
+          message,
+          branding: { storeName, primaryColor: '#7c3aed' },
+        });
+
+        const result = await emailService.send({
+          to: recipient.email,
+          subject,
+          html,
+          storeName,
+        });
+
+        if (result.sent || result.logged) sentCount++;
+        else failedCount++;
+      } catch {
+        failedCount++;
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    res.json({
+      message: `تم إرسال البريد إلى ${sentCount} زبون`,
+      messageEn: `Email sent to ${sentCount} customers`,
+      sent: sentCount,
+      failed: failedCount,
+      total: emailList.length,
+    });
+  } catch (error) {
+    console.error('Error in sendEmailBroadcast:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إرسال البريد' });
+  }
+}
+
+// ─── عدد الزبائن المتاحين للإرسال ───
+async function getBroadcastRecipientCount(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { getPool } = require('../config/db');
+    const pool = getPool();
+    const [[{ count }]] = await pool.query(
+      `SELECT COUNT(*) as count FROM customers WHERE site_key = ? AND email IS NOT NULL AND email != '' AND is_blocked = 0`,
+      [site_key]
+    );
+    res.json({ count });
+  } catch (error) {
+    console.error('Error in getBroadcastRecipientCount:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
   createNotification,
   updateNotification,
-  deleteNotification
+  deleteNotification,
+  sendEmailBroadcast,
+  getBroadcastRecipientCount
 };
