@@ -256,7 +256,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
               <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: '1rem' }}>💳</span> {t('الدفع بالمحفظة')}
               </div>
-              <div style={{ color: canPayWithWallet ? '#4ade80' : '#fca5a5', fontWeight: 800, textAlign: 'left', fontSize: '0.95rem', textShadow: canPayWithWallet ? '0 0 8px rgba(74,222,128,0.4)' : '0 0 8px rgba(252,165,165,0.4)' }}>
+              <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
                 {loadingProfile ? t('جاري جلب الرصيد...') : `$${(walletBalance ?? 0).toFixed(2)}`}
               </div>
             </div>
