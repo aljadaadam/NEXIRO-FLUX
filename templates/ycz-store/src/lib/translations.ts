@@ -8,6 +8,12 @@ const en: Record<string, string> = {
   'طلباتي': 'My Orders',
   'الدعم': 'Support',
   'حسابي': 'My Account',
+  'تصفح الخدمات': 'Browse Services',
+  'جميع الخدمات': 'All Services',
+  'سجل الطلبات': 'Order History',
+  'الحساب': 'Account',
+  'الدعم الفني': 'Technical Support',
+  'الرصيد': 'Balance',
 
   // ─── Home Page ───
   'مرحباً بك 👋': 'Welcome 👋',
