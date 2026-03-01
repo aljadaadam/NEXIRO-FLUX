@@ -205,6 +205,9 @@ class DhruFusionClient {
 
     xml += '</PARAMETERS>';
 
+    console.log(`📝 DHRU placeOrder XML:`, xml);
+    console.log(`📝 customFields received:`, JSON.stringify(customFields));
+
     const data = await this._post('placeimeiorder', { parameters: xml });
     const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
 
