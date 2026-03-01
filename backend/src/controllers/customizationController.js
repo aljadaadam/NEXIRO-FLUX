@@ -40,7 +40,8 @@ async function updateCustomization(req, res) {
       'instagram_link', 'tiktok_link', 'youtube_link',
       'meta_title', 'meta_description', 'ga_id', 'pixel_id',
       'show_prices', 'allow_guest_checkout', 'maintenance_mode',
-      'custom_css', 'announcement_bar', 'announcement_bar_text',
+      'custom_css', 'footer_text', 'social_links',
+      'announcement_bar', 'announcement_bar_text',
       'announcement_bar_color', 'announcement_bar_link',
     ];
     // Only admin can update SMTP and admin_slug

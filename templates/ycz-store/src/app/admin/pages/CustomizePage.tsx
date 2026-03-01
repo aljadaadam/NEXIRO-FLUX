@@ -460,7 +460,35 @@ export default function CustomizePage() {
           ))}
         </Section>
 
-        {/* ═══════════ 5. Live Preview ═══════════ */}
+        {/* ═══════════ 5. Custom CSS ═══════════ */}
+        <Section icon={<Paintbrush size={18} color="#7c5cff" />} title={t("CSS مخصص")}>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 12 }}>{t('أضف أكواد CSS مخصصة لتعديل مظهر المتجر. يُطبَّق مباشرة.')}</p>
+          <textarea
+            value={theme.customCss}
+            onChange={e => theme.setCustomCss(e.target.value)}
+            placeholder={`.my-class {
+  color: #333;
+  font-size: 14px;
+}`}
+            dir="ltr"
+            spellCheck={false}
+            style={{
+              width: '100%', minHeight: 140, padding: '0.75rem', borderRadius: 10,
+              border: '1px solid #e2e8f0', fontSize: '0.78rem', fontWeight: 500,
+              fontFamily: '"Fira Code", "Cascadia Code", Consolas, monospace',
+              outline: 'none', background: '#0f172a', color: '#e2e8f0',
+              resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' as const,
+              tabSize: 2,
+            }}
+          />
+          {theme.customCss && (
+            <p style={{ fontSize: '0.68rem', color: '#f59e0b', marginTop: 6, fontWeight: 600 }}>
+              ⚠️ {t('CSS مخصص مُفعّل — تأكد من صحة الأكواد قبل الحفظ')}
+            </p>
+          )}
+        </Section>
+
+        {/* ═══════════ 6. Live Preview ═══════════ */}
         <Section icon={<Monitor size={18} color="#7c5cff" />} title={t("معاينة مباشرة")}>
           <div style={{
             borderRadius: 14, overflow: 'hidden',
