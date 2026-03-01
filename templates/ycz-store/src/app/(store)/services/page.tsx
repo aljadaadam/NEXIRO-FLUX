@@ -194,7 +194,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
             display: 'flex', alignItems: 'center', gap: 8, marginTop: 10,
             padding: '0.6rem 0.8rem', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border-light)',
           }}>
-            <span style={{ fontSize: '1.15rem', fontWeight: 800, color: currentTheme.primary }}>{product.price}</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>{product.price}</span>
             {product.originalPrice && (
               <>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{product.originalPrice}</span>
@@ -256,7 +256,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
               <div style={{ color: '#f8fafc', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: '1rem' }}>💳</span> {t('الدفع بالمحفظة')}
               </div>
-              <div style={{ color: canPayWithWallet ? '#4ade80' : '#f87171', fontWeight: 800, textAlign: 'left' }}>
+              <div style={{ color: canPayWithWallet ? '#4ade80' : '#fca5a5', fontWeight: 800, textAlign: 'left', fontSize: '0.95rem', textShadow: canPayWithWallet ? '0 0 8px rgba(74,222,128,0.4)' : '0 0 8px rgba(252,165,165,0.4)' }}>
                 {loadingProfile ? t('جاري جلب الرصيد...') : `$${(walletBalance ?? 0).toFixed(2)}`}
               </div>
             </div>
