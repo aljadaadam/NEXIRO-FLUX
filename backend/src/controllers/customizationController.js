@@ -45,7 +45,11 @@ async function updateCustomization(req, res) {
     ];
     // Only admin can update SMTP and admin_slug
     if (req.user.role === 'admin') {
-      allowedFields.push('admin_slug', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from');
+      allowedFields.push(
+        'admin_slug', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from',
+        'support_email', 'support_phone', 'otp_enabled',
+        'secondary_currency', 'currency_rate'
+      );
     }
     const safeBody = {};
     for (const key of allowedFields) {
