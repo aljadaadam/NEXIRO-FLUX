@@ -13,8 +13,18 @@ export default function Header() {
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // User profile state
-  const [profile, setProfile] = useState<{ name: string; email: string; balance: number } | null>(null);
+  // User profile state — fetch eagerly on mount & cache
+  const [profile, setProfile] = useState<{ name: string; email: string; balance: number } | null>(() => {
+    // Instant cache from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('_sidebar_profile');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false); }, [pathname]);
@@ -26,24 +36,51 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  // Fetch profile when menu opens
+  // Fetch profile on mount (eagerly) so it's ready when menu opens
+  useEffect(() => {
+    const token = typeof window !== 'undefined' && localStorage.getItem('auth_token');
+    if (!token) { setProfile(null); localStorage.removeItem('_sidebar_profile'); return; }
+    let cancelled = false;
+    setProfileLoading(true);
+    (async () => {
+      try {
+        const res = await storeApi.getProfile();
+        const c = res?.customer || res;
+        if (!cancelled) {
+          const p = {
+            name: c.name || c.username || '',
+            email: c.email || '',
+            balance: Number(c.wallet_balance ?? c.balance ?? 0),
+          };
+          setProfile(p);
+          try { localStorage.setItem('_sidebar_profile', JSON.stringify(p)); } catch {}
+        }
+      } catch { if (!cancelled) { setProfile(null); localStorage.removeItem('_sidebar_profile'); } }
+      finally { if (!cancelled) setProfileLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Refresh balance when menu opens (quick update, profile already loaded)
   useEffect(() => {
     if (!menuOpen) return;
     const token = typeof window !== 'undefined' && localStorage.getItem('auth_token');
-    if (!token) { setProfile(null); return; }
+    if (!token) return;
     let cancelled = false;
     (async () => {
       try {
         const res = await storeApi.getProfile();
         const c = res?.customer || res;
         if (!cancelled) {
-          setProfile({
+          const p = {
             name: c.name || c.username || '',
             email: c.email || '',
             balance: Number(c.wallet_balance ?? c.balance ?? 0),
-          });
+          };
+          setProfile(p);
+          try { localStorage.setItem('_sidebar_profile', JSON.stringify(p)); } catch {}
         }
-      } catch { if (!cancelled) setProfile(null); }
+      } catch {}
     })();
     return () => { cancelled = true; };
   }, [menuOpen]);
@@ -228,6 +265,18 @@ export default function Header() {
                       ${profile.balance.toFixed(2)}
                     </span>
                   </Link>
+                </>
+              ) : isLoggedIn && !profile ? (
+                /* Logged in but loading — show skeleton */
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--bg-muted)', animation: 'nf-pulse 1.5s ease infinite' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ width: '60%', height: 14, borderRadius: 6, background: 'var(--bg-muted)', marginBottom: 6, animation: 'nf-pulse 1.5s ease infinite' }} />
+                      <div style={{ width: '80%', height: 10, borderRadius: 4, background: 'var(--bg-muted)', animation: 'nf-pulse 1.5s ease infinite' }} />
+                    </div>
+                  </div>
+                  <div style={{ width: '100%', height: 36, borderRadius: 10, background: 'var(--bg-muted)', animation: 'nf-pulse 1.5s ease infinite' }} />
                 </>
               ) : (
                 /* Not logged in */
