@@ -6,6 +6,7 @@ import {
   ShoppingCart, CreditCard, CheckCircle2, XCircle, Clock, AlertTriangle,
   RefreshCw, UserCheck, UserX, ShieldCheck, BadgeCheck, BadgeX,
   Package, DollarSign, X, Plus, Minus, Eye, Hash,
+  FileImage, ThumbsUp, ThumbsDown, MessageSquare, ExternalLink,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
@@ -59,6 +60,7 @@ function ProfileSkeleton() {
 function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: ColorTheme; onClose: () => void; onDone: (nb: number) => void }) {
   const [mode, setMode] = useState<'add' | 'deduct'>('add');
   const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -70,11 +72,12 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
     if (submitting || num <= 0) return;
     setError(null); setSuccess(null); setSubmitting(true);
     try {
-      const res = await adminApi.updateCustomerWallet(user.id, mode === 'deduct' ? -num : num);
+      const res = await adminApi.updateCustomerWallet(user.id, mode === 'deduct' ? -num : num, reason.trim() || undefined);
       const nb = parseFloat(res?.wallet_balance ?? 0);
       setSuccess(isRTL ? `تم ${mode === 'add' ? 'إضافة' : 'خصم'} $${num.toFixed(2)}. الرصيد الجديد: $${nb.toFixed(2)}` : `${mode === 'add' ? 'Added' : 'Deducted'} $${num.toFixed(2)}. New balance: $${nb.toFixed(2)}`);
       onDone(nb);
       setAmount('');
+      setReason('');
     } catch (e: unknown) { setError(e instanceof Error ? e.message : t('فشلت العملية')); }
     finally { setSubmitting(false); }
   };
@@ -115,6 +118,10 @@ function WalletModal({ user, theme, onClose, onDone }: { user: User; theme: Colo
         <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>{t('المبلغ ($)')}</label>
         <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
           style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '1rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box', textAlign: 'left', direction: 'ltr' }} />
+
+        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: 6, marginTop: 12 }}>{t('السبب (اختياري)')}</label>
+        <input type="text" value={reason} onChange={e => setReason(e.target.value)} placeholder={isRTL ? 'مثال: مكافأة، تعويض، تصحيح...' : 'e.g. reward, refund, correction...'}
+          style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: '0.88rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
 
         {error && <div style={{ marginTop: 10, padding: '0.6rem 0.85rem', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: '0.78rem', fontWeight: 700 }}>{error}</div>}
         {success && <div style={{ marginTop: 10, padding: '0.6rem 0.85rem', borderRadius: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', fontSize: '0.78rem', fontWeight: 700 }}>{success}</div>}
@@ -196,16 +203,26 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
   const [loading, setLoading] = useState(true);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'payments' | 'verification'>('orders');
+  const [verificationNote, setVerificationNote] = useState('');
+  const [verificationUpdating, setVerificationUpdating] = useState(false);
+  const [verificationMsg, setVerificationMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [docPreviewOpen, setDocPreviewOpen] = useState(false);
 
-  // بيانات التحقق من الهوية (محلية — يمكن ربطها لاحقاً بالباكند)
+  // بيانات التحقق من الهوية — مرتبطة ببيانات حقيقية من الباكند
   const verificationStatus = useMemo(() => {
     if (!user) return null;
     const isCustomer = userType === 'customer';
+    const vs = user.verification_status;
+    const hasIdDoc = !!user.id_document_url;
     return {
-      emailVerified: true, // الزبون سجل بنجاح ← تم التحقق من الإيميل
+      emailVerified: !!user.is_verified,
       phoneVerified: !!user.phone,
-      identityVerified: false, // لم يُضاف بعد — حقل مستقبلي
+      identityVerified: vs === 'verified',
+      identityPending: vs === 'pending',
+      hasIdDocument: hasIdDoc,
+      verificationNote: user.verification_note,
       accountAge: user.joined,
       isBlocked: user.status === 'محظور',
       isCustomer,
@@ -215,45 +232,46 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Load all customers and find the one we need
-      const [customersRes, staffRes] = await Promise.allSettled([
-        adminApi.getCustomers(1, 200, ''),
-        adminApi.getUsers(),
-      ]);
-
       let found: User | null = null;
 
-      if (userType === 'customer' && customersRes.status === 'fulfilled') {
-        const raw = customersRes.value;
-        const customers = Array.isArray(raw) ? raw : (Array.isArray(raw?.customers) ? raw.customers : []);
-        const c = customers.find((u: Record<string, unknown>) => Number(u.id) === userId);
-        if (c) {
-          found = {
-            id: Number(c.id), name: String(c.name || ''), email: String(c.email || ''),
-            role: c.is_blocked ? 'محظور' : 'زبون',
-            status: c.is_blocked ? 'محظور' : 'نشط',
-            joined: c.created_at ? new Date(String(c.created_at)).toLocaleDateString('ar-EG') : '--',
-            orders: Number(c.orders || 0), spent: String(c.spent || '$0.00'),
-            wallet_balance: Number(c.wallet_balance || 0), _type: 'customer',
-            phone: String(c.phone || ''), country: String(c.country || ''),
-            is_verified: c.is_verified, last_login_at: c.last_login_at ? String(c.last_login_at) : undefined,
-          };
-        }
+      if (userType === 'customer') {
+        // Fetch single customer by ID (includes id_document_url)
+        try {
+          const c = await adminApi.getCustomerById(userId);
+          if (c) {
+            found = {
+              id: Number(c.id), name: String(c.name || ''), email: String(c.email || ''),
+              role: c.is_blocked ? 'محظور' : 'زبون',
+              status: c.is_blocked ? 'محظور' : 'نشط',
+              joined: c.created_at ? new Date(String(c.created_at)).toLocaleDateString('ar-EG') : '--',
+              orders: Number(c.orders || 0), spent: String(c.spent || '$0.00'),
+              wallet_balance: Number(c.wallet_balance || 0), _type: 'customer',
+              phone: String(c.phone || ''), country: String(c.country || ''),
+              is_verified: c.is_verified, last_login_at: c.last_login_at ? String(c.last_login_at) : undefined,
+              verification_status: c.verification_status ? String(c.verification_status) : undefined,
+              verification_note: c.verification_note ? String(c.verification_note) : undefined,
+              id_document_url: c.id_document_url ? String(c.id_document_url) : undefined,
+              _raw_created_at: c.created_at ? String(c.created_at) : undefined,
+            } as User;
+          }
+        } catch { /* fallback below */ }
       }
 
-      if (userType === 'staff' && staffRes.status === 'fulfilled') {
-        const raw = staffRes.value;
-        const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
-        const s = staff.find((u: Record<string, unknown>) => Number(u.id) === userId);
-        if (s) {
-          found = {
-            id: Number(s.id), name: String(s.name || ''), email: String(s.email || ''),
-            role: String(s.role) === 'admin' ? 'مدير' : 'مشرف',
-            status: 'نشط',
-            joined: s.created_at ? new Date(String(s.created_at)).toLocaleDateString('ar-EG') : '--',
-            orders: 0, spent: '$0.00', _type: 'staff',
-          };
-        }
+      if (userType === 'staff') {
+        try {
+          const raw = await adminApi.getUsers();
+          const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
+          const s = staff.find((u: Record<string, unknown>) => Number(u.id) === userId);
+          if (s) {
+            found = {
+              id: Number(s.id), name: String(s.name || ''), email: String(s.email || ''),
+              role: String(s.role) === 'admin' ? 'مدير' : 'مشرف',
+              status: 'نشط',
+              joined: s.created_at ? new Date(String(s.created_at)).toLocaleDateString('ar-EG') : '--',
+              orders: 0, spent: '$0.00', _type: 'staff',
+            };
+          }
+        } catch { /* ignore */ }
       }
 
       setUser(found);
@@ -281,7 +299,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // حظر/إلغاء حظر
+  // حظر/إلغاء حظر مع تأكيد
   const handleToggleBlock = async () => {
     if (!user || blocking) return;
     const isBlocked = user.status === 'محظور';
@@ -294,7 +312,7 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
         role: isBlocked ? 'زبون' : 'محظور',
       } : null);
     } catch { /* ignore */ }
-    finally { setBlocking(false); }
+    finally { setBlocking(false); setBlockConfirmOpen(false); }
   };
 
   // Summary stats
@@ -403,16 +421,12 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: '#64748b' }}>
               <Mail size={13} /> {user.email}
             </span>
-            {user.phone && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: '#64748b' }}>
-                <Phone size={13} /> {user.phone}
-              </span>
-            )}
-            {user.country && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: '#64748b' }}>
-                <MapPin size={13} /> {user.country}
-              </span>
-            )}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: user.phone ? '#64748b' : '#cbd5e1' }}>
+              <Phone size={13} /> {user.phone || (isRTL ? 'غير محدد' : 'Not set')}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: user.country ? '#64748b' : '#cbd5e1' }}>
+              <MapPin size={13} /> {user.country || (isRTL ? 'غير محدد' : 'Not set')}
+            </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: '#64748b' }}>
               <Calendar size={13} /> {t('انضم')} {user.joined}
             </span>
@@ -435,17 +449,17 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
             >
               <Wallet size={14} /> {t('تعديل الرصيد')}
             </button>
-            <button onClick={handleToggleBlock} disabled={blocking} style={{
+            <button onClick={() => setBlockConfirmOpen(true)} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '0.55rem 1rem', borderRadius: 10,
               background: isBlocked ? '#f0fdf4' : '#fef2f2',
               border: isBlocked ? '1px solid #bbf7d0' : '1px solid #fecaca',
               color: isBlocked ? '#16a34a' : '#dc2626',
               fontSize: '0.8rem', fontWeight: 700,
-              cursor: blocking ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
-              opacity: blocking ? 0.6 : 1, transition: 'transform 0.15s',
+              cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+              transition: 'transform 0.15s',
             }}
-              onMouseEnter={e => { if (!blocking) e.currentTarget.style.transform = 'scale(1.03)'; }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               {isBlocked ? <><UserCheck size={14} /> {t('إلغاء الحظر')}</> : <><Shield size={14} /> {t('حظر')}</>}
@@ -655,8 +669,14 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
               <VerificationCard
                 icon={Shield}
                 title={t('التحقق من الهوية')}
-                description={verificationStatus?.identityVerified ? t('تم التحقق من وثيقة الهوية') : t('لم يتم تقديم وثيقة هوية بعد')}
+                description={
+                  verificationStatus?.identityVerified ? t('تم التحقق من وثيقة الهوية')
+                  : verificationStatus?.identityPending ? t('بانتظار مراجعة الوثيقة')
+                  : verificationStatus?.hasIdDocument ? t('تم رفع الوثيقة — بانتظار المراجعة')
+                  : t('لم يتم تقديم وثيقة هوية بعد')
+                }
                 verified={verificationStatus?.identityVerified ?? false}
+                pending={verificationStatus?.identityPending}
                 theme={theme}
               />
               {/* Account Age */}
@@ -689,8 +709,153 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
                 danger={isBlocked}
               />
             </div>
+
+            {/* ═══ Identity Document Section ═══ */}
+            {user.id_document_url && (
+              <div style={{ marginTop: 20, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, overflow: 'hidden' }}>
+                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FileImage size={18} color={theme.primary} />
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0b1020' }}>{t('وثيقة الهوية المرفوعة')}</h4>
+                  </div>
+                  <a href={user.id_document_url} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    fontSize: '0.75rem', fontWeight: 600, color: theme.primary,
+                    textDecoration: 'none',
+                  }}>
+                    <ExternalLink size={12} /> {t('فتح في تبويب جديد')}
+                  </a>
+                </div>
+                <div style={{ padding: '1rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => setDocPreviewOpen(true)}>
+                  <img
+                    src={user.id_document_url}
+                    alt="Identity Document"
+                    style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 10, border: '1px solid #e2e8f0', objectFit: 'contain' }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>{t('اضغط لتكبير الصورة')}</p>
+                </div>
+              </div>
+            )}
+
+            {/* ═══ Verification Actions (Approve / Reject) ═══ */}
+            {user.id_document_url && !verificationStatus?.identityVerified && (
+              <div style={{ marginTop: 16, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <MessageSquare size={16} color={theme.primary} /> {t('إجراء التحقق')}
+                </h4>
+                <textarea
+                  value={verificationNote}
+                  onChange={e => setVerificationNote(e.target.value)}
+                  placeholder={isRTL ? 'ملاحظة للزبون (اختياري) — مثال: وثيقة واضحة، شكراً...' : 'Note to customer (optional)...'}
+                  rows={2}
+                  style={{
+                    width: '100%', padding: '0.7rem 1rem', borderRadius: 10,
+                    border: '1px solid #e2e8f0', fontSize: '0.82rem',
+                    fontFamily: 'Tajawal, sans-serif', outline: 'none',
+                    resize: 'vertical', boxSizing: 'border-box',
+                  }}
+                />
+                {verificationMsg && (
+                  <div style={{
+                    marginTop: 10, padding: '0.6rem 0.85rem', borderRadius: 10,
+                    background: verificationMsg.type === 'success' ? '#f0fdf4' : '#fef2f2',
+                    border: `1px solid ${verificationMsg.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+                    color: verificationMsg.type === 'success' ? '#16a34a' : '#b91c1c',
+                    fontSize: '0.78rem', fontWeight: 700,
+                  }}>{verificationMsg.text}</div>
+                )}
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  <button
+                    onClick={async () => {
+                      setVerificationUpdating(true); setVerificationMsg(null);
+                      try {
+                        await adminApi.updateCustomerVerification(user.id, 'verified', verificationNote.trim() || undefined);
+                        setVerificationMsg({ type: 'success', text: isRTL ? 'تم قبول التحقق بنجاح ✅' : 'Verification approved ✅' });
+                        setVerificationNote('');
+                        loadData();
+                      } catch { setVerificationMsg({ type: 'error', text: t('فشلت العملية') }); }
+                      finally { setVerificationUpdating(false); }
+                    }}
+                    disabled={verificationUpdating}
+                    style={{
+                      flex: 1, padding: '0.7rem', borderRadius: 10, border: 'none',
+                      background: '#16a34a', color: '#fff', fontSize: '0.82rem', fontWeight: 700,
+                      cursor: verificationUpdating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      opacity: verificationUpdating ? 0.7 : 1,
+                    }}
+                  >
+                    <ThumbsUp size={15} /> {t('قبول التحقق')}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setVerificationUpdating(true); setVerificationMsg(null);
+                      try {
+                        await adminApi.updateCustomerVerification(user.id, 'rejected', verificationNote.trim() || (isRTL ? 'تم رفض الوثيقة. يرجى إعادة رفع وثيقة واضحة.' : 'Document rejected. Please re-upload a clear document.'));
+                        setVerificationMsg({ type: 'success', text: isRTL ? 'تم رفض التحقق' : 'Verification rejected' });
+                        setVerificationNote('');
+                        loadData();
+                      } catch { setVerificationMsg({ type: 'error', text: t('فشلت العملية') }); }
+                      finally { setVerificationUpdating(false); }
+                    }}
+                    disabled={verificationUpdating}
+                    style={{
+                      flex: 1, padding: '0.7rem', borderRadius: 10, border: 'none',
+                      background: '#dc2626', color: '#fff', fontSize: '0.82rem', fontWeight: 700,
+                      cursor: verificationUpdating ? 'wait' : 'pointer', fontFamily: 'Tajawal, sans-serif',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      opacity: verificationUpdating ? 0.7 : 1,
+                    }}
+                  >
+                    <ThumbsDown size={15} /> {t('رفض التحقق')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Verified badge (after approval) */}
+            {verificationStatus?.identityVerified && user.id_document_url && (
+              <div style={{ marginTop: 16, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#dcfce7', display: 'grid', placeItems: 'center' }}>
+                  <BadgeCheck size={20} color="#16a34a" />
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>{t('تم التحقق من الهوية بنجاح')}</p>
+                  {user.verification_note && (
+                    <p style={{ fontSize: '0.75rem', color: '#15803d', marginTop: 2 }}>{user.verification_note}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* No document uploaded */}
+            {!user.id_document_url && (
+              <div style={{ marginTop: 20, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1.5rem', textAlign: 'center' }}>
+                <FileImage size={32} color="#94a3b8" style={{ marginBottom: 8 }} />
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>{t('لم يتم رفع وثيقة هوية بعد')}</p>
+                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>{t('سيظهر هنا عند رفع الزبون لوثيقة الهوية')}</p>
+              </div>
+            )}
           </div>
         </Section>
+      )}
+
+      {/* ═══ Document Preview Modal ═══ */}
+      {docPreviewOpen && user?.id_document_url && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={() => setDocPreviewOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <button onClick={() => setDocPreviewOpen(false)} style={{
+              position: 'absolute', top: -12, right: -12, width: 32, height: 32,
+              borderRadius: '50%', background: '#fff', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              cursor: 'pointer', display: 'grid', placeItems: 'center', zIndex: 1,
+            }}><X size={16} /></button>
+            <img src={user.id_document_url} alt="Identity Document" style={{
+              maxWidth: '90vw', maxHeight: '85vh', borderRadius: 12,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)', objectFit: 'contain',
+            }} />
+          </div>
+        </div>
       )}
 
       {/* ═══ Staff info ═══ */}
@@ -716,6 +881,47 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
         />
       )}
 
+      {/* ═══ Block Confirm Modal ═══ */}
+      {blockConfirmOpen && user && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }} onClick={() => setBlockConfirmOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '90%', maxWidth: 400, boxShadow: '0 25px 50px rgba(0,0,0,0.15)', textAlign: 'center' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', margin: '0 auto 14px',
+              background: isBlocked ? '#f0fdf4' : '#fef2f2',
+              display: 'grid', placeItems: 'center',
+            }}>
+              {isBlocked ? <UserCheck size={26} color="#16a34a" /> : <UserX size={26} color="#dc2626" />}
+            </div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', marginBottom: 8, fontFamily: 'Tajawal, sans-serif' }}>
+              {isBlocked ? t('إلغاء الحظر') : t('حظر المستخدم')}
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 6, fontFamily: 'Tajawal, sans-serif' }}>
+              {isBlocked
+                ? (isRTL ? `هل تريد إلغاء حظر "${user.name}"؟` : `Unblock "${user.name}"?`)
+                : (isRTL ? `هل أنت متأكد من حظر "${user.name}"؟` : `Are you sure you want to block "${user.name}"?`)}
+            </p>
+            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 20, fontFamily: 'Tajawal, sans-serif' }}>
+              {isBlocked
+                ? t('سيتمكن المستخدم من تسجيل الدخول واستخدام المتجر مجدداً')
+                : t('لن يتمكن المستخدم من تسجيل الدخول أو إجراء أي عمليات')}
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setBlockConfirmOpen(false)} style={{
+                flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #e2e8f0',
+                background: '#fff', color: '#64748b', fontSize: '0.82rem', fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+              }}>{t('إلغاء')}</button>
+              <button onClick={handleToggleBlock} disabled={blocking} style={{
+                flex: 1, padding: '0.65rem', borderRadius: 10, border: 'none',
+                background: isBlocked ? '#16a34a' : '#dc2626', color: '#fff',
+                fontSize: '0.82rem', fontWeight: 700, cursor: blocking ? 'wait' : 'pointer',
+                fontFamily: 'Tajawal, sans-serif', opacity: blocking ? 0.7 : 1,
+              }}>{blocking ? t('جارٍ التنفيذ...') : isBlocked ? t('إلغاء الحظر') : t('تأكيد الحظر')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
       `}</style>
@@ -724,14 +930,18 @@ export default function UserDetailsPage({ theme, userId, userType, onBack }: Use
 }
 
 /* ═══ Verification Card ═══ */
-function VerificationCard({ icon: Icon, title, description, verified, theme, danger }: {
-  icon: typeof Mail; title: string; description: string; verified: boolean; theme: ColorTheme; danger?: boolean;
+function VerificationCard({ icon: Icon, title, description, verified, theme, danger, pending }: {
+  icon: typeof Mail; title: string; description: string; verified: boolean; theme: ColorTheme; danger?: boolean; pending?: boolean;
 }) {
+  const borderColor = danger ? '#fecaca' : pending ? '#fde68a' : verified ? '#bbf7d0' : '#e2e8f0';
+  const bgColor = danger ? '#fef2f2' : pending ? '#fffbeb' : verified ? '#f0fdf4' : '#fafbfc';
+  const iconColor = danger ? '#dc2626' : pending ? '#f59e0b' : verified ? '#16a34a' : '#94a3b8';
+  const iconBg = danger ? '#fee2e2' : pending ? '#fef3c7' : verified ? '#dcfce7' : '#f1f5f9';
   return (
     <div style={{
       padding: '1rem', borderRadius: 14,
-      border: `1px solid ${danger ? '#fecaca' : verified ? '#bbf7d0' : '#e2e8f0'}`,
-      background: danger ? '#fef2f2' : verified ? '#f0fdf4' : '#fafbfc',
+      border: `1px solid ${borderColor}`,
+      background: bgColor,
       display: 'flex', alignItems: 'flex-start', gap: 12,
       transition: 'transform 0.2s, box-shadow 0.2s',
     }}
@@ -740,16 +950,18 @@ function VerificationCard({ icon: Icon, title, description, verified, theme, dan
     >
       <div style={{
         width: 38, height: 38, borderRadius: 10,
-        background: danger ? '#fee2e2' : verified ? '#dcfce7' : '#f1f5f9',
+        background: iconBg,
         display: 'grid', placeItems: 'center', flexShrink: 0,
       }}>
-        <Icon size={17} color={danger ? '#dc2626' : verified ? '#16a34a' : '#94a3b8'} />
+        <Icon size={17} color={iconColor} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020' }}>{title}</p>
           {danger ? (
             <BadgeX size={14} color="#dc2626" />
+          ) : pending ? (
+            <Clock size={14} color="#f59e0b" />
           ) : verified ? (
             <BadgeCheck size={14} color="#16a34a" />
           ) : (

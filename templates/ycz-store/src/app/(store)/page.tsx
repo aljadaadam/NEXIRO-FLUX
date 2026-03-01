@@ -543,22 +543,20 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
             <button
               onClick={() => { setError(null); setStep(2); }}
-              disabled={!allRequiredFilled || loadingProfile || !isLoggedIn}
+              disabled={!allRequiredFilled || loadingProfile || !isLoggedIn || !canPayWithWallet}
               style={{
                 width: '100%', marginTop: 16, padding: '0.75rem', borderRadius: btnR,
-                background: currentTheme.primary, color: '#fff', border: 'none',
-                fontSize: '0.9rem', fontWeight: 700, fontFamily: 'inherit',
-                cursor: allRequiredFilled ? 'pointer' : 'not-allowed',
-                opacity: allRequiredFilled ? 1 : 0.6,
+                background: (!canPayWithWallet && isLoggedIn && walletBalance !== null && !loadingProfile) ? '#ef4444' : currentTheme.primary,
+                color: '#fff', border: 'none',
+                fontSize: (!canPayWithWallet && isLoggedIn && walletBalance !== null && !loadingProfile) ? '0.78rem' : '0.9rem',
+                fontWeight: 700, fontFamily: 'inherit',
+                cursor: (allRequiredFilled && canPayWithWallet) ? 'pointer' : 'not-allowed',
+                opacity: (allRequiredFilled && canPayWithWallet) ? 1 : 0.6,
               }}>
-              {isRTL ? `${t('متابعة')} ←` : `${t('متابعة')} →`}
+              {(isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet)
+                ? `${t('الرصيد غير كافٍ لإتمام الطلب')} ($${totalPrice.toFixed(2)})`
+                : (isRTL ? `${t('متابعة')} ←` : `${t('متابعة')} →`)}
             </button>
-
-            {isLoggedIn && walletBalance !== null && !loadingProfile && !canPayWithWallet && (
-              <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}>
-                {t('الرصيد غير كافٍ لإتمام الطلب')} (${totalPrice.toFixed(2)})
-              </p>
-            )}
           </>
         )}
 
@@ -628,20 +626,16 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
                 disabled={submitting || !canPayWithWallet}
                 style={{
                   flex: 2, padding: '0.75rem', borderRadius: btnR,
-                  background: canPayWithWallet ? currentTheme.primary : '#94a3b8',
-                  color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700,
+                  background: canPayWithWallet ? currentTheme.primary : '#ef4444',
+                  color: '#fff', border: 'none',
+                  fontSize: !canPayWithWallet ? '0.72rem' : '0.9rem',
+                  fontWeight: 700,
                   cursor: canPayWithWallet && !submitting ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
                   opacity: submitting ? 0.7 : 1,
                 }}>
-                {submitting ? t('جارٍ إرسال الطلب...') : `✓ ${t('تأكيد الطلب')}`}
+                {submitting ? t('جارٍ إرسال الطلب...') : !canPayWithWallet ? `${t('الرصيد غير كافٍ لإتمام الطلب')} ($${totalPrice.toFixed(2)})` : `✓ ${t('تأكيد الطلب')}`}
               </button>
             </div>
-
-            {!canPayWithWallet && (
-              <p style={{ marginTop: 10, fontSize: '0.78rem', color: '#ef4444', fontWeight: 700, textAlign: 'center' }}>
-                {t('الرصيد غير كافٍ لإتمام الطلب')} (${totalPrice.toFixed(2)})
-              </p>
-            )}
           </>
         )}
 

@@ -57,39 +57,39 @@ export default function TestimonialsSection() {
               </div>
 
               {/* Quote Text */}
-              <p className="text-xl md:text-2xl text-white leading-relaxed mb-8 font-medium min-h-[100px]">
+              <p className="text-base sm:text-xl md:text-2xl text-white leading-relaxed mb-6 sm:mb-8 font-medium min-h-[80px] sm:min-h-[100px]">
                 "{isRTL ? testimonials[active].text : testimonials[active].textEn}"
               </p>
 
               {/* Author */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <img
                     src={testimonials[active].avatar}
                     alt={isRTL ? testimonials[active].name : testimonials[active].nameEn}
-                    className="w-14 h-14 rounded-full border-2 border-primary-500/30 object-cover"
+                    className="w-11 h-11 sm:w-14 sm:h-14 rounded-full border-2 border-primary-500/30 object-cover"
                   />
                   <div>
-                    <h4 className="font-bold text-white text-lg">
+                    <h4 className="font-bold text-white text-base sm:text-lg">
                       {isRTL ? testimonials[active].name : testimonials[active].nameEn}
                     </h4>
-                    <p className="text-dark-400 text-sm">
+                    <p className="text-dark-400 text-xs sm:text-sm">
                       {isRTL ? testimonials[active].role : testimonials[active].roleEn}
                     </p>
                   </div>
                 </div>
 
                 {/* Navigation */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={prev}
-                    className="w-10 h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
                   <button
                     onClick={next}
-                    className="w-10 h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>

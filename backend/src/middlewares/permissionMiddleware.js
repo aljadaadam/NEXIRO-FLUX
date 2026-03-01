@@ -34,7 +34,7 @@ function checkPermission(requiredPermissions) {
         return next();
       }
 
-      // أي دور آخر (customer وغيره) — ليس لديه صلاحيات إدارية
+      // أي دور آخر — ليس لديه صلاحيات إدارية
       return res.status(403).json({ 
         error: 'هذا الإجراء يحتاج صلاحيات أدمن أو موظف' 
       });

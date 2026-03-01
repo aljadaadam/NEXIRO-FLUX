@@ -19,6 +19,7 @@ interface Gateway {
 
 interface PaymentTx {
   id: number;
+  invoice_number?: string;
   customer_id: number;
   customer_name?: string;
   type: 'deposit' | 'purchase' | 'refund';
@@ -26,7 +27,7 @@ interface PaymentTx {
   currency: string;
   payment_method: string;
   payment_gateway_id?: number;
-  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+  status: 'pending' | 'awaiting_receipt' | 'completed' | 'failed' | 'refunded' | 'cancelled';
   description?: string;
   external_id?: string;
   meta?: Record<string, string>;
@@ -86,9 +87,9 @@ const GATEWAY_META: Record<GatewayType, { label: string; labelEn: string; desc: 
   paypal:        { label: 'PayPal',          labelEn: 'PayPal',        desc: 'بطاقات ائتمان و PayPal',                  color: '#253B80', bg: '#EFF6FF' },
   binance:       { label: 'Binance Pay',     labelEn: 'Binance Pay',   desc: 'دفع عبر العملات الرقمية',                 color: '#B8860B', bg: '#FFFBEB' },
   usdt:          { label: 'USDT',            labelEn: 'USDT Crypto',   desc: 'تيثر على شبكة Tron/ERC20/BEP20',         color: '#166534', bg: '#F0FDF4' },
-  bank_transfer: { label: 'التحويل البنكي',  labelEn: 'Bank Transfer', desc: 'تحويل بنكي مباشر',                        color: '#1D4ED8', bg: '#EFF6FF' },
+  bank_transfer: { label: 'التحويل البنكي',  labelEn: 'Bank Transfer', desc: 'عرض بيانات بنكية فقط (بدون رفع إيصال)', color: '#1D4ED8', bg: '#EFF6FF' },
   wallet:        { label: 'محفظة إلكترونية', labelEn: 'E-Wallet',      desc: 'شحن عبر محافظ إلكترونية (تعليمات فقط)',    color: '#6D28D9', bg: '#F5F3FF' },
-  bankak:        { label: 'بنكك',            labelEn: 'Bankak',        desc: 'دفع عبر بنكك — تحويل محلي بسعر الصرف',    color: '#0E7490', bg: '#ECFEFF' },
+  bankak:        { label: 'بنكك',            labelEn: 'Bankak',        desc: 'دفع عبر بنكك — رفع إشعار + تأكيد أدمن',   color: '#0E7490', bg: '#ECFEFF' },
 };
 
 const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: string; placeholder: string; required?: boolean; options?: { value: string; label: string }[] }[]> = {
@@ -121,17 +122,16 @@ const CONFIG_FIELDS: Record<GatewayType, { key: string; label: string; type?: st
     { key: 'image_url', label: 'رابط صورة/لوغو المحفظة', placeholder: 'https://example.com/logo.png' },
   ],
   bankak: [
-    { key: 'account_number', label: 'رقم الحساب', placeholder: 'أدخل رقم الحساب البنكي', required: true },
-    { key: 'full_name', label: 'الاسم الكامل (صاحب الحساب)', placeholder: 'مثال: أحمد محمد علي', required: true },
-    { key: 'exchange_rate', label: 'سعر الصرف (1 دولار = ؟ جنيه سوداني)', placeholder: 'مثال: 600', required: true },
-    { key: 'local_currency', label: 'رمز العملة المحلية', placeholder: 'SDG', required: true, options: [{ value: 'SDG', label: 'SDG (ج.س)' }] },
-    { key: 'image_url', label: 'رابط صورة/لوغو بنكك', placeholder: 'https://example.com/bankak-logo.png' },
+    { key: 'account_number', label: 'رقم الحساب', placeholder: 'أدخل رقم الحساب', required: true },
+    { key: 'full_name', label: 'الاسم', placeholder: 'اسم صاحب الحساب', required: true },
+    { key: 'exchange_rate', label: 'سعر الصرف', placeholder: 'مثال: 600', required: true },
+    { key: 'receipt_note', label: 'التعليق المطلوب في الإشعار', placeholder: 'مثال: اكتب اسمك ورقم هاتفك في الإشعار', required: true },
   ],
 };
 
 const ALL_TYPES: GatewayType[] = ['paypal', 'binance', 'usdt', 'bank_transfer', 'wallet', 'bankak'];
 
-export default function PaymentsPage() {
+export default function PaymentsPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [gateways, setGateways] = useState<Gateway[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,6 +154,7 @@ export default function PaymentsPage() {
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [receiptModal, setReceiptModal] = useState<PaymentTx | null>(null);
   const [txStats, setTxStats] = useState<{ totalRevenue: number; todayRevenue: number; totalDeposits: number } | null>(null);
+  const [txSearch, setTxSearch] = useState('');
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -172,12 +173,12 @@ export default function PaymentsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchGateways(); }, [fetchGateways]);
+  useEffect(() => { if (isActive) fetchGateways(); }, [isActive, fetchGateways]);
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async (search?: string) => {
     try {
       const [txRes, statsRes] = await Promise.all([
-        adminApi.getPayments(1, 100),
+        adminApi.getPayments(1, 200, undefined, search),
         adminApi.getPaymentStats(),
       ]);
       setTransactions(txRes.payments || []);
@@ -189,7 +190,7 @@ export default function PaymentsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+  useEffect(() => { if (isActive) fetchTransactions(); }, [isActive, fetchTransactions]);
 
   const handleApprove = async (tx: PaymentTx) => {
     setApprovingId(tx.id);
@@ -225,15 +226,16 @@ export default function PaymentsPage() {
     if (gw) {
       setEditingGw(gw);
       setFormType(gw.type);
-      setFormName(gw.name);
-      setFormNameEn(gw.name_en || '');
+      // بنكك: الاسم ثابت لا يتغير
+      setFormName(gw.type === 'bankak' ? 'بنكك' : gw.name);
+      setFormNameEn(gw.type === 'bankak' ? 'Bankak' : (gw.name_en || ''));
       setFormConfig(gw.config || {});
       setFormDefault(gw.is_default);
     } else {
       setEditingGw(null);
       setFormType(type);
-      setFormName(GATEWAY_META[type].label);
-      setFormNameEn(GATEWAY_META[type].labelEn);
+      setFormName(type === 'bankak' ? 'بنكك' : GATEWAY_META[type].label);
+      setFormNameEn(type === 'bankak' ? 'Bankak' : GATEWAY_META[type].labelEn);
       setFormConfig({});
       setFormDefault(false);
     }
@@ -339,183 +341,177 @@ export default function PaymentsPage() {
         <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{t('اختر وفعّل بوابات الدفع التي تريد تقديمها لعملائك')}</p>
       </div>
 
-      {/* Gateway Cards Grid — Always Show All Types */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+      {/* Gateway Cards — Vertical List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ALL_TYPES.map(type => {
           const meta = GATEWAY_META[type];
           const gw = gwByType.get(type);
           const isConfigured = !!gw;
           const isEnabled = gw?.is_enabled ?? false;
+          const requiredFields = (CONFIG_FIELDS[type] || []).filter(f => f.required);
+          const missingFields = isConfigured ? requiredFields.filter(f => !gw?.config?.[f.key]?.trim()) : [];
 
           return (
-            <div key={type} style={{
+            <div key={type} className="gw-card" style={{
               background: '#fff',
-              borderRadius: 16,
-              border: isEnabled ? `2px solid ${meta.color}22` : '1px solid #f1f5f9',
-              boxShadow: isEnabled ? `0 4px 16px ${meta.color}10` : '0 1px 4px rgba(0,0,0,0.04)',
+              borderRadius: 14,
+              border: `1px solid ${isEnabled ? meta.color + '30' : '#e2e8f0'}`,
               overflow: 'hidden',
-              transition: 'all 0.25s ease',
+              transition: 'all 0.3s cubic-bezier(.4,0,.2,1)',
+              boxShadow: isEnabled ? `0 2px 12px ${meta.color}12` : '0 1px 3px rgba(0,0,0,0.04)',
             }}>
-              {/* Card Header */}
+              {/* ── Main Row: Icon + Name + Details + Actions + Toggle ── */}
               <div style={{
-                padding: '1.25rem 1.25rem 0.75rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '0.9rem 1.15rem',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 14,
-                    background: meta.bg,
-                    display: 'grid', placeItems: 'center',
-                    boxShadow: `0 2px 8px ${meta.color}15`,
-                  }}>
-                    {GatewayIcons[type]}
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0b1020' }}>
-                        {isRTL ? (gw?.name || meta.label) : (gw?.name_en || meta.labelEn)}
-                      </h4>
-                      {gw?.is_default && (
-                        <span style={{
-                          fontSize: '0.6rem', padding: '0.15rem 0.45rem', borderRadius: 4,
-                          background: '#dbeafe', color: '#2563eb', fontWeight: 700, letterSpacing: '0.02em',
-                        }}>{t('افتراضي')}</span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>{t(meta.desc)}</p>
-                  </div>
+                {/* Colored side accent */}
+                <div style={{
+                  width: 4, alignSelf: 'stretch', borderRadius: 4,
+                  background: isEnabled ? meta.color : '#e2e8f0',
+                  transition: 'background 0.3s',
+                  flexShrink: 0,
+                }} />
+
+                {/* Icon */}
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                  background: isEnabled ? `linear-gradient(135deg, ${meta.bg}, ${meta.color}12)` : meta.bg,
+                  display: 'grid', placeItems: 'center',
+                  transition: 'all 0.3s',
+                }}>
+                  {GatewayIcons[type]}
                 </div>
 
-                {/* Toggle or Status Badge */}
+                {/* Name + Description */}
+                <div style={{ minWidth: 0, flex: '0 0 160px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b1020', whiteSpace: 'nowrap' }}>
+                      {isRTL ? (gw?.name || meta.label) : (gw?.name_en || meta.labelEn)}
+                    </h4>
+                    {gw?.is_default && (
+                      <span style={{
+                        fontSize: '0.58rem', padding: '0.1rem 0.4rem', borderRadius: 4,
+                        background: '#dbeafe', color: '#2563eb', fontWeight: 700,
+                      }}>{t('افتراضي')}</span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(meta.desc)}</p>
+                </div>
+
+                {/* Inline Config Details */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  {isConfigured && missingFields.length > 0 && (
+                    <span style={{
+                      fontSize: '0.68rem', fontWeight: 600, color: '#b91c1c',
+                      background: '#fef2f2', border: '1px solid #fecaca',
+                      padding: '0.2rem 0.55rem', borderRadius: 6,
+                      display: 'inline-flex', alignItems: 'center', gap: 3,
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M12 2L2 20h20L12 2z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      {isRTL ? `${missingFields.length} حقول ناقصة` : `${missingFields.length} missing`}
+                    </span>
+                  )}
+                  {isConfigured && missingFields.length === 0 && (
+                    <>
+                      {type === 'paypal' && (
+                        <>
+                          {gw?.config?.email && <InlineChip label={t("البريد")} value={gw.config.email} />}
+                          {gw?.config?.mode && <InlineChip label={t("الوضع")} value={gw.config.mode === 'live' ? t('حقيقي') : t('تجريبي')} dotColor={gw.config.mode === 'live' ? '#16a34a' : '#d97706'} />}
+                        </>
+                      )}
+                      {type === 'binance' && gw?.config?.binance_id && <InlineChip label="ID" value={gw.config.binance_id} />}
+                      {type === 'usdt' && (
+                        <>
+                          {gw?.config?.network && <InlineChip label={t("الشبكة")} value={gw.config.network} />}
+                          {gw?.config?.wallet_address && <InlineChip label={t("المحفظة")} value={maskString(gw.config.wallet_address)} />}
+                        </>
+                      )}
+                      {type === 'bank_transfer' && (
+                        <>
+                          {gw?.config?.bank_name && <InlineChip label={t("البنك")} value={gw.config.bank_name} />}
+                          {gw?.config?.iban && <InlineChip label="IBAN" value={maskString(gw.config.iban)} />}
+                        </>
+                      )}
+                      {type === 'wallet' && (
+                        <>
+                          {gw?.config?.instructions && <InlineChip label={t("التعليمات")} value={gw.config.instructions.length > 25 ? gw.config.instructions.slice(0, 25) + '…' : gw.config.instructions} />}
+                          {gw?.config?.contact_numbers && <InlineChip label={t("التواصل")} value={gw.config.contact_numbers} />}
+                        </>
+                      )}
+                      {type === 'bankak' && (
+                        <>
+                          {gw?.config?.full_name && <InlineChip label={t("الحساب")} value={gw.config.full_name} />}
+                          {gw?.config?.exchange_rate && <InlineChip label={t("الصرف")} value={`1$ = ${gw.config.exchange_rate}`} />}
+                        </>
+                      )}
+                      {(!gw?.config || Object.keys(gw.config).length === 0) && (
+                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontStyle: 'italic' }}>{t('لم يتم إدخال بيانات بعد')}</span>
+                      )}
+                    </>
+                  )}
+                  {!isConfigured && (
+                    <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontStyle: 'italic' }}>{t('غير مُهيأة — اضغط إعداد')}</span>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  {isConfigured ? (
+                    <>
+                      <button onClick={() => openConfigModal(type, gw)} title={t('تعديل')} style={{
+                        width: 34, height: 34, borderRadius: 9, border: '1px solid #e2e8f0',
+                        background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center',
+                        transition: 'all 0.15s', color: '#3b82f6',
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                      <button onClick={() => setDeleteConfirm(gw!.id)} title={t('حذف')} style={{
+                        width: 34, height: 34, borderRadius: 9, border: '1px solid #fecaca',
+                        background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center',
+                        transition: 'all 0.15s', color: '#dc2626',
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => openConfigModal(type)} style={{
+                      padding: '0.45rem 0.9rem', borderRadius: 9, border: 'none',
+                      background: `linear-gradient(135deg, ${meta.color}, ${meta.color}cc)`,
+                      cursor: 'pointer', fontSize: '0.76rem', fontWeight: 700,
+                      fontFamily: 'Tajawal, sans-serif', color: '#fff',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                      {t('إعداد')}
+                    </button>
+                  )}
+                </div>
+
+                {/* Separator before toggle */}
+                <div style={{ width: 1, height: 32, background: '#f1f5f9', flexShrink: 0 }} />
+
+                {/* Toggle ON/OFF */}
                 {isConfigured ? (
                   <button onClick={() => handleToggle(gw!)} style={{
-                    width: 44, height: 24, borderRadius: 12, border: 'none',
+                    width: 48, height: 26, borderRadius: 13, border: 'none',
                     background: isEnabled ? '#22c55e' : '#e2e8f0',
-                    position: 'relative', cursor: 'pointer', transition: 'all 0.25s', flexShrink: 0,
+                    position: 'relative', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(.4,0,.2,1)',
+                    flexShrink: 0, boxShadow: isEnabled ? '0 2px 8px rgba(34,197,94,0.3)' : 'none',
                   }}>
                     <div style={{
-                      width: 18, height: 18, borderRadius: '50%', background: '#fff',
-                      position: 'absolute', top: 3, transition: 'all 0.25s',
+                      width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                      position: 'absolute', top: 3, transition: 'all 0.3s cubic-bezier(.4,0,.2,1)',
                       boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
-                      ...(isEnabled ? { left: 3 } : { right: 3 }),
+                      ...(isEnabled ? { [isRTL ? 'right' : 'left']: 3 } : { [isRTL ? 'left' : 'right']: 3 }),
                     }} />
                   </button>
                 ) : (
-                  <span style={{
-                    fontSize: '0.7rem', fontWeight: 600, padding: '0.25rem 0.6rem',
-                    borderRadius: 6, background: '#f8fafc', color: '#94a3b8',
-                    border: '1px solid #f1f5f9',
-                  }}>{t('غير مُهيأة')}</span>
-                )}
-              </div>
-
-              {/* Config Details (if configured) */}
-              {isConfigured && (
-                <div style={{ padding: '0 1.25rem' }}>
-                  {/* Missing Fields Warning */}
-                  {(() => {
-                    const requiredFields = (CONFIG_FIELDS[type] || []).filter(f => f.required);
-                    const missing = requiredFields.filter(f => !gw?.config?.[f.key]?.trim());
-                    if (missing.length > 0) {
-                      return (
-                        <div style={{
-                          padding: '0.45rem 0.75rem', background: '#fef2f2', border: '1px solid #fecaca',
-                          borderRadius: 8, marginBottom: 8, fontSize: '0.73rem', color: '#b91c1c', fontWeight: 600,
-                          display: 'flex', alignItems: 'center', gap: 4,
-                        }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M12 2L2 20h20L12 2z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          {isRTL ? 'حقول ناقصة:' : 'Missing fields:'} {missing.map(f => t(f.label)).join(isRTL ? '، ' : ', ')}
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  {/* Type-specific preview */}
-                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: '0.6rem 0.75rem', marginBottom: 8 }}>
-                    {type === 'paypal' && (
-                      <>
-                        {gw?.config?.email && <ConfigRow label={t("البريد")} value={gw.config.email} />}
-                        {gw?.config?.mode && <ConfigRow label={t("الوضع")} value={gw.config.mode === 'live' ? t('● حقيقي') : t('● تجريبي')} valueColor={gw.config.mode === 'live' ? '#16a34a' : '#d97706'} />}
-                      </>
-                    )}
-                    {type === 'binance' && gw?.config?.binance_id && <ConfigRow label="Binance ID" value={gw.config.binance_id} />}
-                    {type === 'usdt' && (
-                      <>
-                        {gw?.config?.network && <ConfigRow label={t("الشبكة")} value={gw.config.network} />}
-                        {gw?.config?.wallet_address && <ConfigRow label={t("المحفظة")} value={maskString(gw.config.wallet_address)} />}
-                      </>
-                    )}
-                    {type === 'bank_transfer' && (
-                      <>
-                        {gw?.config?.bank_name && <ConfigRow label={t("البنك")} value={gw.config.bank_name} />}
-                        {gw?.config?.iban && <ConfigRow label="IBAN" value={maskString(gw.config.iban)} />}
-                      </>
-                    )}
-                    {type === 'wallet' && (
-                      <>
-                        {gw?.config?.instructions && <ConfigRow label={t("التعليمات")} value={gw.config.instructions.length > 35 ? gw.config.instructions.slice(0, 35) + '...' : gw.config.instructions} />}
-                        {gw?.config?.contact_numbers && <ConfigRow label={t("التواصل")} value={gw.config.contact_numbers} />}
-                        {gw?.config?.image_url && <ImgPreview src={gw.config.image_url} />}
-                      </>
-                    )}
-                    {type === 'bankak' && (
-                      <>
-                        {gw?.config?.full_name && <ConfigRow label={t("صاحب الحساب")} value={gw.config.full_name} />}
-                        {gw?.config?.account_number && <ConfigRow label={t("رقم الحساب")} value={maskString(gw.config.account_number)} />}
-                        {gw?.config?.exchange_rate && <ConfigRow label={t("سعر الصرف")} value={`1$ = ${gw.config.exchange_rate} ${gw.config.local_currency || 'SDG'}`} />}
-                        {gw?.config?.image_url && <ImgPreview src={gw.config.image_url} />}
-                      </>
-                    )}
-                    {/* Fallback if no details to show */}
-                    {!gw?.config || Object.keys(gw.config).length === 0 ? (
-                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', padding: '0.25rem 0' }}>{t('لم يتم إدخال بيانات بعد')}</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions Footer */}
-              <div style={{
-                padding: '0.75rem 1.25rem',
-                borderTop: '1px solid #f8fafc',
-                display: 'flex', gap: 8,
-              }}>
-                {isConfigured ? (
-                  <>
-                    <button onClick={() => openConfigModal(type, gw)} style={{
-                      flex: 1, padding: '0.55rem', borderRadius: 10,
-                      border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer',
-                      fontSize: '0.8rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
-                      color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      transition: 'all 0.15s',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      {t('تعديل')}
-                    </button>
-                    <button onClick={() => setDeleteConfirm(gw!.id)} style={{
-                      padding: '0.55rem 0.75rem', borderRadius: 10,
-                      border: '1px solid #fecaca', background: '#fff', cursor: 'pointer',
-                      fontSize: '0.8rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
-                      color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.15s',
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </button>
-                  </>
-                ) : (
-                  <button onClick={() => openConfigModal(type)} style={{
-                    flex: 1, padding: '0.6rem', borderRadius: 10, border: 'none',
-                    background: `linear-gradient(135deg, ${meta.color}, ${meta.color}cc)`,
-                    cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700,
-                    fontFamily: 'Tajawal, sans-serif', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    transition: 'all 0.15s',
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                    {t('إعداد البوابة')}
-                  </button>
+                  <div style={{
+                    width: 48, height: 26, borderRadius: 13,
+                    background: '#f1f5f9', flexShrink: 0, opacity: 0.5,
+                  }} />
                 )}
               </div>
             </div>
@@ -523,8 +519,7 @@ export default function PaymentsPage() {
         })}
       </div>
       {/* ═══════════════ Transaction Log ═══════════════ */}
-      <div style={{ marginTop: 36 }}>
-        {/* Section Header */}
+      <div style={{ marginTop: 36 }}>        {/* Section Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -535,18 +530,39 @@ export default function PaymentsPage() {
             </h3>
             <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>{t('جميع عمليات الشحن والدفع — يمكنك الموافقة على المعلقة')}</p>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Search */}
+            <div style={{ position: 'relative' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', ...(isRTL ? { right: 10 } : { left: 10 }), pointerEvents: 'none' }}><circle cx="11" cy="11" r="8" stroke="#94a3b8" strokeWidth="2"/><path d="M21 21l-4.35-4.35" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/></svg>
+              <input
+                value={txSearch}
+                onChange={e => setTxSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { setTxPage(1); fetchTransactions(txSearch || undefined); } }}
+                placeholder={isRTL ? 'بحث برقم الفاتورة أو اسم العميل...' : 'Search invoice or customer...'}
+                style={{ width: 220, padding: '0.45rem 0.75rem', paddingInlineStart: 32, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.78rem', fontFamily: 'Tajawal, sans-serif', outline: 'none', background: '#fff' }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
           {([['all', 'الكل'], ['pending', 'بانتظار المراجعة'], ['awaiting_receipt', 'بانتظار الإيصال'], ['completed', 'مكتملة'], ['failed', 'مرفوضة']] as const).map(([key, label]) => {
             const count = key === 'all' ? transactions.length : transactions.filter(t => t.status === key).length;
             const isActive = txFilter === key;
+            const colorMap: Record<string, { bg: string; color: string }> = {
+              pending: { bg: '#fef3c7', color: '#92400e' },
+              awaiting_receipt: { bg: '#eef2ff', color: '#4338ca' },
+              completed: { bg: '#dcfce7', color: '#166534' },
+              failed: { bg: '#fee2e2', color: '#b91c1c' },
+              all: { bg: '#f1f5f9', color: '#334155' },
+            };
+            const colors = colorMap[key] || colorMap.all;
             return (
               <button key={key} onClick={() => { setTxFilter(key); setTxPage(1); }} style={{
                 padding: '0.4rem 0.85rem', borderRadius: 8, border: 'none',
-                background: isActive ? (key === 'pending' ? '#fef3c7' : key === 'completed' ? '#dcfce7' : key === 'failed' ? '#fee2e2' : '#f1f5f9') : '#fff',
-                color: isActive ? (key === 'pending' ? '#92400e' : key === 'completed' ? '#166534' : key === 'failed' ? '#b91c1c' : '#334155') : '#94a3b8',
+                background: isActive ? colors.bg : '#fff',
+                color: isActive ? colors.color : '#94a3b8',
                 fontSize: '0.78rem', fontWeight: isActive ? 700 : 500, cursor: 'pointer',
                 fontFamily: 'Tajawal, sans-serif', transition: 'all 0.15s',
                 boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
@@ -581,11 +597,11 @@ export default function PaymentsPage() {
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
                 {/* Table Header */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
+                  display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
                   padding: '0.65rem 1rem', background: '#f8fafc', borderBottom: '1px solid #f1f5f9',
                   fontSize: '0.72rem', fontWeight: 700, color: '#64748b',
                 }}>
-                  <span>#</span>
+                  <span>{t('رقم الفاتورة')}</span>
                   <span>{t('العميل')}</span>
                   <span>{t('المبلغ')}</span>
                   <span>{t('البوابة')}</span>
@@ -595,31 +611,31 @@ export default function PaymentsPage() {
 
                 {/* Rows */}
                 {paginated.map(tx => {
-                  const isPending = tx.status === 'pending';
+                  const isPending = tx.status === 'pending' || tx.status === 'awaiting_receipt';
                   const hasReceipt = !!tx.meta?.receipt_url;
                   const methodLabel = isRTL
                     ? (GATEWAY_META[tx.payment_method as GatewayType]?.label || tx.payment_method)
                     : (GATEWAY_META[tx.payment_method as GatewayType]?.labelEn || tx.payment_method);
                   const methodColor = GATEWAY_META[tx.payment_method as GatewayType]?.color || '#64748b';
                   const statusConfig = {
-                    pending: { label: t('بانتظار المراجعة'), bg: '#fef3c7', color: '#92400e', icon: '⏳' },
-                    awaiting_receipt: { label: t('بانتظار الإيصال'), bg: '#eef2ff', color: '#4338ca', icon: '📄' },
-                    completed: { label: t('مكتملة'), bg: '#dcfce7', color: '#166534', icon: '✅' },
-                    failed: { label: t('مرفوضة'), bg: '#fee2e2', color: '#b91c1c', icon: '❌' },
-                    refunded: { label: t('مستردة'), bg: '#e0e7ff', color: '#4338ca', icon: '↩️' },
-                    cancelled: { label: t('ملغاة'), bg: '#f1f5f9', color: '#64748b', icon: '🚫' },
-                  }[tx.status] || { label: tx.status, bg: '#f1f5f9', color: '#64748b', icon: '•' };
+                    pending: { label: t('بانتظار المراجعة'), bg: '#fef3c7', color: '#92400e', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#92400e" strokeWidth="2"/><path d="M12 6v6l4 2" stroke="#92400e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                    awaiting_receipt: { label: t('بانتظار الإيصال'), bg: '#eef2ff', color: '#4338ca', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                    completed: { label: t('مكتملة'), bg: '#dcfce7', color: '#166534', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M22 4L12 14.01l-3-3" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                    failed: { label: t('مرفوضة'), bg: '#fee2e2', color: '#b91c1c', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#b91c1c" strokeWidth="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="#b91c1c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                    refunded: { label: t('مستردة'), bg: '#e0e7ff', color: '#4338ca', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                    cancelled: { label: t('ملغاة'), bg: '#f1f5f9', color: '#64748b', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#64748b" strokeWidth="2"/><path d="M4.93 4.93l14.14 14.14" stroke="#64748b" strokeWidth="2" strokeLinecap="round"/></svg> },
+                  }[tx.status] || { label: tx.status, bg: '#f1f5f9', color: '#64748b', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#64748b"/></svg> };
 
                   return (
                     <div key={tx.id} style={{
-                      display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
+                      display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 0.7fr 0.8fr 0.8fr 1fr',
                       padding: '0.7rem 1rem', borderBottom: '1px solid #f8fafc',
                       alignItems: 'center', fontSize: '0.8rem',
                       background: isPending ? '#fffbeb05' : 'transparent',
                     }}>
-                      {/* ID + Date */}
+                      {/* Invoice + Date */}
                       <div>
-                        <span style={{ fontWeight: 700, color: '#0b1020' }}>#{tx.id}</span>
+                        <span style={{ fontWeight: 700, color: '#7c5cff', fontSize: '0.82rem', fontFamily: 'monospace', letterSpacing: '0.02em' }}>{tx.invoice_number || `#${tx.id}`}</span>
                         <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 2 }}>
                           {new Date(tx.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric' })}
                           {' '}
@@ -665,7 +681,8 @@ export default function PaymentsPage() {
                             padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid #e2e8f0',
                             background: '#fff', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 600,
                             fontFamily: 'Tajawal, sans-serif', color: '#2563eb',
-                          }}>{t('🧁 إيصال')}</button>
+                            display: 'inline-flex', alignItems: 'center', gap: 3,
+                          }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2v6h6" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> {t('إيصال')}</button>
                         )}
                         {isPending && (
                           <>
@@ -678,7 +695,7 @@ export default function PaymentsPage() {
                                 fontSize: '0.68rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                                 color: '#fff', opacity: approvingId === tx.id ? 0.6 : 1,
                               }}
-                            >{approvingId === tx.id ? '...' : t('✓ موافقة')}</button>
+                            >{approvingId === tx.id ? '...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg> {t('موافقة')}</span>}</button>
                             <button
                               onClick={() => handleReject(tx)}
                               disabled={approvingId === tx.id}
@@ -688,7 +705,7 @@ export default function PaymentsPage() {
                                 fontSize: '0.68rem', fontWeight: 600, fontFamily: 'Tajawal, sans-serif',
                                 color: '#dc2626', opacity: approvingId === tx.id ? 0.6 : 1,
                               }}
-                            >{t('✗ رفض')}</button>
+                            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> {t('رفض')}</span></button>
                           </>
                         )}
                         {!isPending && !hasReceipt && (
@@ -729,12 +746,18 @@ export default function PaymentsPage() {
             boxShadow: '0 25px 50px rgba(0,0,0,0.2)', maxHeight: '88vh', overflowY: 'auto',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020' }}>{isRTL ? '🧁 إيصال الدفع' : '🧁 Payment Receipt'} — #{receiptModal.id}</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 6 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#7c5cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#7c5cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> {isRTL ? 'إيصال الدفع' : 'Payment Receipt'}  {receiptModal.invoice_number || `#${receiptModal.id}`}</h3>
               <button onClick={() => setReceiptModal(null)} style={{ background: '#f1f5f9', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: '0.9rem', display: 'grid', placeItems: 'center' }}>✕</button>
             </div>
 
             {/* Payment Info */}
             <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', marginBottom: 16 }}>
+              {receiptModal.invoice_number && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
+                  <span style={{ color: '#64748b' }}>{t('رقم الفاتورة')}</span>
+                  <span style={{ fontWeight: 700, color: '#7c5cff', fontFamily: 'monospace' }}>{receiptModal.invoice_number}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.82rem' }}>
                 <span style={{ color: '#64748b' }}>{t('العميل')}</span>
                 <span style={{ fontWeight: 600, color: '#0b1020' }}>{receiptModal.customer_name || `#${receiptModal.customer_id}`}</span>
@@ -776,18 +799,18 @@ export default function PaymentsPage() {
             )}
 
             {/* Actions */}
-            {receiptModal.status === 'pending' && (
+            {(receiptModal.status === 'pending' || receiptModal.status === 'awaiting_receipt') && (
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => { handleReject(receiptModal); setReceiptModal(null); }} style={{
                   flex: 1, padding: '0.65rem', borderRadius: 10, border: '1px solid #fecaca',
                   background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
                   fontFamily: 'Tajawal, sans-serif', color: '#dc2626',
-                }}>{t('✗ رفض')}</button>
+                }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> {t('رفض')}</span></button>
                 <button onClick={() => { handleApprove(receiptModal); setReceiptModal(null); }} style={{
                   flex: 2, padding: '0.65rem', borderRadius: 10, border: 'none',
                   background: '#059669', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
                   fontFamily: 'Tajawal, sans-serif', color: '#fff',
-                }}>{t('✓ موافقة وإضافة الرصيد')}</button>
+                }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg> {t('موافقة وإضافة الرصيد')}</span></button>
               </div>
             )}
           </div>
@@ -825,7 +848,8 @@ export default function PaymentsPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Name */}
+              {/* Name – hidden for bankak (fixed name) */}
+              {formType !== 'bankak' && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={labelStyle}>{t('الاسم (عربي)')}</label>
@@ -836,6 +860,7 @@ export default function PaymentsPage() {
                   <input value={formNameEn} onChange={e => setFormNameEn(e.target.value)} placeholder="Gateway Name" style={inputStyle} />
                 </div>
               </div>
+              )}
 
               {/* Config Fields */}
               <div>
@@ -910,7 +935,11 @@ export default function PaymentsPage() {
                 cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Tajawal, sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}>
-                {saving ? t('⏳ جاري الحفظ...') : editingGw ? t('💾 حفظ التعديلات') : t('💾 إضافة البوابة')}
+                {saving ? (
+                  <><div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> {t('جاري الحفظ...')}</>
+                ) : (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> {editingGw ? t('حفظ التعديلات') : t('إضافة البوابة')}</>
+                )}
               </button>
             </div>
           </div>
@@ -944,12 +973,22 @@ export default function PaymentsPage() {
           fontSize: '0.85rem', fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
           boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
           animation: 'slideUp 0.3s ease',
+          display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          {toast.type === 'success' ? '✅' : '❌'} {toast.msg}
+          {toast.type === 'success'
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M22 4L12 14.01l-3-3" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#dc2626" strokeWidth="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          } {toast.msg}
         </div>
       )}
 
-      <style>{`@keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
+      <style>{`
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .gw-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07) !important; }
+        @media (max-width: 768px) {
+          .gw-card > div:first-child { flex-wrap: wrap !important; gap: 10px !important; }
+        }
+      `}</style>
     </>
   );
 }
@@ -970,6 +1009,21 @@ function ImgPreview({ src }: { src: string }) {
     <div style={{ textAlign: 'center', marginTop: 6 }}>
       <img src={src} alt="" style={{ maxWidth: 80, maxHeight: 40, borderRadius: 6, border: '1px solid #e2e8f0' }} onError={e => (e.currentTarget.style.display = 'none')} />
     </div>
+  );
+}
+
+function InlineChip({ label, value, dotColor }: { label: string; value: string; dotColor?: string }) {
+  return (
+    <span style={{
+      fontSize: '0.72rem', fontWeight: 500, color: '#475569',
+      background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: 6,
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+    }}>
+      <span style={{ color: '#94a3b8', fontWeight: 600 }}>{label}:</span>
+      {dotColor && <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />}
+      <span style={{ fontWeight: 600, color: '#334155' }}>{value}</span>
+    </span>
   );
 }
 

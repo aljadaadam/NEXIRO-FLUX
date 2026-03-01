@@ -89,9 +89,42 @@ async function initCheckout(req, res) {
       return res.status(401).json({ error: 'يلزم تسجيل دخول الزبون لشحن المحفظة' });
     }
 
-    // تحديد الحالة الأولية: بوابات البنك تبدأ بـ awaiting_receipt حتى يرفع الإيصال
-    const manualGateways = ['bank_transfer', 'bankak'];
-    const initialStatus = manualGateways.includes(gateway.type) ? 'awaiting_receipt' : 'pending';
+    // bank_transfer = عرض فقط (info-only)، لا يُنشئ دفعة
+    if (gateway.type === 'bank_transfer') {
+      const config = gateway.config;
+      return res.json({
+        success: true,
+        paymentId: 0,
+        gatewayType: 'bank_transfer',
+        method: 'info_bank',
+        bankDetails: {
+          bank_name: config.bank_name,
+          account_holder: config.account_holder,
+          iban: config.iban,
+          swift: config.swift,
+          account_number: config.account_number,
+          currency: config.currency || currency || 'USD',
+        },
+      });
+    }
+
+    // wallet = عرض فقط (info-only)، لا يُنشئ دفعة
+    if (gateway.type === 'wallet') {
+      return res.json({
+        success: true,
+        paymentId: 0,
+        gatewayType: 'wallet',
+        method: 'info_wallet',
+        walletConfig: {
+          instructions: gateway.config?.instructions,
+          contact_numbers: gateway.config?.contact_numbers,
+          image_url: gateway.config?.image_url,
+        },
+      });
+    }
+
+    // تحديد الحالة الأولية: بنكك فقط يبدأ بـ awaiting_receipt
+    const initialStatus = gateway.type === 'bankak' ? 'awaiting_receipt' : 'pending';
 
     const payment = await Payment.create({
       site_key: getSiteKey(req),
@@ -211,30 +244,7 @@ async function initCheckout(req, res) {
         break;
       }
 
-      // ━━━━━ تحويل بنكي ━━━━━
-      case 'bank_transfer': {
-        const config = gateway.config;
-        await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
-        result = {
-          method: 'manual_bank',
-          bankDetails: {
-            bank_name: config.bank_name,
-            account_holder: config.account_holder,
-            iban: config.iban,
-            swift: config.swift,
-            account_number: config.account_number,
-            currency: config.currency || currency || 'USD',
-          },
-          referenceId,
-          instructions: {
-            ar: `حوّل المبلغ ${amount} ${currency || 'USD'} إلى الحساب أعلاه واكتب رقم المرجع "${referenceId}" في وصف التحويل. بعد التحويل ارفع إيصال الدفع.`,
-            en: `Transfer ${amount} ${currency || 'USD'} to the account above and include reference "${referenceId}" in the transfer description. After transfer, upload your receipt.`,
-          },
-        };
-        break;
-      }
-
-      // ━━━━━ بنكك ━━━━━
+      // ━━━━━ بنكك (البوابة اليدوية الوحيدة — رفع إشعار + تأكيد أدمن) ━━━━━
       case 'bankak': {
         const bConfig = gateway.config;
         const exchangeRate = parseFloat(bConfig.exchange_rate) || 0;
@@ -242,8 +252,9 @@ async function initCheckout(req, res) {
         await Payment.updateExternalId(payment.id, getSiteKey(req), referenceId);
         await Payment.updateMeta(payment.id, getSiteKey(req), {
           bankak_exchange_rate: bConfig.exchange_rate,
-          bankak_local_currency: bConfig.local_currency,
+          bankak_local_currency: 'SDG',
           bankak_local_amount: localAmount,
+          bankak_receipt_note: bConfig.receipt_note || '',
         });
         result = {
           method: 'manual_bankak',
@@ -251,7 +262,9 @@ async function initCheckout(req, res) {
             account_number: bConfig.account_number,
             full_name: bConfig.full_name,
             exchange_rate: bConfig.exchange_rate,
-            local_currency: bConfig.local_currency || '',
+            local_currency: 'SDG',
+            receipt_note: bConfig.receipt_note || '',
+            image_url: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png',
           },
           localAmount,
           referenceId,
@@ -266,6 +279,7 @@ async function initCheckout(req, res) {
     res.json({
       success: true,
       paymentId: payment.id,
+      invoiceNumber: payment.invoice_number,
       gatewayType: gateway.type,
       ...result,
     });
@@ -632,6 +646,11 @@ async function uploadBankReceipt(req, res) {
     // فقط الدفعات التي بانتظار الإيصال أو المعلقة يمكن رفع إيصال لها
     if (!['awaiting_receipt', 'pending'].includes(payment.status)) {
       return res.status(400).json({ error: 'لا يمكن رفع إيصال لهذه الدفعة' });
+    }
+
+    // فقط بنكك يسمح برفع إشعار
+    if (payment.payment_method !== 'bankak') {
+      return res.status(400).json({ error: 'رفع الإشعار متاح فقط لبوابة بنكك' });
     }
 
     await Payment.updateMeta(payment.id, getSiteKey(req), {

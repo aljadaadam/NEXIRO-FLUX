@@ -389,7 +389,11 @@ class ApiService {
   }
 
   async getReservations(params = {}) {
-    const query = new URLSearchParams(params).toString();
+    // Filter out undefined/null values to prevent URLSearchParams from converting them to strings
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const query = new URLSearchParams(cleanParams).toString();
     return this.request(`/reservations${query ? '?' + query : ''}`);
   }
 
@@ -402,6 +406,31 @@ class ApiService {
 
   async deleteReservation(id) {
     return this.request(`/reservations/${id}`, { method: 'DELETE' });
+  }
+
+  // ─── Platform: Broadcasts (إعلانات بريدية) ───
+
+  async sendBroadcast(data) {
+    return this.request('/platform/broadcasts/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getBroadcasts(params = {}) {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const query = new URLSearchParams(cleanParams).toString();
+    return this.request(`/platform/broadcasts${query ? '?' + query : ''}`);
+  }
+
+  async deleteBroadcast(id) {
+    return this.request(`/platform/broadcasts/${id}`, { method: 'DELETE' });
+  }
+
+  async getAvailableRecipients() {
+    return this.request('/platform/broadcasts/recipients');
   }
 
   // ─── Customization ───

@@ -16,10 +16,10 @@ import { storeApi } from '@/lib/api';
 const GATEWAY_ICONS: Record<string, { icon: string; color: string; desc: string }> = {
   binance: { icon: '₿', color: '#f0b90b', desc: 'USDT — Binance Pay' },
   paypal:  { icon: '💳', color: '#003087', desc: 'تحويل عبر PayPal' },
-  bank_transfer: { icon: '🏦', color: '#059669', desc: 'حوالة بنكية مباشرة' },
+  bank_transfer: { icon: '🏦', color: '#059669', desc: 'بيانات بنكية — للعرض فقط' },
   usdt:    { icon: '💚', color: '#26a17b', desc: 'USDT — تيثر' },
   wallet:  { icon: '📱', color: '#8b5cf6', desc: 'شحن عبر محفظة إلكترونية' },
-  bankak:  { icon: '🏛️', color: '#0891b2', desc: 'دفع عبر بنكك — تحويل محلي' },
+  bankak:  { icon: '🏛️', color: '#0891b2', desc: 'دفع عبر بنكك' },
 };
 
 // ─── Types for checkout response ───
@@ -66,6 +66,8 @@ type CheckoutResult = {
     full_name?: string;
     exchange_rate?: string;
     local_currency?: string;
+    receipt_note?: string;
+    image_url?: string;
   };
   localAmount?: number;
 };
@@ -140,6 +142,25 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
       return;
     }
 
+    // ─── Bank Transfer type: info-only, show bank details without creating payment ───
+    if (selectedGw.type === 'bank_transfer') {
+      setCheckoutData({
+        success: true,
+        method: 'info_bank',
+        paymentId: 0,
+        gatewayType: 'bank_transfer',
+        bankDetails: {
+          bank_name: selectedGw.config?.bank_name || '',
+          account_holder: selectedGw.config?.account_holder || '',
+          iban: selectedGw.config?.iban || '',
+          swift: selectedGw.config?.swift || '',
+          currency: selectedGw.config?.currency || 'USD',
+        },
+      } as CheckoutResult);
+      setStep(2);
+      return;
+    }
+
     // ─── Bankak type: show bank info + receipt upload ───
     // In demo mode, handle locally; otherwise let it go through backend checkout
     if (selectedGw.type === 'bankak' && typeof window !== 'undefined' && (
@@ -158,7 +179,9 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
           account_number: selectedGw.config?.account_number || '',
           full_name: selectedGw.config?.full_name || '',
           exchange_rate: selectedGw.config?.exchange_rate || '',
-          local_currency: selectedGw.config?.local_currency || '',
+          local_currency: 'SDG',
+          receipt_note: selectedGw.config?.receipt_note || '',
+          image_url: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png',
         },
         localAmount: localAmt,
         amount: Number(amount),
@@ -704,12 +727,12 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
               </div>
             )}
 
-            {/* ── Bank Transfer: show details + go to receipt ── */}
-            {checkoutData.method === 'manual_bank' && (
+            {/* ── Bank Transfer: info-only — عرض بيانات البنك فقط بدون رفع إيصال ── */}
+            {checkoutData.method === 'info_bank' && (
               <div>
                 <div style={{ background: 'var(--bg-subtle)', borderRadius: 14, padding: '1.25rem', marginBottom: 16 }}>
                   <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Lock size={14} color={currentTheme.primary} /> {t('بيانات التحويل')}
+                    <Lock size={14} color={currentTheme.primary} /> {t('بيانات الحساب البنكي')}
                   </h4>
                   {[
                     ...(checkoutData.bankDetails?.bank_name ? [{ label: t('البنك'), value: checkoutData.bankDetails.bank_name }] : []),
@@ -717,28 +740,27 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                     ...(checkoutData.bankDetails?.iban ? [{ label: 'IBAN', value: checkoutData.bankDetails.iban }] : []),
                     ...(checkoutData.bankDetails?.swift ? [{ label: 'SWIFT', value: checkoutData.bankDetails.swift }] : []),
                     ...(checkoutData.bankDetails?.currency ? [{ label: t('العملة'), value: checkoutData.bankDetails.currency }] : []),
-                    ...(checkoutData.referenceId ? [{ label: t('رقم المرجع'), value: checkoutData.referenceId }] : []),
                   ].map((item, i, arr) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.label}</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', direction: 'ltr', maxWidth: '60%', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: '60%' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', wordBreak: 'break-all' }}>{item.value}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(item.value); }} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border-default)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>📋</button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
-                  <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
-                    {typeof checkoutData.instructions === 'object' && checkoutData.instructions !== null
-                      ? checkoutData.instructions.ar
-                      : t('تأكد من إرسال المبلغ الصحيح. بعد التحويل أرفق إيصال الدفع للتأكيد.')}
-                  </p>
+
+                {/* Info note — للعرض فقط */}
+                <div style={{ background: '#eff6ff', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>ℹ️</span>
+                  <p style={{ fontSize: '0.78rem', color: '#1e40af', lineHeight: 1.6 }}>{t('هذه البوابة للعرض فقط. حوّل المبلغ إلى الحساب أعلاه وتواصل مع الإدارة لتأكيد التحويل.')}</p>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{ flex: 1, padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('رجوع')}</button>
-                  <button onClick={() => setStep(3)} style={{ flex: 2, padding: '0.7rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                    <Upload size={14} /> {t('رفع الإيصال')}
-                  </button>
-                </div>
+
+                <button onClick={() => { setStep(1); setCheckoutData(null); }} style={{
+                  width: '100%', padding: '0.7rem', borderRadius: btnR, background: 'var(--bg-muted)',
+                  color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}>{t('← رجوع')}</button>
               </div>
             )}
 
@@ -788,6 +810,11 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             {/* ── Bankak: local bank transfer with exchange rate ── */}
             {checkoutData.method === 'manual_bankak' && checkoutData.bankakDetails && (
               <div>
+                {/* Bankak logo */}
+                <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                  <img src={checkoutData.bankakDetails.image_url || 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png'} alt="بنكك" style={{ height: 48, objectFit: 'contain', borderRadius: 10 }} />
+                </div>
+
                 {/* Amount banner with exchange rate */}
                 <div style={{
                   background: 'linear-gradient(135deg, #0891b2, #06b6d4)',
@@ -800,13 +827,13 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   {checkoutData.localAmount && checkoutData.localAmount > 0 && (
                     <div style={{ marginTop: 8, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.15)', display: 'inline-block' }}>
                       <p style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                        = {checkoutData.localAmount.toLocaleString()} {checkoutData.bankakDetails.local_currency}
+                        = {checkoutData.localAmount.toLocaleString()} {checkoutData.bankakDetails.local_currency || 'SDG'}
                       </p>
                     </div>
                   )}
                   {checkoutData.bankakDetails.exchange_rate && (
                     <p style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 6 }}>
-                      {t('سعر الصرف')}: 1$ = {checkoutData.bankakDetails.exchange_rate} {checkoutData.bankakDetails.local_currency}
+                      {t('سعر الصرف')}: 1$ = {checkoutData.bankakDetails.exchange_rate} {checkoutData.bankakDetails.local_currency || 'SDG'}
                     </p>
                   )}
                 </div>
@@ -831,13 +858,15 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
                   ))}
                 </div>
 
-                {/* Warning note */}
-                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
-                  <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
-                    {t('حوّل المبلغ بالعملة المحلية إلى الحساب أعلاه. بعد التحويل ارفع صورة الإشعار للتأكيد.')}
-                  </p>
-                </div>
+                {/* Receipt note from admin */}
+                {checkoutData.bankakDetails.receipt_note && (
+                  <div style={{ background: '#fffbeb', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                    <p style={{ fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
+                      {checkoutData.bankakDetails.receipt_note}
+                    </p>
+                  </div>
+                )}
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -850,7 +879,7 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
             )}
 
             {submitError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center', marginTop: 10 }}>{submitError}</p>}
-            {checkoutData.method !== 'manual_bank' && checkoutData.method !== 'info_wallet' && checkoutData.method !== 'manual_bankak' && (
+            {checkoutData.method !== 'info_bank' && checkoutData.method !== 'info_wallet' && checkoutData.method !== 'manual_bankak' && (
               <button onClick={() => { setStep(1); setCheckoutData(null); setSubmitError(''); }} style={{
                 width: '100%', marginTop: 12, padding: '0.6rem', borderRadius: btnR, background: 'var(--bg-muted)',
                 color: 'var(--text-secondary)', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
@@ -1255,6 +1284,12 @@ export default function ProfilePage() {
 
   // ─── Login / Register (Demo-style tabs) ───
   if (!isLoggedIn) {
+    // ─── تنبيه الحساب المحظور ───
+    const wasBlocked = typeof window !== 'undefined' && sessionStorage.getItem('account_blocked') === '1';
+    if (wasBlocked) {
+      // مسح العلامة بعد عرضها مرة واحدة
+      sessionStorage.removeItem('account_blocked');
+    }
     // ─── OTP Verification Step ───
     if (otpStep) {
       return (
@@ -1290,6 +1325,24 @@ export default function ProfilePage() {
 
     return (
       <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
+        {/* ─── تنبيه الحساب المحظور ─── */}
+        {wasBlocked && (
+          <div style={{
+            background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12,
+            padding: '1rem 1.2rem', marginBottom: 16, textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fee2e2', display: 'grid', placeItems: 'center' }}>
+              <Shield size={20} color="#dc2626" />
+            </div>
+            <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#dc2626', margin: 0, fontFamily: 'inherit' }}>
+              {t('تم حظر حسابك')}
+            </p>
+            <p style={{ fontSize: '0.78rem', color: '#991b1b', margin: 0, fontFamily: 'inherit' }}>
+              {t('تواصل مع الدعم إذا كنت تعتقد أن هذا خطأ')}
+            </p>
+          </div>
+        )}
         <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--bg-muted)', borderRadius: 10, padding: 4 }}>

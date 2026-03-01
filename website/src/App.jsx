@@ -24,9 +24,9 @@ import {
   CarStoreLiveDemo, CarDashboardLiveDemo,
   // Admin
   AdminLoginPage, AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
-  AdminAnnouncements, AdminSettings, AdminPayments,
+  AdminAnnouncements, AdminSettings,
   AdminPaymentGateways, AdminPurchaseCodes, AdminTickets, AdminChat,
-  AdminReservations,
+  AdminReservations, AdminBroadcasts,
 } from './routes';
 
 // Loading fallback
@@ -167,7 +167,7 @@ function AppContent() {
               <Route path="templates" element={<AdminTemplates />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="announcements" element={<AdminAnnouncements />} />
-              <Route path="payments" element={<AdminPayments />} />
+              <Route path="broadcasts" element={<AdminBroadcasts />} />
               <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
               <Route path="payment-gateways" element={<AdminPaymentGateways />} />
               <Route path="settings" element={<AdminSettings />} />

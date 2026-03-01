@@ -348,15 +348,13 @@ export default function CheckoutPage() {
                     <p className="text-dark-400 text-sm">
                       {isRTL ? 'افتح تطبيق Binance واكمل الدفع' : 'Open Binance app and complete payment'}
                     </p>
-                    <a
-                      href={paymentResult.checkoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold hover:shadow-lg transition-all"
+                    <button
+                      onClick={() => { window.location.href = paymentResult.checkoutUrl; }}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold hover:shadow-lg transition-all cursor-pointer"
                     >
                       <ExternalLink className="w-4 h-4" />
                       {isRTL ? 'فتح Binance Pay' : 'Open Binance Pay'}
-                    </a>
+                    </button>
                   </div>
                   <button
                     onClick={handleCheckBinance}

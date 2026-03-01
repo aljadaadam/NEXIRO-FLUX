@@ -41,8 +41,8 @@ function authenticateToken(req, res, next) {
   next();
 }
 
-// ─── التحقق من صلاحية الدور (admin, user, customer) ───
-// يُستخدم بعد authenticateToken لضمان فصل مسارات الأدمن عن الزبائن
+// ─── التحقق من صلاحية الدور ───
+// يُستخدم بعد authenticateToken — users table: admin/user | customers token: customer
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !req.user.role) {

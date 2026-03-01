@@ -40,9 +40,9 @@ export const AdminTemplates = lazy(() => import('../pages/admin/AdminTemplates')
 export const AdminUsers = lazy(() => import('../pages/admin/AdminUsers'));
 export const AdminAnnouncements = lazy(() => import('../pages/admin/AdminAnnouncements'));
 export const AdminSettings = lazy(() => import('../pages/admin/AdminSettings'));
-export const AdminPayments = lazy(() => import('../pages/admin/AdminPayments'));
 export const AdminPaymentGateways = lazy(() => import('../pages/admin/AdminPaymentGateways'));
 export const AdminPurchaseCodes = lazy(() => import('../pages/admin/AdminPurchaseCodes'));
 export const AdminTickets = lazy(() => import('../pages/admin/AdminTickets'));
 export const AdminChat = lazy(() => import('../pages/admin/AdminChat'));
 export const AdminReservations = lazy(() => import('../pages/admin/AdminReservations'));
+export const AdminBroadcasts = lazy(() => import('../pages/admin/AdminBroadcasts'));

@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import type { Announcement } from '@/lib/types';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
-export default function AnnouncementsPage() {
+export default function AnnouncementsPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [showAdd, setShowAdd] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -16,8 +16,8 @@ export default function AnnouncementsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadAnnouncements();
-  }, []);
+    if (isActive) loadAnnouncements();
+  }, [isActive]);
 
   async function loadAnnouncements() {
     try {

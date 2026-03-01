@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
-export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
+export default function SettingsAdminPage({ theme, isActive }: { theme: ColorTheme; isActive?: boolean }) {
   const { t, isRTL } = useAdminLang();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,6 +42,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
 
   useEffect(() => {
+    if (!isActive) return;
     async function load() {
       try {
         const res = await adminApi.getSettings();
@@ -64,7 +65,7 @@ export default function SettingsAdminPage({ theme }: { theme: ColorTheme }) {
       finally { setLoading(false); }
     }
     load();
-  }, []);
+  }, [isActive]);
 
   async function handleSave() {
     setSaving(true);

@@ -143,9 +143,24 @@ async function createOrder(req, res) {
       }
     }
 
+    // ─── حماية من الطلب المزدوج: لا نقبل طلب مماثل خلال 30 ثانية ───
+    if (role === 'customer' && product_id) {
+      const [recentDup] = await pool.query(
+        `SELECT id FROM orders WHERE site_key = ? AND customer_id = ? AND product_id = ? AND imei <=> ? AND created_at > DATE_SUB(NOW(), INTERVAL 30 SECOND) LIMIT 1`,
+        [site_key, effectiveCustomerId, product_id, imei || null]
+      );
+      if (recentDup.length > 0) {
+        // استرجاع الرصيد إذا تم خصمه
+        if (payment_method === 'wallet') {
+          await pool.query('UPDATE customers SET wallet_balance = wallet_balance + ? WHERE id = ? AND site_key = ?', [total_price, effectiveCustomerId, site_key]);
+        }
+        return res.status(409).json({ error: 'تم إرسال طلب مماثل مؤخراً، يرجى الانتظار' });
+      }
+    }
+
     const order = await Order.create({
       site_key, customer_id: effectiveCustomerId, product_id, product_name, quantity: qty,
-      unit_price: parseFloat(unit_price), total_price, payment_method, imei, notes
+      unit_price: verifiedPrice, total_price, payment_method, imei, notes
     });
 
     // تسجيل الدفع
@@ -266,50 +281,62 @@ async function createOrder(req, res) {
                     }
                   }
                 } catch (sourceErr) {
-                  // ❌ فشل الإرسال — رفض الطلب + استرجاع الرصيد
-                  const originalMsg = (sourceErr instanceof DhruFusionError || sourceErr instanceof ImeiCheckError)
-                    ? sourceErr.message
-                    : (sourceErr.message || 'خطأ اتصال بالمصدر');
+                  const isApiError = (sourceErr instanceof DhruFusionError || sourceErr instanceof ImeiCheckError);
+                  const originalMsg = isApiError ? sourceErr.message : (sourceErr.message || 'خطأ اتصال بالمصدر');
 
-                  // تحديث الطلب → failed (الرسالة الأصلية بدون ترجمة)
-                  await pool.query(
-                    `UPDATE orders SET status = 'failed', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
-                    [source.id, originalMsg, order.id, site_key]
-                  );
+                  if (isApiError) {
+                    // ❌ خطأ صريح من API (مثل invalid IMEI, insufficient balance) → الطلب لم يُقبل أكيد → رفض + استرجاع
+                    await pool.query(
+                      `UPDATE orders SET status = 'rejected', source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
+                      [source.id, originalMsg, order.id, site_key]
+                    );
 
-                  // استرجاع رصيد المحفظة
-                  if (payment_method === 'wallet' && total_price > 0) {
-                    try {
-                      await Customer.updateWallet(effectiveCustomerId, site_key, total_price);
-                      await Payment.create({
-                        site_key,
-                        customer_id: effectiveCustomerId,
-                        order_id: order.id,
-                        type: 'refund',
-                        amount: total_price,
-                        payment_method: 'wallet',
-                        status: 'completed',
-                        description: `استرجاع تلقائي: طلب #${order.order_number} (${originalMsg})`
-                      });
-                      await Order.updatePaymentStatus(order.id, site_key, 'refunded');
-                      console.log(`💰 Order #${order.order_number} → استرجاع $${total_price} للزبون ${effectiveCustomerId}`);
-                    } catch (refundErr) {
-                      console.error(`❌ فشل استرجاع الرصيد لطلب #${order.order_number}:`, refundErr.message);
+                    // استرجاع رصيد المحفظة
+                    if (payment_method === 'wallet' && total_price > 0) {
+                      try {
+                        await Customer.updateWallet(effectiveCustomerId, site_key, total_price);
+                        await Payment.create({
+                          site_key, customer_id: effectiveCustomerId, order_id: order.id,
+                          type: 'refund', amount: total_price, payment_method: 'wallet', status: 'completed',
+                          description: `استرجاع تلقائي: طلب #${order.order_number} (${originalMsg})`
+                        });
+                        await Order.updatePaymentStatus(order.id, site_key, 'refunded');
+                        console.log(`💰 Order #${order.order_number} → استرجاع $${total_price} للزبون ${effectiveCustomerId}`);
+                      } catch (refundErr) {
+                        console.error(`❌ فشل استرجاع الرصيد لطلب #${order.order_number}:`, refundErr.message);
+                      }
                     }
+
+                    // إشعار الزبون
+                    await Notification.create({
+                      site_key, recipient_type: 'customer', recipient_id: effectiveCustomerId,
+                      title: 'طلب مرفوض ❌',
+                      message: `طلبك #${order.order_number} تم رفضه: ${originalMsg}${payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
+                      type: 'order'
+                    });
+
+                    externalResult = { ok: false, type: 'SOURCE_ERROR', error: originalMsg, refunded: payment_method === 'wallet' };
+                    console.log(`❌ Order #${order.order_number} → REJECTED (${originalMsg})`);
+
+                  } else {
+                    // ⚠️ خطأ اتصال (timeout, ECONNRESET, socket hang up) → لا نعرف هل الطلب تم أم لا
+                    // الطلب يبقى pending + تحذير للأدمن + لا استرجاع
+                    await pool.query(
+                      `UPDATE orders SET source_id = ?, server_response = ? WHERE id = ? AND site_key = ?`,
+                      [source.id, `⚠️ ${originalMsg}`, order.id, site_key]
+                    );
+
+                    // إشعار تحذيري للأدمن
+                    await Notification.create({
+                      site_key, recipient_type: 'admin',
+                      title: '⚠️ خطأ اتصال بالمصدر',
+                      message: `طلب #${order.order_number} — فشل الاتصال بالمصدر: ${originalMsg}. يرجى التحقق يدوياً.`,
+                      type: 'order', link: `/orders/${order.id}`
+                    });
+
+                    externalResult = { ok: false, type: 'CONNECTION_ERROR', error: originalMsg, refunded: false };
+                    console.log(`⚠️ Order #${order.order_number} → CONNECTION ERROR (${originalMsg}) — الطلب يبقى pending`);
                   }
-
-                  // إشعار الزبون
-                  await Notification.create({
-                    site_key,
-                    recipient_type: 'customer',
-                    recipient_id: effectiveCustomerId,
-                    title: 'طلب مرفوض ❌',
-                    message: `طلبك #${order.order_number} تم رفضه: ${originalMsg}${payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
-                    type: 'order'
-                  });
-
-                  externalResult = { ok: false, type: 'SOURCE_ERROR', error: originalMsg, refunded: payment_method === 'wallet' };
-                  console.log(`❌ Order #${order.order_number} → FAILED (${originalMsg}) — رصيد مسترجع: ${payment_method === 'wallet' ? 'نعم' : 'لا'}`);
                 }
               }
             }
@@ -350,12 +377,10 @@ async function updateOrderStatus(req, res) {
     // إشعار للزبون
     if (order.customer_id) {
       const statusLabels = {
-        pending: 'معلق',
+        pending: 'الانتظار',
         processing: 'جارٍ التنفيذ',
         completed: 'مكتمل',
-        failed: 'مرفوض',
-        cancelled: 'ملغي',
-        refunded: 'مسترجع'
+        rejected: 'مرفوض'
       };
       const arStatus = statusLabels[status] || status;
 
@@ -378,14 +403,15 @@ async function updateOrderStatus(req, res) {
       } catch (e) { /* ignore */ }
     }
 
-    // استرجاع المبلغ في حالة الإلغاء — بشكل ذري لمنع الاسترجاع المزدوج
-    if (status === 'refunded' && order.payment_status === 'paid') {
-      const pool = getPool();
+    // ─── إجراءات مالية حسب الحالة الجديدة ───
+    const pool = getPool();
+
+    // ❌ رفض → استرجاع الرصيد (حتى لو كان مكتمل سابقاً)
+    if (status === 'rejected' && order.payment_method === 'wallet' && order.payment_status === 'paid') {
       const [refundResult] = await pool.query(
         "UPDATE orders SET payment_status = 'refunded' WHERE id = ? AND site_key = ? AND payment_status = 'paid'",
         [id, site_key]
       );
-      // فقط إذا تم التحديث فعلاً (لم يسبق الاسترجاع)
       if (refundResult.affectedRows > 0) {
         await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
         await Payment.create({
@@ -394,10 +420,56 @@ async function updateOrderStatus(req, res) {
           payment_method: 'wallet', status: 'completed',
           description: `استرجاع: طلب #${order.order_number}`
         });
+        console.log(`💰 استرجاع $${order.total_price} للزبون ${order.customer_id} — طلب #${order.order_number}`);
       }
     }
 
-    res.json({ message: 'تم تحديث حالة الطلب', order });
+    // ✅ إكمال → إعادة خصم الرصيد (إذا سبق الاسترجاع)
+    if (status === 'completed' && order.payment_method === 'wallet' && order.payment_status === 'refunded') {
+      const conn = await pool.getConnection();
+      try {
+        await conn.beginTransaction();
+        // قفل صف الزبون لمنع السحب المزدوج
+        const [rows] = await conn.query(
+          'SELECT wallet_balance FROM customers WHERE id = ? AND site_key = ? FOR UPDATE',
+          [order.customer_id, site_key]
+        );
+        if (!rows[0] || parseFloat(rows[0].wallet_balance) < parseFloat(order.total_price)) {
+          await conn.rollback();
+          conn.release();
+          // إرجاع الحالة للمرفوض لأن الرصيد غير كافٍ
+          await Order.updateStatus(id, site_key, 'rejected', server_response);
+          return res.status(400).json({ error: `رصيد الزبون غير كافٍ ($${rows[0] ? rows[0].wallet_balance : 0})` });
+        }
+        // خصم من المحفظة
+        await conn.query(
+          'UPDATE customers SET wallet_balance = wallet_balance - ? WHERE id = ? AND site_key = ?',
+          [parseFloat(order.total_price), order.customer_id, site_key]
+        );
+        // تحديث payment_status ذرياً
+        await conn.query(
+          "UPDATE orders SET payment_status = 'paid' WHERE id = ? AND site_key = ? AND payment_status = 'refunded'",
+          [id, site_key]
+        );
+        await conn.commit();
+        conn.release();
+
+        await Payment.create({
+          site_key, customer_id: order.customer_id, order_id: order.id,
+          type: 'purchase', amount: parseFloat(order.total_price),
+          payment_method: 'wallet', status: 'completed',
+          description: `إعادة خصم: طلب #${order.order_number}`
+        });
+        console.log(`💳 إعادة خصم $${order.total_price} من الزبون ${order.customer_id} — طلب #${order.order_number}`);
+      } catch (txErr) {
+        await conn.rollback().catch(() => {});
+        conn.release();
+        throw txErr;
+      }
+    }
+
+    const finalOrder = await Order.findById(id);
+    res.json({ message: 'تم تحديث حالة الطلب', order: finalOrder });
   } catch (error) {
     console.error('Error in updateOrderStatus:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء تحديث الطلب' });
@@ -625,33 +697,49 @@ async function checkExternalOrderStatus(req, res) {
     }
 
     const apiKey = decryptApiKey(source.api_key);
-    const client = new DhruFusionClient({
-      baseUrl: source.url,
-      username: source.username || '',
-      apiAccessKey: apiKey
-    });
+    const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
+    let result;
 
-    const result = await client.getOrderStatus(order.external_reference_id);
+    // ─── IMEI Check: فحص عبر ImeiCheckClient ───
+    if (source.type === 'imeicheck') {
+      const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+      const imeiClient = new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl });
+      const historyResult = await imeiClient.getOrderHistory(order.external_reference_id);
+      result = {
+        status: historyResult.status,
+        statusCode: historyResult.statusCode || historyResult.status,
+        statusLabel: historyResult.statusLabel,
+        comments: historyResult.result || null,
+        message: historyResult.result || null,
+        fullResponse: historyResult.result || historyResult.statusLabel || '',
+      };
+    }
+    // ─── DHRU Fusion وأشباهه ───
+    else if (dhruTypes.includes(source.type)) {
+      const client = new DhruFusionClient({
+        baseUrl: source.url,
+        username: source.username || '',
+        apiAccessKey: apiKey
+      });
+      result = await client.getOrderStatus(order.external_reference_id);
+    } else {
+      return res.status(400).json({ error: 'نوع المصدر غير مدعوم للفحص' });
+    }
 
     // تحديث حالة الطلب محلياً
     const statusMapping = {
       'completed': 'completed',
       'waiting': 'processing',
       'pending': 'processing',
-      'rejected': 'failed',
-      'cancelled': 'cancelled'
+      'rejected': 'rejected',
+      'cancelled': 'rejected'
     };
 
     const newStatus = statusMapping[result.status] || order.status;
-    const serverResponseData = {
-      dhruStatus: result.statusCode,
-      dhruStatusLabel: result.statusLabel,
-      comments: result.comments,
-      message: result.message,
-      checkedAt: new Date().toISOString()
-    };
+    // حفظ المحتوى الفعلي كنص عادي (متوافق مع الكرون والفرونتند)
+    const responseText = result.fullResponse || result.comments || result.message || result.statusLabel || '';
 
-    await Order.updateStatus(id, site_key, newStatus, JSON.stringify(serverResponseData));
+    await Order.updateStatus(id, site_key, newStatus, responseText);
 
     // إذا اكتمل الطلب، أرسل إشعار
     if (result.status === 'completed' && order.status !== 'completed') {
@@ -679,14 +767,37 @@ async function checkExternalOrderStatus(req, res) {
       } catch { /* ignore */ }
     }
 
-    // إذا فشل أو رُفض، أرسل إشعار
-    if (['rejected', 'cancelled'].includes(result.status) && !['failed', 'cancelled'].includes(order.status)) {
+    // إذا رُفض — استرجاع تلقائي + إشعار
+    if (['rejected', 'cancelled'].includes(result.status) && order.status !== 'rejected') {
+      // استرجاع الرصيد إذا كان الدفع بالمحفظة
+      if (order.payment_method === 'wallet' && parseFloat(order.total_price) > 0 && order.payment_status === 'paid') {
+        try {
+          const pool = getPool();
+          const [refundResult] = await pool.query(
+            "UPDATE orders SET payment_status = 'refunded' WHERE id = ? AND site_key = ? AND payment_status = 'paid'",
+            [id, site_key]
+          );
+          if (refundResult.affectedRows > 0) {
+            await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
+            await Payment.create({
+              site_key, customer_id: order.customer_id, order_id: order.id,
+              type: 'refund', amount: parseFloat(order.total_price),
+              payment_method: 'wallet', status: 'completed',
+              description: `استرجاع تلقائي: طلب #${order.order_number} (${result.statusLabel})`
+            });
+            console.log(`💰 checkExternalOrderStatus: استرجاع $${order.total_price} للزبون ${order.customer_id}`);
+          }
+        } catch (refundErr) {
+          console.error(`❌ فشل استرجاع الرصيد لطلب #${order.order_number}:`, refundErr.message);
+        }
+      }
+
       await Notification.create({
         site_key,
         recipient_type: 'customer',
         recipient_id: order.customer_id,
-        title: 'تحديث الطلب',
-        message: `طلبك #${order.order_number}: ${result.statusLabel}${result.message ? ' - ' + result.message : ''}`,
+        title: 'طلب مرفوض ❌',
+        message: `طلبك #${order.order_number}: ${result.statusLabel}${result.message ? ' - ' + result.message : ''}${order.payment_method === 'wallet' ? '. تم استرجاع الرصيد لمحفظتك.' : ''}`,
         type: 'order'
       });
     }
@@ -703,6 +814,11 @@ async function checkExternalOrderStatus(req, res) {
       return res.status(400).json({
         error: `خطأ من المصدر: ${error.message}`,
         fullDescription: error.fullDescription
+      });
+    }
+    if (error instanceof ImeiCheckError) {
+      return res.status(400).json({
+        error: `خطأ من IMEI Check: ${error.message}`
       });
     }
     res.status(500).json({ error: 'حدث خطأ أثناء فحص حالة الطلب' });
@@ -736,6 +852,7 @@ async function bulkCheckExternalOrders(req, res) {
     // تجميع حسب المصدر
     const sourceCache = {};
     const results = [];
+    const dhruTypes = ['dhru-fusion', 'sd-unlocker', 'unlock-world'];
 
     for (const order of pendingOrders) {
       const srcId = order.source_id || order.product_source_id;
@@ -752,32 +869,77 @@ async function bulkCheckExternalOrders(req, res) {
             continue;
           }
           const apiKey = decryptApiKey(source.api_key);
-          sourceCache[srcId] = new DhruFusionClient({
-            baseUrl: source.url,
-            username: source.username || '',
-            apiAccessKey: apiKey
-          });
+          if (!apiKey) {
+            results.push({ orderId: order.id, status: 'skipped', reason: 'invalid api key' });
+            continue;
+          }
+
+          // ─── IMEI Check ───
+          if (source.type === 'imeicheck') {
+            const phpBaseUrl = 'https://alpha.imeicheck.com/api/php-api';
+            sourceCache[srcId] = { client: new ImeiCheckClient({ apiKey, baseUrl: phpBaseUrl }), type: 'imeicheck' };
+          }
+          // ─── DHRU Fusion وأشباهه ───
+          else if (dhruTypes.includes(source.type)) {
+            sourceCache[srcId] = { client: new DhruFusionClient({ baseUrl: source.url, username: source.username || '', apiAccessKey: apiKey }), type: 'dhru' };
+          } else {
+            results.push({ orderId: order.id, status: 'skipped', reason: 'unsupported source type' });
+            continue;
+          }
         }
 
-        const client = sourceCache[srcId];
-        const result = await client.getOrderStatus(order.external_reference_id);
+        const { client, type: clientType } = sourceCache[srcId];
+        let result;
+
+        if (clientType === 'imeicheck') {
+          const historyResult = await client.getOrderHistory(order.external_reference_id);
+          result = {
+            status: historyResult.status,
+            statusLabel: historyResult.statusLabel,
+            comments: historyResult.result || null,
+            message: historyResult.result || null,
+            fullResponse: historyResult.result || historyResult.statusLabel || '',
+          };
+        } else {
+          result = await client.getOrderStatus(order.external_reference_id);
+        }
 
         const statusMapping = {
           'completed': 'completed',
           'waiting': 'processing',
           'pending': 'processing',
-          'rejected': 'failed',
-          'cancelled': 'cancelled'
+          'rejected': 'rejected',
+          'cancelled': 'rejected'
         };
 
         const newStatus = statusMapping[result.status] || order.status;
         if (newStatus !== order.status) {
-          await Order.updateStatus(order.id, site_key, newStatus, JSON.stringify({
-            dhruStatus: result.statusCode,
-            comments: result.comments,
-            message: result.message,
-            checkedAt: new Date().toISOString()
-          }));
+          // حفظ المحتوى كنص عادي (متوافق مع الكرون والفرونتند)
+          const responseText = result.fullResponse || result.comments || result.message || result.statusLabel || '';
+          await Order.updateStatus(order.id, site_key, newStatus, responseText);
+
+          // استرجاع الرصيد تلقائياً عند الرفض
+          if (newStatus === 'rejected' && order.payment_method === 'wallet' && parseFloat(order.total_price) > 0 && order.payment_status === 'paid') {
+            try {
+              const pool = getPool();
+              const [refundResult] = await pool.query(
+                "UPDATE orders SET payment_status = 'refunded' WHERE id = ? AND site_key = ? AND payment_status = 'paid'",
+                [order.id, site_key]
+              );
+              if (refundResult.affectedRows > 0) {
+                await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
+                await Payment.create({
+                  site_key, customer_id: order.customer_id, order_id: order.id,
+                  type: 'refund', amount: parseFloat(order.total_price),
+                  payment_method: 'wallet', status: 'completed',
+                  description: `استرجاع تلقائي: طلب #${order.order_number} (${result.statusLabel})`
+                });
+                console.log(`💰 bulkCheck: استرجاع $${order.total_price} للزبون ${order.customer_id}`);
+              }
+            } catch (refundErr) {
+              console.error(`❌ فشل استرجاع الرصيد لطلب #${order.order_number}:`, refundErr.message);
+            }
+          }
         }
 
         results.push({

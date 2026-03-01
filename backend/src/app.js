@@ -98,9 +98,9 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// ─── Body Parsing (مع حد حجم — 5mb للسماح بالشعار كـ Base64) ───
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// ─── Body Parsing (مع حد حجم — 10mb للسماح بالشعار ووثيقة الهوية كـ Base64) ───
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Tenant Resolution (must be before routes) ───
 app.use(resolveTenant);

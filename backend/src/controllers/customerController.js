@@ -140,6 +140,22 @@ async function getAllCustomers(req, res) {
   }
 }
 
+// جلب تفاصيل زبون واحد (أدمن)
+async function getCustomerById(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { id } = req.params;
+    const customer = await Customer.findById(id, site_key);
+    if (!customer) {
+      return res.status(404).json({ error: 'الزبون غير موجود' });
+    }
+    res.json(customer);
+  } catch (error) {
+    console.error('Error in getCustomerById:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 // حظر / إلغاء حظر زبون
 async function toggleBlockCustomer(req, res) {
   try {
@@ -151,6 +167,16 @@ async function toggleBlockCustomer(req, res) {
     if (!success) {
       return res.status(404).json({ error: 'الزبون غير موجود' });
     }
+
+    // تسجيل عملية الحظر/إلغاء الحظر في سجل النشاط
+    try {
+      await ActivityLog.log({
+        site_key, user_id: req.user.id,
+        action: blocked ? 'customer_blocked' : 'customer_unblocked',
+        entity_type: 'customer', entity_id: parseInt(id),
+        ip_address: req.ip
+      });
+    } catch (e) { /* ignore */ }
 
     // إشعار بريدي بالحظر/إلغاء الحظر
     try {
@@ -176,7 +202,7 @@ async function updateCustomerWallet(req, res) {
   try {
     const { site_key } = req.user;
     const { id } = req.params;
-    const { amount } = req.body;
+    const { amount, reason } = req.body;
 
     if (!amount || isNaN(amount)) {
       return res.status(400).json({ error: 'المبلغ مطلوب' });
@@ -197,6 +223,16 @@ async function updateCustomerWallet(req, res) {
     }
 
     const customer = await Customer.findById(id);
+
+    // Log wallet update to ActivityLog
+    await ActivityLog.log({
+      site_key,
+      action: parseFloat(amount) > 0 ? 'wallet_add' : 'wallet_deduct',
+      entity_type: 'customer',
+      entity_id: parseInt(id),
+      details: `Wallet ${parseFloat(amount) > 0 ? 'add' : 'deduct'} $${Math.abs(parseFloat(amount)).toFixed(2)} for ${customer?.name || id}${reason ? ' — ' + reason : ''}`,
+      performed_by: req.user.id
+    });
 
     // بريد تحديث المحفظة
     if (customer?.email) {
@@ -311,6 +347,11 @@ async function verifyOtp(req, res) {
     const customer = await Customer.findById(stored.customerId);
     if (!customer) {
       return res.status(404).json({ error: 'الزبون غير موجود' });
+    }
+
+    // ─── فحص الحظر قبل إصدار التوكن ───
+    if (customer.is_blocked) {
+      return res.status(403).json({ error: 'الحساب محظور' });
     }
 
     await Customer.updateLastLogin(customer.id);
@@ -433,6 +474,7 @@ module.exports = {
   loginCustomer,
   verifyOtp,
   getAllCustomers,
+  getCustomerById,
   toggleBlockCustomer,
   updateCustomerWallet,
   getMyCustomerProfile,

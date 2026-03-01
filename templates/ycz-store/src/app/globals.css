@@ -100,18 +100,26 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 
 /* ─── Admin Responsive ─── */
 @media (max-width: 768px) {
-  .dash-sidebar {
+  /* RTL: sidebar on right → push right to hide */
+  [dir="rtl"] .dash-sidebar {
     transform: translateX(100%);
+    box-shadow: -12px 0 30px rgba(2, 6, 23, 0.12);
+  }
+  /* LTR: sidebar on left → push left to hide */
+  [dir="ltr"] .dash-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 12px 0 30px rgba(2, 6, 23, 0.12);
+  }
+  .dash-sidebar {
     width: min(82vw, 300px) !important;
     top: 0 !important;
     height: 100dvh !important;
-    box-shadow: -12px 0 30px rgba(2, 6, 23, 0.12);
     z-index: 55 !important;
   }
   .dash-sidebar-open {
     transform: translateX(0) !important;
   }
-  .dash-main-content { margin-right: 0 !important; padding-bottom: 5.25rem !important; }
+  .dash-main-content { margin-right: 0 !important; margin-left: 0 !important; padding-bottom: 5.25rem !important; }
   .dash-menu-btn { display: block !important; }
   .dash-search { width: 160px !important; }
   .dash-profile-text { display: none !important; }
@@ -136,6 +144,8 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .dash-stats-grid p:first-of-type { font-size: 1.15rem !important; }
   .dash-overview-grid { grid-template-columns: 1fr !important; }
   .dash-banner-card { flex-direction: column !important; text-align: center !important; }
+  .dash-banner-card > div:first-child > div { flex-direction: column !important; align-items: center !important; text-align: center !important; }
+  .dash-banner-card-inner { flex-direction: column !important; align-items: center !important; text-align: center !important; }
   .dash-banner-card > div:last-child { align-self: center !important; }
   .dash-quick-actions { gap: 6px !important; }
   .dash-quick-action-btn { padding: 0.45rem 0.75rem !important; font-size: 0.72rem !important; }
@@ -149,7 +159,7 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 }
 
 @media (max-width: 480px) {
-  .dash-search { width: 120px !important; }
+  .dash-search { width: 140px !important; }
   .dash-stats-grid { grid-template-columns: 1fr 1fr !important; }
 }
 

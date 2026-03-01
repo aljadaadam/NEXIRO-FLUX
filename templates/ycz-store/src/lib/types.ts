@@ -77,6 +77,10 @@ export interface User {
   country?: string;
   is_verified?: boolean | number;
   last_login_at?: string;
+  _raw_created_at?: string;
+  verification_status?: string;
+  verification_note?: string;
+  id_document_url?: string;
 }
 
 export interface StatsCard {

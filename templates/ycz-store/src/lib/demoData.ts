@@ -435,7 +435,7 @@ export const demoGateways = [
   {
     id: 5, type: 'bankak', name: 'بنكك', name_en: 'Bankak',
     is_enabled: true, is_default: false,
-    config: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '1480', local_currency: 'IQD' },
+    config: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '600', receipt_note: 'اكتب اسمك ورقم هاتفك في الإشعار', image_url: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png' },
     display_order: 5,
   },
 ];
@@ -643,13 +643,13 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
       return { stats: { totalRevenue: 1250.00, todayRevenue: 85.00, totalDeposits: 980.00 } };
     }
     return { payments: [
-      { id: 1, customer_id: 1, customer_name: 'أحمد محمد', type: 'deposit', amount: 50, currency: 'USD', payment_method: 'bankak', status: 'pending', description: 'شحن رصيد', created_at: '2026-02-20T10:30:00Z', meta: { receipt_url: 'https://example.com/receipt1.jpg', receipt_uploaded_at: '2026-02-20T10:35:00Z' } },
-      { id: 2, customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 100, currency: 'USD', payment_method: 'bank_transfer', status: 'pending', description: 'شحن رصيد', created_at: '2026-02-20T09:15:00Z', meta: { receipt_url: 'https://example.com/receipt2.jpg' } },
-      { id: 3, customer_id: 3, customer_name: 'خالد عبدالله', type: 'deposit', amount: 25, currency: 'USD', payment_method: 'paypal', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-19T14:00:00Z' },
-      { id: 4, customer_id: 1, customer_name: 'أحمد محمد', type: 'purchase', amount: 15, currency: 'USD', payment_method: 'wallet', status: 'completed', description: 'شراء خدمة', created_at: '2026-02-19T11:20:00Z' },
-      { id: 5, customer_id: 4, customer_name: 'فاطمة حسن', type: 'deposit', amount: 200, currency: 'USD', payment_method: 'binance', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T16:45:00Z' },
-      { id: 6, customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 75, currency: 'USD', payment_method: 'usdt', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T08:30:00Z' },
-      { id: 7, customer_id: 5, customer_name: 'عمر يوسف', type: 'deposit', amount: 30, currency: 'USD', payment_method: 'bankak', status: 'failed', description: 'شحن رصيد', created_at: '2026-02-17T13:10:00Z' },
+      { id: 1, invoice_number: 'INV-10000', customer_id: 1, customer_name: 'أحمد محمد', type: 'deposit', amount: 50, currency: 'USD', payment_method: 'bankak', status: 'awaiting_receipt', description: 'شحن رصيد', created_at: '2026-02-20T10:30:00Z', meta: { receipt_url: 'https://example.com/receipt1.jpg', receipt_uploaded_at: '2026-02-20T10:35:00Z' } },
+      { id: 2, invoice_number: 'INV-10001', customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 100, currency: 'USD', payment_method: 'bankak', status: 'pending', description: 'شحن رصيد', created_at: '2026-02-20T09:15:00Z', meta: { receipt_url: 'https://example.com/receipt2.jpg' } },
+      { id: 3, invoice_number: 'INV-10002', customer_id: 3, customer_name: 'خالد عبدالله', type: 'deposit', amount: 25, currency: 'USD', payment_method: 'paypal', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-19T14:00:00Z', external_id: 'PAYPAL-ORD-123456' },
+      { id: 4, invoice_number: 'INV-10003', customer_id: 1, customer_name: 'أحمد محمد', type: 'purchase', amount: 15, currency: 'USD', payment_method: 'wallet', status: 'completed', description: 'شراء خدمة', created_at: '2026-02-19T11:20:00Z' },
+      { id: 5, invoice_number: 'INV-10004', customer_id: 4, customer_name: 'فاطمة حسن', type: 'deposit', amount: 200, currency: 'USD', payment_method: 'binance', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T16:45:00Z', external_id: 'BN-TRD-789012' },
+      { id: 6, invoice_number: 'INV-10005', customer_id: 2, customer_name: 'سارة علي', type: 'deposit', amount: 75, currency: 'USD', payment_method: 'usdt', status: 'completed', description: 'شحن رصيد', created_at: '2026-02-18T08:30:00Z' },
+      { id: 7, invoice_number: 'INV-10006', customer_id: 5, customer_name: 'عمر يوسف', type: 'deposit', amount: 30, currency: 'USD', payment_method: 'bankak', status: 'failed', description: 'شحن رصيد', created_at: '2026-02-17T13:10:00Z' },
     ]};
   }
   if (ep.match(/^payments\/\d+\/status$/) && method === 'PATCH') {
@@ -722,9 +722,9 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
         return { success: true, paymentId: demoPaymentId, gatewayType: 'usdt', method: 'manual_crypto', walletAddress: 'TXqL98dKjQr7pMxVJyBdRaCne5i7L4Vucd', network: 'TRC20', amount: amt, currency: 'USDT', contractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', instructions: `أرسل ${amt} USDT بالضبط إلى العنوان أعلاه عبر شبكة TRC20`, expires_in: 1800, expires_at: new Date(Date.now() + 1800000).toISOString() };
       case 'bank_transfer':
       default:
-        return { success: true, paymentId: demoPaymentId, gatewayType: 'bank_transfer', method: 'manual_bank', bankDetails: { bank_name: 'البنك الأهلي', account_holder: 'متجر YCZ للخدمات', iban: 'SA02 8000 0000 6080 1016 7519', swift: 'NCBKSAJE', currency: 'USD' }, referenceId: `NF${demoPaymentId}T${Date.now()}`, instructions: { ar: `حوّل المبلغ ${amt} USD إلى الحساب أعلاه. بعد التحويل ارفع إيصال الدفع.`, en: `Transfer ${amt} USD to the account above, then upload your receipt.` } };
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'bank_transfer', method: 'info_bank', bankDetails: { bank_name: 'البنك الأهلي', account_holder: 'متجر YCZ للخدمات', iban: 'SA02 8000 0000 6080 1016 7519', swift: 'NCBKSAJE', currency: 'USD' } };
       case 'bankak':
-        return { success: true, paymentId: demoPaymentId, gatewayType: 'bankak', method: 'manual_bankak', bankakDetails: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '1480', local_currency: 'IQD' }, localAmount: Math.round(amt * 1480), referenceId: `BK${demoPaymentId}T${Date.now()}` };
+        return { success: true, paymentId: demoPaymentId, gatewayType: 'bankak', method: 'manual_bankak', bankakDetails: { account_number: '0781234567890', full_name: 'أحمد محمد علي', exchange_rate: '600', local_currency: 'SDG', receipt_note: 'اكتب اسمك ورقم هاتفك في الإشعار', image_url: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png' }, localAmount: Math.round(amt * 600), referenceId: `BK${demoPaymentId}T${Date.now()}` };
     }
   }
   if (ep.match(/^checkout\/status\/\d+$/) && method === 'GET') {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
   Link2, Paintbrush, Megaphone, BookOpen, MessageCircle, Zap as ZapIcon, Settings, ChevronRight, ChevronLeft,
-  Zap, LogOut, X,
+  Zap, LogOut, X, ExternalLink,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
@@ -44,6 +44,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const { t, isRTL } = useAdminLang();
   const [chatUnread, setChatUnread] = useState(0);
+  const [pendingOrders, setPendingOrders] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchUnread = useCallback(async () => {
@@ -58,6 +59,23 @@ export default function Sidebar({
     pollRef.current = setInterval(fetchUnread, 8000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchUnread]);
+
+  // Listen for pending orders count from OrdersAdminPage
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const count = (e as CustomEvent).detail;
+      if (typeof count === 'number') setPendingOrders(count);
+    };
+    window.addEventListener('orders-pending-count', handler);
+    // Initial fetch
+    (async () => {
+      try {
+        const res = await adminApi.getStats() as { pendingOrders?: number };
+        if (typeof res?.pendingOrders === 'number') setPendingOrders(res.pendingOrders);
+      } catch {}
+    })();
+    return () => window.removeEventListener('orders-pending-count', handler);
+  }, []);
 
   return (
     <aside
@@ -159,15 +177,38 @@ export default function Sidebar({
                     top: collapsed ? 4 : undefined, left: collapsed ? 4 : undefined,
                   }}>{chatUnread}</span>
                 )}
+                {item.id === 'orders' && pendingOrders > 0 && (
+                  <span style={{
+                    minWidth: collapsed ? 16 : 20, height: collapsed ? 16 : 20,
+                    borderRadius: 10, background: '#f59e0b', color: '#fff',
+                    fontSize: collapsed ? '.55rem' : '.65rem', fontWeight: 700,
+                    display: 'grid', placeItems: 'center', padding: '0 4px',
+                    fontFamily: 'system-ui', lineHeight: 1,
+                    position: collapsed ? 'absolute' as const : 'static' as const,
+                    top: collapsed ? 4 : undefined, left: collapsed ? 4 : undefined,
+                  }}>{pendingOrders}</span>
+                )}
               </button>
             );
           })}
         </div>
       </nav>
 
-      {/* Logout */}
+      {/* Visit Store + Logout */}
       {!collapsed && (
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <a href="/" target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            width: '100%', padding: '0.6rem 1rem',
+            borderRadius: 10, border: `1px solid ${theme.primary}20`,
+            background: `${theme.primary}08`, color: theme.primary,
+            fontSize: '0.82rem', fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
+            textDecoration: 'none', transition: 'all 0.2s',
+          }}>
+            <ExternalLink size={16} />
+            {t('زيارة المتجر')}
+          </a>
           <button onClick={onLogout} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             width: '100%', padding: '0.6rem 1rem',

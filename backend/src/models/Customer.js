@@ -8,7 +8,7 @@ class Customer {
       try { await pool.query(`ALTER TABLE customers ADD COLUMN ${col} ${def}`); } catch (e) { /* exists */ }
     };
     await addCol('country', 'VARCHAR(100) NULL');
-    await addCol('id_document_url', 'TEXT NULL');
+    await addCol('id_document_url', 'LONGTEXT NULL');
     await addCol('verification_status', "VARCHAR(20) DEFAULT 'none'");
     await addCol('verification_note', 'TEXT NULL');
   }
@@ -111,6 +111,59 @@ class Customer {
   static async updateLastLogin(id) {
     const pool = getPool();
     await pool.query('UPDATE customers SET last_login_at = NOW() WHERE id = ?', [id]);
+  }
+
+  // تحديث آخر نشاط (يُستدعى من middleware)
+  static async updateLastActive(id) {
+    const pool = getPool();
+    await pool.query('UPDATE customers SET last_active_at = NOW() WHERE id = ?', [id]);
+  }
+
+  // إحصائيات المتصلين (نشط خلال آخر 5 دقائق)
+  static async getOnlineStats(site_key) {
+    const pool = getPool();
+    
+    // عدد المتصلين الآن (آخر 5 دقائق)
+    const [onlineRows] = await pool.query(
+      'SELECT COUNT(*) as count FROM customers WHERE site_key = ? AND last_active_at >= NOW() - INTERVAL 5 MINUTE AND is_blocked = 0',
+      [site_key]
+    );
+    const onlineCount = onlineRows[0].count;
+
+    // توزيع حسب الدولة
+    const [countryRows] = await pool.query(
+      `SELECT COALESCE(country, 'غير محدد') as country, COUNT(*) as count 
+       FROM customers 
+       WHERE site_key = ? AND last_active_at >= NOW() - INTERVAL 5 MINUTE AND is_blocked = 0 
+       GROUP BY country 
+       ORDER BY count DESC 
+       LIMIT 10`,
+      [site_key]
+    );
+
+    // المسجلين اليوم
+    const [todayRows] = await pool.query(
+      'SELECT COUNT(*) as count FROM customers WHERE site_key = ? AND DATE(created_at) = CURDATE()',
+      [site_key]
+    );
+    const todayNewUsers = todayRows[0].count;
+
+    // قائمة المتصلين
+    const [onlineUsers] = await pool.query(
+      `SELECT id, name, email, country, last_active_at 
+       FROM customers 
+       WHERE site_key = ? AND last_active_at >= NOW() - INTERVAL 5 MINUTE AND is_blocked = 0 
+       ORDER BY last_active_at DESC 
+       LIMIT 20`,
+      [site_key]
+    );
+
+    return {
+      onlineCount,
+      countryBreakdown: countryRows,
+      todayNewUsers,
+      onlineUsers,
+    };
   }
 
   static async updateProfile(id, site_key, { name, email, phone, country, password } = {}) {

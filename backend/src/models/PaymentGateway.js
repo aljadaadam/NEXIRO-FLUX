@@ -86,10 +86,11 @@ class PaymentGateway {
       countries: typeof r.countries === 'string' ? JSON.parse(r.countries) : r.countries,
     }));
 
-    // تصفية بوابات الدفع البنكي حسب الدولة
+    // تصفية بوابات الدفع البنكي/بنكك حسب الدولة
     if (countryCode) {
+      const countryFiltered = ['bank_transfer', 'bankak'];
       gateways = gateways.filter(gw => {
-        if (gw.type !== 'bank_transfer') return true; // غير البنكي يظهر دائماً
+        if (!countryFiltered.includes(gw.type)) return true; // غير البنكي يظهر دائماً
         if (!gw.countries || gw.countries.length === 0) return true; // بدون تقييد
         return gw.countries.includes(countryCode.toUpperCase());
       });

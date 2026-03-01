@@ -397,7 +397,7 @@ function ConnectSourceModal({ source, onClose, onSuccess }: { source: AvailableS
 /* ═══════════════════════════════════════════ */
 /* ═══════════ Main Page Component ═══════════ */
 /* ═══════════════════════════════════════════ */
-export default function ExternalSourcesPage() {
+export default function ExternalSourcesPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [activeTab, setActiveTab] = useState('available');
   const [loading, setLoading] = useState(true);
@@ -488,7 +488,7 @@ export default function ExternalSourcesPage() {
     }
   }, []);
 
-  useEffect(() => { fetchSources(); }, [fetchSources]);
+  useEffect(() => { if (isActive) fetchSources(); }, [isActive, fetchSources]);
 
   // ─── تطبيق الربح ───
   const handleApplyProfit = useCallback(async (sourceId: number) => {

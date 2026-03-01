@@ -54,7 +54,7 @@
   }
 
   .btn-primary {
-    @apply relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white 
+    @apply relative inline-flex items-center justify-center px-5 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-bold text-white 
            bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl
            hover:from-primary-500 hover:to-primary-400
            transform hover:scale-105 active:scale-95
@@ -63,7 +63,7 @@
   }
 
   .btn-secondary {
-    @apply relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white 
+    @apply relative inline-flex items-center justify-center px-5 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-bold text-white 
            glass hover:bg-white/10
            transform hover:scale-105 active:scale-95
            transition-all duration-300 ease-out;

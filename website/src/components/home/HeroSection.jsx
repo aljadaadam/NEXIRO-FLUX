@@ -19,9 +19,9 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-grid" />
       
       {/* Animated Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent-500/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-600/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-primary-500/20 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 right-1/4 w-40 sm:w-60 md:w-80 h-40 sm:h-60 md:h-80 bg-accent-500/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[450px] md:w-[600px] h-[300px] sm:h-[450px] md:h-[600px] bg-primary-600/5 rounded-full blur-3xl" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
         <div className="text-center max-w-5xl mx-auto">
@@ -32,10 +32,10 @@ export default function HeroSection() {
           </div>
 
           {/* Main Title */}
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black leading-tight mb-8 animate-slide-up">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-black leading-tight mb-6 sm:mb-8 animate-slide-up">
             <span className="text-white block">{t('hero.title1')}</span>
             <span className="gradient-text block">{t('hero.title2')}</span>
-            <span className="text-dark-400 block text-4xl sm:text-5xl md:text-6xl mt-2">{t('hero.title3')}</span>
+            <span className="text-dark-400 block text-2xl xs:text-3xl sm:text-4xl md:text-6xl mt-2">{t('hero.title3')}</span>
           </h1>
 
           {/* Subtitle */}
@@ -74,10 +74,10 @@ export default function HeroSection() {
         </div>
 
         {/* Stats */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto animate-slide-up" style={{ animationDelay: '0.8s' }}>
+        <div className="mt-12 sm:mt-20 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-4xl mx-auto animate-slide-up" style={{ animationDelay: '0.8s' }}>
           {stats.map((stat, i) => (
-            <div key={i} className="glass p-6 text-center card-hover">
-              <div className="text-3xl md:text-4xl font-display font-black gradient-text mb-2">
+            <div key={i} className="glass p-3 sm:p-6 text-center card-hover">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-display font-black gradient-text mb-1 sm:mb-2">
                 {stat.value}
               </div>
               <div className="text-dark-400 text-sm font-medium">

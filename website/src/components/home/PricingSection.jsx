@@ -80,13 +80,13 @@ export default function PricingSection() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto px-2 sm:px-0">
           {plans.map((plan, i) => (
             <div
               key={i}
               className={`relative rounded-3xl overflow-hidden transition-all duration-700 ${
                 visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              } ${plan.popular ? 'md:-translate-y-4 scale-105 z-10' : ''}`}
+              } ${plan.popular ? 'md:-translate-y-4 md:scale-105 z-10' : ''}`}
               style={{ transitionDelay: `${(i + 2) * 150}ms` }}
             >
               {/* Popular badge */}

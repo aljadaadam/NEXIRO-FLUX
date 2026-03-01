@@ -131,7 +131,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div className={`md:hidden transition-all duration-300 overflow-hidden ${
-        mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        mobileOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="px-4 py-4 bg-dark-950/95 backdrop-blur-xl border-t border-white/5 space-y-2">
           {navLinks.map(link => (

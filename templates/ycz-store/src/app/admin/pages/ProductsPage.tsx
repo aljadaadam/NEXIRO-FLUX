@@ -7,7 +7,7 @@ import type { ColorTheme } from '@/lib/themes';
 import type { Product } from '@/lib/types';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 
-export default function ProductsPage({ theme }: { theme: ColorTheme }) {
+export default function ProductsPage({ theme, isActive }: { theme: ColorTheme; isActive?: boolean }) {
   const { t, isRTL } = useAdminLang();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -17,6 +17,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   const [showEdit, setShowEdit] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   // New product form state
   const [newName, setNewName] = useState('');
@@ -81,9 +82,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
   }
 
   useEffect(() => {
-    loadProducts();
-    loadSources();
-  }, []);
+    if (isActive) { loadProducts(); loadSources(); }
+  }, [isActive]);
 
   async function loadProducts() {
     try {
@@ -91,7 +91,8 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
       const raw = Array.isArray(res) ? res : (res?.products && Array.isArray(res.products) ? res.products : []);
       const mapped = raw.map((p: Record<string, unknown>) => mapBackendProduct(p)) as Product[];
       setProducts(mapped);
-    } catch { /* keep fallback */ }
+      setFetchError(false);
+    } catch { setFetchError(true); }
     finally { setLoading(false); }
   }
 
@@ -512,6 +513,13 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
 
   return (
     <>
+      {fetchError && !loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 16, fontFamily: 'Tajawal, sans-serif' }}>
+          <AlertCircle size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: '1rem', fontWeight: 700, color: '#64748b' }}>{t('يجري تحديث النظام، يرجى الانتظار قليلاً ثم حاول مرة أخرى')}</p>
+        </div>
+      )}
+      {!fetchError && <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={22} color="#64748b" /> {t('المنتجات')}</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1617,6 +1625,7 @@ export default function ProductsPage({ theme }: { theme: ColorTheme }) {
           </div>
         </div>
       )}
+    </>}
     </>
   );
 }

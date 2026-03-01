@@ -52,7 +52,7 @@ const ordersTable = `
     quantity INT DEFAULT 1,
     unit_price DECIMAL(12, 3) NOT NULL,
     total_price DECIMAL(12, 3) NOT NULL,
-    status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded') DEFAULT 'pending',
+    status ENUM('pending', 'processing', 'completed', 'rejected') DEFAULT 'pending',
     payment_method VARCHAR(50) NULL COMMENT 'wallet, stripe, paypal, etc',
     payment_status ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid',
     imei VARCHAR(100) NULL COMMENT 'IMEI للخدمات من نوع IMEI',
@@ -76,12 +76,17 @@ const paymentsTable = `
     type ENUM('deposit', 'purchase', 'refund', 'subscription') DEFAULT 'purchase',
     amount DECIMAL(12, 3) NOT NULL,
     currency VARCHAR(10) DEFAULT 'USD',
-    payment_method VARCHAR(50) NOT NULL COMMENT 'wallet, stripe, paypal, bank_transfer',
-    payment_gateway_id VARCHAR(255) NULL COMMENT 'معرف العملية في بوابة الدفع',
-    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    payment_method VARCHAR(50) NOT NULL COMMENT 'wallet, stripe, paypal, bank_transfer, usdt, binance, bankak',
+    payment_gateway_id INT NULL COMMENT 'FK to payment_gateways.id',
+    status ENUM('pending', 'awaiting_receipt', 'completed', 'failed', 'refunded', 'cancelled') DEFAULT 'pending',
     description TEXT NULL,
+    external_id VARCHAR(255) DEFAULT NULL,
+    invoice_number VARCHAR(50) DEFAULT NULL,
+    meta JSON DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE,
+    INDEX idx_payments_invoice (invoice_number)
   )
 `;
 

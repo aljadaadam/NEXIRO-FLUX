@@ -23,6 +23,7 @@ const branchRoutes = require('./branchRoutes');
 const blogRoutes = require('./blogRoutes');
 const chatRoutes = require('./chatRoutes');
 const reservationRoutes = require('./reservationRoutes');
+const platformRoutes = require('./platformRoutes');
 
 /**
  * Mount all API routes on the Express app
@@ -64,6 +65,9 @@ function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimi
   app.use('/api/blogs', blogRoutes);
   app.use('/api/chat', chatRoutes);
   app.use('/api/reservations', reservationRoutes);
+
+  // ─── Platform-only routes (معزولة عن القوالب) ───
+  app.use('/api/platform', platformRoutes);
 
   // ─── Binance webhook: use ONLY /api/checkout/webhooks/binance (with rate limiting) ───
   // Legacy paths removed for security — they bypassed rate limiting

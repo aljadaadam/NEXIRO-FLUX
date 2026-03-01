@@ -12,7 +12,7 @@ const { authenticateToken, requireRole } = require('../middlewares/authMiddlewar
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
 // ─── Public: جلب البوابات المفعّلة (حسب الدولة) ───
-router.get('/enabled', getEnabledGateways);
+router.get('/enabled', validateSite, getEnabledGateways);
 
 // ─── Protected routes ───
 router.use(validateSite);

@@ -16,7 +16,7 @@ function getFontStyleCSS(style: string): Record<string, string | number> {
   }
 }
 
-export default function FlashPopupPage() {
+export default function FlashPopupPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,8 +36,8 @@ export default function FlashPopupPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (isActive) loadSettings();
+  }, [isActive]);
 
   const loadSettings = async () => {
     try {

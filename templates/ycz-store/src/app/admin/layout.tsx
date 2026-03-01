@@ -16,6 +16,7 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
   theme: import('@/lib/themes').ColorTheme;
 }) {
   const { t } = useAdminLang();
+  const [mobilePending, setMobilePending] = useState(0);
   const items = [
     { id: 'overview', icon: LayoutDashboard, label: t('الرئيسية') },
     { id: 'products', icon: Package, label: t('المنتجات') },
@@ -23,6 +24,15 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
     { id: 'users', icon: Users, label: t('المستخدمين') },
     { id: 'settings', icon: Settings, label: t('الإعدادات') },
   ];
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const count = (e as CustomEvent).detail;
+      if (typeof count === 'number') setMobilePending(count);
+    };
+    window.addEventListener('orders-pending-count', handler);
+    return () => window.removeEventListener('orders-pending-count', handler);
+  }, []);
 
   return (
     <nav className="dash-bottom-nav" style={{
@@ -62,6 +72,16 @@ function AdminMobileNav({ currentPage, setCurrentPage, theme }: {
               )}
               <Icon size={20} />
               <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1.1 }}>{item.label}</span>
+              {item.id === 'orders' && mobilePending > 0 && (
+                <span style={{
+                  position: 'absolute', top: -2, right: '50%', transform: 'translateX(14px)',
+                  minWidth: 16, height: 16, borderRadius: 8,
+                  background: '#f59e0b', color: '#fff',
+                  fontSize: '.55rem', fontWeight: 700,
+                  display: 'grid', placeItems: 'center',
+                  padding: '0 3px', fontFamily: 'system-ui', lineHeight: 1,
+                }}>{mobilePending}</span>
+              )}
             </button>
           );
         })}
@@ -106,7 +126,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { t, isRTL, lang } = useAdminLang();
 
   const [currentPage, setCurrentPage] = useState('overview');
-  const [overviewReload, setOverviewReload] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [slugVerified, setSlugVerified] = useState<boolean | null>(null); // null = checking
@@ -153,6 +172,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      let networkError = false;
+
       try {
         const res = await fetch(`/api/customization/verify-slug/${slugToCheck}`, { cache: 'no-store' });
         if (res.ok) {
@@ -162,11 +183,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             setSlugVerified(true);
             return;
           }
+        } else if (res.status >= 500) {
+          networkError = true; // 502/503/500 = backend down, not invalid slug
         }
-      } catch { /* ignore */ }
+      } catch {
+        networkError = true;
+      }
 
-      // URL slug is invalid — try stored slug if different
-      if (storedSlug && storedSlug !== urlKey) {
+      // URL slug failed — try stored slug if different
+      if (!networkError && storedSlug && storedSlug !== urlKey) {
         try {
           const res = await fetch(`/api/customization/verify-slug/${storedSlug}`, { cache: 'no-store' });
           if (res.ok) {
@@ -175,8 +200,23 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               setSlugVerified(true);
               return;
             }
+          } else if (res.status >= 500) {
+            networkError = true;
           }
-        } catch { /* ignore */ }
+        } catch {
+          networkError = true;
+        }
+      }
+
+      // If network error → trust cached slug, or just let them in
+      if (networkError) {
+        if (storedSlug || slugToCheck) {
+          sessionStorage.setItem('admin_slug', storedSlug || slugToCheck);
+          setSlugVerified(true);
+          return;
+        }
+        setSlugVerified(true); // let them in, pages will show connection error
+        return;
       }
 
       sessionStorage.removeItem('admin_slug');
@@ -405,33 +445,23 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   const handlePageChange = (id: string) => {
-    // إذا ضغط المستخدم على نفس الصفحة الحالية، لا تتجاهل الحدث
-    // (مهم خصوصاً لصفحة النظر العام: نجلب بيانات جديدة من القاعدة عند كل فتح)
-    if (id === currentPage) {
-      if (id === 'overview') {
-        setOverviewReload((v) => v + 1);
-      }
-      setMobileDrawerOpen(false);
-      return;
-    }
-
     setCurrentPage(id);
     setMobileDrawerOpen(false);
   };
 
   const pages: Record<string, React.ReactNode> = {
-    overview: <OverviewPage key={`overview-${overviewReload}`} theme={currentTheme} />,
-    products: <ProductsPage theme={currentTheme} />,
-    orders: <OrdersAdminPage theme={currentTheme} />,
-    users: <UsersAdminPage theme={currentTheme} />,
-    payments: <PaymentsPage />,
-    sources: <ExternalSourcesPage />,
+    overview: <OverviewPage isActive={currentPage === 'overview'} theme={currentTheme} />,
+    products: <ProductsPage isActive={currentPage === 'products'} theme={currentTheme} />,
+    orders: <OrdersAdminPage isActive={currentPage === 'orders'} theme={currentTheme} />,
+    users: <UsersAdminPage isActive={currentPage === 'users'} theme={currentTheme} />,
+    payments: <PaymentsPage isActive={currentPage === 'payments'} />,
+    sources: <ExternalSourcesPage isActive={currentPage === 'sources'} />,
     customize: <CustomizePage />,
-    announcements: <AnnouncementsPage />,
-    blog: <BlogAdminPage />,
-    chat: <ChatAdminPage />,
-    flash: <FlashPopupPage />,
-    settings: <SettingsAdminPage theme={currentTheme} />,
+    announcements: <AnnouncementsPage isActive={currentPage === 'announcements'} />,
+    blog: <BlogAdminPage isActive={currentPage === 'blog'} />,
+    chat: <ChatAdminPage isActive={currentPage === 'chat'} />,
+    flash: <FlashPopupPage isActive={currentPage === 'flash'} />,
+    settings: <SettingsAdminPage isActive={currentPage === 'settings'} theme={currentTheme} />,
   };
 
   return (

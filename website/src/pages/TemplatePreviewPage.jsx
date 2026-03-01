@@ -115,11 +115,11 @@ export default function TemplatePreviewPage() {
           {/* Preview Area - Left/Right based on RTL */}
           <div className="lg:col-span-2">
             {/* Device Toggle */}
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-display font-black text-white">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-white">
                 {isRTL ? template.name : template.nameEn}
               </h1>
-              <div className="flex items-center gap-1 glass p-1 rounded-xl">
+              <div className="flex items-center gap-1 glass p-1 rounded-xl flex-shrink-0">
                 {[
                   { key: 'desktop', icon: Monitor },
                   { key: 'tablet', icon: Tablet },

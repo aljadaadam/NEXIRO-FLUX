@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
-  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, CreditCard, Landmark, Key,
-  MessageSquare, MessagesSquare, CalendarCheck
+  Sparkles, Menu, X, ChevronLeft, Bell, Search, User, Landmark, Key,
+  MessageSquare, MessagesSquare, CalendarCheck, Mail
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -14,7 +14,7 @@ const navItems = [
   { to: '/aljadadm654/reservations', icon: CalendarCheck, labelAr: 'الحجوزات', labelEn: 'Reservations' },
   { to: '/aljadadm654/tickets', icon: MessageSquare, labelAr: 'تذاكر الدعم', labelEn: 'Tickets' },
   { to: '/aljadadm654/chat', icon: MessagesSquare, labelAr: 'الدردشة المباشرة', labelEn: 'Live Chat' },
-  { to: '/aljadadm654/payments', icon: CreditCard, labelAr: 'المدفوعات', labelEn: 'Payments' },
+  { to: '/aljadadm654/broadcasts', icon: Mail, labelAr: 'الإعلانات البريدية', labelEn: 'Email Broadcasts' },
   { to: '/aljadadm654/templates', icon: Layers, labelAr: 'القوالب', labelEn: 'Templates' },
   { to: '/aljadadm654/purchase-codes', icon: Key, labelAr: 'أكواد الشراء', labelEn: 'Purchase Codes' },
   { to: '/aljadadm654/payment-gateways', icon: Landmark, labelAr: 'بوابات الدفع', labelEn: 'Payment Gateways' },

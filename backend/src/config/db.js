@@ -29,6 +29,7 @@ const {
   notificationsTable,
   activityLogTable,
   reservationsTable,
+  emailBroadcastsTable,
   deliveryZonesTable,
   deliveryRegionsTable,
   currenciesTable,
@@ -78,6 +79,7 @@ async function createTables() {
     await pool.query(ticketsTable);
     await pool.query(ticketMessagesTable);
     await pool.query(reservationsTable);
+    await pool.query(emailBroadcastsTable);
 
     // ─── Store Feature Tables ───
     await pool.query(customizationsTable);

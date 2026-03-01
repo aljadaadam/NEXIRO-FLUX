@@ -28,7 +28,7 @@ function playNotifSound() {
   } catch { /* silent */ }
 }
 
-export default function ChatAdminPage() {
+export default function ChatAdminPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
@@ -59,10 +59,14 @@ export default function ChatAdminPage() {
   }, []);
 
   useEffect(() => {
+    if (!isActive) {
+      if (pollConvRef.current) clearInterval(pollConvRef.current);
+      return;
+    }
     loadConversations();
     pollConvRef.current = setInterval(loadConversations, 5000);
     return () => { if (pollConvRef.current) clearInterval(pollConvRef.current); };
-  }, [loadConversations]);
+  }, [isActive, loadConversations]);
 
   /* ─── جلب رسائل محادثة ─── */
   const loadMessages = useCallback(async (convId: string, isPolling = false) => {

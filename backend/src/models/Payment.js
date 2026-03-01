@@ -1,14 +1,34 @@
 const { getPool } = require('../config/db');
 
 class Payment {
-  // ─── التأكد من وجود الأعمدة الإضافية ───
+  // ─── التأكد من وجود الأعمدة الإضافية (مرة واحدة فقط) ───
+  static _columnsEnsured = false;
   static async ensureColumns() {
+    if (this._columnsEnsured) return;
     const pool = getPool();
     const addCol = async (col, def) => {
       try { await pool.query(`ALTER TABLE payments ADD COLUMN ${col} ${def}`); } catch(e) { /* exists */ }
     };
     await addCol('external_id', 'VARCHAR(255) DEFAULT NULL');
     await addCol('meta', 'JSON DEFAULT NULL');
+    await addCol('invoice_number', 'VARCHAR(50) DEFAULT NULL AFTER external_id');
+    // إنشاء index للبحث السريع
+    try { await pool.query('CREATE INDEX idx_payments_invoice ON payments (invoice_number)'); } catch(e) { /* exists */ }
+    this._columnsEnsured = true;
+  }
+
+  // ─── توليد رقم فاتورة تسلسلي فريد لكل موقع ───
+  static async generateInvoiceNumber(pool, site_key) {
+    const [lastRow] = await pool.query(
+      'SELECT invoice_number FROM payments WHERE site_key = ? AND invoice_number REGEXP "^INV-[0-9]+$" ORDER BY CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED) DESC LIMIT 1',
+      [site_key]
+    );
+    let nextNum = 10000; // يبدأ من INV-10000
+    if (lastRow.length > 0) {
+      const lastNum = parseInt(lastRow[0].invoice_number.replace('INV-', ''));
+      nextNum = lastNum + 1;
+    }
+    return `INV-${nextNum}`;
   }
 
   // إنشاء عملية دفع
@@ -16,10 +36,13 @@ class Payment {
     const pool = getPool();
     await this.ensureColumns();
 
+    // توليد رقم فاتورة تسلسلي
+    const invoice_number = await this.generateInvoiceNumber(pool, site_key);
+
     const [result] = await pool.query(
-      `INSERT INTO payments (site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [site_key, customer_id || null, order_id || null, type || 'purchase', amount, currency || 'USD', payment_method, payment_gateway_id || null, status || 'pending', description || null]
+      `INSERT INTO payments (site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description, invoice_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [site_key, customer_id || null, order_id || null, type || 'purchase', amount, currency || 'USD', payment_method, payment_gateway_id || null, status || 'pending', description || null, invoice_number]
     );
 
     return this.findById(result.insertId);
@@ -37,7 +60,7 @@ class Payment {
   }
 
   // جلب مدفوعات موقع
-  static async findBySiteKey(site_key, { page = 1, limit = 50, type, customer_id } = {}) {
+  static async findBySiteKey(site_key, { page = 1, limit = 50, type, customer_id, search } = {}) {
     const pool = getPool();
     const offset = (page - 1) * limit;
 
@@ -46,6 +69,12 @@ class Payment {
 
     if (type) { query += ' AND p.type = ?'; params.push(type); }
     if (customer_id) { query += ' AND p.customer_id = ?'; params.push(customer_id); }
+    // بحث بالفاتورة أو اسم العميل أو external_id
+    if (search) {
+      query += ' AND (p.invoice_number LIKE ? OR c.name LIKE ? OR p.external_id LIKE ? OR CAST(p.id AS CHAR) = ?)';
+      const like = `%${search}%`;
+      params.push(like, like, like, search);
+    }
 
     query += ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
@@ -66,6 +95,16 @@ class Payment {
     const [result] = await pool.query(
       'UPDATE payments SET status = ? WHERE id = ? AND site_key = ?',
       [status, id, site_key]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // تحديث ذري: فقط إذا كانت الحالة الحالية تتطابق مع المتوقع (Race-Condition Safe)
+  static async updateStatusAtomic(id, site_key, expectedStatus, newStatus) {
+    const pool = getPool();
+    const [result] = await pool.query(
+      'UPDATE payments SET status = ? WHERE id = ? AND site_key = ? AND status = ?',
+      [newStatus, id, site_key, expectedStatus]
     );
     return result.affectedRows > 0;
   }
@@ -123,6 +162,21 @@ class Payment {
       [externalId]
     );
     return rows[0] || null;
+  }
+
+  // ─── بحث بالـ invoice_number ───
+  static async findByInvoiceNumber(invoiceNumber, site_key) {
+    const pool = getPool();
+    await this.ensureColumns();
+    const [rows] = await pool.query(
+      'SELECT p.*, c.name as customer_name FROM payments p LEFT JOIN customers c ON p.customer_id = c.id WHERE p.invoice_number = ? AND p.site_key = ?',
+      [invoiceNumber, site_key]
+    );
+    const row = rows[0] || null;
+    if (row && row.meta && typeof row.meta === 'string') {
+      try { row.meta = JSON.parse(row.meta); } catch (e) { /* ignore */ }
+    }
+    return row;
   }
 
   // ─── تحديث metadata ───

@@ -61,12 +61,14 @@ async function getEnabledGateways(req, res) {
           instructions: gw.config.instructions,
           contact_numbers: gw.config.contact_numbers,
         } : {}),
-        // Bankak - عرض رقم الحساب والاسم وسعر الصرف
+        // Bankak - عرض رقم الحساب والاسم وسعر الصرف والتعليق
         ...(gw.type === 'bankak' ? {
           account_number: gw.config.account_number,
           full_name: gw.config.full_name,
           exchange_rate: gw.config.exchange_rate,
-          local_currency: gw.config.local_currency,
+          receipt_note: gw.config.receipt_note,
+          local_currency: 'SDG',
+          image_url: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png',
         } : {}),
       } : null,
     }));
@@ -119,7 +121,7 @@ async function updateGateway(req, res) {
     const siteKey = req.siteKey || req.user?.site_key;
 
     // Whitelist allowed fields to prevent mass assignment
-    const allowedFields = ['name', 'type', 'is_enabled', 'is_default', 'config', 'countries', 'display_order', 'instructions'];
+    const allowedFields = ['name', 'name_en', 'type', 'is_enabled', 'is_default', 'config', 'countries', 'display_order'];
     const safeBody = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) safeBody[key] = req.body[key];
@@ -163,6 +165,7 @@ const REQUIRED_CONFIG = {
   usdt: ['wallet_address', 'network'],
   bank_transfer: ['bank_name', 'account_holder', 'iban', 'currency'],
   wallet: ['instructions'],
+  bankak: ['account_number', 'full_name', 'exchange_rate', 'receipt_note'],
 };
 
 function getMissingFields(type, config) {

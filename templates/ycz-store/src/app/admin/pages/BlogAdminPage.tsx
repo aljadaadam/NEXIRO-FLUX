@@ -18,7 +18,7 @@ const CATEGORY_COLORS = [
 
 const POST_EMOJIS = ['📝', '🍎', '📱', '🔧', '🛡️', '🔎', '🎮', '💻', '🔐', '📡', '⚡', '🌐', '📊', '🎯'];
 
-export default function BlogAdminPage() {
+export default function BlogAdminPage({ isActive }: { isActive?: boolean } = {}) {
   const { t, isRTL } = useAdminLang();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function BlogAdminPage() {
   const [readTime, setReadTime] = useState(5);
   const [isPublished, setIsPublished] = useState(true);
 
-  useEffect(() => { loadPosts(); }, []);
+  useEffect(() => { if (isActive) loadPosts(); }, [isActive]);
 
   async function loadPosts() {
     try {

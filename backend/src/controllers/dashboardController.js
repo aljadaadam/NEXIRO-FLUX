@@ -672,9 +672,22 @@ async function getPlatformSites(req, res) {
   }
 }
 
+// ─── إحصائيات المتصلين الآن (أدمن الموقع) ───
+async function getOnlineStats(req, res) {
+  try {
+    const { site_key } = req.user;
+    const stats = await Customer.getOnlineStats(site_key);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error in getOnlineStats:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب إحصائيات المتصلين' });
+  }
+}
+
 module.exports = {
   getDashboardStats,
   getRecentActivities,
+  getOnlineStats,
   getPlatformStats,
   getPlatformPayments,
   updatePlatformPaymentStatus,

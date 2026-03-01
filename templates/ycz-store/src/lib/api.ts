@@ -85,12 +85,16 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
-  // إذا كان الرد خطأ مصادقة — نحذف التوكن
+  // إذا كان الرد خطأ مصادقة أو حظر — نحذف التوكن
   if (res.status === 401 || res.status === 403) {
+    const errBody = await res.json().catch(() => ({}));
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      // إذا كان الحساب محظور — حفظ سبب الطرد
+      if (errBody?.blocked) {
+        sessionStorage.setItem('account_blocked', '1');
+      }
     }
-    const errBody = await res.json().catch(() => ({}));
     throw new Error(errBody?.error || 'غير مصرح');
   }
   if (!res.ok) {
@@ -104,6 +108,7 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
 // المسارات تطابق الباك اند: /api/sources, /api/products, /api/orders, إلخ
 export const adminApi = {
   getStats: () => adminFetch('/dashboard/stats'),
+  getOnlineStats: () => adminFetch('/dashboard/online-stats'),
   getProducts: () => adminFetch('/products'),
   createProduct: (data: Record<string, unknown>) => adminFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: number, data: Record<string, unknown>) => adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -115,6 +120,7 @@ export const adminApi = {
   updateOrderStatus: (id: number, data: { status: string; server_response?: string }) => adminFetch(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
   getUsers: () => adminFetch('/auth/users'),
   getCustomers: (page = 1, limit = 50, search = '') => adminFetch(`/customers?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+  getCustomerById: (id: number) => adminFetch(`/customers/${id}`),
   getAnnouncements: () => adminFetch('/notifications'),
   createAnnouncement: (data: Record<string, unknown>) => adminFetch('/notifications', { method: 'POST', body: JSON.stringify(data) }),
   deleteAnnouncement: (id: number) => adminFetch(`/notifications/${id}`, { method: 'DELETE' }),
@@ -130,7 +136,7 @@ export const adminApi = {
   deleteSource: (id: number) => adminFetch(`/sources/${id}`, { method: 'DELETE' }),
   toggleSyncOnly: (id: number, syncOnly: boolean) => adminFetch(`/sources/${id}/sync-only`, { method: 'PATCH', body: JSON.stringify({ syncOnly }) }),
   // عمليات الدفع
-  getPayments: (page = 1, limit = 50, type?: string) => adminFetch(`/payments?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}`),
+  getPayments: (page = 1, limit = 50, type?: string, search?: string) => adminFetch(`/payments?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   getPaymentStats: () => adminFetch('/payments/stats'),
   updatePaymentStatus: (id: number, status: string) => adminFetch(`/payments/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   getPaymentGateways: () => adminFetch('/payment-gateways'),
@@ -141,8 +147,9 @@ export const adminApi = {
   getCustomize: () => adminFetch('/customization'),
   updateCustomize: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
   resetCustomize: () => adminFetch('/customization', { method: 'DELETE' }),
-  updateCustomerWallet: (id: number, amount: number) => adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount }) }),
+  updateCustomerWallet: (id: number, amount: number, reason?: string) => adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount, reason }) }),
   toggleBlockCustomer: (id: number, blocked: boolean) => adminFetch(`/customers/${id}/block`, { method: 'PATCH', body: JSON.stringify({ blocked }) }),
+  updateCustomerVerification: (id: number, status: string, note?: string) => adminFetch(`/customers/${id}/verification`, { method: 'PATCH', body: JSON.stringify({ status, note }) }),
   getCustomerOrders: (customerId: number) => adminFetch(`/orders?customer_id=${customerId}&limit=200`),
   getCustomerPayments: (customerId: number) => adminFetch(`/payments?customer_id=${customerId}&limit=200`),
   // مدونة

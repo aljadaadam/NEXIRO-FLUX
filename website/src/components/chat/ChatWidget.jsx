@@ -313,7 +313,7 @@ export default function ChatWidget() {
         .nf-chat-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
       `}</style>
 
-      <div className="nf-chat-widget" style={{ position: 'fixed', bottom: 24, [isRTL ? 'left' : 'right']: 24, zIndex: 99999, fontFamily: "'Segoe UI', 'Cairo', system-ui, sans-serif", direction: isRTL ? 'rtl' : 'ltr' }}>
+      <div className="nf-chat-widget" style={{ position: 'fixed', bottom: 16, [isRTL ? 'left' : 'right']: 16, zIndex: 99999, fontFamily: "'Segoe UI', 'Cairo', system-ui, sans-serif", direction: isRTL ? 'rtl' : 'ltr' }}>
 
         {/* ════════ Chat Window ════════ */}
         {isOpen && (
@@ -322,9 +322,9 @@ export default function ChatWidget() {
             bottom: 72,
             [isRTL ? 'left' : 'right']: 0,
             width: 380,
-            maxWidth: 'calc(100vw - 32px)',
+            maxWidth: 'calc(100vw - 24px)',
             height: 520,
-            maxHeight: 'calc(100vh - 120px)',
+            maxHeight: 'calc(100vh - 100px)',
             borderRadius: 20,
             overflow: 'hidden',
             display: 'flex',

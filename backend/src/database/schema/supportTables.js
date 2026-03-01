@@ -85,10 +85,26 @@ const reservationsTable = `
   )
 `;
 
+const emailBroadcastsTable = `
+  CREATE TABLE IF NOT EXISTS email_broadcasts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    subject VARCHAR(500) NOT NULL,
+    message TEXT NOT NULL,
+    recipient_type ENUM('all_reservations', 'individual', 'custom_list') NOT NULL,
+    recipient_count INT DEFAULT 0,
+    sent_count INT DEFAULT 0,
+    failed_count INT DEFAULT 0,
+    sent_by INT NULL,
+    status ENUM('sending', 'completed', 'failed') DEFAULT 'sending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`;
+
 module.exports = {
   ticketsTable,
   ticketMessagesTable,
   notificationsTable,
   activityLogTable,
   reservationsTable,
+  emailBroadcastsTable,
 };

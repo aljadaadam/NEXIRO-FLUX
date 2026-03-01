@@ -644,6 +644,29 @@ function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }
 
 
 // ═══════════════════════════════════
+//  BROADCAST / ANNOUNCEMENT EMAIL
+// ═══════════════════════════════════
+
+function broadcast({ name, subject, message, branding = {} }) {
+  const ui = createUI(branding.primaryColor);
+  // Convert newlines to <br> for proper rendering
+  const formattedMessage = (message || '').replace(/\n/g, '<br>');
+  return baseLayout({
+    title: subject,
+    branding,
+    content: `
+      ${ui.icon('📢')}
+      ${ui.heading(subject)}
+      ${ui.text(`مرحباً ${name || ''},`)}
+      <div style="margin:0 0 20px;color:#d1d5db;font-size:14px;line-height:1.8;">${formattedMessage}</div>
+      ${ui.divider()}
+      ${ui.text('تم إرسال هذا الإعلان من فريق NEXIRO-FLUX')}
+    `,
+  });
+}
+
+
+// ═══════════════════════════════════
 //  EXPORTS
 // ═══════════════════════════════════
 
@@ -679,4 +702,6 @@ module.exports = {
   subscriptionCancelled,
   // Wallet
   walletUpdated,
+  // Broadcast
+  broadcast,
 };

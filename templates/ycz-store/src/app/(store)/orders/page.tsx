@@ -19,12 +19,10 @@ export default function OrdersPage() {
 
   // تحويل حالات الباك اند إلى عربي مع ألوان
   const statusMap: Record<string, { label: string; color: string }> = {
-    pending:    { label: t('قيد الانتظار'), color: '#f59e0b' },
+    pending:    { label: t('الانتظار'), color: '#f59e0b' },
     processing: { label: t('قيد المعالجة'), color: '#3b82f6' },
     completed:  { label: t('مكتمل'), color: '#22c55e' },
-    failed:     { label: t('مرفوض'), color: '#ef4444' },
-    cancelled:  { label: t('ملغي'), color: '#94a3b8' },
-    refunded:   { label: t('مسترجع'), color: '#8b5cf6' },
+    rejected:   { label: t('مرفوض'), color: '#ef4444' },
   };
 
   function mapOrder(raw: Record<string, unknown>): Order {
@@ -85,8 +83,8 @@ export default function OrdersPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  const filters = ['all', 'completed', 'pending', 'failed'];
-  const filterLabels: Record<string, string> = { all: t('الكل'), completed: t('مكتملة'), pending: t('معلقة'), failed: t('مرفوضة') };
+  const filters = ['all', 'completed', 'pending', 'rejected'];
+  const filterLabels: Record<string, string> = { all: t('الكل'), completed: t('مكتملة'), pending: t('الانتظار'), rejected: t('مرفوضة') };
 
   const filtered = useMemo(() => {
     let result = orders;
@@ -96,8 +94,7 @@ export default function OrdersPage() {
       result = result.filter(o => {
         if (filter === 'completed') return o.status === 'completed';
         if (filter === 'pending') return o.status === 'pending' || o.status === 'processing';
-        if (filter === 'failed') return o.status === 'failed';
-        if (filter === 'cancelled') return o.status === 'cancelled' || o.status === 'refunded';
+        if (filter === 'rejected') return o.status === 'rejected';
         return true;
       });
     }
@@ -290,7 +287,7 @@ export default function OrdersPage() {
                 <p style={{ fontSize: '0.78rem', color: '#166534', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>
               </div>
             )}
-            {order.server_response && order.status === 'failed' && (
+            {order.server_response && order.status === 'rejected' && (
               <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 8 }}>
                 <p style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600, marginBottom: 2 }}>{t('سبب الرفض:')}</p>
                 <p style={{ fontSize: '0.78rem', color: '#991b1b', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{order.server_response}</p>

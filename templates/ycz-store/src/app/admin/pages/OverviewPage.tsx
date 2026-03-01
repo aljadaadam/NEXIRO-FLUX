@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users,
   BarChart3, Clock, Package, RefreshCw, Inbox, Plus, Eye, Settings,
@@ -29,12 +29,10 @@ const EMPTY_STATS: StatsCard[] = [
 const EMPTY_CHART: { month: string; value: number }[] = [];
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: 'معلق', color: '#f59e0b', bg: '#fffbeb' },
+  pending: { label: 'الانتظار', color: '#f59e0b', bg: '#fffbeb' },
   processing: { label: 'جارٍ', color: '#3b82f6', bg: '#eff6ff' },
   completed: { label: 'مكتمل', color: '#22c55e', bg: '#f0fdf4' },
-  failed: { label: 'مرفوض', color: '#ef4444', bg: '#fef2f2' },
-  cancelled: { label: 'ملغي', color: '#94a3b8', bg: '#f8fafc' },
-  refunded: { label: 'مسترجع', color: '#8b5cf6', bg: '#f5f3ff' },
+  rejected: { label: 'مرفوض', color: '#ef4444', bg: '#fef2f2' },
 };
 
 // ─── Skeleton Pulse Block ───
@@ -111,19 +109,23 @@ function OrdersSkeleton() {
   );
 }
 
-export default function OverviewPage({ theme }: { theme: ColorTheme }) {
+export default function OverviewPage({ theme, isActive }: { theme: ColorTheme; isActive?: boolean }) {
   const [stats, setStats] = useState<StatsCard[]>(EMPTY_STATS);
   const [chartData, setChartData] = useState(EMPTY_CHART);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadChat, setUnreadChat] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { t, isRTL } = useAdminLang();
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
+    let failures = 0;
     try {
       const res = await adminApi.getStats();
       if (res?.stats && Array.isArray(res.stats)) {
@@ -177,7 +179,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
       }
       if (res?.chartData && Array.isArray(res.chartData)) setChartData(res.chartData);
       if (res?.recentOrders && Array.isArray(res.recentOrders)) setOrders(res.recentOrders);
-    } catch { /* keep fallback */ }
+    } catch { failures++; /* keep fallback */ }
 
     // Also try to load orders separately
     try {
@@ -187,21 +189,38 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
       else if (ordersRes?.orders && Array.isArray(ordersRes.orders)) allOrders = ordersRes.orders;
       setOrders(allOrders.slice(0, 5));
       setPendingCount(allOrders.filter((o: Order) => o.status === 'pending').length);
-    } catch { /* keep fallback */ }
+    } catch { failures++; /* keep fallback */ }
 
     // Chat unread
     try {
       const chatRes = await adminApi.getChatUnread() as { unread?: number; totalUnread?: number };
       setUnreadChat(chatRes?.unread || chatRes?.totalUnread || 0);
-    } catch { /* silent */ }
+    } catch { failures++; /* silent */ }
 
+    setFetchError(failures >= 3);
     setLoading(false);
     setRefreshing(false);
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (isActive) loadData();
+  }, [isActive, loadData]);
+
+  // Auto-refresh every 60s
+  useEffect(() => {
+    if (!isActive) {
+      if (refreshRef.current) { clearInterval(refreshRef.current); refreshRef.current = null; }
+      return;
+    }
+    refreshRef.current = setInterval(() => { loadData(true); }, 60000);
+    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
+  }, [isActive, loadData]);
+
+  // Clock update every minute
+  useEffect(() => {
+    const t = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const maxValue = Math.max(...chartData.map(d => d.value), 1);
 
@@ -216,6 +235,18 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
 
   return (
     <>
+      {/* Connection error - full white screen with message */}
+      {fetchError && !loading && (
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          minHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 16,
+          fontFamily: 'Tajawal, sans-serif',
+        }}>
+          <AlertCircle size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: '1rem', fontWeight: 700, color: '#64748b' }}>{t('يجري تحديث النظام، يرجى الانتظار قليلاً ثم حاول مرة أخرى')}</p>
+        </div>
+      )}
+      {!fetchError && <>
       {/* Banner Card */}
       <div className="dash-banner-card" style={{
         marginBottom: 16,
@@ -278,7 +309,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         </svg>
 
         {/* Content */}
-        <div style={{
+        <div className="dash-banner-card-inner" style={{
           position: 'relative', zIndex: 2,
           padding: '1.25rem 1.5rem',
           display: 'flex',
@@ -313,6 +344,11 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
             }}>
               {t('إدارة المتجر ومتابعة الأداء من مكان واحد')}
             </h3>
+            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4, fontWeight: 500 }}>
+              {currentTime.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {' — '}
+              {currentTime.toLocaleTimeString(isRTL ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -398,12 +434,15 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         <div className="dash-stats-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20,
         }}>
-          {stats.map((stat, i) => (
-            <div key={i} className="dash-stat-card" style={{
+          {stats.map((stat, i) => {
+            const statPageMap: Record<string, string> = { orders: 'orders', users: 'users', earnings: 'payments', rate: 'orders' };
+            const targetPage = statPageMap[stat.icon];
+            return (
+            <div key={i} className="dash-stat-card" onClick={() => targetPage && window.dispatchEvent(new CustomEvent('admin-navigate', { detail: targetPage }))} style={{
               background: '#fff', borderRadius: 16, padding: '1.25rem',
               border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
               transition: 'transform 0.2s, box-shadow 0.2s',
-              cursor: 'default',
+              cursor: targetPage ? 'pointer' : 'default',
             }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; }}
@@ -432,7 +471,8 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               <p style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0b1020', marginBottom: 2 }}>{stat.value}</p>
               <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t(stat.label)}</p>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 
@@ -499,10 +539,13 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
           {loading ? <ChartSkeleton /> : chartData.length === 0 ? (
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', height: 180, color: '#94a3b8', gap: 8,
+              justifyContent: 'center', height: 180, color: '#94a3b8', gap: 10,
             }}>
-              <BarChart3 size={36} color="#e2e8f0" />
-              <p style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t('لا توجد بيانات مبيعات بعد')}</p>
+              <div style={{ position: 'relative', width: 56, height: 56, borderRadius: 16, background: '#f1f5f9', display: 'grid', placeItems: 'center' }}>
+                <BarChart3 size={28} color="#cbd5e1" />
+              </div>
+              <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>{t('لا توجد بيانات مبيعات بعد')}</p>
+              <p style={{ fontSize: '0.72rem', fontWeight: 500, color: '#94a3b8' }}>{isRTL ? 'ستظهر البيانات هنا بعد أول عملية بيع' : 'Data will appear here after the first sale'}</p>
             </div>
           ) : (
             <div style={{
@@ -604,12 +647,12 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
               {orders.slice(0, 5).map(order => {
                 const si = STATUS_MAP[String(order.status)] || STATUS_MAP['pending'];
                 return (
-                  <div key={order.id} style={{
+                  <div key={order.id} onClick={() => window.dispatchEvent(new CustomEvent('admin-navigate', { detail: 'orders' }))} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '0.6rem 0.75rem', borderRadius: 10,
                     background: '#f8fafc',
                     transition: 'background 0.15s',
-                    cursor: 'default',
+                    cursor: 'pointer',
                   }}
                     onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; }}
@@ -656,6 +699,7 @@ export default function OverviewPage({ theme }: { theme: ColorTheme }) {
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
       `}</style>
+    </>}
     </>
   );
 }

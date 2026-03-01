@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Bell, Menu, User, Globe } from 'lucide-react';
+import { Search, Bell, Menu, User, Globe, ExternalLink } from 'lucide-react';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 import type { ColorTheme } from '@/lib/themes';
 
@@ -51,6 +51,25 @@ export default function DashHeader({ collapsed, onMenuToggle, theme, logoPreview
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Visit Store */}
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title={t('زيارة المتجر')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            height: 38, minWidth: 38, padding: '0 12px', borderRadius: 10,
+            border: `1px solid ${theme.primary}25`, background: `${theme.primary}08`,
+            cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+            color: theme.primary, fontFamily: 'Tajawal, sans-serif',
+            transition: 'all 0.2s', textDecoration: 'none',
+          }}
+        >
+          <ExternalLink size={14} />
+          <span className="dash-profile-text">{t('زيارة المتجر')}</span>
+        </a>
+
         {/* Language Switcher */}
         <button
           onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}

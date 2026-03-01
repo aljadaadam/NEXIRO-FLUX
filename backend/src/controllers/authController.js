@@ -19,6 +19,26 @@ setInterval(() => {
   }
 }, 15 * 60 * 1000);
 
+// ─── Known devices cache: userId → Set<deviceHash> ───
+// يُرسل تنبيه تسجيل الدخول فقط إذا كان الجهاز/IP جديد
+const knownDevices = new Map();
+const KNOWN_DEVICES_TTL = 30 * 24 * 60 * 60 * 1000; // 30 يوم
+function getDeviceHash(ip, userAgent) {
+  return crypto.createHash('sha256').update(`${ip || ''}::${userAgent || ''}`).digest('hex').slice(0, 16);
+}
+function isKnownDevice(userId, deviceHash) {
+  const devices = knownDevices.get(userId);
+  if (!devices) return false;
+  const entry = devices.get(deviceHash);
+  if (!entry) return false;
+  if (Date.now() - entry > KNOWN_DEVICES_TTL) { devices.delete(deviceHash); return false; }
+  return true;
+}
+function markDeviceKnown(userId, deviceHash) {
+  if (!knownDevices.has(userId)) knownDevices.set(userId, new Map());
+  knownDevices.get(userId).set(deviceHash, Date.now());
+}
+
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // إنشاء حساب أدمن جديد للموقع (فقط إذا لا يوجد أدمن مسجل بعد)
@@ -178,15 +198,15 @@ async function registerUser(req, res) {
       });
     }
 
-    // إنشاء مستخدم عادي (زبون — ليس موظف أو أدمن)
-    // Public registration creates 'customer' role only
-    // 'user' role (employee) can only be created by admin via createUser
+    // إنشاء مستخدم عادي — role = 'user'
+    // جدول users يحتوي فقط على admin و user
+    // الزبائن (customers) يُسجَّلون في جدول customers المنفصل عبر registerCustomer
     const user = await User.create({
       site_key: siteKey,
       name,
       email,
       password,
-      role: 'customer'
+      role: 'user'
     });
 
     // registerUser = مستخدم عادي، ليس أدمن منصة أبداً
@@ -279,12 +299,16 @@ async function login(req, res) {
       }
     } catch (e) { /* ignore */ }
 
-    // تنبيه تسجيل الدخول
-    emailService.sendLoginAlert({
-      to: user.email, name: user.name,
-      ip: req.ip, device: req.headers['user-agent'],
-      time: new Date().toLocaleString('ar-SA')
-    }).catch(e => console.error('Email error:', e.message));
+    // تنبيه تسجيل الدخول — فقط إذا كان الجهاز/IP جديد
+    const deviceHash = getDeviceHash(req.ip, req.headers['user-agent']);
+    if (!isKnownDevice(user.id, deviceHash)) {
+      emailService.sendLoginAlert({
+        to: user.email, name: user.name,
+        ip: req.ip, device: req.headers['user-agent'],
+        time: new Date().toLocaleString('ar-SA')
+      }).catch(e => console.error('Email error:', e.message));
+    }
+    markDeviceKnown(user.id, deviceHash);
 
     res.json({
       message: 'تم تسجيل الدخول بنجاح',
@@ -334,8 +358,8 @@ async function createUser(req, res) {
       });
     }
 
-    // Whitelist allowed roles
-    const allowedRoles = ['user', 'customer'];
+    // Whitelist allowed roles — جدول users يدعم admin و user فقط
+    const allowedRoles = ['user'];
     const safeRole = allowedRoles.includes(role) ? role : 'user';
 
     // التحقق من أن البريد الإلكتروني غير مستخدم في نفس الموقع

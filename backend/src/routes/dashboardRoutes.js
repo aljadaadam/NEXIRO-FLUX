@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getDashboardStats,
   getRecentActivities,
+  getOnlineStats,
   getPlatformStats,
   getPlatformPayments,
   updatePlatformPaymentStatus,
@@ -32,6 +33,9 @@ router.use(validateSite);
 
 // جلب إحصائيات لوحة التحكم (للأدمن فقط)
 router.get('/stats', authenticateToken, requireRole('admin', 'user'), getDashboardStats);
+
+// إحصائيات المتصلين الآن
+router.get('/online-stats', authenticateToken, requireRole('admin', 'user'), getOnlineStats);
 
 // جلب آخر النشاطات
 router.get('/activities', authenticateToken, requireRole('admin', 'user'), getRecentActivities);

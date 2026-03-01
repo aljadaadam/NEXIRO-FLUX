@@ -27,7 +27,7 @@ class Reservation {
     let query = 'SELECT * FROM reservations';
     const params = [];
 
-    if (status && status !== 'all') {
+    if (status && status !== 'all' && status !== 'undefined') {
       query += ' WHERE status = ?';
       params.push(status);
     }

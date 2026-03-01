@@ -178,8 +178,8 @@ async function checkPendingOrders() {
               'completed': 'completed',
               'waiting': 'processing',
               'pending': 'processing',
-              'rejected': 'failed',
-              'cancelled': 'cancelled'
+              'rejected': 'rejected',
+              'cancelled': 'rejected'
             };
 
             const newStatus = statusMapping[result.status] || order.status;
@@ -218,7 +218,7 @@ async function checkPendingOrders() {
                 } catch { /* ignore */ }
               }
 
-              if (['failed', 'cancelled'].includes(newStatus)) {
+              if (newStatus === 'rejected') {
                 failed++;
 
                 // استرجاع الرصيد إذا كان الدفع بالمحفظة
@@ -257,7 +257,7 @@ async function checkPendingOrders() {
                 await Notification.create({
                   site_key: siteKey,
                   recipient_type: 'admin',
-                  title: 'طلب مرفوض/ملغي',
+                  title: 'طلب مرفوض ❌',
                   message: `طلب #${order.order_number} — ${result.statusLabel}. تم استرجاع الرصيد تلقائياً.`,
                   type: 'order'
                 });

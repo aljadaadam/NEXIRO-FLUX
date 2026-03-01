@@ -1,15 +1,317 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Eye, Shield, Wallet, X, Plus, Minus, Users, UserCheck,
-  UserX, ShieldCheck, RefreshCw, Inbox, ChevronLeft, ChevronRight,
+  UserX, ShieldCheck, RefreshCw, Inbox, ChevronLeft, ChevronRight, AlertCircle,
+  Download, ArrowUpDown, Copy, CheckCircle, Globe, UserPlus, Trophy,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
 import type { User } from '@/lib/types';
 import UserDetailsPage from './UserDetailsPage';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
+
+/* ═══ Country → coordinates on simplified world map (percentage-based) ═══ */
+const COUNTRY_COORDS: Record<string, { x: number; y: number; nameAr: string }> = {
+  'السعودية': { x: 57, y: 42, nameAr: 'السعودية' },
+  'saudi arabia': { x: 57, y: 42, nameAr: 'السعودية' },
+  'sa': { x: 57, y: 42, nameAr: 'السعودية' },
+  'مصر': { x: 52, y: 40, nameAr: 'مصر' },
+  'egypt': { x: 52, y: 40, nameAr: 'مصر' },
+  'eg': { x: 52, y: 40, nameAr: 'مصر' },
+  'الإمارات': { x: 60, y: 42, nameAr: 'الإمارات' },
+  'uae': { x: 60, y: 42, nameAr: 'الإمارات' },
+  'ae': { x: 60, y: 42, nameAr: 'الإمارات' },
+  'العراق': { x: 57, y: 37, nameAr: 'العراق' },
+  'iraq': { x: 57, y: 37, nameAr: 'العراق' },
+  'iq': { x: 57, y: 37, nameAr: 'العراق' },
+  'الأردن': { x: 54, y: 39, nameAr: 'الأردن' },
+  'jordan': { x: 54, y: 39, nameAr: 'الأردن' },
+  'jo': { x: 54, y: 39, nameAr: 'الأردن' },
+  'الكويت': { x: 58, y: 40, nameAr: 'الكويت' },
+  'kuwait': { x: 58, y: 40, nameAr: 'الكويت' },
+  'kw': { x: 58, y: 40, nameAr: 'الكويت' },
+  'قطر': { x: 59, y: 42, nameAr: 'قطر' },
+  'qatar': { x: 59, y: 42, nameAr: 'قطر' },
+  'qa': { x: 59, y: 42, nameAr: 'قطر' },
+  'البحرين': { x: 59, y: 41, nameAr: 'البحرين' },
+  'bahrain': { x: 59, y: 41, nameAr: 'البحرين' },
+  'bh': { x: 59, y: 41, nameAr: 'البحرين' },
+  'عمان': { x: 61, y: 44, nameAr: 'عمان' },
+  'oman': { x: 61, y: 44, nameAr: 'عمان' },
+  'om': { x: 61, y: 44, nameAr: 'عمان' },
+  'اليمن': { x: 58, y: 46, nameAr: 'اليمن' },
+  'yemen': { x: 58, y: 46, nameAr: 'اليمن' },
+  'ye': { x: 58, y: 46, nameAr: 'اليمن' },
+  'سوريا': { x: 55, y: 37, nameAr: 'سوريا' },
+  'syria': { x: 55, y: 37, nameAr: 'سوريا' },
+  'sy': { x: 55, y: 37, nameAr: 'سوريا' },
+  'لبنان': { x: 54, y: 37, nameAr: 'لبنان' },
+  'lebanon': { x: 54, y: 37, nameAr: 'لبنان' },
+  'lb': { x: 54, y: 37, nameAr: 'لبنان' },
+  'فلسطين': { x: 54, y: 39, nameAr: 'فلسطين' },
+  'palestine': { x: 54, y: 39, nameAr: 'فلسطين' },
+  'ps': { x: 54, y: 39, nameAr: 'فلسطين' },
+  'ليبيا': { x: 48, y: 40, nameAr: 'ليبيا' },
+  'libya': { x: 48, y: 40, nameAr: 'ليبيا' },
+  'ly': { x: 48, y: 40, nameAr: 'ليبيا' },
+  'تونس': { x: 47, y: 37, nameAr: 'تونس' },
+  'tunisia': { x: 47, y: 37, nameAr: 'تونس' },
+  'tn': { x: 47, y: 37, nameAr: 'تونس' },
+  'الجزائر': { x: 44, y: 38, nameAr: 'الجزائر' },
+  'algeria': { x: 44, y: 38, nameAr: 'الجزائر' },
+  'dz': { x: 44, y: 38, nameAr: 'الجزائر' },
+  'المغرب': { x: 42, y: 38, nameAr: 'المغرب' },
+  'morocco': { x: 42, y: 38, nameAr: 'المغرب' },
+  'ma': { x: 42, y: 38, nameAr: 'المغرب' },
+  'السودان': { x: 52, y: 46, nameAr: 'السودان' },
+  'sudan': { x: 52, y: 46, nameAr: 'السودان' },
+  'sd': { x: 52, y: 46, nameAr: 'السودان' },
+  'تركيا': { x: 53, y: 34, nameAr: 'تركيا' },
+  'turkey': { x: 53, y: 34, nameAr: 'تركيا' },
+  'tr': { x: 53, y: 34, nameAr: 'تركيا' },
+  'إيران': { x: 60, y: 37, nameAr: 'إيران' },
+  'iran': { x: 60, y: 37, nameAr: 'إيران' },
+  'ir': { x: 60, y: 37, nameAr: 'إيران' },
+  'الهند': { x: 68, y: 43, nameAr: 'الهند' },
+  'india': { x: 68, y: 43, nameAr: 'الهند' },
+  'in': { x: 68, y: 43, nameAr: 'الهند' },
+  'باكستان': { x: 65, y: 40, nameAr: 'باكستان' },
+  'pakistan': { x: 65, y: 40, nameAr: 'باكستان' },
+  'pk': { x: 65, y: 40, nameAr: 'باكستان' },
+  'أمريكا': { x: 20, y: 36, nameAr: 'أمريكا' },
+  'united states': { x: 20, y: 36, nameAr: 'أمريكا' },
+  'us': { x: 20, y: 36, nameAr: 'أمريكا' },
+  'بريطانيا': { x: 45, y: 28, nameAr: 'بريطانيا' },
+  'united kingdom': { x: 45, y: 28, nameAr: 'بريطانيا' },
+  'gb': { x: 45, y: 28, nameAr: 'بريطانيا' },
+  'ألمانيا': { x: 47, y: 29, nameAr: 'ألمانيا' },
+  'germany': { x: 47, y: 29, nameAr: 'ألمانيا' },
+  'de': { x: 47, y: 29, nameAr: 'ألمانيا' },
+  'فرنسا': { x: 45, y: 31, nameAr: 'فرنسا' },
+  'france': { x: 45, y: 31, nameAr: 'فرنسا' },
+  'fr': { x: 45, y: 31, nameAr: 'فرنسا' },
+  'كندا': { x: 20, y: 26, nameAr: 'كندا' },
+  'canada': { x: 20, y: 26, nameAr: 'كندا' },
+  'ca': { x: 20, y: 26, nameAr: 'كندا' },
+};
+
+function resolveCountry(country: string): { x: number; y: number; nameAr: string } | null {
+  if (!country) return null;
+  const lower = country.toLowerCase().trim();
+  return COUNTRY_COORDS[lower] || null;
+}
+
+/* ═══ LiveVisitorsCard ═══ */
+function LiveVisitorsCard({ theme, isRTL, t }: { theme: ColorTheme; isRTL: boolean; t: (s: string) => string }) {
+  const [data, setData] = useState<{
+    onlineCount: number;
+    countryBreakdown: { country: string; count: number }[];
+    todayNewUsers: number;
+    onlineUsers: { id: number; name: string; email: string; country: string; last_active_at: string }[];
+  } | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const res = await adminApi.getOnlineStats();
+      setData(res);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+    intervalRef.current = setInterval(loadStats, 30000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [loadStats]);
+
+  const onlineCount = data?.onlineCount ?? 0;
+  const todayNew = data?.todayNewUsers ?? 0;
+  const countries = data?.countryBreakdown ?? [];
+  const topCountry = countries.length > 0 ? countries[0] : null;
+  const maxCount = countries.length > 0 ? Math.max(...countries.map(c => c.count)) : 1;
+
+  // Map dots
+  const mapDots = countries.map(c => {
+    const coords = resolveCountry(c.country);
+    if (!coords) return null;
+    return { ...coords, count: c.count, country: c.country };
+  }).filter(Boolean) as { x: number; y: number; nameAr: string; count: number; country: string }[];
+
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 18, border: '1px solid #f1f5f9',
+      marginBottom: 16, overflow: 'hidden',
+    }}>
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', minHeight: 200,
+      }}>
+        {/* ─── Left: Stats ─── */}
+        <div style={{
+          flex: '0 0 280px', padding: '1.5rem',
+          display: 'flex', flexDirection: 'column', gap: 16,
+          borderLeft: isRTL ? 'none' : '1px solid #f1f5f9',
+          borderRight: isRTL ? '1px solid #f1f5f9' : 'none',
+        }}>
+          {/* Title with pulse */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: '50%',
+              background: onlineCount > 0 ? '#22c55e' : '#cbd5e1',
+              boxShadow: onlineCount > 0 ? '0 0 8px rgba(34,197,94,0.5)' : 'none',
+              animation: onlineCount > 0 ? 'online-pulse 2s ease-in-out infinite' : 'none',
+            }} />
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b1020' }}>
+              {isRTL ? 'المتصلون الآن' : 'Online Now'}
+            </h3>
+          </div>
+
+          {/* Big number */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '1rem', borderRadius: 14,
+            background: `linear-gradient(135deg, ${theme.primary}08, ${theme.primary}15)`,
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: theme.gradient, display: 'grid', placeItems: 'center',
+            }}>
+              <Users size={22} color="#fff" />
+            </div>
+            <div>
+              <p style={{ fontSize: '2rem', fontWeight: 900, color: theme.primary, lineHeight: 1 }}>
+                {onlineCount}
+              </p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>
+                {isRTL ? 'متصل الآن' : 'online now'}
+              </p>
+            </div>
+          </div>
+
+          {/* Mini stats */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{
+              flex: 1, padding: '0.75rem', borderRadius: 12,
+              background: '#f0fdf4', display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <UserPlus size={16} color="#22c55e" />
+              <div>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b1020', lineHeight: 1 }}>{todayNew}</p>
+                <p style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 600 }}>{isRTL ? 'جدد اليوم' : 'new today'}</p>
+              </div>
+            </div>
+            <div style={{
+              flex: 1, padding: '0.75rem', borderRadius: 12,
+              background: '#fffbeb', display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <Trophy size={16} color="#f59e0b" />
+              <div>
+                <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0b1020', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {topCountry ? (resolveCountry(topCountry.country)?.nameAr || topCountry.country) : '--'}
+                </p>
+                <p style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 600 }}>{isRTL ? 'الأكثر نشاطاً' : 'most active'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Country list */}
+          {countries.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {countries.slice(0, 5).map((c, i) => {
+                const resolved = resolveCountry(c.country);
+                const name = resolved?.nameAr || c.country;
+                const pct = Math.round((c.count / maxCount) * 100);
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', width: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                    <div style={{ flex: 1, height: 6, borderRadius: 3, background: '#f1f5f9', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: theme.primary, transition: 'width 0.5s ease' }} />
+                    </div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', minWidth: 16, textAlign: 'center' }}>{c.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ─── Right: World Map ─── */}
+        <div style={{
+          flex: 1, minWidth: 300, padding: '1.25rem', position: 'relative',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: '#fafbfc',
+        }}>
+          {/* Simplified world map SVG */}
+          <svg viewBox="0 0 100 60" style={{ width: '100%', maxWidth: 520, height: 'auto', opacity: 0.12 }}>
+            {/* Simplified continents path */}
+            <path d="M8,18 Q12,15 18,17 Q22,14 26,16 Q28,12 32,15 L28,22 Q24,26 20,24 Q16,28 12,25 Q8,24 8,18Z" fill="#94a3b8" /> {/* North America */}
+            <path d="M22,30 Q24,28 26,30 Q28,34 26,38 Q24,42 22,40 Q20,36 22,30Z" fill="#94a3b8" /> {/* South America */}
+            <path d="M42,16 Q44,14 48,15 Q52,14 54,16 Q56,14 58,16 Q56,18 54,20 Q52,22 48,20 Q44,22 42,18Z" fill="#94a3b8" /> {/* Europe */}
+            <path d="M42,24 Q46,22 50,24 Q54,22 58,26 Q62,30 58,36 Q54,40 50,42 Q46,44 44,40 Q40,36 42,30Z" fill="#94a3b8" /> {/* Africa */}
+            <path d="M56,16 Q60,14 66,16 Q72,14 78,18 Q82,22 80,28 Q76,32 72,30 Q68,34 62,30 Q58,26 56,22Z" fill="#94a3b8" /> {/* Asia */}
+            <path d="M78,38 Q82,34 86,36 Q90,38 88,42 Q84,46 80,44 Q76,42 78,38Z" fill="#94a3b8" /> {/* Australia */}
+          </svg>
+
+          {/* Glowing dots on map */}
+          {mapDots.map((dot, i) => {
+            const size = Math.min(12, Math.max(6, 4 + dot.count * 2));
+            return (
+              <div key={i} title={`${dot.nameAr}: ${dot.count}`} style={{
+                position: 'absolute',
+                left: `${dot.x}%`,
+                top: `${dot.y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: size, height: size,
+                borderRadius: '50%',
+                background: theme.primary,
+                boxShadow: `0 0 ${size}px ${theme.primary}80`,
+                animation: 'map-dot-pulse 2s ease-in-out infinite',
+                animationDelay: `${i * 0.3}s`,
+                cursor: 'default',
+                zIndex: 2,
+              }}>
+                {/* Label */}
+                <div style={{
+                  position: 'absolute', bottom: size + 4, left: '50%', transform: 'translateX(-50%)',
+                  background: '#0b1020', color: '#fff', padding: '2px 6px', borderRadius: 4,
+                  fontSize: '0.55rem', fontWeight: 700, whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                }}>
+                  {dot.nameAr} ({dot.count})
+                </div>
+              </div>
+            );
+          })}
+
+          {/* No visitors overlay */}
+          {onlineCount === 0 && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', zIndex: 3,
+            }}>
+              <Globe size={36} color="#cbd5e1" />
+              <p style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600, marginTop: 8 }}>
+                {isRTL ? 'لا يوجد متصلين حالياً' : 'No visitors online'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes online-pulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+          50% { opacity: 0.6; box-shadow: 0 0 16px rgba(34,197,94,0.8); }
+        }
+        @keyframes map-dot-pulse {
+          0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.4); }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 // ─── Skeleton Row ───
 function SkeletonBlock({ w, h, r = 6 }: { w: string | number; h: number; r?: number }) {
@@ -205,11 +507,12 @@ type RoleFilter = typeof ROLE_FILTERS[number]['key'];
 
 const PER_PAGE = 15;
 
-export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
+export default function UsersAdminPage({ theme, isActive }: { theme: ColorTheme; isActive?: boolean }) {
   const { t, isRTL } = useAdminLang();
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [total, setTotal] = useState(0);
   const [walletUser, setWalletUser] = useState<User | null>(null);
   const [blockUser, setBlockUser] = useState<User | null>(null);
@@ -218,6 +521,10 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: number; type: 'customer' | 'staff' } | null>(null);
+  const [sortKey, setSortKey] = useState<string>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [copiedEmail, setCopiedEmail] = useState('');
+  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
@@ -243,6 +550,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
             role: u.is_blocked ? 'محظور' : 'زبون',
             status: u.is_blocked ? 'محظور' : 'نشط',
             joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+            _raw_created_at: u.created_at ? String(u.created_at) : '',
             orders: Number(u.orders || 0),
             spent: String(u.spent || '$0.00'),
             wallet_balance: Number(u.wallet_balance || 0),
@@ -254,15 +562,18 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
       if (staffRes.status === 'fulfilled') {
         const raw = staffRes.value;
         const staff = Array.isArray(raw) ? raw : (Array.isArray(raw?.users) ? raw.users : []);
-        staffCount = staff.length;
-        staff.forEach((u: Record<string, unknown>) => {
+        // Filter out admin accounts — only show moderators
+        const nonAdminStaff = staff.filter((u: Record<string, unknown>) => String(u.role) !== 'admin');
+        staffCount = nonAdminStaff.length;
+        nonAdminStaff.forEach((u: Record<string, unknown>) => {
           allUsers.push({
             id: Number(u.id),
             name: String(u.name || ''),
             email: String(u.email || ''),
-            role: String(u.role) === 'admin' ? 'مدير' : 'مشرف',
+            role: 'مشرف',
             status: 'نشط',
             joined: u.created_at ? new Date(String(u.created_at)).toLocaleDateString('ar-EG') : '--',
+            _raw_created_at: u.created_at ? String(u.created_at) : '',
             orders: 0,
             spent: '$0.00',
             _type: 'staff',
@@ -272,16 +583,55 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
 
       setUsers(allUsers);
       setTotal(customersCount + staffCount);
+      setFetchError(false);
     } catch {
       setUsers([]);
       setTotal(0);
+      setFetchError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { if (isActive) loadData(); }, [isActive, loadData]);
+
+  // Auto-refresh every 60s
+  useEffect(() => {
+    if (!isActive) {
+      if (refreshRef.current) { clearInterval(refreshRef.current); refreshRef.current = null; }
+      return;
+    }
+    refreshRef.current = setInterval(() => { loadData(true); }, 60000);
+    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
+  }, [isActive, loadData]);
+
+  function toggleSort(key: string) {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+    setPage(1);
+  }
+
+  function copyEmail(email: string) {
+    navigator.clipboard.writeText(email).catch(() => {});
+    setCopiedEmail(email);
+    setTimeout(() => setCopiedEmail(''), 1500);
+  }
+
+  function exportUsersCSV() {
+    const headers = [t('الاسم'), t('الإيميل'), t('الدور'), t('الرصيد'), t('الطلبات'), t('الإنفاق'), t('الحالة'), t('تاريخ التسجيل')];
+    const rows = filtered.map(u => [
+      u.name, u.email, u.role,
+      u._type === 'customer' ? (u.wallet_balance ?? 0).toFixed(2) : '',
+      u.orders, u.spent, u.status, u.joined,
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`));
+    const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `users_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+  }
 
   // ─── Computed stats ───
   const statCounts = useMemo(() => {
@@ -301,8 +651,27 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
     // Search
     const q = search.trim().toLowerCase();
     if (q) list = list.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    // Sort — default: highest balance first
+    if (sortKey) {
+      list = [...list].sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        if (sortKey === 'name') return dir * a.name.localeCompare(b.name);
+        if (sortKey === 'balance') return dir * ((a.wallet_balance ?? 0) - (b.wallet_balance ?? 0));
+        if (sortKey === 'orders') return dir * ((a.orders ?? 0) - (b.orders ?? 0));
+        if (sortKey === 'spent') return dir * (parseFloat((a.spent || '0').replace(/[^0-9.-]/g, '') || '0') - parseFloat((b.spent || '0').replace(/[^0-9.-]/g, '') || '0'));
+        if (sortKey === 'joined') {
+          const da = new Date(a._raw_created_at || '1970-01-01').getTime();
+          const db = new Date(b._raw_created_at || '1970-01-01').getTime();
+          return dir * (da - db);
+        }
+        return 0;
+      });
+    } else {
+      // Default sort: highest wallet balance first
+      list = [...list].sort((a, b) => (b.wallet_balance ?? 0) - (a.wallet_balance ?? 0));
+    }
     return list;
-  }, [users, search, roleFilter]);
+  }, [users, search, roleFilter, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = useMemo(() => {
@@ -311,22 +680,24 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
   }, [filtered, page]);
 
   // Reset page when filter/search changes
-  useEffect(() => { setPage(1); }, [roleFilter, search]);
+  useEffect(() => { setPage(1); }, [roleFilter, search, sortKey, sortDir]);
 
   // ─── Handle block/unblock ───
   const handleBlockToggle = async () => {
     if (!blockUser) return;
+    const isBlocked = blockUser.status === 'محظور';
     setBlocking(true);
     try {
-      // Toggle block status locally (API may not exist yet)
+      await adminApi.toggleBlockCustomer(blockUser.id, !isBlocked);
       setUsers(prev => prev.map(u => {
         if (u.id === blockUser.id && u._type === blockUser._type) {
-          const isBlocked = u.status === 'محظور';
           return { ...u, status: isBlocked ? 'نشط' : 'محظور', role: isBlocked ? 'زبون' : 'محظور' };
         }
         return u;
       }));
       setBlockUser(null);
+    } catch (err) {
+      console.error('Block toggle error:', err);
     } finally {
       setBlocking(false);
     }
@@ -354,6 +725,16 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
 
   return (
     <>
+      {fetchError && !loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 16, fontFamily: 'Tajawal, sans-serif' }}>
+          <AlertCircle size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: '1rem', fontWeight: 700, color: '#64748b' }}>{t('يجري تحديث النظام، يرجى الانتظار قليلاً ثم حاول مرة أخرى')}</p>
+        </div>
+      )}
+      {!fetchError && <>
+      {/* Live Visitors Card */}
+      <LiveVisitorsCard theme={theme} isRTL={isRTL} t={t} />
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0b1020', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -362,6 +743,11 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>({filtered.length})</span>
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={exportUsersCSV} title="CSV" style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: '#fff', border: '1px solid #e2e8f0',
+            cursor: 'pointer', display: 'grid', placeItems: 'center', color: '#64748b',
+          }}><Download size={15} /></button>
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
@@ -451,7 +837,12 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
           );
         })}
       </div>
-
+      {/* Results counter */}
+      {!loading && (
+        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 8 }}>
+          {isRTL ? `عرض ${paginated.length} من ${filtered.length} مستخدم` : `Showing ${paginated.length} of ${filtered.length} users`}
+        </div>
+      )}
       {/* Table */}
       <div style={{
         background: '#fff', borderRadius: 16,
@@ -461,19 +852,33 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['المستخدم', 'الدور', 'الرصيد', 'الطلبات', 'الإنفاق', 'الحالة', 'تاريخ التسجيل', 'إجراءات'].map(h => (
-                  <th key={h} style={{
+                {[
+                  { label: t('المستخدم'), key: 'name' },
+                  { label: t('الرصيد'), key: 'balance' },
+                  { label: t('الطلبات'), key: 'orders' },
+                  { label: t('الإنفاق'), key: 'spent' },
+                  { label: t('الحالة'), key: '' },
+                  { label: t('تاريخ التسجيل'), key: 'joined' },
+                  { label: t('إجراءات'), key: '' },
+                ].map((h, i) => (
+                  <th key={i} onClick={() => h.key && toggleSort(h.key)} style={{
                     padding: '0.85rem 1rem', textAlign: isRTL ? 'right' : 'left',
                     fontSize: '0.75rem', fontWeight: 700, color: '#64748b',
                     borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
-                  }}>{t(h)}</th>
+                    cursor: h.key ? 'pointer' : 'default', userSelect: 'none',
+                  }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      {h.label}
+                      {h.key && <ArrowUpDown size={11} color={sortKey === h.key ? theme.primary : '#cbd5e1'} />}
+                    </span>
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? <TableSkeleton /> : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: '3rem 1rem', textAlign: 'center' }}>
+                  <td colSpan={7} style={{ padding: '3rem 1rem', textAlign: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#94a3b8' }}>
                       <Inbox size={36} color="#cbd5e1" />
                       <p style={{ fontSize: '0.88rem', fontWeight: 700 }}>
@@ -491,8 +896,6 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                   </td>
                 </tr>
               ) : paginated.map(user => {
-                const roleBg = user.role === 'مدير' ? '#dbeafe' : user.role === 'محظور' ? '#fee2e2' : user.role === 'مشرف' ? '#e0e7ff' : '#f1f5f9';
-                const roleColor = user.role === 'مدير' ? '#2563eb' : user.role === 'محظور' ? '#dc2626' : user.role === 'مشرف' ? '#4f46e5' : '#64748b';
                 return (
                   <tr key={`${user._type}-${user.id}`} style={{
                     borderBottom: '1px solid #f8fafc',
@@ -515,15 +918,12 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-                          <p style={{ fontSize: '0.68rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
+                          <p onClick={(e) => { e.stopPropagation(); copyEmail(user.email); }} style={{ fontSize: '0.68rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }} title={isRTL ? 'انقر للنسخ' : 'Click to copy'}>
+                            {user.email}
+                            {copiedEmail === user.email ? <CheckCircle size={10} color="#22c55e" /> : <Copy size={10} color="#cbd5e1" />}
+                          </p>
                         </div>
                       </div>
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <span style={{
-                        padding: '0.2rem 0.6rem', borderRadius: 6,
-                        background: roleBg, fontSize: '0.72rem', fontWeight: 700, color: roleColor,
-                      }}>{t(user.role)}</span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', fontWeight: 700, color: user._type === 'customer' ? '#0b1020' : '#94a3b8' }}>
                       {user._type === 'customer' ? `$${(user.wallet_balance ?? 0).toFixed(2)}` : '--'}
@@ -675,6 +1075,7 @@ export default function UsersAdminPage({ theme }: { theme: ColorTheme }) {
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
       `}</style>
+    </>}
     </>
   );
 }

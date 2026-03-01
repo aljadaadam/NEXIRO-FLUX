@@ -205,6 +205,7 @@ async function provisionSite(req, res) {
     }
     const cycle = (codeData?.billing_cycle) || billing_cycle || 'monthly';
     let price = templatePrices[cycle] || templatePrices.monthly;
+    const originalPrice = price; // ← السعر الأصلي قبل أي خصم
 
     // ─── ⛔ يجب توفير كود شراء صالح أو دفعة مؤكدة لإنشاء موقع ───
     if (!codeData && !verifiedPayment) {
@@ -214,22 +215,23 @@ async function provisionSite(req, res) {
       });
     }
 
-    // ─── تطبيق خصم الكود ───
+    // ─── تطبيق خصم الكود (حساب المبلغ المدفوع فعلياً) ───
     let paymentStatus = 'pending';
+    let discountedPrice = price; // المبلغ بعد الخصم (للتتبع فقط)
     if (verifiedPayment && verifiedPayment.status === 'completed') {
       paymentStatus = 'paid_by_gateway';
     } else if (verifiedPayment && verifiedPayment.payment_method === 'bank_transfer') {
       paymentStatus = 'pending_bank_review';
     } else if (codeData) {
       if (codeData.discount_type === 'full') {
-        price = 0;
+        discountedPrice = 0;
         paymentStatus = 'paid_by_code';
       } else if (codeData.discount_type === 'percentage') {
-        price = price * (1 - codeData.discount_value / 100);
-        paymentStatus = price <= 0 ? 'paid_by_code' : 'partial_code';
+        discountedPrice = price * (1 - codeData.discount_value / 100);
+        paymentStatus = discountedPrice <= 0 ? 'paid_by_code' : 'partial_code';
       } else if (codeData.discount_type === 'fixed') {
-        price = Math.max(0, price - codeData.discount_value);
-        paymentStatus = price <= 0 ? 'paid_by_code' : 'partial_code';
+        discountedPrice = Math.max(0, price - codeData.discount_value);
+        paymentStatus = discountedPrice <= 0 ? 'paid_by_code' : 'partial_code';
       }
     }
 
@@ -293,6 +295,10 @@ async function provisionSite(req, res) {
             payment_method: payment_method || (purchase_code ? 'purchase_code' : 'manual'),
             payment_reference: payment_reference || null,
             payment_status: paymentStatus,
+            original_price: originalPrice,
+            discounted_price: discountedPrice,
+            discount_type: codeData?.discount_type || null,
+            discount_value: codeData?.discount_value || null,
           })
         ]
       );
@@ -309,14 +315,14 @@ async function provisionSite(req, res) {
       );
       admin = adminRows[0];
 
-      // ─── 3. إنشاء الاشتراك ───
+      // ─── 3. إنشاء الاشتراك (يُحفظ السعر الأصلي للقالب) ───
       const planId = cycle === 'lifetime' ? 'premium' : (cycle === 'yearly' ? 'pro' : 'basic');
       const trial_ends = new Date();
       trial_ends.setDate(trial_ends.getDate() + 14);
       const [subResult] = await connection.query(
         `INSERT INTO subscriptions (site_key, plan_id, template_id, billing_cycle, price, status, trial_ends_at, expires_at)
          VALUES (?, ?, ?, ?, ?, 'trial', ?, NULL)`,
-        [site_key, planId, template_id, cycle, price, trial_ends]
+        [site_key, planId, template_id, cycle, originalPrice, trial_ends]
       );
       const [subRows] = await connection.query('SELECT * FROM subscriptions WHERE id = ?', [subResult.insertId]);
       subscription = subRows[0];
@@ -370,10 +376,13 @@ async function provisionSite(req, res) {
           const mergedMeta = { ...existingMeta, provisioned_site_key: site_key, provisioned_store: store_name, provisioned_at: new Date().toISOString() };
           await connection.query('UPDATE payments SET meta = ? WHERE id = ? AND site_key = ?', [JSON.stringify(mergedMeta), verifiedPayment.id, verifiedPayment.site_key]);
         } else {
+          const payDesc = codeData
+            ? `Site provisioning: ${store_name} (${cycle}) — Code: ${purchase_code}, Discount: ${codeData.discount_type}${codeData.discount_type !== 'full' ? ' ' + codeData.discount_value : ''}, Original: $${originalPrice}, Paid: $${discountedPrice}`
+            : `Site provisioning: ${store_name} (${cycle})`;
           await connection.query(
             `INSERT INTO payments (site_key, customer_id, order_id, type, amount, currency, payment_method, payment_gateway_id, status, description)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [site_key, null, null, 'subscription', price, 'USD', finalPaymentMethod, null, (paymentStatus === 'paid_by_code') ? 'completed' : 'pending', `Site provisioning: ${store_name} (${cycle})`]
+            [site_key, null, null, 'subscription', originalPrice, 'USD', finalPaymentMethod, null, (paymentStatus === 'paid_by_code') ? 'completed' : 'pending', payDesc]
           );
         }
       } catch (payErr) {
@@ -387,7 +396,7 @@ async function provisionSite(req, res) {
           [site_key, admin.id, null, 'site_created', 'site', site_key, JSON.stringify({
             store_name, domain, template_id,
             billing_cycle: cycle, payment_method: finalPaymentMethod,
-            payment_status: paymentStatus, price,
+            payment_status: paymentStatus, price: originalPrice, discounted_price: discountedPrice,
           }), req.ip || req.connection?.remoteAddress]
         );
       } catch (logErr) {
@@ -453,7 +462,7 @@ async function provisionSite(req, res) {
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">المالك</td><td style="padding:8px;border:1px solid #ddd">${owner_name} (${owner_email})</td></tr>
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">القالب</td><td style="padding:8px;border:1px solid #ddd">${template_id}</td></tr>
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">الخطة</td><td style="padding:8px;border:1px solid #ddd">${cycle}</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">السعر</td><td style="padding:8px;border:1px solid #ddd">$${price}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">السعر</td><td style="padding:8px;border:1px solid #ddd">$${originalPrice}${discountedPrice < originalPrice ? ` (بعد الخصم: $${discountedPrice})` : ''}</td></tr>
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">طريقة الدفع</td><td style="padding:8px;border:1px solid #ddd">${finalPaymentMethod}</td></tr>
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">حالة الدفع</td><td style="padding:8px;border:1px solid #ddd">${paymentStatus}</td></tr>
           <tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">Site Key</td><td style="padding:8px;border:1px solid #ddd">${site_key}</td></tr>
@@ -510,7 +519,7 @@ async function provisionSite(req, res) {
       subscription: {
         id: subscription.id,
         billing_cycle: cycle,
-        price,
+        price: originalPrice,
         status: (paymentStatus === 'paid_by_code' || paymentStatus === 'paid_by_gateway') ? 'active' : subscription.status,
         trial_ends_at: subscription.trial_ends_at,
         payment_status: paymentStatus,

@@ -227,7 +227,7 @@ class DhruFusionClient {
       '4': 'completed',   // تم بنجاح ✅
       '2': 'rejected',    // مرفوض ❌
       '3': 'rejected',    // فشل ❌
-      '5': 'cancelled'    // ملغي ❌
+      '5': 'rejected'     // ملغي → مرفوض ❌
     };
 
     const statusLabels = {
