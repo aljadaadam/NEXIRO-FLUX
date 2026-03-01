@@ -3,14 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, HelpCircle, User, Zap, Menu, X } from 'lucide-react';
+import { Home, Package, ShoppingCart, HelpCircle, User, Zap, Menu, X, ChevronRight, Wallet, LogIn } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
+import { storeApi } from '@/lib/api';
 
 export default function Header() {
   const { currentTheme, storeName, logoPreview, buttonRadius, t, isRTL } = useTheme();
   const pathname = usePathname();
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // User profile state
+  const [profile, setProfile] = useState<{ name: string; email: string; balance: number } | null>(null);
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false); }, [pathname]);
@@ -22,12 +26,60 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
+  // Fetch profile when menu opens
+  useEffect(() => {
+    if (!menuOpen) return;
+    const token = typeof window !== 'undefined' && localStorage.getItem('auth_token');
+    if (!token) { setProfile(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await storeApi.getProfile();
+        const c = res?.customer || res;
+        if (!cancelled) {
+          setProfile({
+            name: c.name || c.username || '',
+            email: c.email || '',
+            balance: Number(c.wallet_balance ?? c.balance ?? 0),
+          });
+        }
+      } catch { if (!cancelled) setProfile(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [menuOpen]);
+
   const navItems = [
     { id: '/', label: t('الرئيسية'), icon: Home },
     { id: '/services', label: t('الخدمات'), icon: Package },
     { id: '/orders', label: t('طلباتي'), icon: ShoppingCart },
     { id: '/support', label: t('الدعم'), icon: HelpCircle },
     { id: '/profile', label: t('حسابي'), icon: User },
+  ];
+
+  const isLoggedIn = typeof window !== 'undefined' && Boolean(localStorage.getItem('auth_token'));
+
+  // Sidebar sections (sd-unlocker style)
+  const orderSections = [
+    {
+      title: t('تصفح الخدمات'),
+      items: [
+        { id: '/', label: t('الرئيسية'), icon: Home },
+        { id: '/services', label: t('جميع الخدمات'), icon: Package },
+      ]
+    },
+    {
+      title: t('سجل الطلبات'),
+      items: [
+        { id: '/orders', label: t('طلباتي'), icon: ShoppingCart },
+      ]
+    },
+    {
+      title: t('الحساب'),
+      items: [
+        { id: '/profile', label: t('حسابي'), icon: User },
+        { id: '/support', label: t('الدعم الفني'), icon: HelpCircle },
+      ]
+    },
   ];
 
   return (
@@ -90,7 +142,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ─── Mobile Side Drawer ─── */}
+      {/* ─── Mobile Side Drawer (sd-unlocker style) ─── */}
       {menuOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }}>
           {/* Backdrop */}
@@ -104,7 +156,7 @@ export default function Header() {
           {/* Drawer */}
           <div style={{
             position: 'absolute', top: 0, [isRTL ? 'right' : 'left']: 0,
-            width: 280, maxWidth: '80vw', height: '100%',
+            width: 300, maxWidth: '82vw', height: '100%',
             background: 'var(--bg-main)',
             borderLeft: isRTL ? 'none' : '1px solid var(--border-light)',
             borderRight: isRTL ? '1px solid var(--border-light)' : 'none',
@@ -113,76 +165,157 @@ export default function Header() {
             animation: isRTL ? 'nf-slide-right 0.25s ease' : 'nf-slide-left 0.25s ease',
             overflowY: 'auto',
           }}>
-            {/* Drawer Header */}
+
+            {/* ── User Account Section (Top) ── */}
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '1rem 1.2rem',
+              padding: '1.25rem 1.2rem',
+              background: `linear-gradient(135deg, ${currentTheme.primary}18, ${currentTheme.primary}08)`,
               borderBottom: '1px solid var(--border-light)',
             }}>
-              <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-                {logoPreview ? (
-                  <img src={logoPreview} alt="logo" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: currentTheme.gradient, display: 'grid', placeItems: 'center' }}>
-                    <Zap size={16} color="#fff" />
-                  </div>
-                )}
-                <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{storeName}</span>
-              </Link>
-              <button onClick={() => setMenuOpen(false)} style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-                display: 'grid', placeItems: 'center', cursor: 'pointer',
-                color: 'var(--text-muted)',
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+              {/* Close button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                <button onClick={() => setMenuOpen(false)} style={{
+                  width: 30, height: 30, borderRadius: 8,
+                  background: 'var(--bg-card)', border: '1px solid var(--border-light)',
+                  display: 'grid', placeItems: 'center', cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                }}>
+                  <X size={14} />
+                </button>
+              </div>
 
-            {/* Drawer Nav */}
-            <div style={{ flex: 1, padding: '0.75rem' }}>
-              {navItems.map(item => {
-                const Icon = item.icon;
-                const isActive = pathname === item.id;
-                return (
-                  <Link key={item.id} href={item.id} onClick={() => setMenuOpen(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '0.85rem 1rem', borderRadius: 12,
-                    marginBottom: 4,
-                    background: isActive ? `${currentTheme.primary}15` : 'transparent',
-                    color: isActive ? currentTheme.primary : 'var(--text-primary)',
-                    textDecoration: 'none', fontWeight: 600, fontSize: '0.92rem',
-                    transition: 'all 0.2s',
-                    border: isActive ? `1px solid ${currentTheme.primary}30` : '1px solid transparent',
-                  }}>
+              {isLoggedIn && profile ? (
+                <>
+                  {/* Avatar + Name */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                     <div style={{
-                      width: 36, height: 36, borderRadius: 10,
-                      background: isActive ? `${currentTheme.primary}20` : 'var(--bg-card)',
+                      width: 48, height: 48, borderRadius: 14,
+                      background: currentTheme.gradient,
                       display: 'grid', placeItems: 'center',
-                      border: !isActive ? '1px solid var(--border-light)' : 'none',
+                      boxShadow: `0 4px 12px ${currentTheme.primary}30`,
+                      flexShrink: 0,
                     }}>
-                      <Icon size={18} />
+                      <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>
+                        {(profile.name || '?')[0].toUpperCase()}
+                      </span>
                     </div>
-                    {item.label}
-                    {isActive && (
-                      <div style={{
-                        marginLeft: isRTL ? 0 : 'auto', marginRight: isRTL ? 'auto' : 0,
-                        width: 6, height: 6, borderRadius: '50%', background: currentTheme.primary,
-                      }} />
-                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {profile.name}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {profile.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Wallet Balance */}
+                  <Link href="/profile?tab=wallet" onClick={() => setMenuOpen(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '0.55rem 0.8rem', borderRadius: 10,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-light)',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                  }}>
+                    <Wallet size={16} color={currentTheme.primary} />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('الرصيد')}:</span>
+                    <span style={{
+                      fontSize: '0.85rem', fontWeight: 800,
+                      color: profile.balance > 0 ? '#10b981' : '#f87171',
+                      marginInlineStart: 'auto',
+                    }}>
+                      ${profile.balance.toFixed(2)}
+                    </span>
                   </Link>
-                );
-              })}
+                </>
+              ) : (
+                /* Not logged in */
+                <Link href="/profile" onClick={() => setMenuOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '0.75rem 1rem', borderRadius: 12,
+                  background: currentTheme.gradient,
+                  color: '#fff', textDecoration: 'none',
+                  fontWeight: 700, fontSize: '0.88rem',
+                  boxShadow: `0 4px 14px ${currentTheme.primary}40`,
+                }}>
+                  <LogIn size={18} />
+                  {t('تسجيل الدخول')}
+                </Link>
+              )}
             </div>
 
-            {/* Drawer Footer */}
+            {/* ── Navigation Sections ── */}
+            <div style={{ flex: 1, padding: '0.5rem 0' }}>
+              {orderSections.map((section, si) => (
+                <div key={si}>
+                  {/* Section Header */}
+                  <div style={{
+                    padding: '0.7rem 1.2rem 0.35rem',
+                    fontSize: '0.65rem', fontWeight: 700,
+                    color: 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}>
+                    {section.title}
+                  </div>
+
+                  {/* Section Items */}
+                  {section.items.map(item => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.id || (item.id !== '/' && pathname.startsWith(item.id.split('?')[0]) && item.id.includes('?') === false);
+                    return (
+                      <Link key={item.id} href={item.id} onClick={() => setMenuOpen(false)} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '0.7rem 1.2rem',
+                        marginInline: '0.5rem', marginBottom: 2, borderRadius: 10,
+                        background: isActive ? `${currentTheme.primary}12` : 'transparent',
+                        color: isActive ? currentTheme.primary : 'var(--text-primary)',
+                        textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem',
+                        transition: 'all 0.2s',
+                        border: isActive ? `1px solid ${currentTheme.primary}25` : '1px solid transparent',
+                      }}>
+                        <div style={{
+                          width: 34, height: 34, borderRadius: 9,
+                          background: isActive ? `${currentTheme.primary}18` : 'var(--bg-card)',
+                          display: 'grid', placeItems: 'center',
+                          border: !isActive ? '1px solid var(--border-light)' : 'none',
+                          flexShrink: 0,
+                        }}>
+                          <Icon size={16} />
+                        </div>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        <ChevronRight size={14} color="var(--text-muted)" style={{ opacity: 0.5 }} />
+                      </Link>
+                    );
+                  })}
+
+                  {/* Section Divider */}
+                  {si < orderSections.length - 1 && (
+                    <div style={{ height: 1, background: 'var(--border-light)', margin: '0.4rem 1.2rem' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* ── Drawer Footer with Logo ── */}
             <div style={{
               padding: '1rem 1.2rem',
               borderTop: '1px solid var(--border-light)',
-              textAlign: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                ⚡ Powered by NEXIRO FLUX
+              <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                {logoPreview ? (
+                  <img src={logoPreview} alt="logo" style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: currentTheme.gradient, display: 'grid', placeItems: 'center' }}>
+                    <Zap size={12} color="#fff" />
+                  </div>
+                )}
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{storeName}</span>
+              </Link>
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', opacity: 0.5, fontWeight: 500 }}>
+                ⚡ NEXIRO FLUX
               </span>
             </div>
           </div>
