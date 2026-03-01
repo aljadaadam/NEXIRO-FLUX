@@ -9,6 +9,7 @@ import YCZStoreDemo from '../components/templates/YCZStoreDemo';
 import GxVaultDemo from '../components/templates/GxVaultDemo';
 import HxToolsDemo from '../components/templates/HxToolsDemo';
 import CarStoreDemo from '../components/templates/CarStoreDemo';
+import SmmStoreDemo from '../components/templates/SmmStoreDemo';
 
 // Map of template IDs to their custom demo components
 const customDemos = {
@@ -16,6 +17,7 @@ const customDemos = {
   'game-topup-store': GxVaultDemo,
   'hardware-tools-store': HxToolsDemo,
   'car-dealership-store': CarStoreDemo,
+  'smm-store': SmmStoreDemo,
 };
 
 export default function TemplatePreviewPage() {
