@@ -157,7 +157,7 @@ export default function Header() {
           <div style={{
             position: 'absolute', top: 0, [isRTL ? 'right' : 'left']: 0,
             width: 300, maxWidth: '82vw', height: '100%',
-            background: 'var(--bg-main)',
+            background: 'var(--bg-page)',
             borderLeft: isRTL ? 'none' : '1px solid var(--border-light)',
             borderRight: isRTL ? '1px solid var(--border-light)' : 'none',
             boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
