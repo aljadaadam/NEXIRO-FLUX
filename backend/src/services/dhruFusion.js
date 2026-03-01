@@ -186,7 +186,7 @@ class DhruFusionClient {
     // إذا IMEI فارغ وهناك حقول مخصصة، استخدم أول قيمة كـ IMEI
     // لأن DHRU يتوقع حقول serviceimei في <IMEI> tag
     let effectiveImei = imei || '';
-    let remainingFields: Record<string, string> = {};
+    let remainingFields = {};
 
     if (customFields && typeof customFields === 'object') {
       const entries = Object.entries(customFields);
