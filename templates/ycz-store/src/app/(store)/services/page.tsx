@@ -655,7 +655,7 @@ export default function ServicesPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h4 style={{
                   fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{p.name}</h4>
                 <p style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: 2 }}>{t(p.category)}</p>
               </div>
