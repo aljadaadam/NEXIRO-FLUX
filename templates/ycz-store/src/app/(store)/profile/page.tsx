@@ -972,7 +972,11 @@ function WalletChargeModal({ onClose, onSubmitted }: { onClose: () => void; onSu
 export default function ProfilePage() {
   const router = useRouter();
   const { currentTheme, buttonRadius, t, isRTL } = useTheme();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Initialize isLoggedIn synchronously from token
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== 'undefined') return !!localStorage.getItem('auth_token');
+    return false;
+  });
   const [tab, setTab] = useState('login');
   const [view, setView] = useState('menu');
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -982,7 +986,16 @@ export default function ProfilePage() {
   const [personalSaved, setPersonalSaved] = useState(false);
   const [personalSaving, setPersonalSaving] = useState(false);
   const [personalError, setPersonalError] = useState('');
-  const [profile, setProfile] = useState<{ name: string; email: string; phone?: string; balance?: string }>({ name: '', email: '' });
+  // Initialize profile from localStorage cache for instant display
+  const [profile, setProfile] = useState<{ name: string; email: string; phone?: string; balance?: string }>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('_profile_page_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return { name: '', email: '' };
+  });
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   // Auth form state
@@ -1069,12 +1082,17 @@ export default function ProfilePage() {
       const customer = res?.customer || res?.user || res;
       if (customer) {
         const walletBalance = Number(customer.wallet_balance ?? customer.balance ?? customer.wallet?.balance ?? 0);
-        setProfile({
+        const profileData = {
           name: customer.name || customer.username || '',
           email: customer.email || '',
           phone: customer.phone || '',
           balance: `$${walletBalance.toFixed(2)}`,
-        });
+        };
+        setProfile(profileData);
+        // Cache for instant display next time
+        try { localStorage.setItem('_profile_page_cache', JSON.stringify(profileData)); } catch {}
+        // Also update sidebar cache
+        try { localStorage.setItem('_sidebar_profile', JSON.stringify({ name: profileData.name, email: profileData.email, balance: walletBalance })); } catch {}
         // Verification status from backend
         const vs = customer.verification_status || (customer.is_verified ? 'verified' : 'none');
         setVerificationStatus(vs as 'none' | 'pending' | 'verified' | 'rejected');
@@ -1277,6 +1295,8 @@ export default function ProfilePage() {
 
   function handleLogout() {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('_profile_page_cache');
+    localStorage.removeItem('_sidebar_profile');
     setIsLoggedIn(false);
     setProfile({ name: '', email: '' });
     setView('menu');
