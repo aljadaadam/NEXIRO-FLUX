@@ -247,7 +247,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       refetch: fetchFromServer,
       language, setLanguage, isRTL, t, dateLocale,
     }}>
-      {children}
+      {/* Hide until client hydration completes — prevents theme color flash */}
+      <div style={{ opacity: mounted ? 1 : 0, transition: mounted ? 'opacity 0.08s ease' : 'none' }}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

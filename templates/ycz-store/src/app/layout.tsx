@@ -88,11 +88,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
+        {/* Blocking script: apply cached theme BEFORE first paint */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var d=document.documentElement,s=localStorage;var l=s.getItem('ycz_language');if(l==='en'){d.lang='en';d.dir='ltr'}if(s.getItem('ycz_darkMode')==='true')d.classList.add('dark')}catch(e){}})()` }} />
         <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
-      <body style={{ margin: 0, fontFamily: 'Tajawal, Cairo, sans-serif' }}>
+      <body style={{ margin: 0 }} suppressHydrationWarning>
         <ThemeProvider>
           {children}
         </ThemeProvider>
