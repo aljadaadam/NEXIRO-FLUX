@@ -156,9 +156,32 @@ async function sendEmailBroadcast(req, res) {
       return res.status(400).json({ error: 'لا يوجد زبائن لإرسال البريد', errorEn: 'No customers found' });
     }
 
-    // جلب اسم المتجر
-    const [custRows] = await pool.query('SELECT store_name FROM customizations WHERE site_key = ? LIMIT 1', [site_key]);
-    const storeName = custRows?.[0]?.store_name || 'المتجر';
+    // جلب بيانات المتجر (اسم + لون + SMTP)
+    const [custRows] = await pool.query(
+      'SELECT store_name, primary_color, logo_url, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from FROM customizations WHERE site_key = ? LIMIT 1',
+      [site_key]
+    );
+    const siteCustom = custRows?.[0] || {};
+    const storeName = siteCustom.store_name || 'المتجر';
+    const branding = {
+      storeName,
+      primaryColor: siteCustom.primary_color || '#7c3aed',
+      logoUrl: siteCustom.logo_url || null,
+    };
+
+    // إعداد SMTP خاص بالمتجر (إن وُجد)
+    let siteSettings = null;
+    if (siteCustom.smtp_host && siteCustom.smtp_user) {
+      siteSettings = {
+        smtp: {
+          host: siteCustom.smtp_host,
+          port: siteCustom.smtp_port || 587,
+          user: siteCustom.smtp_user,
+          pass: siteCustom.smtp_pass,
+          from: siteCustom.smtp_from || siteCustom.smtp_user,
+        }
+      };
+    }
 
     // إرسال الإيميلات
     let sentCount = 0;
@@ -170,7 +193,7 @@ async function sendEmailBroadcast(req, res) {
           name: recipient.name,
           subject,
           message,
-          branding: { storeName, primaryColor: '#7c3aed' },
+          branding,
         });
 
         const result = await emailService.send({
@@ -178,6 +201,7 @@ async function sendEmailBroadcast(req, res) {
           subject,
           html,
           storeName,
+          siteSettings,
         });
 
         if (result.sent || result.logged) sentCount++;
