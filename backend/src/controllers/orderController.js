@@ -592,7 +592,7 @@ async function placeExternalOrder(req, res) {
         serviceId,
         imei: imei || '',
         quantity: order.quantity || 1,
-        customFields: req.body.customFields || null
+        customFields: req.body.customFields || (() => { try { return order.notes ? JSON.parse(order.notes) : null; } catch { return null; } })()
       });
 
       if (!result.referenceId) {
