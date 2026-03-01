@@ -51,6 +51,12 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 .store-products-list {
   grid-template-columns: repeat(3, 1fr) !important;
   gap: 10px !important;
+  max-width: 100%;
+  overflow: hidden;
+}
+.store-products-list > * {
+  min-width: 0;
+  overflow: hidden;
 }
 @media (max-width: 1024px) {
   .store-products-list { grid-template-columns: repeat(2, 1fr) !important; }

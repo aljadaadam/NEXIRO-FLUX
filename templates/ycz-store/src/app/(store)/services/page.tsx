@@ -636,7 +636,7 @@ export default function ServicesPage() {
       </div>
 
       {/* Products */}
-      <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: productLayout === 'list' ? 12 : 16 }}>
+      <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: productLayout === 'list' ? 10 : 16, maxWidth: '100%', overflow: 'hidden' }}>
         {filtered.map(p => (
           productLayout === 'list' ? (
             <div key={p.id} onClick={() => setOrderProduct(p)} className="store-product-card store-product-card-list" style={{

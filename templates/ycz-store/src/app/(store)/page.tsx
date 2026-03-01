@@ -800,7 +800,7 @@ export default function HomePage() {
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{t('🔥 المنتجات المميزة')}</h3>
           <Link href="/services" style={{ background: 'none', border: 'none', color: currentTheme.primary, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('عرض الكل ←')}</Link>
         </div>
-        <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)', gap: productLayout === 'list' ? 12 : 16 }}>
+        <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)', gap: productLayout === 'list' ? 10 : 16, maxWidth: '100%', overflow: 'hidden' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>{t('جاري التحميل...')}</div>
           ) : products.length === 0 ? (
