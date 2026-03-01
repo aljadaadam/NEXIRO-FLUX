@@ -181,26 +181,9 @@ class DhruFusionClient {
    */
   async placeOrder({ serviceId, imei, quantity, customFields }) {
     if (!serviceId) throw new Error('serviceId مطلوب');
-    
-    // ─── DHRU FUSION: حقول serviceimei تُرسل عبر <IMEI> ───
-    // إذا IMEI فارغ وهناك حقول مخصصة، استخدم أول قيمة كـ IMEI
-    // لأن DHRU يتوقع حقول serviceimei في <IMEI> tag
-    let effectiveImei = imei || '';
-    let remainingFields = {};
+    const effectiveImei = imei || '';
 
-    if (customFields && typeof customFields === 'object') {
-      const entries = Object.entries(customFields);
-      if (!effectiveImei && entries.length > 0) {
-        // استخدم أول حقل مخصص كـ IMEI (عادة يكون حقل serviceimei)
-        effectiveImei = String(entries[0][1]);
-        // باقي الحقول تُرسل كعناصر XML
-        remainingFields = Object.fromEntries(entries.slice(1));
-      } else {
-        remainingFields = { ...customFields };
-      }
-    }
-
-    // بناء XML Parameters
+    // بناء XML Parameters (فقط ID + IMEI + QNT)
     const esc = DhruFusionClient.escapeXml;
     let xml = `<PARAMETERS><ID>${esc(serviceId)}</ID><IMEI>${esc(effectiveImei)}</IMEI>`;
     
@@ -208,18 +191,21 @@ class DhruFusionClient {
       xml += `<QNT>${quantity}</QNT>`;
     }
 
-    if (Object.keys(remainingFields).length > 0) {
-      for (const [key, value] of Object.entries(remainingFields)) {
-        const xmlTag = String(key).replace(/\s+/g, '_');
-        xml += `<${xmlTag}>${esc(String(value))}</${xmlTag}>`;
+    xml += '</PARAMETERS>';
+
+    // ─── الحقول المخصصة تُرسل كـ POST params منفصلة (خارج XML) ───
+    // DHRU FUSION يتوقع كل حقل مخصص كـ POST parameter مستقل
+    const extraParams = { parameters: xml };
+    if (customFields && typeof customFields === 'object') {
+      for (const [key, value] of Object.entries(customFields)) {
+        const paramKey = String(key).replace(/\s+/g, '_');
+        extraParams[paramKey] = String(value);
       }
     }
 
-    xml += '</PARAMETERS>';
+    console.log(`📝 DHRU placeOrder params:`, JSON.stringify(extraParams));
 
-    console.log(`📝 DHRU placeOrder XML:`, xml);
-
-    const data = await this._post('placeimeiorder', { parameters: xml });
+    const data = await this._post('placeimeiorder', extraParams);
     const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
 
     return {
