@@ -53,18 +53,21 @@ function safeGet(key: string, fallback: string): string {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [themeId, setThemeId] = useState('purple');
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [storeName, setStoreName] = useState('المتجر');
-  const [darkMode, setDarkMode] = useState(false);
-  const [buttonRadius, setButtonRadius] = useState('14');
-  const [headerStyle, setHeaderStyle] = useState('default');
-  const [showBanner, setShowBanner] = useState(true);
-  const [fontFamily, setFontFamily] = useState('Tajawal');
+  // ─── Initialize from localStorage cache immediately (no flash) ───
+  const [themeId, setThemeId] = useState(() => safeGet('ycz_themeId', 'purple'));
+  const [logoPreview, setLogoPreview] = useState<string | null>(() => {
+    try { return typeof window !== 'undefined' ? localStorage.getItem('ycz_logo') : null; } catch { return null; }
+  });
+  const [storeName, setStoreName] = useState(() => safeGet('ycz_storeName', 'المتجر'));
+  const [darkMode, setDarkMode] = useState(() => safeGet('ycz_darkMode', 'false') === 'true');
+  const [buttonRadius, setButtonRadius] = useState(() => safeGet('ycz_buttonRadius', '14'));
+  const [headerStyle, setHeaderStyle] = useState(() => safeGet('ycz_headerStyle', 'default'));
+  const [showBanner, setShowBanner] = useState(() => safeGet('ycz_showBanner', 'true') !== 'false');
+  const [fontFamily, setFontFamily] = useState(() => safeGet('ycz_fontFamily', 'Tajawal'));
   const [socialLinks, setSocialLinks] = useState<{ whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }>({});
-  const [customCss, setCustomCss] = useState('');
-  const [footerText, setFooterText] = useState('');
-  const [productLayout, setProductLayout] = useState('grid');
+  const [customCss, setCustomCss] = useState(() => safeGet('ycz_customCss', ''));
+  const [footerText, setFooterText] = useState(() => safeGet('ycz_footerText', ''));
+  const [productLayout, setProductLayout] = useState(() => safeGet('ycz_productLayout', 'grid'));
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -134,25 +137,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [customCss]);
 
   // ─── 1. قراءة من localStorage كـ cache أولي (سريع) ───
+  // States already initialized from localStorage via lazy initializers above.
+  // Just mark as mounted so UI renders, then fetch silently in background.
   useEffect(() => {
-    setThemeId(safeGet('ycz_themeId', 'purple'));
-    setLogoPreview(localStorage.getItem('ycz_logo'));
-    setStoreName(safeGet('ycz_storeName', 'المتجر'));
-    setDarkMode(safeGet('ycz_darkMode', 'false') === 'true');
-    setButtonRadius(safeGet('ycz_buttonRadius', '14'));
-    setHeaderStyle(safeGet('ycz_headerStyle', 'default'));
-    setShowBanner(safeGet('ycz_showBanner', 'true') !== 'false');
-    setFontFamily(safeGet('ycz_fontFamily', 'Tajawal'));
-    setCustomCss(safeGet('ycz_customCss', ''));
-    setFooterText(safeGet('ycz_footerText', ''));
-    setProductLayout(safeGet('ycz_productLayout', 'grid'));
-    const cachedLang = safeGet('ycz_language', '');
-    if (cachedLang === 'en' || cachedLang === 'ar') {
-      setLanguage(cachedLang);
-    } else {
-      const bl = navigator.language || '';
-      setLanguage(bl.startsWith('ar') ? 'ar' : 'en');
-    }
     setMounted(true);
   }, []);
 
