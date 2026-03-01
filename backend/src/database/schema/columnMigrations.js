@@ -107,6 +107,9 @@ async function migrateCustomizations(pool) {
   await ensureColumn(pool, 'customizations', 'flash_btn_text', "flash_btn_text VARCHAR(100) DEFAULT 'حسناً' COMMENT 'نص زر الإغلاق'");
   await ensureColumn(pool, 'customizations', 'flash_btn_url', "flash_btn_url TEXT NULL COMMENT 'رابط زر الفلاش (اختياري)'");
   await ensureColumn(pool, 'customizations', 'flash_font_style', "flash_font_style VARCHAR(20) DEFAULT 'normal' COMMENT 'نمط الخط: normal, block, outlined, shadow, neon, italic'");
+
+  // Product card layout: grid (square cards) or list (horizontal/rectangular cards)
+  await ensureColumn(pool, 'customizations', 'product_layout', "product_layout VARCHAR(20) DEFAULT 'grid' COMMENT 'تخطيط عرض المنتجات: grid أو list'");
 }
 
 // ─── Users Columns ───

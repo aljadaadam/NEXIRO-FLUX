@@ -41,6 +41,9 @@ interface ThemeContextType {
   setCustomCss: (v: string) => void;
   footerText: string;
   setFooterText: (v: string) => void;
+  // ─── Product Layout ───
+  productLayout: string;
+  setProductLayout: (v: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -61,6 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [socialLinks, setSocialLinks] = useState<{ whatsapp?: string; telegram?: string; facebook?: string; instagram?: string; twitter?: string }>({});
   const [customCss, setCustomCss] = useState('');
   const [footerText, setFooterText] = useState('');
+  const [productLayout, setProductLayout] = useState('grid');
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -141,6 +145,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setFontFamily(safeGet('ycz_fontFamily', 'Tajawal'));
     setCustomCss(safeGet('ycz_customCss', ''));
     setFooterText(safeGet('ycz_footerText', ''));
+    setProductLayout(safeGet('ycz_productLayout', 'grid'));
     const cachedLang = safeGet('ycz_language', '');
     if (cachedLang === 'en' || cachedLang === 'ar') {
       setLanguage(cachedLang);
@@ -193,6 +198,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (c.store_name) setStoreName(c.store_name);
         if (c.custom_css !== undefined) setCustomCss(c.custom_css || '');
         if (c.footer_text !== undefined) setFooterText(c.footer_text || '');
+        if (c.product_layout) setProductLayout(c.product_layout);
         if (c.social_links) {
           const sl = typeof c.social_links === 'string' ? JSON.parse(c.social_links) : c.social_links;
           setSocialLinks(sl);
@@ -229,8 +235,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('ycz_language', language);
       localStorage.setItem('ycz_customCss', customCss);
       localStorage.setItem('ycz_footerText', footerText);
+      localStorage.setItem('ycz_productLayout', productLayout);
     } catch { /* ignore */ }
-  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, customCss, footerText, mounted]);
+  }, [themeId, logoPreview, storeName, darkMode, buttonRadius, headerStyle, showBanner, fontFamily, language, customCss, footerText, productLayout, mounted]);
 
   const currentTheme = getTheme(themeId);
 
@@ -247,6 +254,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       socialLinks, setSocialLinks,
       customCss, setCustomCss,
       footerText, setFooterText,
+      productLayout, setProductLayout,
       colorThemes: COLOR_THEMES,
       loaded,
       refetch: fetchFromServer,

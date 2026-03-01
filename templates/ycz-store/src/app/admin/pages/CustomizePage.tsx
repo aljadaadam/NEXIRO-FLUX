@@ -30,6 +30,11 @@ const RADIUS_OPTIONS = [
   { id: '20', label: 'كبير (20px)' },
 ];
 
+const PRODUCT_LAYOUT_OPTIONS = [
+  { id: 'grid', label: 'شبكة (مربع)', icon: '▦' },
+  { id: 'list', label: 'قائمة (مستطيل)', icon: '☰' },
+];
+
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
@@ -100,6 +105,7 @@ export default function CustomizePage() {
         store_language: theme.language,
         custom_css: theme.customCss,
         footer_text: theme.footerText,
+        product_layout: theme.productLayout,
       });
       // في وضع الديمو لا نستدعي refetch لأنه يعيد البيانات الافتراضية ويمسح تغييرات الزائر
       if (!isDemoMode()) {
@@ -133,6 +139,7 @@ export default function CustomizePage() {
         theme.setStoreName('المتجر');
         theme.setSocialLinks({});
         theme.setLanguage('ar');
+        theme.setProductLayout('grid');
       } else {
         await theme.refetch();
       }
@@ -437,6 +444,29 @@ export default function CustomizePage() {
                 <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0b1020' }}>{t('إظهار البانر')}</span>
               </div>
               <Toggle value={theme.showBanner} onChange={theme.setShowBanner} />
+            </div>
+          </div>
+
+          {/* Product Layout */}
+          <div style={{ marginTop: 16 }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: 8, display: 'block' }}>{t('تخطيط عرض المنتجات')}</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {PRODUCT_LAYOUT_OPTIONS.map(lo => (
+                <button
+                  key={lo.id}
+                  onClick={() => theme.setProductLayout(lo.id)}
+                  style={{
+                    flex: 1, padding: '0.7rem', borderRadius: 8,
+                    border: theme.productLayout === lo.id ? '2px solid #7c5cff' : '1px solid #e2e8f0',
+                    background: theme.productLayout === lo.id ? '#f5f3ff' : '#fff',
+                    cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
+                    fontFamily: 'Tajawal, sans-serif', color: '#0b1020',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>{lo.icon}</span> {t(lo.label)}
+                </button>
+              ))}
             </div>
           </div>
         </Section>

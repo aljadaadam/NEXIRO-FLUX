@@ -10,7 +10,7 @@ import JsonLd from '@/components/seo/JsonLd';
 
 // ─── OrderModal (Enhanced: rich product details + confirmation step) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const { currentTheme, buttonRadius, t, isRTL } = useTheme();
+  const { currentTheme, buttonRadius, productLayout, t, isRTL } = useTheme();
   const [step, setStep] = useState(1); // 1=form, 2=confirm, 3=success
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -636,8 +636,45 @@ export default function ServicesPage() {
       </div>
 
       {/* Products */}
-      <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+      <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: productLayout === 'list' ? 12 : 16 }}>
         {filtered.map(p => (
+          productLayout === 'list' ? (
+            <div key={p.id} onClick={() => setOrderProduct(p)} className="store-product-card store-product-card-list" style={{
+              background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)',
+              padding: '0.75rem 1rem', cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--shadow-sm)',
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <div style={{
+                fontSize: '1.5rem', width: 52, height: 52, minWidth: 52,
+                display: 'grid', placeItems: 'center',
+                background: 'var(--bg-subtle)', borderRadius: 10,
+              }}>
+                {p.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{
+                  fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>{p.name}</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: 2 }}>{t(p.category)}</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {p.originalPrice && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{p.originalPrice}</span>}
+                  <span style={{
+                    fontSize: '0.95rem', fontWeight: 800,
+                    background: currentTheme.primary, color: '#fff',
+                    padding: '0.2rem 0.55rem', borderRadius: btnR, lineHeight: 1.3,
+                  }}>{p.price}</span>
+                </div>
+                {p.service_time && (
+                  <span style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600, background: '#dcfce7', padding: '0.15rem 0.45rem', borderRadius: 6 }}>
+                    {p.service_time}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
           <div key={p.id} onClick={() => setOrderProduct(p)} className="store-product-card" style={{
             background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)', padding: '1rem',
             cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--shadow-sm)',
@@ -661,6 +698,7 @@ export default function ServicesPage() {
               </div>
             </div>
           </div>
+          )
         ))}
       </div>
 

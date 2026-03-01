@@ -236,9 +236,54 @@ function HeroBanner() {
 
 // ─── ProductCard (Demo-style: simpler, emoji on gray bg, availability badge) ───
 function ProductCard({ product, onClick }: { product: Product; onClick?: () => void }) {
-  const { currentTheme, buttonRadius, t } = useTheme();
+  const { currentTheme, buttonRadius, productLayout, t } = useTheme();
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
+  // ─── Horizontal / List layout ───
+  if (productLayout === 'list') {
+    return (
+      <div onClick={onClick} className="store-product-card store-product-card-list" style={{
+        background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)',
+        padding: '0.75rem 1rem', cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--shadow-sm)',
+        display: 'flex', alignItems: 'center', gap: 14,
+      }}>
+        {/* Icon */}
+        <div style={{
+          fontSize: '1.5rem', width: 52, height: 52, minWidth: 52,
+          display: 'grid', placeItems: 'center',
+          background: 'var(--bg-subtle)', borderRadius: 10,
+        }}>
+          {product.icon}
+        </div>
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h4 style={{
+            fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>{product.name}</h4>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: 2 }}>{t(product.category)}</p>
+        </div>
+        {/* Price + service_time */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {product.originalPrice && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{product.originalPrice}</span>}
+            <span style={{
+              fontSize: '0.95rem', fontWeight: 800,
+              background: currentTheme.primary, color: '#fff',
+              padding: '0.2rem 0.55rem', borderRadius: btnR, lineHeight: 1.3,
+            }}>{product.price}</span>
+          </div>
+          {product.service_time && (
+            <span style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600, background: '#dcfce7', padding: '0.15rem 0.45rem', borderRadius: 6 }}>
+              {product.service_time}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Default Grid (square card) layout ───
   return (
     <div onClick={onClick} className="store-product-card" style={{
       background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)', padding: '1rem',
@@ -690,7 +735,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
 // ─── الصفحة الرئيسية ───
 export default function HomePage() {
-  const { currentTheme, t } = useTheme();
+  const { currentTheme, productLayout, t } = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -754,7 +799,7 @@ export default function HomePage() {
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{t('🔥 المنتجات المميزة')}</h3>
           <Link href="/services" style={{ background: 'none', border: 'none', color: currentTheme.primary, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('عرض الكل ←')}</Link>
         </div>
-        <div className="store-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+        <div className={productLayout === 'list' ? 'store-products-list' : 'store-products-grid'} style={{ display: 'grid', gridTemplateColumns: productLayout === 'list' ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)', gap: productLayout === 'list' ? 12 : 16 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>{t('جاري التحميل...')}</div>
           ) : products.length === 0 ? (

@@ -43,6 +43,7 @@ async function updateCustomization(req, res) {
       'custom_css', 'footer_text', 'social_links',
       'announcement_bar', 'announcement_bar_text',
       'announcement_bar_color', 'announcement_bar_link',
+      'product_layout',
     ];
     // Only admin can update SMTP and admin_slug
     if (req.user.role === 'admin') {

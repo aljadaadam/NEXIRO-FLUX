@@ -51,6 +51,7 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .store-hero-title { font-size: 1.5rem !important; }
   .store-hero-subtitle { font-size: 0.85rem !important; }
   .store-products-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .store-products-list { grid-template-columns: 1fr !important; gap: 8px !important; }
   .store-steps-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .store-header-nav { display: none !important; }
   .store-mobile-nav {
@@ -76,14 +77,18 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 
 @media (max-width: 480px) {
   .store-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .store-products-list { grid-template-columns: 1fr !important; gap: 8px !important; }
   .store-product-card { padding: 0.75rem !important; border-radius: 12px !important; }
+  .store-product-card-list { padding: 0.6rem 0.75rem !important; }
   .store-steps-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .store-about-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 @media (max-width: 360px) {
   .store-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .store-products-list { grid-template-columns: 1fr !important; gap: 6px !important; }
   .store-product-card { padding: 0.7rem !important; }
+  .store-product-card-list { padding: 0.5rem 0.65rem !important; }
 }
 
 /* ─── Store Product Card Hover ─── */
@@ -93,6 +98,10 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 .store-product-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+.store-product-card-list:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 /* ─── Store Footer ─── */
