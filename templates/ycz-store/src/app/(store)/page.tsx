@@ -243,13 +243,14 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
   if (productLayout === 'list') {
     return (
       <div onClick={onClick} className="store-product-card store-product-card-list" style={{
-        background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-light)',
-        padding: '0.75rem 1rem', cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--shadow-sm)',
-        display: 'flex', alignItems: 'center', gap: 14,
+        background: 'var(--bg-card)', borderRadius: 12, border: '1.5px solid var(--border-light)',
+        padding: '0.7rem 0.85rem', cursor: 'pointer', transition: 'all 0.3s',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        display: 'flex', alignItems: 'center', gap: 12,
       }}>
         {/* Icon */}
         <div style={{
-          fontSize: '1.5rem', width: 52, height: 52, minWidth: 52,
+          fontSize: '1.4rem', width: 46, height: 46, minWidth: 46,
           display: 'grid', placeItems: 'center',
           background: 'var(--bg-subtle)', borderRadius: 10,
         }}>
@@ -258,23 +259,23 @@ function ProductCard({ product, onClick }: { product: Product; onClick?: () => v
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h4 style={{
-            fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4,
+            fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{product.name}</h4>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: 2 }}>{t(product.category)}</p>
+          <p style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: 2 }}>{t(product.category)}</p>
         </div>
         {/* Price + service_time */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {product.originalPrice && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{product.originalPrice}</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            {product.originalPrice && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{product.originalPrice}</span>}
             <span style={{
-              fontSize: '0.95rem', fontWeight: 800,
+              fontSize: '0.85rem', fontWeight: 800,
               background: currentTheme.primary, color: '#fff',
-              padding: '0.2rem 0.55rem', borderRadius: btnR, lineHeight: 1.3,
+              padding: '0.18rem 0.5rem', borderRadius: btnR, lineHeight: 1.3,
             }}>{product.price}</span>
           </div>
           {product.service_time && (
-            <span style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600, background: '#dcfce7', padding: '0.15rem 0.45rem', borderRadius: 6 }}>
+            <span style={{ fontSize: '0.6rem', color: '#16a34a', fontWeight: 600, background: '#dcfce7', padding: '0.12rem 0.4rem', borderRadius: 5 }}>
               {product.service_time}
             </span>
           )}

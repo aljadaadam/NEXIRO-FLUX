@@ -47,6 +47,14 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 }
 
 /* ─── Store Responsive ─── */
+/* List layout: enforce 3 columns on large screens, 2 on medium */
+.store-products-list {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+}
+@media (max-width: 1024px) {
+  .store-products-list { grid-template-columns: repeat(2, 1fr) !important; }
+}
 @media (max-width: 768px) {
   .store-hero-title { font-size: 1.5rem !important; }
   .store-hero-subtitle { font-size: 0.85rem !important; }
