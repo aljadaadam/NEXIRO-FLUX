@@ -254,12 +254,28 @@ class DhruFusionClient {
       '5': 'ملغي'
     };
 
+  /**
+   * تنظيف HTML tags من نص الرد
+   */
+  static stripHtml(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str
+      .replace(/<[^>]*>/g, '')  // إزالة كل HTML tags
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')     // تنظيف مسافات زائدة
+      .trim();
+  }
+
     // استخراج كل الحقول المفيدة من الرد — المصادر تختلف في أسماء الحقول
-    const comments = success?.COMMENTS || success?.comments || '';
-    const message = success?.MESSAGE || success?.message || '';
-    const code = success?.CODE || success?.code || success?.UNLOCK_CODE || success?.unlock_code || '';
-    const result = success?.RESULT || success?.result || '';
-    const info = success?.INFO || success?.info || '';
+    const comments = DhruFusionClient.stripHtml(success?.COMMENTS || success?.comments || '');
+    const message = DhruFusionClient.stripHtml(success?.MESSAGE || success?.message || '');
+    const code = DhruFusionClient.stripHtml(success?.CODE || success?.code || success?.UNLOCK_CODE || success?.unlock_code || '');
+    const result = DhruFusionClient.stripHtml(success?.RESULT || success?.result || '');
+    const info = DhruFusionClient.stripHtml(success?.INFO || success?.info || '');
 
     // تجميع كل المحتوى الفعلي بترتيب الأولوية
     const allContent = [comments, code, result, message, info].filter(v => typeof v === 'string' && v.trim().length > 0);
