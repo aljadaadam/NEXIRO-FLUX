@@ -226,6 +226,22 @@ class DhruFusionClient {
 
   // ─── متابعة حالة طلب ──────────────────────────────────────
   /**
+   * تنظيف HTML tags من نص الرد
+   */
+  static stripHtml(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str
+      .replace(/<[^>]*>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
    * @param {string} referenceId - رقم المرجع من placeOrder
    */
   async getOrderStatus(referenceId) {
@@ -253,22 +269,6 @@ class DhruFusionClient {
       '3': 'فشل',
       '5': 'ملغي'
     };
-
-  /**
-   * تنظيف HTML tags من نص الرد
-   */
-  static stripHtml(str) {
-    if (!str || typeof str !== 'string') return str;
-    return str
-      .replace(/<[^>]*>/g, '')  // إزالة كل HTML tags
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, ' ')     // تنظيف مسافات زائدة
-      .trim();
-  }
 
     // استخراج كل الحقول المفيدة من الرد — المصادر تختلف في أسماء الحقول
     const comments = DhruFusionClient.stripHtml(success?.COMMENTS || success?.comments || '');
