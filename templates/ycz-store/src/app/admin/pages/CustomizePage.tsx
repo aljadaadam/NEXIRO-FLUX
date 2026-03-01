@@ -468,6 +468,50 @@ export default function CustomizePage() {
                 </button>
               ))}
             </div>
+
+            {/* Live Preview */}
+            <div style={{ marginTop: 12, padding: '0.75rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+              <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600 }}>{t('معاينة مباشرة')}</p>
+              {theme.productLayout === 'list' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[
+                    { name: 'Unlocktool 12 Months', cat: 'Unlocktool Activation', price: '$42', time: '1-3 Hours' },
+                    { name: 'Unlocktool 3 Months', cat: 'Unlocktool Activation', price: '$18.4', time: '1-3 Hours' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.65rem',
+                      background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0',
+                    }}>
+                      <div style={{ width: 36, height: 36, minWidth: 36, borderRadius: 8, background: '#f1f5f9', display: 'grid', placeItems: 'center', fontSize: '0.9rem' }}>🔑</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0b1020', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</p>
+                        <p style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{item.cat}</p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#7c5cff', color: '#fff', padding: '0.12rem 0.4rem', borderRadius: 6 }}>{item.price}</span>
+                        <span style={{ fontSize: '0.55rem', color: '#16a34a', fontWeight: 600, background: '#dcfce7', padding: '0.1rem 0.3rem', borderRadius: 4 }}>{item.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                  {[
+                    { name: 'Unlocktool 12M', price: '$42' },
+                    { name: 'Unlocktool 3M', price: '$18.4' },
+                    { name: 'Unlocktool 6M', price: '$26.4' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      padding: '0.5rem', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', textAlign: 'center',
+                    }}>
+                      <div style={{ width: '100%', height: 28, borderRadius: 6, background: '#f1f5f9', display: 'grid', placeItems: 'center', fontSize: '0.8rem', marginBottom: 4 }}>🔑</div>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, color: '#0b1020', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</p>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#7c5cff' }}>{item.price}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Section>
 
