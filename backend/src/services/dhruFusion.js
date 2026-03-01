@@ -181,9 +181,15 @@ class DhruFusionClient {
    */
   async placeOrder({ serviceId, imei, quantity, customFields }) {
     if (!serviceId) throw new Error('serviceId مطلوب');
-    const effectiveImei = imei || '';
 
-    // بناء XML Parameters (فقط ID + IMEI + QNT)
+    // ─── IMEI: إذا فارغ → رقم عشوائي 15 خانة (مطلوب دائماً) ───
+    let effectiveImei = imei || '';
+    if (!effectiveImei) {
+      // لخدمات SERVER: IMEI عشوائي 15 رقم
+      effectiveImei = Array.from({ length: 15 }, () => Math.floor(Math.random() * 10)).join('');
+    }
+
+    // ─── بناء XML Parameters ───
     const esc = DhruFusionClient.escapeXml;
     let xml = `<PARAMETERS><ID>${esc(serviceId)}</ID><IMEI>${esc(effectiveImei)}</IMEI>`;
     
@@ -191,19 +197,23 @@ class DhruFusionClient {
       xml += `<QNT>${quantity}</QNT>`;
     }
 
-    xml += '</PARAMETERS>';
-
-    // ─── الحقول المخصصة تُرسل كـ POST params منفصلة (خارج XML) ───
-    // DHRU FUSION يتوقع كل حقل مخصص كـ POST parameter مستقل
-    const extraParams = { parameters: xml };
-    if (customFields && typeof customFields === 'object') {
+    // ─── CUSTOMFIELD: حقول مخصصة → JSON → Base64 داخل XML ───
+    if (customFields && typeof customFields === 'object' && Object.keys(customFields).length > 0) {
+      // تحويل المفاتيح: Player_ID → Player ID (مسافة بدل underscore)
+      const cleanFields = {};
       for (const [key, value] of Object.entries(customFields)) {
-        const paramKey = String(key).replace(/\s+/g, '_');
-        extraParams[paramKey] = String(value);
+        cleanFields[key.replace(/_/g, ' ')] = String(value);
       }
+      const jsonStr = JSON.stringify(cleanFields);
+      const base64 = Buffer.from(jsonStr).toString('base64');
+      xml += `<CUSTOMFIELD>${base64}</CUSTOMFIELD>`;
     }
 
-    console.log(`📝 DHRU placeOrder params:`, JSON.stringify(extraParams));
+    xml += '</PARAMETERS>';
+
+    const extraParams = { parameters: xml };
+
+    console.log(`📝 DHRU placeOrder XML:`, xml);
 
     const data = await this._post('placeimeiorder', extraParams);
     const success = data?.SUCCESS?.RESULT || (Array.isArray(data?.SUCCESS) ? data.SUCCESS[0] : data?.SUCCESS);
