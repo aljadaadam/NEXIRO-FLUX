@@ -31,6 +31,8 @@ export const HxToolsStoreLiveDemo = lazy(() => import('../pages/demo/HxToolsStor
 export const HxToolsDashboardLiveDemo = lazy(() => import('../pages/demo/HxToolsDashboardLiveDemo'));
 export const CarStoreLiveDemo = lazy(() => import('../pages/demo/CarStoreLiveDemo'));
 export const CarDashboardLiveDemo = lazy(() => import('../pages/demo/CarDashboardLiveDemo'));
+export const SmmStoreLiveDemo = lazy(() => import('../pages/demo/SmmStoreLiveDemo'));
+export const SmmDashboardLiveDemo = lazy(() => import('../pages/demo/SmmDashboardLiveDemo'));
 
 // ─── Admin Dashboard ───
 export const AdminLoginPage = lazy(() => import('../pages/admin/AdminLoginPage'));

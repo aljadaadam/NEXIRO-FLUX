@@ -22,6 +22,7 @@ import {
   GxVaultStoreLiveDemo, GxVaultDashboardLiveDemo,
   HxToolsStoreLiveDemo, HxToolsDashboardLiveDemo,
   CarStoreLiveDemo, CarDashboardLiveDemo,
+  SmmStoreLiveDemo, SmmDashboardLiveDemo,
   // Admin
   AdminLoginPage, AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
   AdminAnnouncements, AdminSettings,
@@ -101,6 +102,8 @@ function AppContent() {
           <Route path="/demo/hx-dashboard" element={<HxToolsDashboardLiveDemo />} />
           <Route path="/demo/car-store" element={<CarStoreLiveDemo />} />
           <Route path="/demo/car-dashboard" element={<CarDashboardLiveDemo />} />
+          <Route path="/demo/smm-store" element={<SmmStoreLiveDemo />} />
+          <Route path="/demo/smm-dashboard" element={<SmmDashboardLiveDemo />} />
         </Routes>
       </Suspense>
     );
