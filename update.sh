@@ -15,6 +15,7 @@ WEBSITE_DIR="$ROOT_DIR/website"
 TEMPLATE_DIR="$ROOT_DIR/templates/ycz-store"
 HX_TEMPLATE_DIR="$ROOT_DIR/templates/hx-tools-store"
 CAR_TEMPLATE_DIR="$ROOT_DIR/templates/car-store"
+SMM_TEMPLATE_DIR="$ROOT_DIR/templates/smm-store"
 
 echo "══════════════════════════════════════"
 echo "  NEXIRO-FLUX — تحديث وبناء كامل"
@@ -90,7 +91,21 @@ else
 fi
 echo ""
 
-# ─── 6. التحقق ───
+# ─── 7. بناء قالب المتجر smm-store ───
+echo "📱 [7/8] بناء قالب المتجر smm-store (Next.js)..."
+cd "$SMM_TEMPLATE_DIR"
+npm install
+rm -rf .next
+npm run build
+if command -v pm2 &> /dev/null; then
+  pm2 restart smm-store 2>/dev/null || pm2 start npm --name smm-store -- start
+  echo "✅ قالب smm-store يعمل على المنفذ 4004 (pm2)"
+else
+  echo "⚠️  PM2 غير مثبت — شغّل القالب يدوياً: cd templates/smm-store && npm start"
+fi
+echo ""
+
+# ─── 8. التحقق ───
 echo "🔍 [6/6] التحقق من الحالة..."
 if command -v pm2 &> /dev/null; then
   pm2 status
@@ -103,4 +118,7 @@ echo "════════════════════════�
 echo ""
 echo "  Backend API:     http://localhost:3000"
 echo "  YCZ Store:       http://localhost:4000"
-echo "  HX Tools Store:  http://localhost:4002"  echo "  Car Store:       http://localhost:4003"echo ""
+echo "  HX Tools Store:  http://localhost:4002"
+echo "  Car Store:       http://localhost:4003"
+echo "  SMM Store:       http://localhost:4004"
+echo ""
