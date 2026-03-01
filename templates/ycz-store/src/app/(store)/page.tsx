@@ -328,8 +328,10 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
   useEffect(() => {
     let cancelled = false;
+    const hasCachedBalance = walletBalance !== null;
     async function loadProfile() {
-      setLoadingProfile(true);
+      // Only show loading if we don't have a cached balance
+      if (!hasCachedBalance) setLoadingProfile(true);
       setError(null);
       try {
         if (!isLoggedIn) {
@@ -339,7 +341,16 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
         const res = await storeApi.getProfile();
         const customer = res?.customer || res;
         const balance = Number(customer?.wallet_balance ?? customer?.balance ?? customer?.wallet?.balance ?? 0);
-        if (!cancelled) setWalletBalance(Number.isFinite(balance) ? balance : 0);
+        if (!cancelled) {
+          setWalletBalance(Number.isFinite(balance) ? balance : 0);
+          // Update cache for next time
+          try {
+            const cached = localStorage.getItem('_sidebar_profile');
+            const p = cached ? JSON.parse(cached) : {};
+            p.balance = Number.isFinite(balance) ? balance : 0;
+            localStorage.setItem('_sidebar_profile', JSON.stringify(p));
+          } catch {}
+        }
       } catch {
         if (!cancelled) setWalletBalance(null);
       } finally {
