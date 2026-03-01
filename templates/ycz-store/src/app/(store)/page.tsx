@@ -271,8 +271,27 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
   const { currentTheme, buttonRadius, t, isRTL } = useTheme();
   const [step, setStep] = useState(1); // 1=form, 2=confirm, 3=success
   const [formValues, setFormValues] = useState<Record<string, string>>({});
-  const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  // Initialize wallet balance from cache for instant display
+  const [walletBalance, setWalletBalance] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('_sidebar_profile');
+        if (cached) {
+          const p = JSON.parse(cached);
+          const b = Number(p.balance);
+          if (Number.isFinite(b)) return b;
+        }
+      } catch {}
+    }
+    return null;
+  });
+  const [loadingProfile, setLoadingProfile] = useState(() => {
+    // If we have cached balance, no need to show loading
+    if (typeof window !== 'undefined') {
+      try { return !localStorage.getItem('_sidebar_profile'); } catch {}
+    }
+    return true;
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qty, setQty] = useState(product.minQuantity || 1);
