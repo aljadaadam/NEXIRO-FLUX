@@ -47,6 +47,7 @@ class Customization {
       flash_btn_text: data.flash_btn_text,
       flash_btn_url: data.flash_btn_url,
       flash_font_style: data.flash_font_style,
+      product_layout: data.product_layout,
     };
 
     // تصفية الحقول غير المعرّفة
