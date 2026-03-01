@@ -595,8 +595,8 @@ export default function ServicesPage() {
 
           {groupsOpen && groupSourceCategory && (
             <div style={{
-              position: 'absolute', top: 'calc(100% + 6px)', left: 0,
-              width: '100%', minWidth: 220, background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              width: '100%', minWidth: 220, maxWidth: '80vw', background: 'var(--bg-card)', border: '1px solid var(--border-default)',
               borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', zIndex: 20,
               maxHeight: 260, overflowY: 'auto',
             }}>
