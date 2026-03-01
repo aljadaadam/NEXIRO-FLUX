@@ -579,7 +579,7 @@ const adminEn: Record<string, string> = {
   'استخدام': 'Use',
   'رجوع للقوالب': 'Back to Templates',
   'سيتم الإرسال إلى': 'Will be sent to',
-  'زبون': 'customer(s)',
+  'زبون مشترك': 'customer(s)',
   'عنوان البريد': 'Email Subject',
   'عنوان البريد الإلكتروني...': 'Email subject...',
   'محتوى الرسالة': 'Message Content',

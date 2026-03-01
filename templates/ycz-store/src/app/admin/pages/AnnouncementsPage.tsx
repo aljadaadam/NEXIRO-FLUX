@@ -179,7 +179,7 @@ export default function AnnouncementsPage({ isActive }: { isActive?: boolean } =
           {t('تم الإرسال بنجاح! 🎉')}
         </h2>
         <p style={{ fontSize: '0.95rem', color: '#64748b', textAlign: 'center', lineHeight: 1.8 }}>
-          {t('تم إرسال البريد إلى')} <strong style={{ color: '#16a34a' }}>{sentResult?.sent || 0}</strong> {t('زبون')}
+          {t('تم إرسال البريد إلى')} <strong style={{ color: '#16a34a' }}>{sentResult?.sent || 0}</strong> {t('زبون مشترك')}
           {(sentResult?.failed || 0) > 0 && (
             <span style={{ color: '#ef4444' }}> — {t('فشل')}: {sentResult?.failed}</span>
           )}
