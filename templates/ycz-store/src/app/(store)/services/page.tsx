@@ -10,7 +10,7 @@ import JsonLd from '@/components/seo/JsonLd';
 
 // ─── OrderModal (Enhanced: rich product details + confirmation step) ───
 function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const { currentTheme, buttonRadius, productLayout, t, isRTL } = useTheme();
+  const { currentTheme, buttonRadius, t, isRTL } = useTheme();
   const [step, setStep] = useState(1); // 1=form, 2=confirm, 3=success
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -420,7 +420,7 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
 
 // ─── صفحة الخدمات (Demo-style) ───
 export default function ServicesPage() {
-  const { currentTheme, buttonRadius, t } = useTheme();
+  const { currentTheme, buttonRadius, productLayout, t } = useTheme();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeGroup, setActiveGroup] = useState('all');
