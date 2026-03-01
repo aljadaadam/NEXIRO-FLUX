@@ -193,9 +193,14 @@ class DhruFusionClient {
     }
 
     if (customFields && Object.keys(customFields).length > 0) {
-      const customJson = JSON.stringify(customFields);
-      const customBase64 = Buffer.from(customJson).toString('base64');
-      xml += `<CUSTOMFIELD>${customBase64}</CUSTOMFIELD>`;
+      // ─── إرسال الحقول المخصصة كعناصر XML مباشرة ───
+      // DHRU FUSION يتوقع كل حقل كعنصر XML منفصل
+      // مثال: <Player_ID>123</Player_ID>
+      for (const [key, value] of Object.entries(customFields)) {
+        // تحويل المسافات إلى underscores في اسم العنصر (XML لا يقبل مسافات في أسماء العناصر)
+        const xmlTag = String(key).replace(/\s+/g, '_');
+        xml += `<${xmlTag}>${esc(String(value))}</${xmlTag}>`;
+      }
     }
 
     xml += '</PARAMETERS>';
