@@ -3,6 +3,7 @@ import './globals.css';
 import { HxThemeProvider } from '@/providers/HxThemeProvider';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:4000'),
   title: 'HX Tools Store',
   description: 'متجر أدوات الصيانة والسوفتوير - دونجلات، بوكسات، JTAG، أدوات لحام وقطع غيار',
 };

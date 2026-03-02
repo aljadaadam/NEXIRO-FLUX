@@ -3,6 +3,7 @@ import { GxvThemeCore } from '@/core/GxvThemeCore';
 import './gxv-globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:4000'),
   title: 'GX Vault — شحن الألعاب',
   description: 'أسرع منصة لشحن ألعابك المفضلة — ببجي، فورتنايت، فري فاير، كول اوف ديوتي والمزيد',
 };

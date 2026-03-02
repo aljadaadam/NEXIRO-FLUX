@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://magicdesign3.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mt-servers.com';
 
   return [
     {

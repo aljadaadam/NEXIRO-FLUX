@@ -772,13 +772,13 @@ export default function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: t('متجر خدمات رقمية'),
-    url: typeof window !== 'undefined' ? window.location.origin : 'https://magicdesign3.com',
+    url: typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'https://mt-servers.com'),
     description: t('المتجر — خدمات رقمية'),
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: (typeof window !== 'undefined' ? window.location.origin : 'https://magicdesign3.com') + '/services?q={search_term_string}',
+        urlTemplate: (typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'https://mt-servers.com')) + '/services?q={search_term_string}',
       },
       'query-input': 'required name=search_term_string',
     },

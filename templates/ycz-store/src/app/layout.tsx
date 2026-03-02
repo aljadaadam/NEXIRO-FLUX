@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://magicdesign3.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://mt-servers.com'),
   title: {
     default: 'متجر خدمات رقمية | فتح شبكات، إزالة iCloud، أدوات صيانة، شحن ألعاب',
     template: '%s | متجر خدمات رقمية',

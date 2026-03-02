@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/providers/ThemeProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:4000'),
   title: 'أوتو زون — معرض سيارات',
   description: 'أوتو زون — أفضل معرض سيارات جديدة ومستعملة بأسعار منافسة وضمان شامل',
 };

@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://example.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:4000'),
   title: {
     default: 'SMM Boost | خدمات سوشال ميديا - متابعين، لايكات، مشاهدات',
     template: '%s | SMM Boost',
