@@ -158,7 +158,7 @@ async function sendEmailBroadcast(req, res) {
 
     // جلب بيانات المتجر (اسم + لون + SMTP)
     const [custRows] = await pool.query(
-      'SELECT store_name, primary_color, logo_url, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from FROM customizations WHERE site_key = ? LIMIT 1',
+      'SELECT store_name, primary_color, logo_url, smtp_host, smtp_port, smtp_user, smtp_pass FROM customizations WHERE site_key = ? LIMIT 1',
       [site_key]
     );
     const siteCustom = custRows?.[0] || {};
@@ -178,7 +178,7 @@ async function sendEmailBroadcast(req, res) {
           port: siteCustom.smtp_port || 587,
           user: siteCustom.smtp_user,
           pass: siteCustom.smtp_pass,
-          from: siteCustom.smtp_from || siteCustom.smtp_user,
+          from: siteCustom.smtp_user,
         }
       };
     }

@@ -88,7 +88,7 @@ class EmailService {
             port: custom.smtp_port || 587,
             user: custom.smtp_user,
             pass: custom.smtp_pass,
-            from: custom.smtp_from || custom.smtp_user,
+            from: custom.smtp_user,
           }
         };
       }

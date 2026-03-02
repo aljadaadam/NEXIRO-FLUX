@@ -48,7 +48,7 @@ async function updateCustomization(req, res) {
     // Only admin can update SMTP and admin_slug
     if (req.user.role === 'admin') {
       allowedFields.push(
-        'admin_slug', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from',
+        'admin_slug', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass',
         'support_email', 'support_phone', 'otp_enabled',
         'secondary_currency', 'currency_rate'
       );
@@ -129,7 +129,6 @@ async function getStoreCustomization(req, res) {
       delete customization.smtp_port;
       delete customization.smtp_user;
       delete customization.smtp_pass;
-      delete customization.smtp_from;
 
       // إذا store_name فارغ — نجلبه من جدول sites
       if (!customization.store_name && req.site && req.site.name) {

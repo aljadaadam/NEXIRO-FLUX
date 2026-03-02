@@ -33,7 +33,6 @@ export default function TerminalSetupPage() {
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
-  const [smtpFrom, setSmtpFrom] = useState('');
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [buildProgress, setBuildProgress] = useState([]);
@@ -106,7 +105,7 @@ export default function TerminalSetupPage() {
     smtpPortPlaceholder: isRTL ? 'المنفذ (587)' : 'Port (587)',
     smtpUserPlaceholder: isRTL ? 'اسم المستخدم / البريد' : 'Username / Email',
     smtpPassPlaceholder: isRTL ? 'كلمة المرور' : 'Password',
-    smtpFromPlaceholder: isRTL ? 'البريد المرسل' : 'From email',
+
     next: isRTL ? 'التالي' : 'Next',
     back: isRTL ? 'السابق' : 'Back',
     skip: isRTL ? 'تخطي' : 'Skip',
@@ -197,7 +196,7 @@ export default function TerminalSetupPage() {
         smtp_port: smtpPort,
         smtp_user: smtpUser,
         smtp_pass: smtpPass,
-        smtp_from: smtpFrom || ownerEmail,
+
       } : {}),
     });
 
@@ -243,7 +242,7 @@ export default function TerminalSetupPage() {
         }, 4000);
       }
     }
-  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, templateData, isRTL, codeVerified, purchaseCode, codeInfo, selectedGateway, paymentConfirmed]);
+  }, [ownerName, ownerEmail, ownerPassword, storeName, domain, templateId, plan, paymentRef, smtpHost, smtpPort, smtpUser, smtpPass, templateData, isRTL, codeVerified, purchaseCode, codeInfo, selectedGateway, paymentConfirmed]);
 
   //  Validation 
   const validateStep = () => {
@@ -501,13 +500,12 @@ export default function TerminalSetupPage() {
                 <input type="text" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder={t.smtpPortPlaceholder} className={inputClass} dir="ltr" />
               </div>
               <input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder={t.smtpPassPlaceholder} className={inputClass} dir="ltr" />
-              <input type="email" value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder={t.smtpFromPlaceholder} className={inputClass} dir="ltr" />
 
               {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
               <div className="flex items-center gap-3 pt-2">
                 <button onClick={handleBack} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors">{t.back}</button>
-                <button onClick={() => { setSmtpHost(''); setSmtpUser(''); setSmtpPass(''); setSmtpFrom(''); runBuild(); }} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 font-medium text-sm transition-colors">{t.skip}</button>
+                <button onClick={() => { setSmtpHost(''); setSmtpUser(''); setSmtpPass(''); runBuild(); }} className="px-6 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 font-medium text-sm transition-colors">{t.skip}</button>
                 <button onClick={handleNext} className="flex-1 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-colors">{t.buildSite}</button>
               </div>
             </div>

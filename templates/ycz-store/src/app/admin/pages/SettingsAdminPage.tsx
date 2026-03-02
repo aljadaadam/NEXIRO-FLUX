@@ -18,7 +18,6 @@ export default function SettingsAdminPage({ theme, isActive }: { theme: ColorThe
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
-  const [smtpFrom, setSmtpFrom] = useState('');
 
   // Currency
   const [secondaryCurrency, setSecondaryCurrency] = useState('');
@@ -52,7 +51,6 @@ export default function SettingsAdminPage({ theme, isActive }: { theme: ColorThe
           setSmtpPort(String(c.smtp_port || '587'));
           setSmtpUser(c.smtp_user || '');
           setSmtpPass(c.smtp_pass || '');
-          setSmtpFrom(c.smtp_from || '');
           setSecondaryCurrency(c.secondary_currency || '');
           setCurrencyRate(c.currency_rate ? String(c.currency_rate) : '');
           setOtpEnabled(Boolean(c.otp_enabled));
@@ -76,7 +74,6 @@ export default function SettingsAdminPage({ theme, isActive }: { theme: ColorThe
         smtp_port: smtpPort ? parseInt(smtpPort) : null,
         smtp_user: smtpUser || null,
         smtp_pass: smtpPass || null,
-        smtp_from: smtpFrom || null,
         secondary_currency: secondaryCurrency || null,
         currency_rate: currencyRate ? parseFloat(currencyRate) : null,
         otp_enabled: otpEnabled,
@@ -194,10 +191,7 @@ export default function SettingsAdminPage({ theme, isActive }: { theme: ColorThe
                 </button>
               </div>
             </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>{t('البريد المرسل (From)')}</label>
-              <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder="noreply@example.com" style={inputStyle} />
-            </div>
+
           </div>
         </div>
 

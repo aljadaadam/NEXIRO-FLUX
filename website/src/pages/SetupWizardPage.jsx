@@ -144,7 +144,6 @@ export default function SetupWizardPage() {
     smtp_port: '587',
     smtp_user: '',
     smtp_pass: '',
-    smtp_from: '',
   });
 
   const handleChange = (field, value) => {
@@ -235,7 +234,6 @@ export default function SetupWizardPage() {
           smtp_port: form.smtp_port,
           smtp_user: form.smtp_user,
           smtp_pass: form.smtp_pass,
-          smtp_from: form.smtp_from || form.owner_email,
         } : {})
       });
 
@@ -858,16 +856,7 @@ export default function SetupWizardPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm text-dark-300 mb-2">{isRTL ? 'البريد المرسل (From)' : 'From Email'}</label>
-                <input
-                  type="email"
-                  value={form.smtp_from}
-                  onChange={e => handleChange('smtp_from', e.target.value)}
-                  placeholder="noreply@yourstore.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-dark-500 outline-none focus:border-primary-500/30 text-sm"
-                />
-              </div>
+
             </div>
           )}
 
