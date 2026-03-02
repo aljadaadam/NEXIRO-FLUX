@@ -418,6 +418,7 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
   const [deleteTarget, setDeleteTarget] = useState<ConnectedSource | null>(null);
   const [editTarget, setEditTarget] = useState<ConnectedSource | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [balanceJustUpdated, setBalanceJustUpdated] = useState<number | null>(null);
 
   // Toast
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
@@ -548,16 +549,32 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
         status: res?.success ? 'success' : 'error',
       };
       setSyncLogs(prev => [newLog, ...prev].slice(0, 20));
+
+      const syncBalance = res?.account?.creditraw || res?.account?.credits;
+      const syncCurrency = res?.account?.currency || '';
+      const syncBalanceDisplay = syncBalance ? `${syncBalance} ${syncCurrency}`.trim() : null;
+
       setSourceResults(prev => ({
         ...prev,
         [sourceId]: {
           type: 'sync', success: !!res?.success,
           message: res?.success ? (isRTL ? `تم مزامنة ${res.count || 0} خدمة بنجاح` : `Synced ${res.count || 0} services successfully`) : (res?.error || t('فشل المزامنة')),
           logs: res?.logs || [], count: res?.count,
-          balance: res?.account?.creditraw || res?.account?.credits,
-          currency: res?.account?.currency,
+          balance: syncBalance,
+          currency: syncCurrency,
         }
       }));
+
+      // ── تحديث الرصيد فوراً في الكرت ──
+      if (res?.success && syncBalanceDisplay) {
+        setConnectedSources(prev => prev.map(s =>
+          s.id === sourceId ? { ...s, balance: syncBalanceDisplay } : s
+        ));
+        setStats(prev => ({ ...prev, balance: syncBalanceDisplay }));
+        setBalanceJustUpdated(sourceId);
+        setTimeout(() => setBalanceJustUpdated(null), 2500);
+      }
+
       if (res?.success) showToast(isRTL ? `تم مزامنة ${res.count || 0} خدمة` : `Synced ${res.count || 0} services`, 'success');
       await fetchSources();
     } catch (err: unknown) {
@@ -578,6 +595,10 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
     setExpandedSource(sourceId);
     try {
       const res = await adminApi.testSource(sourceId);
+      const newBalance = res?.sourceBalance;
+      const newCurrency = res?.sourceCurrency || '';
+      const balanceDisplay = newBalance ? `${newBalance} ${newCurrency}`.trim() : null;
+
       setSourceResults(prev => ({
         ...prev,
         [sourceId]: {
@@ -585,10 +606,28 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
           message: res?.connectionOk
             ? (isRTL ? `الاتصال ناجح${res?.resolvedUrl ? ` — تم اكتشاف: ${res.resolvedUrl}` : ''}` : `Connection successful${res?.resolvedUrl ? ` — Resolved: ${res.resolvedUrl}` : ''}`)
             : (res?.error || t('فشل الاتصال')),
-          balance: res?.sourceBalance, currency: res?.sourceCurrency,
+          balance: newBalance, currency: newCurrency,
         }
       }));
-      if (res?.connectionOk) showToast(t('الاتصال ناجح'), 'success');
+
+      // ── تحديث الرصيد فوراً في الكرت ──
+      if (res?.connectionOk && balanceDisplay) {
+        setConnectedSources(prev => prev.map(s =>
+          s.id === sourceId ? { ...s, balance: balanceDisplay } : s
+        ));
+        setStats(prev => ({ ...prev, balance: balanceDisplay }));
+        setBalanceJustUpdated(sourceId);
+        setTimeout(() => setBalanceJustUpdated(null), 2500);
+      }
+
+      if (res?.connectionOk) {
+        showToast(
+          balanceDisplay
+            ? (isRTL ? `✅ الاتصال ناجح — الرصيد: ${balanceDisplay}` : `✅ Connected — Balance: ${balanceDisplay}`)
+            : t('الاتصال ناجح'),
+          'success'
+        );
+      }
       await fetchSources();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t('فشل اختبار الاتصال');
@@ -665,6 +704,7 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         @keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes balancePulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); box-shadow: 0 0 12px rgba(59,130,246,0.35); } 100% { transform: scale(1); } }
         .src-card { transition: transform 0.2s, box-shadow 0.2s; }
         .src-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(124,92,255,0.12) !important; }
         .src-btn { transition: all 0.2s; }
@@ -948,20 +988,25 @@ export default function ExternalSourcesPage({ isActive }: { isActive?: boolean }
                 {/* Quick stats */}
                 <div className="src-mini-stats" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
                   {[
-                    { label: t('الخدمات'), value: String(src.products), icon: Package, color: '#7c5cff' },
-                    { label: t('الرصيد'), value: src.balance, icon: CreditCard, color: '#3b82f6' },
-                    { label: t('آخر مزامنة'), value: src.lastSync, icon: Clock, color: '#f59e0b' },
-                    { label: t('الربح'), value: src.profitAmount && src.profitAmount > 0 ? `$${src.profitAmount}` : `${src.profitPercentage}%`, icon: Settings, color: '#22c55e' },
+                    { label: t('الخدمات'), value: String(src.products), icon: Package, color: '#7c5cff', key: 'products' },
+                    { label: t('الرصيد'), value: src.balance, icon: CreditCard, color: '#3b82f6', key: 'balance' },
+                    { label: t('آخر مزامنة'), value: src.lastSync, icon: Clock, color: '#f59e0b', key: 'lastSync' },
+                    { label: t('الربح'), value: src.profitAmount && src.profitAmount > 0 ? `$${src.profitAmount}` : `${src.profitPercentage}%`, icon: Settings, color: '#22c55e', key: 'profit' },
                   ].map((info, j) => {
                     const InfoIcon = info.icon;
+                    const isBalanceHighlight = info.key === 'balance' && balanceJustUpdated === src.id;
                     return (
                       <div key={j} style={{
                         display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '0.45rem 0.75rem', background: '#f8fafc', borderRadius: 8, flex: '1 1 auto', minWidth: 'fit-content',
+                        padding: '0.45rem 0.75rem', borderRadius: 8, flex: '1 1 auto', minWidth: 'fit-content',
+                        background: isBalanceHighlight ? '#dbeafe' : '#f8fafc',
+                        border: isBalanceHighlight ? '1px solid #93c5fd' : '1px solid transparent',
+                        transition: 'all 0.4s ease',
+                        animation: isBalanceHighlight ? 'balancePulse 1s ease-in-out 2' : 'none',
                       }}>
-                        <InfoIcon size={13} color={info.color} />
+                        <InfoIcon size={13} color={isBalanceHighlight ? '#2563eb' : info.color} />
                         <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          {info.label}: <strong style={{ color: '#0b1020' }}>{info.value}</strong>
+                          {info.label}: <strong style={{ color: isBalanceHighlight ? '#1d4ed8' : '#0b1020', transition: 'color 0.4s ease' }}>{info.value}</strong>
                         </span>
                       </div>
                     );
