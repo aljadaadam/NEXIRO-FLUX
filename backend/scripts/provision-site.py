@@ -42,6 +42,16 @@ server {{
     listen 80;
     server_name {domain} {www};
 
+    # ─── Security: Block suspicious paths ───
+    location ~* /(\.env|\.git|wp-admin|wp-login|xmlrpc\.php|phpmyadmin|cgi-bin) {{
+        return 444;
+    }}
+
+    # ─── Security: Block empty User-Agent ───
+    if ($http_user_agent = "") {{
+        return 444;
+    }}
+
     # API routes -> Express backend (port {BACKEND_PORT})
     location /api/ {{
         proxy_pass http://127.0.0.1:{BACKEND_PORT}/api/;
@@ -58,6 +68,20 @@ server {{
         client_max_body_size 50M;
     }}
 
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Maintenance page when Next.js is down
+    error_page 502 503 504 /maintenance.html;
+    location = /maintenance.html {{
+        root /var/www/nexiro-flux/nginx;
+        internal;
+    }}
+
     # Everything else -> Next.js store (port {STORE_PORT})
     location / {{
         proxy_pass http://127.0.0.1:{STORE_PORT};
@@ -69,6 +93,7 @@ server {{
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+        proxy_intercept_errors on;
     }}
 }}
 """

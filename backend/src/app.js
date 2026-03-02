@@ -6,6 +6,7 @@ const { PORT, SITE_KEY } = require('./config/env');
 const { initializeDatabase } = require('./config/db');
 const { resolveTenant } = require('./middlewares/resolveTenant');
 const { checkSubscription } = require('./middlewares/checkSubscription');
+const { botProtection } = require('./middlewares/botProtection');
 const { mountRoutes } = require('./routes');
 
 const app = express();
@@ -73,6 +74,9 @@ const codeLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
+
+// ─── Bot & Abuse Protection ───
+app.use(botProtection);
 
 // ─── CORS (multi-tenant — يقبل نطاقات النظام + نطاقات Tenant المخصصة) ───
 app.use(cors({
