@@ -36,7 +36,7 @@ router.get('/banners/active', getActiveBanners);
 router.use(validateSite);
 router.get('/', authenticateToken, requireRole('admin', 'user'), getCustomization);
 router.put('/', authenticateToken, requireRole('admin', 'user'), updateCustomization);
-router.delete('/', authenticateToken, requireRole('admin', 'user'), resetCustomization);
+router.delete('/', authenticateToken, requireRole('admin'), resetCustomization);
 
 // ===== البانرات (أدمن) =====
 router.get('/banners', authenticateToken, requireRole('admin', 'user'), getBanners);

@@ -71,10 +71,41 @@ class Customization {
     return this.findBySiteKey(site_key);
   }
 
-  // حذف تخصيصات (إعادة الافتراضي)
+  // إعادة التخصيصات الشكلية للقيم الافتراضية (مع الحفاظ على admin_slug و SMTP)
   static async reset(site_key) {
     const pool = getPool();
-    const [result] = await pool.query('DELETE FROM customizations WHERE site_key = ?', [site_key]);
+    const [result] = await pool.query(
+      `UPDATE customizations SET
+        theme_id = 'purple',
+        primary_color = '#7c5cff',
+        secondary_color = '#a78bfa',
+        logo_url = NULL,
+        dark_mode = 0,
+        button_radius = 'rounded-xl',
+        header_style = 'default',
+        show_banner = 1,
+        font_family = 'Tajawal',
+        custom_css = NULL,
+        footer_text = NULL,
+        social_links = NULL,
+        store_language = 'ar',
+        announcement_bar = 0,
+        announcement_bar_text = NULL,
+        announcement_bar_color = NULL,
+        announcement_bar_link = NULL,
+        product_layout = NULL,
+        flash_enabled = 0,
+        flash_title = NULL,
+        flash_body = NULL,
+        flash_image = NULL,
+        flash_bg_color = NULL,
+        flash_text_color = NULL,
+        flash_btn_text = NULL,
+        flash_btn_url = NULL,
+        flash_font_style = NULL
+      WHERE site_key = ?`,
+      [site_key]
+    );
     return result.affectedRows > 0;
   }
 }
