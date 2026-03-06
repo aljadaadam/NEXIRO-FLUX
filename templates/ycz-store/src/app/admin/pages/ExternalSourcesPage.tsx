@@ -184,58 +184,58 @@ function SyncOptionsModal({ source, onSync, onClose }: { source: ConnectedSource
   const [setupRemote, setSetupRemote] = useState(true);
 
   const checkboxStyle = (checked: boolean): React.CSSProperties => ({
-    width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#7c5cff' : 'rgba(255,255,255,0.2)'}`,
-    background: checked ? '#7c5cff' : 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center',
+    width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#7c5cff' : '#d1d5db'}`,
+    background: checked ? '#7c5cff' : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center',
     transition: 'all 0.15s ease', flexShrink: 0,
   });
 
   const radioStyle = (active: boolean): React.CSSProperties => ({
     padding: '0.85rem 1rem', borderRadius: 12,
-    border: `2px solid ${active ? '#7c5cff' : 'rgba(255,255,255,0.1)'}`,
-    background: active ? 'rgba(124,92,255,0.1)' : 'rgba(255,255,255,0.03)',
+    border: `2px solid ${active ? '#7c5cff' : '#e2e8f0'}`,
+    background: active ? '#f5f3ff' : '#fff',
     cursor: 'pointer', transition: 'all 0.15s ease',
   });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#111827', borderRadius: 20, padding: '1.75rem', width: '92%', maxWidth: 440, border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '92%', maxWidth: 440, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(124,92,255,0.15)', display: 'grid', placeItems: 'center' }}>
-              <RefreshCcw size={20} color="#a78bfa" />
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f5f3ff', display: 'grid', placeItems: 'center' }}>
+              <RefreshCcw size={20} color="#7c5cff" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('خيارات المزامنة')}</h3>
-              <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{source.name}</p>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('خيارات المزامنة')}</h3>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{source.name}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-            <X size={16} color="#94a3b8" />
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <X size={16} color="#64748b" />
           </button>
         </div>
 
         {/* Sync Mode */}
-        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', marginBottom: 8, fontFamily: 'Tajawal, sans-serif' }}>{t('وضع المزامنة')}</p>
+        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: 8, fontFamily: 'Tajawal, sans-serif' }}>{t('وضع المزامنة')}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
           <div onClick={() => setSyncMode('sync')} style={radioStyle(syncMode === 'sync')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'sync' ? '#7c5cff' : 'rgba(255,255,255,0.2)'}`, display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'sync' ? '#7c5cff' : '#d1d5db'}`, display: 'grid', placeItems: 'center' }}>
                 {syncMode === 'sync' && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#7c5cff' }} />}
               </div>
               <div>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🔄 {t('دمج (تحديث فوق الموجود)')}</p>
+                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🔄 {t('دمج (تحديث فوق الموجود)')}</p>
                 <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '2px 0 0', fontFamily: 'Tajawal, sans-serif' }}>{t('يحدّث الأسعار والأسماء، يضيف الجديد، يبقي القديم')}</p>
               </div>
             </div>
           </div>
           <div onClick={() => setSyncMode('delete_then_sync')} style={radioStyle(syncMode === 'delete_then_sync')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'delete_then_sync' ? '#ef4444' : 'rgba(255,255,255,0.2)'}`, display: 'grid', placeItems: 'center' }}>
-                {syncMode === 'delete_then_sync' && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />}
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'delete_then_sync' ? '#dc2626' : '#d1d5db'}`, display: 'grid', placeItems: 'center' }}>
+                {syncMode === 'delete_then_sync' && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#dc2626' }} />}
               </div>
               <div>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🗑️ {t('حذف القديم ثم مزامنة')}</p>
+                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🗑️ {t('حذف القديم ثم مزامنة')}</p>
                 <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '2px 0 0', fontFamily: 'Tajawal, sans-serif' }}>{t('يحذف كل منتجات هذا المصدر ثم يجلبها من جديد')}</p>
               </div>
             </div>
@@ -243,27 +243,27 @@ function SyncOptionsModal({ source, onSync, onClose }: { source: ConnectedSource
         </div>
 
         {syncMode === 'delete_then_sync' && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '0.65rem 0.85rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertCircle size={15} color="#f87171" style={{ flexShrink: 0 }} />
-            <p style={{ fontSize: '0.7rem', color: '#fca5a5', margin: 0, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>{t('تحذير: سيتم حذف جميع المنتجات من هذا المصدر ثم إعادة جلبها. الأسعار المخصصة ستُفقد.')}</p>
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '0.65rem 0.85rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertCircle size={15} color="#dc2626" style={{ flexShrink: 0 }} />
+            <p style={{ fontSize: '0.7rem', color: '#991b1b', margin: 0, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>{t('تحذير: سيتم حذف جميع المنتجات من هذا المصدر ثم إعادة جلبها. الأسعار المخصصة ستُفقد.')}</p>
           </div>
         )}
 
         {/* Service Type Filters */}
-        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', marginBottom: 10, fontFamily: 'Tajawal, sans-serif' }}>{t('أنواع الخدمات')}</p>
+        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: 10, fontFamily: 'Tajawal, sans-serif' }}>{t('أنواع الخدمات')}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
           {[
             { key: 'IMEI', label: t('خدمات IMEI'), desc: t('فتح شبكات، FRP، إلخ'), state: setupIMEI, setter: setSetupIMEI },
             { key: 'Server', label: t('خدمات Server'), desc: t('خدمات السيرفر'), state: setupServer, setter: setSetupServer },
             { key: 'Remote', label: t('خدمات Remote'), desc: t('خدمات عن بُعد'), state: setupRemote, setter: setSetupRemote },
           ].map(item => (
-            <div key={item.key} onClick={() => item.setter(!item.state)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.65rem 0.85rem', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', transition: 'all 0.15s' }}>
+            <div key={item.key} onClick={() => item.setter(!item.state)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.65rem 0.85rem', borderRadius: 10, background: item.state ? '#f8fafc' : '#fff', border: `1px solid ${item.state ? '#e2e8f0' : '#f1f5f9'}`, cursor: 'pointer', transition: 'all 0.15s' }}>
               <div style={checkboxStyle(item.state)}>
                 {item.state && <CheckCircle size={14} color="#fff" />}
               </div>
               <div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.label}</p>
-                <p style={{ fontSize: '0.65rem', color: '#64748b', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.desc}</p>
+                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.label}</p>
+                <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.desc}</p>
               </div>
             </div>
           ))}
@@ -271,14 +271,15 @@ function SyncOptionsModal({ source, onSync, onClose }: { source: ConnectedSource
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '0.7rem', borderRadius: 10, background: 'rgba(255,255,255,0.06)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.08)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '0.7rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
           <button
             onClick={() => onSync(source.id, { setupIMEI, setupServer, setupRemote, deleteAllBrandModel: syncMode === 'delete_then_sync', syncMode })}
             disabled={!setupIMEI && !setupServer && !setupRemote}
             style={{
               flex: 1.5, padding: '0.7rem', borderRadius: 10, border: 'none',
-              background: (!setupIMEI && !setupServer && !setupRemote) ? '#374151' : (syncMode === 'delete_then_sync' ? '#dc2626' : '#7c5cff'),
-              color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: (!setupIMEI && !setupServer && !setupRemote) ? 'not-allowed' : 'pointer',
+              background: (!setupIMEI && !setupServer && !setupRemote) ? '#e2e8f0' : (syncMode === 'delete_then_sync' ? '#dc2626' : '#7c5cff'),
+              color: (!setupIMEI && !setupServer && !setupRemote) ? '#94a3b8' : '#fff',
+              fontSize: '0.82rem', fontWeight: 700, cursor: (!setupIMEI && !setupServer && !setupRemote) ? 'not-allowed' : 'pointer',
               fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
             <RefreshCcw size={15} />
