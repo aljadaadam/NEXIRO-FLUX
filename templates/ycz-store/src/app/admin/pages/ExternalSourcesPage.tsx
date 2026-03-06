@@ -183,106 +183,82 @@ function SyncOptionsModal({ source, onSync, onClose }: { source: ConnectedSource
   const [setupServer, setSetupServer] = useState(true);
   const [setupRemote, setSetupRemote] = useState(true);
 
-  const checkboxStyle = (checked: boolean): React.CSSProperties => ({
-    width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? '#7c5cff' : '#d1d5db'}`,
-    background: checked ? '#7c5cff' : '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center',
-    transition: 'all 0.15s ease', flexShrink: 0,
-  });
-
-  const radioStyle = (active: boolean): React.CSSProperties => ({
-    padding: '0.85rem 1rem', borderRadius: 12,
-    border: `2px solid ${active ? '#7c5cff' : '#e2e8f0'}`,
-    background: active ? '#f5f3ff' : '#fff',
-    cursor: 'pointer', transition: 'all 0.15s ease',
-  });
+  const Check = ({ on }: { on: boolean }) => (
+    <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${on ? '#7c5cff' : '#cbd5e1'}`, background: on ? '#7c5cff' : '#fff', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+      {on && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5.5L4 7.5L8 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+    </div>
+  );
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '2rem', width: '92%', maxWidth: 440, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '1.5rem', width: '90%', maxWidth: 360, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f5f3ff', display: 'grid', placeItems: 'center' }}>
-              <RefreshCcw size={20} color="#7c5cff" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('خيارات المزامنة')}</h3>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{source.name}</p>
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-            <X size={16} color="#64748b" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('خيارات المزامنة')}</h3>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 28, height: 28, borderRadius: 7, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <X size={14} color="#64748b" />
           </button>
         </div>
 
+        {/* Source name */}
+        <div style={{ background: '#f8fafc', borderRadius: 8, padding: '0.5rem 0.75rem', marginBottom: 14 }}>
+          <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('المصدر:')} <strong style={{ color: '#334155' }}>{source.name}</strong></p>
+        </div>
+
         {/* Sync Mode */}
-        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: 8, fontFamily: 'Tajawal, sans-serif' }}>{t('وضع المزامنة')}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-          <div onClick={() => setSyncMode('sync')} style={radioStyle(syncMode === 'sync')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'sync' ? '#7c5cff' : '#d1d5db'}`, display: 'grid', placeItems: 'center' }}>
-                {syncMode === 'sync' && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#7c5cff' }} />}
-              </div>
-              <div>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🔄 {t('دمج (تحديث فوق الموجود)')}</p>
-                <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '2px 0 0', fontFamily: 'Tajawal, sans-serif' }}>{t('يحدّث الأسعار والأسماء، يضيف الجديد، يبقي القديم')}</p>
-              </div>
+        <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 6, fontFamily: 'Tajawal, sans-serif' }}>{t('وضع المزامنة')}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 14, border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
+          <div onClick={() => setSyncMode('sync')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.55rem 0.75rem', cursor: 'pointer', background: syncMode === 'sync' ? '#f5f3ff' : '#fff' }}>
+            <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${syncMode === 'sync' ? '#7c5cff' : '#cbd5e1'}`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              {syncMode === 'sync' && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#7c5cff' }} />}
             </div>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('دمج (تحديث فوق الموجود)')}</p>
           </div>
-          <div onClick={() => setSyncMode('delete_then_sync')} style={radioStyle(syncMode === 'delete_then_sync')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${syncMode === 'delete_then_sync' ? '#dc2626' : '#d1d5db'}`, display: 'grid', placeItems: 'center' }}>
-                {syncMode === 'delete_then_sync' && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#dc2626' }} />}
-              </div>
-              <div>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>🗑️ {t('حذف القديم ثم مزامنة')}</p>
-                <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '2px 0 0', fontFamily: 'Tajawal, sans-serif' }}>{t('يحذف كل منتجات هذا المصدر ثم يجلبها من جديد')}</p>
-              </div>
+          <div style={{ height: 1, background: '#e2e8f0' }} />
+          <div onClick={() => setSyncMode('delete_then_sync')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.55rem 0.75rem', cursor: 'pointer', background: syncMode === 'delete_then_sync' ? '#fef2f2' : '#fff' }}>
+            <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${syncMode === 'delete_then_sync' ? '#dc2626' : '#cbd5e1'}`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              {syncMode === 'delete_then_sync' && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#dc2626' }} />}
             </div>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: syncMode === 'delete_then_sync' ? '#dc2626' : '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{t('حذف القديم ثم مزامنة')}</p>
           </div>
         </div>
 
         {syncMode === 'delete_then_sync' && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '0.65rem 0.85rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertCircle size={15} color="#dc2626" style={{ flexShrink: 0 }} />
-            <p style={{ fontSize: '0.7rem', color: '#991b1b', margin: 0, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>{t('تحذير: سيتم حذف جميع المنتجات من هذا المصدر ثم إعادة جلبها. الأسعار المخصصة ستُفقد.')}</p>
-          </div>
+          <p style={{ fontSize: '0.65rem', color: '#dc2626', margin: '0 0 10px', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.4 }}>⚠️ {t('سيتم حذف جميع المنتجات ثم إعادة جلبها. الأسعار المخصصة ستُفقد.')}</p>
         )}
 
         {/* Service Type Filters */}
-        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: 10, fontFamily: 'Tajawal, sans-serif' }}>{t('أنواع الخدمات')}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+        <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: 6, fontFamily: 'Tajawal, sans-serif' }}>{t('أنواع الخدمات')}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 18, border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
           {[
-            { key: 'IMEI', label: t('خدمات IMEI'), desc: t('فتح شبكات، FRP، إلخ'), state: setupIMEI, setter: setSetupIMEI },
-            { key: 'Server', label: t('خدمات Server'), desc: t('خدمات السيرفر'), state: setupServer, setter: setSetupServer },
-            { key: 'Remote', label: t('خدمات Remote'), desc: t('خدمات عن بُعد'), state: setupRemote, setter: setSetupRemote },
-          ].map(item => (
-            <div key={item.key} onClick={() => item.setter(!item.state)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.65rem 0.85rem', borderRadius: 10, background: item.state ? '#f8fafc' : '#fff', border: `1px solid ${item.state ? '#e2e8f0' : '#f1f5f9'}`, cursor: 'pointer', transition: 'all 0.15s' }}>
-              <div style={checkboxStyle(item.state)}>
-                {item.state && <CheckCircle size={14} color="#fff" />}
+            { label: t('خدمات IMEI'), state: setupIMEI, setter: setSetupIMEI },
+            { label: t('خدمات Server'), state: setupServer, setter: setSetupServer },
+            { label: t('خدمات Remote'), state: setupRemote, setter: setSetupRemote },
+          ].map((item, i, arr) => (
+            <div key={item.label}>
+              <div onClick={() => item.setter(!item.state)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.55rem 0.75rem', cursor: 'pointer', background: item.state ? '#f8fafc' : '#fff' }}>
+                <Check on={item.state} />
+                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.label}</p>
               </div>
-              <div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b1020', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.label}</p>
-                <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0, fontFamily: 'Tajawal, sans-serif' }}>{item.desc}</p>
-              </div>
+              {i < arr.length - 1 && <div style={{ height: 1, background: '#e2e8f0' }} />}
             </div>
           ))}
         </div>
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '0.7rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '0.6rem', borderRadius: 10, background: '#f1f5f9', color: '#64748b', border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>{t('إلغاء')}</button>
           <button
             onClick={() => onSync(source.id, { setupIMEI, setupServer, setupRemote, deleteAllBrandModel: syncMode === 'delete_then_sync', syncMode })}
             disabled={!setupIMEI && !setupServer && !setupRemote}
             style={{
-              flex: 1.5, padding: '0.7rem', borderRadius: 10, border: 'none',
+              flex: 1.3, padding: '0.6rem', borderRadius: 10, border: 'none',
               background: (!setupIMEI && !setupServer && !setupRemote) ? '#e2e8f0' : (syncMode === 'delete_then_sync' ? '#dc2626' : '#7c5cff'),
               color: (!setupIMEI && !setupServer && !setupRemote) ? '#94a3b8' : '#fff',
-              fontSize: '0.82rem', fontWeight: 700, cursor: (!setupIMEI && !setupServer && !setupRemote) ? 'not-allowed' : 'pointer',
-              fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              fontSize: '0.78rem', fontWeight: 700, cursor: (!setupIMEI && !setupServer && !setupRemote) ? 'not-allowed' : 'pointer',
+              fontFamily: 'Tajawal, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
             }}>
-            <RefreshCcw size={15} />
+            <RefreshCcw size={13} />
             {syncMode === 'delete_then_sync' ? t('حذف ومزامنة') : t('بدء المزامنة')}
           </button>
         </div>
