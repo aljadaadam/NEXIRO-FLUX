@@ -279,21 +279,12 @@ export default function ProductsPage({ theme, isActive }: { theme: ColorTheme; i
     if (selectedIds.size === 0) return;
     if (!confirm(isRTL ? `هل أنت متأكد من حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.` : `Are you sure you want to delete ${selectedIds.size} product(s)? This cannot be undone.`)) return;
     setBulkDeleting(true);
-    let successCount = 0;
-    let failCount = 0;
-    for (const id of selectedIds) {
-      try {
-        await adminApi.deleteProduct(id);
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
-    setSelectedIds(new Set());
-    if (failCount > 0) {
-      showToast(isRTL ? `تم حذف ${successCount} منتج، فشل ${failCount}` : `Deleted ${successCount} product(s), ${failCount} failed`, 'error');
-    } else {
-      showToast(isRTL ? `تم حذف ${successCount} منتج بنجاح` : `Successfully deleted ${successCount} product(s)`);
+    try {
+      const res = await adminApi.bulkDeleteProducts(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      showToast(isRTL ? `تم حذف ${res.deletedCount} منتج بنجاح` : `Successfully deleted ${res.deletedCount} product(s)`);
+    } catch {
+      showToast(isRTL ? 'حدث خطأ أثناء حذف المنتجات' : 'Error deleting products', 'error');
     }
     await loadProducts();
     setBulkDeleting(false);

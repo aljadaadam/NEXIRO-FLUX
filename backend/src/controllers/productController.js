@@ -300,6 +300,30 @@ async function deleteProduct(req, res) {
   }
 }
 
+// حذف منتجات جماعي
+async function bulkDeleteProducts(req, res) {
+  try {
+    const { site_key } = req.user;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'يرجى تحديد المنتجات المراد حذفها' });
+    }
+
+    const safeIds = ids.filter(id => Number.isInteger(id) && id > 0);
+    if (safeIds.length === 0) {
+      return res.status(400).json({ error: 'معرفات المنتجات غير صالحة' });
+    }
+
+    const deletedCount = await Product.bulkDelete(safeIds, site_key);
+    invalidatePublicProductsCache(site_key);
+    res.json({ message: `تم حذف ${deletedCount} منتج بنجاح`, deletedCount });
+  } catch (error) {
+    console.error('Error in bulkDeleteProducts:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء حذف المنتجات' });
+  }
+}
+
 // ============================================
 // 1️⃣ IMPORT (استيراد من مصدر خارجي)
 // ============================================
@@ -1170,6 +1194,7 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  bulkDeleteProducts,
   importProducts,
   syncProducts,
   importFromExternalApi,

@@ -113,6 +113,7 @@ export const adminApi = {
   createProduct: (data: Record<string, unknown>) => adminFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: number, data: Record<string, unknown>) => adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id: number) => adminFetch(`/products/${id}`, { method: 'DELETE' }),
+  bulkDeleteProducts: (ids: number[]) => adminFetch('/products/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
   toggleFeatured: (id: number) => adminFetch(`/products/${id}/featured`, { method: 'PATCH', body: JSON.stringify({}) }),
   renameGroup: (oldName: string, newName: string) => adminFetch('/products/groups/rename', { method: 'PUT', body: JSON.stringify({ oldName, newName }) }),
   deleteGroup: (name: string) => adminFetch(`/products/groups/${encodeURIComponent(name)}`, { method: 'DELETE' }),

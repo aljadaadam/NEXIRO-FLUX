@@ -248,6 +248,16 @@ class Product {
     return result.affectedRows > 0;
   }
 
+  static async bulkDelete(ids, site_key) {
+    if (!ids || ids.length === 0) return 0;
+    const pool = getPool();
+    const [result] = await pool.query(
+      'DELETE FROM products WHERE id IN (?) AND site_key = ?',
+      [ids, site_key]
+    );
+    return result.affectedRows;
+  }
+
   static async countBySite(site_key) {
     const pool = getPool();
     const [rows] = await pool.query(

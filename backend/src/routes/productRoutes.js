@@ -5,6 +5,7 @@ const {
   createProduct, 
   updateProduct, 
   deleteProduct,
+  bulkDeleteProducts,
   importProducts,
   syncProducts,
   importFromExternalApi,
@@ -83,6 +84,9 @@ router.patch('/:id/featured', authenticateToken, requireRole('admin', 'user'), c
 
 // تحديث منتج (يحتاج صلاحية products:update)
 router.put('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:update'), validateProductId, updateProduct);
+
+// حذف منتجات جماعي (يحتاج صلاحية products:delete)
+router.post('/bulk-delete', authenticateToken, requireRole('admin', 'user'), checkPermission('products:delete'), bulkDeleteProducts);
 
 // حذف منتج (يحتاج صلاحية products:delete)
 router.delete('/:id', authenticateToken, requireRole('admin', 'user'), checkPermission('products:delete'), validateProductId, deleteProduct);
