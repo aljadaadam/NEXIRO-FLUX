@@ -11,7 +11,7 @@ interface BannerTemplate {
   name: string;
   preview_image: string | null;
   category: string;
-  design_data: { title?: string; subtitle?: string; icon?: string; gradient?: string; desc?: string; description?: string; image_url?: string; link?: string; badges?: string[]; meshColor1?: string; meshColor2?: string };
+  design_data: { title?: string; subtitle?: string; icon?: string; gradient?: string; desc?: string; description?: string; image_url?: string; link?: string; badges?: string[]; meshColor1?: string; meshColor2?: string; bg_image?: string; imagePosition?: string };
   price: number;
   is_active: number;
 }
@@ -25,7 +25,7 @@ interface InstalledBanner {
   is_active: number;
   template_id: number | null;
   description: string;
-  extra_data: string | { badges?: string[]; gradient?: string };
+  extra_data: string | { badges?: string[]; gradient?: string; bg_image?: string; imagePosition?: string };
 }
 
 interface Gateway {
@@ -315,13 +315,16 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   };
 
   /* ── Preview components ── */
-  const BannerPreview = ({ design, name }: { design: BannerTemplate['design_data']; name: string }) => (
+  const BannerPreview = ({ design, name }: { design: BannerTemplate['design_data']; name: string }) => {
+    const isBottom = design.imagePosition === 'bottom';
+    return (
     <div style={{
       height: 180, position: 'relative', overflow: 'hidden',
       background: design.gradient || `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`,
       borderRadius: '16px 16px 0 0',
-      display: 'flex', alignItems: 'center', padding: '1.2rem 1.5rem', gap: '1.2rem', direction: 'rtl',
+      display: 'flex', alignItems: 'center', padding: isBottom ? '1.2rem 1.5rem 0' : '1.2rem 1.5rem', gap: '1.2rem', direction: 'rtl',
     }}>
+      {design.bg_image && <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${design.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15, pointerEvents: 'none' }} />}
       <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: `radial-gradient(circle, ${design.meshColor1 || 'rgba(255,255,255,0.15)'} 0%, transparent 70%)`, top: '-30%', right: '-5%', filter: 'blur(30px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: `radial-gradient(circle, ${design.meshColor2 || 'rgba(255,255,255,0.1)'} 0%, transparent 70%)`, bottom: '-20%', left: '-5%', filter: 'blur(20px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '16px 16px', pointerEvents: 'none' }} />
@@ -331,24 +334,27 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
         {(design.desc || design.description) && <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)', margin: '0 0 8px', lineHeight: 1.4, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{design.desc || design.description}</p>}
         {design.badges && design.badges.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{design.badges.map((badge, i) => <span key={i} style={{ borderRadius: 12, padding: '2px 8px', fontSize: '0.55rem', fontWeight: 700, background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff' }}>{badge}</span>)}</div>}
       </div>
-      {design.image_url && <div style={{ flexShrink: 0, position: 'relative', zIndex: 2 }}><div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} /><img src={design.image_url} alt={name} style={{ width: 90, height: 90, objectFit: 'contain', borderRadius: 16, position: 'relative', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))' }} /></div>}
+      {design.image_url && <div style={{ flexShrink: 0, position: 'relative', zIndex: 2, ...(isBottom ? { alignSelf: 'flex-end' } : {}) }}><div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} /><img src={design.image_url} alt={name} style={{ width: isBottom ? 80 : 90, height: isBottom ? 120 : 90, objectFit: 'contain', borderRadius: isBottom ? '16px 16px 0 0' : 16, position: 'relative', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))' }} /></div>}
       {!design.image_url && design.icon && <div style={{ width: 60, height: 60, borderRadius: 16, flexShrink: 0, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', display: 'grid', placeItems: 'center', fontSize: '1.8rem', position: 'relative', zIndex: 2 }}>{design.icon}</div>}
     </div>
-  );
+    );
+  };
 
   const InstalledPreview = ({ banner }: { banner: InstalledBanner }) => {
     const extraData = typeof banner.extra_data === 'string' ? (() => { try { return JSON.parse(banner.extra_data); } catch { return {}; } })() : (banner.extra_data || {});
     const gradient = extraData.gradient || `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`;
     const badges: string[] = extraData.badges || [];
+    const isBottom = extraData.imagePosition === 'bottom';
     return (
-      <div style={{ height: 120, position: 'relative', overflow: 'hidden', background: gradient, borderRadius: 14, display: 'flex', alignItems: 'center', padding: '1rem 1.2rem', gap: '1rem', direction: 'rtl', flexShrink: 0 }}>
+      <div style={{ height: 120, position: 'relative', overflow: 'hidden', background: gradient, borderRadius: 14, display: 'flex', alignItems: 'center', padding: isBottom ? '1rem 1.2rem 0' : '1rem 1.2rem', gap: '1rem', direction: 'rtl', flexShrink: 0 }}>
+        {extraData.bg_image && <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${extraData.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15, pointerEvents: 'none' }} />}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '14px 14px', pointerEvents: 'none' }} />
         <div style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'inline-block', borderRadius: 12, background: 'rgba(255,255,255,0.18)', padding: '2px 8px', fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: 4 }}>{banner.title}</div>
           <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', margin: '0 0 3px', lineHeight: 1.3 }}>{banner.subtitle || '—'}</h4>
           {badges.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>{badges.slice(0, 3).map((b, i) => <span key={i} style={{ borderRadius: 10, padding: '1px 6px', fontSize: '0.5rem', fontWeight: 700, background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>{b}</span>)}</div>}
         </div>
-        {banner.image_url && <img src={banner.image_url} alt="" style={{ width: 65, height: 65, objectFit: 'contain', borderRadius: 12, position: 'relative', zIndex: 2, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }} />}
+        {banner.image_url && <div style={{ flexShrink: 0, position: 'relative', zIndex: 2, ...(isBottom ? { alignSelf: 'flex-end' } : {}) }}><img src={banner.image_url} alt="" style={{ width: isBottom ? 55 : 65, height: isBottom ? 85 : 65, objectFit: 'contain', borderRadius: isBottom ? '12px 12px 0 0' : 12, position: 'relative', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }} /></div>}
       </div>
     );
   };
