@@ -26,7 +26,7 @@ function playNotifSound() {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending:    { label: 'الانتظار', color: '#f59e0b' },
+  pending:    { label: 'WAITING', color: '#f59e0b' },
   processing: { label: 'جارٍ التنفيذ', color: '#3b82f6' },
   completed:  { label: 'مكتمل', color: '#22c55e' },
   rejected:   { label: 'مرفوض', color: '#ef4444' },
@@ -200,7 +200,7 @@ ${order.external_reference_id ? `<hr><p style="font-size:12px;color:#15803d"><st
 
   const filters = [
     { key: 'all', label: t('الكل') },
-    { key: 'pending', label: t('الانتظار') },
+    { key: 'pending', label: 'WAITING' },
     { key: 'processing', label: t('جارٍ') },
     { key: 'completed', label: t('مكتمل') },
     { key: 'rejected', label: t('مرفوض') },
@@ -278,7 +278,7 @@ ${order.external_reference_id ? `<hr><p style="font-size:12px;color:#15803d"><st
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
         {[
           { label: t('إجمالي'), value: orders.length, bg: '#f8fafc', color: '#0b1020' },
-          { label: t('الانتظار'), value: orders.filter(o => o.status === 'pending').length, bg: '#fffbeb', color: '#f59e0b' },
+          { label: 'WAITING', value: orders.filter(o => o.status === 'pending').length, bg: '#fffbeb', color: '#f59e0b' },
           { label: t('جارٍ'), value: orders.filter(o => o.status === 'processing').length, bg: '#eff6ff', color: '#3b82f6' },
           { label: t('مكتمل'), value: orders.filter(o => o.status === 'completed').length, bg: '#f0fdf4', color: '#22c55e' },
           { label: t('مرفوض'), value: orders.filter(o => o.status === 'rejected').length, bg: '#fef2f2', color: '#ef4444' },
