@@ -49,3 +49,4 @@ export const AdminChat = lazy(() => import('../pages/admin/AdminChat'));
 export const AdminReservations = lazy(() => import('../pages/admin/AdminReservations'));
 export const AdminBroadcasts = lazy(() => import('../pages/admin/AdminBroadcasts'));
 export const AdminErrorLog = lazy(() => import('../pages/admin/AdminErrorLog'));
+export const AdminBannerStore = lazy(() => import('../pages/admin/AdminBannerStore'));

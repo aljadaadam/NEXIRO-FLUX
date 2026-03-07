@@ -10,6 +10,7 @@ const broadcastController = require('../controllers/broadcastController');
 const { getBanStatus, manualBan, manualUnban } = require('../middlewares/botProtection');
 const ErrorLog = require('../models/ErrorLog');
 const BannerTemplate = require('../models/BannerTemplate');
+const { getPool } = require('../config/db');
 
 // ─── Platform middleware: كل المسارات تتطلب أدمن المنصة ───
 router.use(authenticateToken, requirePlatformAdmin);
@@ -51,7 +52,38 @@ router.delete('/errors', async (req, res) => {
 router.get('/banner-templates', async (req, res) => {
   try {
     const templates = await BannerTemplate.findAll();
-    res.json({ templates });
+    // جلب إحصائيات الشراء لكل قالب
+    const pool = getPool();
+    const [purchases] = await pool.query(
+      `SELECT template_id,
+              COUNT(*) as total_purchases,
+              SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_purchases,
+              SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_purchases,
+              SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as total_revenue
+       FROM banner_purchases GROUP BY template_id`
+    );
+    const purchaseStats = {};
+    for (const p of purchases) {
+      purchaseStats[p.template_id] = {
+        total: p.total_purchases,
+        completed: Number(p.completed_purchases),
+        pending: Number(p.pending_purchases),
+        revenue: Number(p.total_revenue) || 0,
+      };
+    }
+    // إجمالي الإحصائيات
+    const [totals] = await pool.query(
+      `SELECT COUNT(*) as total,
+              SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+              SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as revenue
+       FROM banner_purchases`
+    );
+    const summary = {
+      totalPurchases: Number(totals[0]?.total) || 0,
+      completedPurchases: Number(totals[0]?.completed) || 0,
+      totalRevenue: Number(totals[0]?.revenue) || 0,
+    };
+    res.json({ templates, purchaseStats, summary });
   } catch (err) {
     console.error('Error fetching banner templates:', err);
     res.status(500).json({ error: 'فشل في جلب قوالب البنرات' });

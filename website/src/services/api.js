@@ -682,6 +682,10 @@ class ApiService {
     return this.request('/platform/banner-templates');
   }
 
+  async getBannerPurchaseStats() {
+    return this.request('/platform/banner-templates');
+  }
+
   async createBannerTemplate(data) {
     return this.request('/platform/banner-templates', {
       method: 'POST',

@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Layers, Users, Megaphone, Settings, LogOut,
   Sparkles, Menu, X, ChevronLeft, Bell, Search, User, Landmark, Key,
-  MessageSquare, MessagesSquare, CalendarCheck, Mail, Bug
+  MessageSquare, MessagesSquare, CalendarCheck, Mail, Bug, Image
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +21,7 @@ const navItems = [
   { to: '/aljadadm654/announcements', icon: Megaphone, labelAr: 'الإشعارات', labelEn: 'Notifications' },
   { to: '/aljadadm654/settings', icon: Settings, labelAr: 'الإعدادات', labelEn: 'Settings' },
   { to: '/aljadadm654/error-log', icon: Bug, labelAr: 'سجل الأخطاء', labelEn: 'Error Log' },
+  { to: '/aljadadm654/banner-store', icon: Image, labelAr: 'متجر البنرات', labelEn: 'Banner Store' },
 ];
 
 export default function AdminLayout() {
