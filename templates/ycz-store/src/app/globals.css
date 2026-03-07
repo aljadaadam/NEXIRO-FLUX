@@ -375,12 +375,12 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 }
 @media (min-width: 768px) {
   .hero-banner-container {
-    min-height: 220px;
-    max-height: 280px;
-    height: 260px;
+    min-height: 240px;
+    max-height: 320px;
+    height: 290px;
   }
   .hero-banner-content {
-    padding: 1.8rem 3rem 0.8rem;
+    padding: 1.8rem 3rem 1.2rem;
     gap: 2.5rem;
     flex-direction: row-reverse;
     height: 100%;
