@@ -298,6 +298,14 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   padding: 1rem 1rem 0.5rem;
   gap: 10px;
 }
+/* Mobile: bottom-positioned images show as small side icon */
+.hero-product-img-bottom {
+  animation: none !important;
+}
+.hero-product-img-bottom .hero-banner-img {
+  width: 56px !important;
+  height: 56px !important;
+}
 .hero-banner-img {
   width: 56px;
   height: 56px;
@@ -342,6 +350,10 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   .hero-banner-img {
     width: 80px;
     height: 80px;
+  }
+  .hero-product-img-bottom .hero-banner-img {
+    width: 80px !important;
+    height: 80px !important;
   }
   .hero-banner-tag {
     font-size: 0.72rem;
@@ -430,6 +442,21 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   }
   .hero-banner-bottom {
     padding: 0 3rem 1.2rem;
+  }
+  /* Desktop: bottom-positioned images stick to bottom edge */
+  .hero-content-img-bottom {
+    padding-bottom: 0 !important;
+  }
+  .hero-product-img-bottom {
+    align-self: flex-end !important;
+    align-items: flex-end !important;
+    animation: none !important;
+  }
+  .hero-product-img-bottom .hero-banner-img {
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 240px !important;
+    width: auto !important;
+    height: auto !important;
   }
 }
 

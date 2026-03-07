@@ -187,16 +187,14 @@ function HeroBanner() {
       </div>
 
       {/* ── Content with slide animation ── */}
-      <div key={animKey} className="hero-slide-in hero-banner-content" style={{
+      <div key={animKey} className={`hero-slide-in hero-banner-content${b.imagePosition === 'bottom' ? ' hero-content-img-bottom' : ''}`} style={{
         position: 'relative', zIndex: 2,
         display: 'flex', alignItems: 'center',
-        ...(b.imagePosition === 'bottom' ? { paddingBottom: 0 } : {}),
       }}>
         {/* Product image (if available) — shown on the side */}
         {hasImage ? (
-          <div className={b.imagePosition === 'bottom' ? '' : 'hero-product-img'} style={{
+          <div className={`hero-product-img${b.imagePosition === 'bottom' ? ' hero-product-img-bottom' : ''}`} style={{
             flexShrink: 0, position: 'relative',
-            ...(b.imagePosition === 'bottom' ? { alignSelf: 'flex-end', display: 'flex', alignItems: 'flex-end', flex: 1, minWidth: 0 } : {}),
           }}>
             {/* Glow ring behind image */}
             <div className="hero-img-glow" style={{
@@ -210,7 +208,7 @@ function HeroBanner() {
               className="hero-banner-img"
               style={{
                 objectFit: 'contain',
-                borderRadius: b.imagePosition === 'bottom' ? '20px 20px 0 0' : 20,
+                borderRadius: 20,
                 position: 'relative',
                 filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
               }}
