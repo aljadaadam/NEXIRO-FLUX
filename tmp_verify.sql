@@ -1,0 +1,1 @@
+UPDATE banners SET extra_data = '{"badges":["سريع","مضمون","جميع الموديلات"],"gradient":"linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #2d1b69 100%)","bg_image":"https://www-file.honor.com/content/dam/honor/common/product-list/plp-banner/global/honor-magic8-lite/brown/Magic8-Lite-Reddish-Brown-pc.png","imagePosition":"bottom"}' WHERE id = 9;
