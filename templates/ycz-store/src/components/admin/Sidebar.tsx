@@ -46,6 +46,19 @@ export default function Sidebar({
   const { t, isRTL } = useAdminLang();
   const [chatUnread, setChatUnread] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
+  const [showNewBadge, setShowNewBadge] = useState(false);
+
+  useEffect(() => {
+    const seen = localStorage.getItem('banner_store_seen');
+    if (!seen) setShowNewBadge(true);
+  }, []);
+
+  useEffect(() => {
+    if (currentPage === 'banner-store' && showNewBadge) {
+      setShowNewBadge(false);
+      localStorage.setItem('banner_store_seen', '1');
+    }
+  }, [currentPage, showNewBadge]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchUnread = useCallback(async () => {
@@ -188,6 +201,19 @@ export default function Sidebar({
                     position: collapsed ? 'absolute' as const : 'static' as const,
                     top: collapsed ? 4 : undefined, left: collapsed ? 4 : undefined,
                   }}>{pendingOrders}</span>
+                )}
+                {item.id === 'banner-store' && showNewBadge && (
+                  <span style={{
+                    borderRadius: 8, background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: '#fff',
+                    fontSize: collapsed ? '.5rem' : '.6rem', fontWeight: 800,
+                    padding: collapsed ? '1px 4px' : '2px 8px',
+                    fontFamily: 'Tajawal, sans-serif', lineHeight: 1.2,
+                    position: collapsed ? 'absolute' as const : 'static' as const,
+                    top: collapsed ? 2 : undefined, left: collapsed ? 0 : undefined,
+                    animation: 'pulse 2s ease-in-out infinite',
+                    boxShadow: '0 2px 8px rgba(16,185,129,0.4)',
+                  }}>{t('جديد')}</span>
                 )}
               </button>
             );
