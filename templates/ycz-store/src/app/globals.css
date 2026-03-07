@@ -290,6 +290,32 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   transform: translateX(-3px);
 }
 
+/* ── Hero banner responsive ── */
+.hero-banner-container {
+  min-height: 180px;
+}
+.hero-banner-content {
+  padding: 1.5rem 1.5rem 0.8rem;
+  gap: 14px;
+}
+.hero-banner-img {
+  width: 72px;
+  height: 72px;
+}
+@media (min-width: 480px) {
+  .hero-banner-container {
+    min-height: 200px;
+  }
+  .hero-banner-content {
+    padding: 2rem 2rem 1rem;
+    gap: 20px;
+  }
+  .hero-banner-img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
 /* ── Product image banner animations ── */
 .hero-product-img {
   animation: heroImgFloat 3s ease-in-out infinite, heroImgEntry 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;

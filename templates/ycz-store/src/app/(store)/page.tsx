@@ -131,10 +131,11 @@ function HeroBanner() {
 
   return (
     <div
+      className="hero-banner-container"
       style={{
         position: 'relative', borderRadius: 20, overflow: 'hidden',
         background: b.gradient, marginBottom: '1.5rem',
-        minHeight: hasImage ? 220 : 200, padding: 0,
+        padding: 0,
         boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
@@ -174,10 +175,9 @@ function HeroBanner() {
       </div>
 
       {/* ── Content with slide animation ── */}
-      <div key={animKey} className="hero-slide-in" style={{
+      <div key={animKey} className="hero-slide-in hero-banner-content" style={{
         position: 'relative', zIndex: 2,
-        padding: '2rem 2rem 1rem',
-        display: 'flex', alignItems: 'center', gap: 20,
+        display: 'flex', alignItems: 'center',
       }}>
         {/* Product image (if available) — shown on the side */}
         {hasImage ? (
@@ -193,8 +193,9 @@ function HeroBanner() {
             <img
               src={b.image_url}
               alt={b.title}
+              className="hero-banner-img"
               style={{
-                width: 100, height: 100, objectFit: 'contain',
+                objectFit: 'contain',
                 borderRadius: 20, position: 'relative',
                 filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
               }}
