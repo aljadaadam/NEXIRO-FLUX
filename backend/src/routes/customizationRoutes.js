@@ -65,6 +65,7 @@ router.get('/banner-store', authenticateToken, requireRole('admin', 'user'), asy
     const templateBannerMap = {};
     installed.filter(b => b.template_id).forEach(b => { templateBannerMap[b.template_id] = b.id; });
     // جلب البنرات المشتراة (مكتمل الدفع)
+    const pool = getPool();
     const [purchases] = await pool.query(
       'SELECT DISTINCT template_id FROM banner_purchases WHERE site_key = ? AND status = ?',
       [site_key, 'completed']
