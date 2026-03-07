@@ -394,9 +394,11 @@ router.post('/banner-store/purchase/:paymentId/check-usdt', authenticateToken, r
 
     const usdt = new USDTProcessor(gateway.config);
     const meta = payment.meta || {};
+    const { tx_hash } = req.body || {};
     const result = await usdt.checkPayment({
       amount: parseFloat(meta.usdt_unique_amount),
       sinceTimestamp: new Date(payment.created_at).getTime(),
+      txHash: tx_hash || undefined,
     });
 
     if (result && result.confirmed) {

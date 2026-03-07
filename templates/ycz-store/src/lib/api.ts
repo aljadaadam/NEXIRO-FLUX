@@ -182,7 +182,7 @@ export const adminApi = {
   purchaseBanner: (templateId: number, gateway_id: number) => adminFetch(`/customization/banner-store/purchase/${templateId}`, { method: 'POST', body: JSON.stringify({ gateway_id }) }),
   checkBannerPurchase: (paymentId: number) => adminFetch(`/customization/banner-store/purchase/${paymentId}/status`),
   uploadBannerReceipt: (paymentId: number, receipt_reference: string) => adminFetch(`/customization/banner-store/purchase/${paymentId}/receipt`, { method: 'POST', body: JSON.stringify({ receipt_reference }) }),
-  checkBannerUsdt: (paymentId: number) => adminFetch(`/customization/banner-store/purchase/${paymentId}/check-usdt`, { method: 'POST' }),
+  checkBannerUsdt: (paymentId: number, txHash?: string) => adminFetch(`/customization/banner-store/purchase/${paymentId}/check-usdt`, { method: 'POST', body: JSON.stringify({ tx_hash: txHash || undefined }) }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───

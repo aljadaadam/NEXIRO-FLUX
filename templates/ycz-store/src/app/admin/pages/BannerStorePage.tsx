@@ -49,6 +49,7 @@ interface PurchaseState {
   paymentId: number | null;
   paymentData: Record<string, unknown>;
   receiptRef: string;
+  txHash: string;
   loadingGateways: boolean;
   processing: boolean;
 }
@@ -99,7 +100,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
 
   // ─── شراء بنر ───
   const openPurchase = async (templateId: number) => {
-    setPurchase({ templateId, step: 'select_method', gateways: [], selectedGateway: null, paymentId: null, paymentData: {}, receiptRef: '', loadingGateways: true, processing: false });
+    setPurchase({ templateId, step: 'select_method', gateways: [], selectedGateway: null, paymentId: null, paymentData: {}, receiptRef: '', txHash: '', loadingGateways: true, processing: false });
     try {
       const data = await adminApi.getBannerGateways() as { gateways: Gateway[] };
       setPurchase(prev => prev ? { ...prev, gateways: data.gateways || [], loadingGateways: false } : null);
@@ -121,8 +122,12 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
         processing: false,
       } : null);
 
-      // Start polling for USDT/Binance
-      if (result.method === 'manual_crypto' || result.method === 'qr_or_redirect') {
+      // Start auto-polling only for TRC20 (auto-detection)
+      if (result.method === 'manual_crypto' && result.network === 'TRC20') {
+        startPolling(result.paymentId as number, result.method as string);
+      }
+      // For BEP20/ERC20, user must enter TX Hash manually
+      if (result.method === 'qr_or_redirect') {
         startPolling(result.paymentId as number, result.method as string);
       }
     } catch (err) {
@@ -155,6 +160,25 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
         }
       } catch { /* */ }
     }, 8000);
+  };
+
+  const submitTxHash = async () => {
+    if (!purchase?.paymentId || !purchase.txHash.trim()) return;
+    setPurchase(prev => prev ? { ...prev, processing: true } : null);
+    try {
+      const res = await adminApi.checkBannerUsdt(purchase.paymentId, purchase.txHash.trim()) as { verified?: boolean; error?: string; message?: string };
+      if (res.verified) {
+        setPurchase(prev => prev ? { ...prev, step: 'done', processing: false } : null);
+        setMsg(t('تم الدفع وتثبيت البنر بنجاح! 🎉'));
+        await fetchStore();
+      } else {
+        setPurchase(prev => prev ? { ...prev, processing: false } : null);
+        setMsg(res.message || t('لم يتم التحقق، تأكد من هاش المعاملة'));
+        setTimeout(() => setMsg(''), 5000);
+      }
+    } catch {
+      setPurchase(prev => prev ? { ...prev, processing: false } : null);
+    }
   };
 
   const submitReceipt = async () => {
@@ -374,10 +398,38 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
-                      <Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite', color: '#16a34a' }} />
-                      <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>{t('بانتظار تأكيد الدفع تلقائياً...')}</span>
-                    </div>
+                    {/* TRC20: auto-detection */}
+                    {purchase.paymentData.network === 'TRC20' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
+                        <Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite', color: '#16a34a' }} />
+                        <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>{t('بانتظار تأكيد الدفع تلقائياً...')}</span>
+                      </div>
+                    )}
+
+                    {/* BEP20/ERC20: TX Hash required */}
+                    {purchase.paymentData.network !== 'TRC20' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', margin: 0 }}>{t('هاش المعاملة (Transaction Hash)')}</p>
+                        <input
+                          type="text"
+                          value={purchase.txHash}
+                          onChange={e => setPurchase(prev => prev ? { ...prev, txHash: e.target.value } : null)}
+                          placeholder="0x..."
+                          dir="ltr"
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.82rem', fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                        <button onClick={submitTxHash} disabled={!purchase.txHash.trim() || purchase.processing} style={{
+                          width: '100%', padding: '12px', borderRadius: 12, border: 'none',
+                          background: purchase.txHash.trim() ? '#16a34a' : '#e2e8f0',
+                          color: purchase.txHash.trim() ? '#fff' : '#94a3b8',
+                          fontSize: '0.88rem', fontWeight: 700, cursor: purchase.txHash.trim() ? 'pointer' : 'default',
+                          fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}>
+                          {purchase.processing ? <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Check size={16} />}
+                          {t('تحقق من الدفع')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
