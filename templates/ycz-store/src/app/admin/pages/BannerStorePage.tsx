@@ -52,6 +52,7 @@ interface PurchaseState {
   txHash: string;
   loadingGateways: boolean;
   processing: boolean;
+  error: string;
 }
 
 export default function BannerStorePage({ isActive }: { isActive?: boolean } = {}) {
@@ -100,7 +101,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
 
   // ─── شراء بنر ───
   const openPurchase = async (templateId: number) => {
-    setPurchase({ templateId, step: 'select_method', gateways: [], selectedGateway: null, paymentId: null, paymentData: {}, receiptRef: '', txHash: '', loadingGateways: true, processing: false });
+    setPurchase({ templateId, step: 'select_method', gateways: [], selectedGateway: null, paymentId: null, paymentData: {}, receiptRef: '', txHash: '', loadingGateways: true, processing: false, error: '' });
     try {
       const data = await adminApi.getBannerGateways() as { gateways: Gateway[] };
       setPurchase(prev => prev ? { ...prev, gateways: data.gateways || [], loadingGateways: false } : null);
@@ -111,7 +112,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
 
   const selectGateway = async (gw: Gateway) => {
     if (!purchase) return;
-    setPurchase(prev => prev ? { ...prev, selectedGateway: gw, processing: true } : null);
+    setPurchase(prev => prev ? { ...prev, selectedGateway: gw, processing: true, error: '' } : null);
     try {
       const result = await adminApi.purchaseBanner(purchase.templateId, gw.id) as Record<string, unknown>;
       setPurchase(prev => prev ? {
@@ -133,9 +134,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
     } catch (err: unknown) {
       console.error('Purchase failed:', err);
       const errMsg = err instanceof Error ? err.message : t('فشل في بدء عملية الشراء');
-      setMsg(errMsg);
-      setTimeout(() => setMsg(''), 5000);
-      setPurchase(prev => prev ? { ...prev, processing: false } : null);
+      setPurchase(prev => prev ? { ...prev, processing: false, error: errMsg } : null);
     }
   };
 
@@ -389,6 +388,11 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                       )}
                     </button>
                   ))}
+                  {purchase.error && (
+                    <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <X size={14} /> {purchase.error}
+                    </div>
+                  )}
                 </div>
               )
             )}
