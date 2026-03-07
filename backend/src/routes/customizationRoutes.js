@@ -64,7 +64,13 @@ router.get('/banner-store', authenticateToken, requireRole('admin', 'user'), asy
     // خريطة template_id → banner_id للحذف من المتجر
     const templateBannerMap = {};
     installed.filter(b => b.template_id).forEach(b => { templateBannerMap[b.template_id] = b.id; });
-    res.json({ templates, installedTemplateIds, templateBannerMap });
+    // جلب البنرات المشتراة (مكتمل الدفع)
+    const [purchases] = await pool.query(
+      'SELECT DISTINCT template_id FROM banner_purchases WHERE site_key = ? AND status = ?',
+      [site_key, 'completed']
+    );
+    const purchasedTemplateIds = purchases.map(p => p.template_id);
+    res.json({ templates, installedTemplateIds, templateBannerMap, purchasedTemplateIds });
   } catch (err) {
     console.error('Error fetching banner store:', err);
     res.status(500).json({ error: 'فشل في جلب متجر البنرات' });

@@ -61,6 +61,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const [tab, setTab] = useState<'store' | 'installed'>('store');
   const [templates, setTemplates] = useState<BannerTemplate[]>([]);
   const [installedIds, setInstalledIds] = useState<number[]>([]);
+  const [purchasedIds, setPurchasedIds] = useState<number[]>([]);
   const [templateBannerMap, setTemplateBannerMap] = useState<Record<number, number>>({});
   const [myBanners, setMyBanners] = useState<InstalledBanner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,9 +78,10 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const fetchStore = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminApi.getBannerStore() as { templates: BannerTemplate[]; installedTemplateIds: number[]; templateBannerMap: Record<number, number> };
+      const data = await adminApi.getBannerStore() as { templates: BannerTemplate[]; installedTemplateIds: number[]; templateBannerMap: Record<number, number>; purchasedTemplateIds: number[] };
       setTemplates(data.templates || []);
       setInstalledIds(data.installedTemplateIds || []);
+      setPurchasedIds(data.purchasedTemplateIds || []);
       setTemplateBannerMap(data.templateBannerMap || {});
     } catch { /* */ } finally { setLoading(false); }
   }, []);
@@ -670,6 +672,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
               {filtered.map(tmpl => {
                 const isInstalled = installedIds.includes(tmpl.id);
+                const isPurchased = purchasedIds.includes(tmpl.id);
                 const design = typeof tmpl.design_data === 'string' ? JSON.parse(tmpl.design_data) : tmpl.design_data;
                 const isPaid = tmpl.price > 0;
                 return (
@@ -680,11 +683,11 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                         <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>{tmpl.name}</h3>
                         <span style={{
                           fontSize: '0.82rem', fontWeight: 800, padding: '4px 12px', borderRadius: 8,
-                          background: isPaid ? '#fffbeb' : '#f0fdf4',
-                          color: isPaid ? '#b45309' : '#16a34a',
-                          border: `1px solid ${isPaid ? '#fde68a' : '#bbf7d0'}`,
+                          background: isPurchased ? '#f0fdf4' : isPaid ? '#fffbeb' : '#f0fdf4',
+                          color: isPurchased ? '#16a34a' : isPaid ? '#b45309' : '#16a34a',
+                          border: `1px solid ${isPurchased ? '#bbf7d0' : isPaid ? '#fde68a' : '#bbf7d0'}`,
                         }}>
-                          {isPaid ? `$${tmpl.price}` : t('مجاني')}
+                          {isPurchased ? t('تم الشراء') : isPaid ? `$${tmpl.price}` : t('مجاني')}
                         </span>
                       </div>
 
@@ -698,6 +701,18 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                             {t('إلغاء')}
                           </button>
                         </div>
+                      ) : isPaid && isPurchased ? (
+                        <button onClick={() => handleInstall(tmpl.id)} disabled={installing === tmpl.id} style={{
+                          width: '100%', padding: '10px', borderRadius: 10, border: 'none',
+                          background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent || currentTheme.primary})`,
+                          color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          fontFamily: 'inherit', boxShadow: `0 4px 12px ${currentTheme.primary}30`,
+                          opacity: installing === tmpl.id ? 0.7 : 1,
+                        }}>
+                          {installing === tmpl.id ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Download size={15} />}
+                          {installing === tmpl.id ? t('جاري التثبيت...') : t('تم الشراء — تثبيت')}
+                        </button>
                       ) : isPaid ? (
                         <button onClick={() => openPurchase(tmpl.id)} style={{
                           width: '100%', padding: '10px', borderRadius: 10, border: 'none',
