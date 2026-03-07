@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Store, Download, Trash2, Loader2, Check, Image, Eye, EyeOff, RefreshCw, Sparkles } from 'lucide-react';
+import { Store, Download, Trash2, Loader2, Check, Image, Eye, EyeOff, RefreshCw, Sparkles, X } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useAdminLang } from '@/providers/AdminLanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -11,7 +11,7 @@ interface BannerTemplate {
   name: string;
   preview_image: string | null;
   category: string;
-  design_data: { title?: string; subtitle?: string; icon?: string; gradient?: string; desc?: string; image_url?: string; link?: string };
+  design_data: { title?: string; subtitle?: string; icon?: string; gradient?: string; desc?: string; description?: string; image_url?: string; link?: string; badges?: string[]; meshColor1?: string; meshColor2?: string };
   price: number;
   is_active: number;
 }
@@ -24,6 +24,8 @@ interface InstalledBanner {
   image_url: string;
   is_active: number;
   template_id: number | null;
+  description: string;
+  extra_data: string | { badges?: string[]; gradient?: string };
 }
 
 export default function BannerStorePage({ isActive }: { isActive?: boolean } = {}) {
@@ -32,9 +34,11 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const [tab, setTab] = useState<'store' | 'installed'>('store');
   const [templates, setTemplates] = useState<BannerTemplate[]>([]);
   const [installedIds, setInstalledIds] = useState<number[]>([]);
+  const [templateBannerMap, setTemplateBannerMap] = useState<Record<number, number>>({});
   const [myBanners, setMyBanners] = useState<InstalledBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [installing, setInstalling] = useState<number | null>(null);
+  const [uninstalling, setUninstalling] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [toggling, setToggling] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -43,9 +47,10 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const fetchStore = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminApi.getBannerStore() as { templates: BannerTemplate[]; installedTemplateIds: number[] };
+      const data = await adminApi.getBannerStore() as { templates: BannerTemplate[]; installedTemplateIds: number[]; templateBannerMap: Record<number, number> };
       setTemplates(data.templates || []);
       setInstalledIds(data.installedTemplateIds || []);
+      setTemplateBannerMap(data.templateBannerMap || {});
     } catch (err) {
       console.error('Failed:', err);
     } finally {
@@ -78,12 +83,32 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
     try {
       await adminApi.installBanner(templateId);
       setMsg(t('تم تثبيت البنر بنجاح'));
-      setInstalledIds(prev => [...prev, templateId]);
+      await fetchStore();
       setTimeout(() => setMsg(''), 3000);
     } catch (err) {
       console.error('Install failed:', err);
     } finally {
       setInstalling(null);
+    }
+  };
+
+  const handleUninstall = async (templateId: number) => {
+    const bannerId = templateBannerMap[templateId];
+    if (!bannerId) return;
+    if (!confirm(t('هل تريد إلغاء تثبيت هذا البنر؟'))) return;
+    setUninstalling(templateId);
+    try {
+      await adminApi.deleteBanner(bannerId);
+      setInstalledIds(prev => prev.filter(id => id !== templateId));
+      const newMap = { ...templateBannerMap };
+      delete newMap[templateId];
+      setTemplateBannerMap(newMap);
+      setMsg(t('تم إلغاء التثبيت'));
+      setTimeout(() => setMsg(''), 3000);
+    } catch (err) {
+      console.error('Uninstall failed:', err);
+    } finally {
+      setUninstalling(null);
     }
   };
 
@@ -115,10 +140,164 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const categories = [...new Set(templates.map(t => t.category))];
   const filtered = categoryFilter ? templates.filter(t => t.category === categoryFilter) : templates;
 
-  const cardStyle: React.CSSProperties = {
-    background: '#fff', borderRadius: 16,
-    border: '1px solid #e2e8f0', overflow: 'hidden',
-    transition: 'all 0.2s',
+  /* ── Mini banner preview component ── */
+  const BannerPreview = ({ design, name }: { design: BannerTemplate['design_data']; name: string }) => {
+    const gradient = design.gradient || `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`;
+    return (
+      <div style={{
+        height: 180, position: 'relative', overflow: 'hidden',
+        background: gradient, borderRadius: '16px 16px 0 0',
+        display: 'flex', alignItems: 'center', padding: '1.2rem 1.5rem',
+        gap: '1.2rem', direction: 'rtl',
+      }}>
+        {/* Animated orbs */}
+        <div style={{
+          position: 'absolute', width: 180, height: 180, borderRadius: '50%',
+          background: `radial-gradient(circle, ${design.meshColor1 || 'rgba(255,255,255,0.15)'} 0%, transparent 70%)`,
+          top: '-30%', right: '-5%', filter: 'blur(30px)', pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', width: 120, height: 120, borderRadius: '50%',
+          background: `radial-gradient(circle, ${design.meshColor2 || 'rgba(255,255,255,0.1)'} 0%, transparent 70%)`,
+          bottom: '-20%', left: '-5%', filter: 'blur(20px)', pointerEvents: 'none',
+        }} />
+
+        {/* Grid pattern */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)',
+          backgroundSize: '16px 16px', pointerEvents: 'none',
+        }} />
+
+        {/* Text content */}
+        <div style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 2 }}>
+          {design.title && (
+            <div style={{
+              display: 'inline-block', borderRadius: 14,
+              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              padding: '2px 10px', fontSize: '0.6rem', fontWeight: 600,
+              color: 'rgba(255,255,255,0.9)', marginBottom: 6,
+            }}>
+              {design.title}
+            </div>
+          )}
+          <h3 style={{
+            fontSize: '1rem', fontWeight: 800, color: '#fff', margin: '0 0 4px',
+            lineHeight: 1.3, textShadow: '0 1px 4px rgba(0,0,0,0.1)',
+          }}>
+            {design.subtitle || name}
+          </h3>
+          {(design.desc || design.description) && (
+            <p style={{
+              fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)', margin: '0 0 8px',
+              lineHeight: 1.4, maxWidth: 220,
+              overflow: 'hidden', textOverflow: 'ellipsis',
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            }}>
+              {design.desc || design.description}
+            </p>
+          )}
+          {design.badges && design.badges.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {design.badges.map((badge, i) => (
+                <span key={i} style={{
+                  borderRadius: 12, padding: '2px 8px', fontSize: '0.55rem', fontWeight: 700,
+                  background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)',
+                  border: '1px solid rgba(255,255,255,0.25)', color: '#fff',
+                }}>
+                  {badge}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product image */}
+        {design.image_url && (
+          <div style={{ flexShrink: 0, position: 'relative', zIndex: 2 }}>
+            <div style={{
+              position: 'absolute', inset: -6, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
+              filter: 'blur(8px)',
+            }} />
+            <img
+              src={design.image_url}
+              alt={name}
+              style={{
+                width: 90, height: 90, objectFit: 'contain',
+                borderRadius: 16, position: 'relative',
+                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
+              }}
+            />
+          </div>
+        )}
+        {!design.image_url && design.icon && (
+          <div style={{
+            width: 60, height: 60, borderRadius: 16, flexShrink: 0,
+            background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'grid', placeItems: 'center', fontSize: '1.8rem',
+            position: 'relative', zIndex: 2,
+          }}>
+            {design.icon}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  /* ── Installed banner card preview ── */
+  const InstalledPreview = ({ banner }: { banner: InstalledBanner }) => {
+    const extraData = typeof banner.extra_data === 'string' ? (() => { try { return JSON.parse(banner.extra_data); } catch { return {}; } })() : (banner.extra_data || {});
+    const gradient = extraData.gradient || `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`;
+    const badges: string[] = extraData.badges || [];
+    return (
+      <div style={{
+        height: 120, position: 'relative', overflow: 'hidden',
+        background: gradient, borderRadius: 14,
+        display: 'flex', alignItems: 'center', padding: '1rem 1.2rem',
+        gap: '1rem', direction: 'rtl', flexShrink: 0,
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)',
+          backgroundSize: '14px 14px', pointerEvents: 'none',
+        }} />
+        <div style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 2 }}>
+          <div style={{
+            display: 'inline-block', borderRadius: 12,
+            background: 'rgba(255,255,255,0.18)', padding: '2px 8px',
+            fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: 4,
+          }}>
+            {banner.title}
+          </div>
+          <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', margin: '0 0 3px', lineHeight: 1.3 }}>
+            {banner.subtitle || '—'}
+          </h4>
+          {badges.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+              {badges.slice(0, 3).map((b, i) => (
+                <span key={i} style={{
+                  borderRadius: 10, padding: '1px 6px', fontSize: '0.5rem', fontWeight: 700,
+                  background: 'rgba(255,255,255,0.2)', color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                }}>
+                  {b}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        {banner.image_url && (
+          <img src={banner.image_url} alt="" style={{
+            width: 65, height: 65, objectFit: 'contain', borderRadius: 12,
+            position: 'relative', zIndex: 2,
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+          }} />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -238,76 +417,88 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
               <p style={{ fontSize: '0.9rem' }}>{t('لا توجد بنرات متاحة حالياً')}</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
               {filtered.map(tmpl => {
                 const isInstalled = installedIds.includes(tmpl.id);
                 const design = typeof tmpl.design_data === 'string' ? JSON.parse(tmpl.design_data) : tmpl.design_data;
                 return (
-                  <div key={tmpl.id} style={cardStyle}>
-                    {/* Preview */}
-                    <div style={{
-                      height: 140, position: 'relative', overflow: 'hidden',
-                      background: design.gradient || `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`,
-                    }}>
-                      {tmpl.preview_image ? (
-                        <img src={tmpl.preview_image} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                          height: '100%', color: '#fff', padding: 16,
-                        }}>
-                          <span style={{ fontSize: '2rem', marginBottom: 6 }}>{design.icon || '🎨'}</span>
-                          <span style={{ fontSize: '1rem', fontWeight: 700 }}>{design.title || tmpl.name}</span>
-                          {design.subtitle && <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>{design.subtitle}</span>}
-                        </div>
-                      )}
-                      {/* Category badge */}
-                      <span style={{
-                        position: 'absolute', top: 10, [isRTL ? 'right' : 'left']: 10,
-                        padding: '3px 10px', borderRadius: 6,
-                        background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
-                        color: '#fff', fontSize: '0.65rem', fontWeight: 600,
-                      }}>
-                        {tmpl.category}
-                      </span>
-                    </div>
+                  <div key={tmpl.id} style={{
+                    background: '#fff', borderRadius: 16,
+                    border: isInstalled ? `2px solid ${currentTheme.primary}40` : '1px solid #e2e8f0',
+                    overflow: 'hidden', transition: 'all 0.2s',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  }}>
+                    {/* Banner preview */}
+                    <BannerPreview design={design} name={tmpl.name} />
 
-                    {/* Info + action */}
+                    {/* Info + actions */}
                     <div style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                         <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                           {tmpl.name}
                         </h3>
                         <span style={{
-                          fontSize: '0.78rem', fontWeight: 700,
+                          fontSize: '0.78rem', fontWeight: 700, padding: '3px 10px', borderRadius: 8,
+                          background: tmpl.price > 0 ? `${currentTheme.primary}10` : '#f0fdf4',
                           color: tmpl.price > 0 ? currentTheme.primary : '#16a34a',
                         }}>
                           {tmpl.price > 0 ? `$${tmpl.price}` : t('مجاني')}
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => !isInstalled && handleInstall(tmpl.id)}
-                        disabled={isInstalled || installing === tmpl.id}
-                        style={{
-                          width: '100%', padding: '10px', borderRadius: 10, border: 'none',
-                          background: isInstalled ? '#f1f5f9' : currentTheme.primary,
-                          color: isInstalled ? '#94a3b8' : '#fff',
-                          fontSize: '0.82rem', fontWeight: 700, cursor: isInstalled ? 'default' : 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          fontFamily: 'inherit', transition: 'all 0.2s',
-                          opacity: installing === tmpl.id ? 0.7 : 1,
-                        }}
-                      >
-                        {installing === tmpl.id ? (
-                          <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} />
-                        ) : isInstalled ? (
-                          <Check size={15} />
-                        ) : (
-                          <Download size={15} />
-                        )}
-                        {installing === tmpl.id ? t('جاري التثبيت...') : isInstalled ? t('مثبت') : t('تثبيت')}
-                      </button>
+                      {isInstalled ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{
+                            flex: 1, padding: '10px', borderRadius: 10,
+                            background: '#f0fdf4', border: '1px solid #bbf7d0',
+                            color: '#16a34a', fontSize: '0.82rem', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          }}>
+                            <Check size={15} />
+                            {t('مثبت')}
+                          </div>
+                          <button
+                            onClick={() => handleUninstall(tmpl.id)}
+                            disabled={uninstalling === tmpl.id}
+                            style={{
+                              padding: '10px 16px', borderRadius: 10, border: '1px solid #fecaca',
+                              background: '#fef2f2', color: '#dc2626',
+                              fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              fontFamily: 'inherit', transition: 'all 0.2s',
+                              opacity: uninstalling === tmpl.id ? 0.7 : 1,
+                            }}
+                          >
+                            {uninstalling === tmpl.id ? (
+                              <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} />
+                            ) : (
+                              <X size={15} />
+                            )}
+                            {t('إلغاء')}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleInstall(tmpl.id)}
+                          disabled={installing === tmpl.id}
+                          style={{
+                            width: '100%', padding: '10px', borderRadius: 10, border: 'none',
+                            background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent || currentTheme.primary})`,
+                            color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            fontFamily: 'inherit', transition: 'all 0.2s',
+                            opacity: installing === tmpl.id ? 0.7 : 1,
+                            boxShadow: `0 4px 12px ${currentTheme.primary}30`,
+                          }}
+                        >
+                          {installing === tmpl.id ? (
+                            <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} />
+                          ) : (
+                            <Download size={15} />
+                          )}
+                          {installing === tmpl.id ? t('جاري التثبيت...') : t('تثبيت البنر')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -325,69 +516,67 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
               <p style={{ fontSize: '0.78rem' }}>{t('اذهب للمتجر وثبت بنراتك الأولى')}</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {myBanners.map(banner => (
                 <div key={banner.id} style={{
-                  ...cardStyle,
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
-                  opacity: banner.is_active ? 1 : 0.6,
+                  background: '#fff', borderRadius: 16,
+                  border: '1px solid #e2e8f0', overflow: 'hidden',
+                  opacity: banner.is_active ? 1 : 0.65,
+                  transition: 'all 0.2s',
                 }}>
-                  {/* Icon */}
+                  {/* Banner preview */}
+                  <InstalledPreview banner={banner} />
+
+                  {/* Actions bar */}
                   <div style={{
-                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                    background: `${currentTheme.primary}10`, display: 'grid', placeItems: 'center',
-                    fontSize: '1.3rem',
+                    padding: '12px 16px',
+                    display: 'flex', alignItems: 'center', gap: 10,
                   }}>
-                    {banner.icon || '🎨'}
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                        {banner.title || t('بنر بدون عنوان')}
+                      </p>
+                    </div>
+
+                    {/* Status badge */}
+                    <span style={{
+                      padding: '4px 12px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600,
+                      background: banner.is_active ? '#f0fdf4' : '#fef2f2',
+                      color: banner.is_active ? '#16a34a' : '#dc2626',
+                      border: `1px solid ${banner.is_active ? '#bbf7d0' : '#fecaca'}`,
+                    }}>
+                      {banner.is_active ? t('مفعّل') : t('معطّل')}
+                    </span>
+
+                    {/* Toggle */}
+                    <button
+                      onClick={() => handleToggle(banner)}
+                      disabled={toggling === banner.id}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10, border: '1px solid #e2e8f0',
+                        background: '#f8fafc', cursor: 'pointer', display: 'grid', placeItems: 'center',
+                        color: '#64748b', transition: 'all 0.2s',
+                      }}
+                      title={banner.is_active ? t('إيقاف') : t('تفعيل')}
+                    >
+                      {toggling === banner.id ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : banner.is_active ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => handleDelete(banner.id)}
+                      disabled={deleting === banner.id}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10, border: '1px solid #fecaca',
+                        background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center',
+                        color: '#dc2626', transition: 'all 0.2s',
+                      }}
+                      title={t('حذف')}
+                    >
+                      {deleting === banner.id ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Trash2 size={14} />}
+                    </button>
                   </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                      {banner.title || t('بنر بدون عنوان')}
-                    </p>
-                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
-                      {banner.subtitle || '—'}
-                    </p>
-                  </div>
-
-                  {/* Status badge */}
-                  <span style={{
-                    padding: '4px 10px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 600,
-                    background: banner.is_active ? '#f0fdf4' : '#fef2f2',
-                    color: banner.is_active ? '#16a34a' : '#dc2626',
-                    border: `1px solid ${banner.is_active ? '#bbf7d0' : '#fecaca'}`,
-                  }}>
-                    {banner.is_active ? t('مفعّل') : t('معطّل')}
-                  </span>
-
-                  {/* Toggle */}
-                  <button
-                    onClick={() => handleToggle(banner)}
-                    disabled={toggling === banner.id}
-                    style={{
-                      width: 34, height: 34, borderRadius: 8, border: '1px solid #e2e8f0',
-                      background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center',
-                      color: '#64748b',
-                    }}
-                    title={banner.is_active ? t('إيقاف') : t('تفعيل')}
-                  >
-                    {toggling === banner.id ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : banner.is_active ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(banner.id)}
-                    disabled={deleting === banner.id}
-                    style={{
-                      width: 34, height: 34, borderRadius: 8, border: '1px solid #fecaca',
-                      background: '#fef2f2', cursor: 'pointer', display: 'grid', placeItems: 'center',
-                      color: '#dc2626',
-                    }}
-                    title={t('حذف')}
-                  >
-                    {deleting === banner.id ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Trash2 size={14} />}
-                  </button>
                 </div>
               ))}
             </div>

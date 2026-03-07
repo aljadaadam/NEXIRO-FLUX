@@ -56,7 +56,10 @@ router.get('/banner-store', authenticateToken, requireRole('admin', 'user'), asy
     const installedTemplateIds = installed
       .filter(b => b.template_id)
       .map(b => b.template_id);
-    res.json({ templates, installedTemplateIds });
+    // خريطة template_id → banner_id للحذف من المتجر
+    const templateBannerMap = {};
+    installed.filter(b => b.template_id).forEach(b => { templateBannerMap[b.template_id] = b.id; });
+    res.json({ templates, installedTemplateIds, templateBannerMap });
   } catch (err) {
     console.error('Error fetching banner store:', err);
     res.status(500).json({ error: 'فشل في جلب متجر البنرات' });
