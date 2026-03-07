@@ -101,6 +101,34 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   // Cleanup polling on unmount
   useEffect(() => { return () => { if (pollRef.current) clearInterval(pollRef.current); }; }, []);
 
+  // Detect visibility change (user returns from Binance Pay tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && purchase?.paymentId && purchase.step === 'payment_details' && purchase.paymentData?.method === 'qr_or_redirect') {
+        checkBinanceStatus(purchase.paymentId);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [purchase?.paymentId, purchase?.step, purchase?.paymentData?.method]);
+
+  const checkBinanceStatus = async (paymentId: number) => {
+    try {
+      setPurchase(prev => prev ? { ...prev, processing: true } : null);
+      const res = await adminApi.checkBannerPurchase(paymentId) as { status?: string };
+      if (res.status === 'completed') {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setPurchase(prev => prev ? { ...prev, step: 'done', processing: false } : null);
+        setMsg(t('\u062a\u0645 \u0627\u0644\u062f\u0641\u0639 \u0648\u062a\u062b\u0628\u064a\u062a \u0627\u0644\u0628\u0646\u0631 \u0628\u0646\u062c\u0627\u062d! \U0001f389'));
+        await fetchStore();
+      } else {
+        setPurchase(prev => prev ? { ...prev, processing: false } : null);
+      }
+    } catch {
+      setPurchase(prev => prev ? { ...prev, processing: false } : null);
+    }
+  };
+
   // ─── شراء بنر ───
   const openPurchase = async (templateId: number) => {
     setPurchase({ templateId, step: 'select_method', gateways: [], selectedGateway: null, paymentId: null, paymentData: {}, receiptRef: '', txHash: '', loadingGateways: true, processing: false, error: '' });
@@ -163,7 +191,7 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
           }
         }
       } catch { /* */ }
-    }, 8000);
+    }, 5000);
   };
 
   const submitTxHash = async () => {
@@ -557,9 +585,27 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                     }}>
                       {t('فتح Binance Pay')} →
                     </a>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', width: '100%' }}>
-                      <Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite', color: '#16a34a' }} />
-                      <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>{t('بانتظار تأكيد الدفع...')}</span>
+                    <button
+                      onClick={() => purchase.paymentId && checkBinanceStatus(purchase.paymentId)}
+                      disabled={purchase.processing}
+                      style={{
+                        width: '100%', padding: '12px', borderRadius: 12, border: '1px solid #bbf7d0',
+                        background: '#f0fdf4', color: '#15803d',
+                        fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {purchase.processing ? (
+                        <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                      {t('\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u062f\u0641\u0639')}
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', width: '100%' }}>
+                      <Loader2 size={12} style={{ animation: 'spin 1.5s linear infinite', color: '#94a3b8' }} />
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t('\u064a\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u062a\u0644\u0642\u0627\u0626\u064a\u0627\u064b \u0643\u0644 5 \u062b\u0648\u0627\u0646\u064a')}</span>
                     </div>
                   </div>
                 )}
