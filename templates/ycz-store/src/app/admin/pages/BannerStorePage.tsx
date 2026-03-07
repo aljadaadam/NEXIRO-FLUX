@@ -130,8 +130,11 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
       if (result.method === 'qr_or_redirect') {
         startPolling(result.paymentId as number, result.method as string);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Purchase failed:', err);
+      const errMsg = err instanceof Error ? err.message : t('فشل في بدء عملية الشراء');
+      setMsg(errMsg);
+      setTimeout(() => setMsg(''), 5000);
       setPurchase(prev => prev ? { ...prev, processing: false } : null);
     }
   };
@@ -209,8 +212,8 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
       await fetchStore();
       setTimeout(() => setMsg(''), 3000);
     } catch (err: unknown) {
-      const e = err as { requires_payment?: boolean };
-      if (e?.requires_payment) {
+      // 402 = يجب الدفع → فتح نافذة الشراء
+      if (err instanceof Error && err.message.includes('يجب الدفع')) {
         openPurchase(templateId);
       }
     } finally { setInstalling(null); }
@@ -254,8 +257,33 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
   const categories = [...new Set(templates.map(t => t.category))];
   const filtered = categoryFilter ? templates.filter(t => t.category === categoryFilter) : templates;
 
-  const gwIcon = (type: string) => type === 'usdt' ? '💲' : type === 'bankak' ? '🏦' : type === 'binance' ? '🟡' : '💳';
-  const gwLabel = (type: string) => type === 'usdt' ? 'USDT (TRC20)' : type === 'bankak' ? t('بنكك') : type === 'binance' ? 'Binance Pay' : type;
+  const GwLogo = ({ type }: { type: string }) => {
+    if (type === 'usdt') return (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="16" fill="#26A17B"/>
+        <path d="M17.9 17.05v-.005c-.1.007-.62.04-1.78.04-0.93 0-1.58-.028-1.82-.042v.008C11.54 16.88 9.5 16.42 9.5 15.87s2.04-1.01 4.8-1.18v1.88c.25.018.91.06 1.84.06.93 0 1.67-.05 1.78-.06v-1.88c2.75.17 4.78.67 4.78 1.18s-2.04 1.01-4.78 1.18zm0-2.56v-1.68h4.98V10h-13.8v2.81h4.98v1.68c-3.12.2-5.47.84-5.47 1.6s2.35 1.4 5.47 1.6v5.73h3.6v-5.73c3.1-.2 5.44-.84 5.44-1.6s-2.34-1.4-5.44-1.6h.26z" fill="white"/>
+      </svg>
+    );
+    if (type === 'binance') return (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="16" fill="#F0B90B"/>
+        <path d="M16 8l2.47 2.47-5.15 5.15L10.85 13.15 16 8zm5.53 5.53L24 16l-2.47 2.47-5.15-5.15 2.47-2.47-.32-.32zm-11.06 0l2.47 2.47-5.15 5.15L5.32 18.68l.32-.32 4.83-4.83zM16 18.68l2.47 2.47L16 23.62l-2.47-2.47L16 18.68z" fill="white"/>
+      </svg>
+    );
+    if (type === 'bankak') return (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="16" fill="#1E40AF"/>
+        <path d="M16 8l8 4v2H8v-2l8-4zm-6 8h3v6h-3v-6zm4.5 0h3v6h-3v-6zm4.5 0h3v6h-3v-6zM8 24h16v2H8v-2z" fill="white"/>
+      </svg>
+    );
+    return <CreditCard size={32} style={{ color: '#94a3b8' }} />;
+  };
+  const gwLabel = (gw: Gateway) => {
+    if (gw.type === 'usdt') return `USDT (${gw.network || 'TRC20'})`;
+    if (gw.type === 'bankak') return t('بنكك');
+    if (gw.type === 'binance') return 'Binance Pay';
+    return gw.name;
+  };
 
   /* ── Preview components ── */
   const BannerPreview = ({ design, name }: { design: BannerTemplate['design_data']; name: string }) => (
@@ -349,9 +377,9 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                       cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit',
                       opacity: purchase.processing ? 0.6 : 1,
                     }}>
-                      <span style={{ fontSize: '1.5rem' }}>{gwIcon(gw.type)}</span>
+                      <GwLogo type={gw.type} />
                       <div style={{ flex: 1, textAlign: 'start' }}>
-                        <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>{gwLabel(gw.type)}</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>{gwLabel(gw)}</p>
                         <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>{gw.name}</p>
                       </div>
                       {purchase.processing && purchase.selectedGateway?.id === gw.id ? (
