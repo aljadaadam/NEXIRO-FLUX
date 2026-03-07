@@ -16,6 +16,8 @@ const {
   updateBanner,
   deleteBanner
 } = require('../controllers/bannerController');
+const BannerTemplate = require('../models/BannerTemplate');
+const Banner = require('../models/Banner');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
 
@@ -43,5 +45,48 @@ router.get('/banners', authenticateToken, requireRole('admin', 'user'), getBanne
 router.post('/banners', authenticateToken, requireRole('admin', 'user'), createBanner);
 router.put('/banners/:id', authenticateToken, requireRole('admin', 'user'), updateBanner);
 router.delete('/banners/:id', authenticateToken, requireRole('admin', 'user'), deleteBanner);
+
+// ===== متجر البنرات (تصفح + تثبيت) =====
+router.get('/banner-store', authenticateToken, requireRole('admin', 'user'), async (req, res) => {
+  try {
+    const templates = await BannerTemplate.findActive();
+    // جلب البنرات المثبتة حالياً للمقارنة
+    const { site_key } = req.user;
+    const installed = await Banner.findBySiteKey(site_key);
+    const installedTemplateIds = installed
+      .filter(b => b.template_id)
+      .map(b => b.template_id);
+    res.json({ templates, installedTemplateIds });
+  } catch (err) {
+    console.error('Error fetching banner store:', err);
+    res.status(500).json({ error: 'فشل في جلب متجر البنرات' });
+  }
+});
+
+router.post('/banner-store/install/:templateId', authenticateToken, requireRole('admin', 'user'), async (req, res) => {
+  try {
+    const { site_key } = req.user;
+    const template = await BannerTemplate.findById(req.params.templateId);
+    if (!template || !template.is_active) {
+      return res.status(404).json({ error: 'القالب غير موجود أو غير متاح' });
+    }
+    const design = typeof template.design_data === 'string' ? JSON.parse(template.design_data) : template.design_data;
+    // إنشاء بنر جديد من القالب
+    const banner = await Banner.create(site_key, {
+      title: design.title || template.name,
+      subtitle: design.subtitle || '',
+      icon: design.icon || '🚀',
+      image_url: design.image_url || template.preview_image || '',
+      link: design.link || '',
+      is_active: true,
+      sort_order: 0,
+      template_id: template.id,
+    });
+    res.status(201).json({ message: 'تم تثبيت البنر بنجاح', banner });
+  } catch (err) {
+    console.error('Error installing banner:', err);
+    res.status(500).json({ error: 'فشل في تثبيت البنر' });
+  }
+});
 
 module.exports = router;

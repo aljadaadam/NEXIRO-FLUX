@@ -16,9 +16,38 @@ function HeroBanner() {
   const [active, setActive] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [dbBanners, setDbBanners] = useState<Array<{ icon: string; title: string; subtitle: string; desc: string; gradient: string; meshColor1: string; meshColor2: string; link?: string }> | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
-  const banners = [
+  const gradientPresets = [
+    { gradient: `linear-gradient(135deg, ${currentTheme.primary} 0%, ${currentTheme.accent} 100%)`, meshColor1: 'rgba(255,255,255,0.12)', meshColor2: 'rgba(255,255,255,0.06)' },
+    { gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)', meshColor1: 'rgba(255,200,50,0.15)', meshColor2: 'rgba(239,68,68,0.1)' },
+    { gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)', meshColor1: 'rgba(6,182,212,0.15)', meshColor2: 'rgba(139,92,246,0.1)' },
+    { gradient: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)', meshColor1: 'rgba(16,185,129,0.15)', meshColor2: 'rgba(59,130,246,0.1)' },
+    { gradient: 'linear-gradient(135deg, #ec4899 0%, #f59e0b 100%)', meshColor1: 'rgba(236,72,153,0.15)', meshColor2: 'rgba(245,158,11,0.1)' },
+  ];
+
+  // Fetch banners from DB
+  useEffect(() => {
+    storeApi.getActiveBanners?.().then((data: { banners?: Array<{ icon?: string; title?: string; subtitle?: string; image_url?: string; link?: string }> }) => {
+      const list = data?.banners;
+      if (list && list.length > 0) {
+        setDbBanners(list.map((b, i) => ({
+          icon: b.icon || '🚀',
+          title: b.title || '',
+          subtitle: b.subtitle || '',
+          desc: '',
+          gradient: gradientPresets[i % gradientPresets.length].gradient,
+          meshColor1: gradientPresets[i % gradientPresets.length].meshColor1,
+          meshColor2: gradientPresets[i % gradientPresets.length].meshColor2,
+          link: b.link,
+        })));
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const defaultBanners = [
     {
       icon: '🚀',
       title: t('مرحباً بك'),
@@ -47,6 +76,8 @@ function HeroBanner() {
       meshColor2: 'rgba(139,92,246,0.1)',
     },
   ];
+
+  const banners = dbBanners || defaultBanners;
 
   const DURATION = 5000;
 

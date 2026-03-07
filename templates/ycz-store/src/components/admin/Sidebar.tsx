@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CreditCard,
   Link2, Paintbrush, Megaphone, BookOpen, MessageCircle, Zap as ZapIcon, Settings, ChevronRight, ChevronLeft,
-  Zap, LogOut, X, ExternalLink,
+  Zap, LogOut, X, ExternalLink, Store,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { ColorTheme } from '@/lib/themes';
@@ -31,6 +31,7 @@ const menuItems = [
   { id: 'payments', icon: CreditCard, label: 'المدفوعات' },
   { id: 'sources', icon: Link2, label: 'المصادر' },
   { id: 'customize', icon: Paintbrush, label: 'التخصيص' },
+  { id: 'banner-store', icon: Store, label: 'متجر البنرات' },
   { id: 'announcements', icon: Megaphone, label: 'الإعلانات' },
   { id: 'blog', icon: BookOpen, label: 'المدونة' },
   { id: 'chat', icon: MessageCircle, label: 'الدردشة' },

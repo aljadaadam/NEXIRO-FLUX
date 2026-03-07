@@ -93,6 +93,7 @@ const bannersTable = `
     link VARCHAR(500) NULL,
     is_active TINYINT(1) DEFAULT 1,
     sort_order INT DEFAULT 0,
+    template_id INT NULL COMMENT 'معرف قالب البنر',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE

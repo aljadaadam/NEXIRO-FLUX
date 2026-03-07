@@ -171,6 +171,12 @@ export const adminApi = {
   // فلاش
   getFlashSettings: () => adminFetch('/customization'),
   updateFlashSettings: (data: Record<string, unknown>) => adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
+  // متجر البنرات
+  getBannerStore: () => adminFetch('/customization/banner-store'),
+  installBanner: (templateId: number) => adminFetch(`/customization/banner-store/install/${templateId}`, { method: 'POST' }),
+  getMyBanners: () => adminFetch('/customization/banners'),
+  deleteBanner: (id: number) => adminFetch(`/customization/banners/${id}`, { method: 'DELETE' }),
+  toggleBanner: (id: number, is_active: boolean) => adminFetch(`/customization/banners/${id}`, { method: 'PUT', body: JSON.stringify({ is_active }) }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
@@ -316,6 +322,12 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
 
 // ─── Customer API ───
 export const storeApi = {
+  getActiveBanners: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/customization/banners/active`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
+      return res.json();
+    } catch { return { banners: [] }; }
+  },
   getProducts: async () => {
     // وضع العرض التجريبي
     if (isDemoMode()) {

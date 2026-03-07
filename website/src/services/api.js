@@ -675,6 +675,32 @@ class ApiService {
   async clearErrorLogs() {
     return this.request('/platform/errors', { method: 'DELETE' });
   }
+
+  // ─── Platform: Banner Templates (قوالب البنرات) ───
+
+  async getBannerTemplates() {
+    return this.request('/platform/banner-templates');
+  }
+
+  async createBannerTemplate(data) {
+    return this.request('/platform/banner-templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBannerTemplate(id, data) {
+    return this.request(`/platform/banner-templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBannerTemplate(id) {
+    return this.request(`/platform/banner-templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Singleton

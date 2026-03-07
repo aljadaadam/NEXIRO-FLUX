@@ -103,6 +103,7 @@ import BlogAdminPage from './pages/BlogAdminPage';
 import ChatAdminPage from './pages/ChatAdminPage';
 import FlashPopupPage from './pages/FlashPopupPage';
 import SettingsAdminPage from './pages/SettingsAdminPage';
+import BannerStorePage from './pages/BannerStorePage';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -457,6 +458,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     payments: <PaymentsPage isActive={currentPage === 'payments'} />,
     sources: <ExternalSourcesPage isActive={currentPage === 'sources'} />,
     customize: <CustomizePage />,
+    'banner-store': <BannerStorePage isActive={currentPage === 'banner-store'} />,
     announcements: <AnnouncementsPage isActive={currentPage === 'announcements'} />,
     blog: <BlogAdminPage isActive={currentPage === 'blog'} />,
     chat: <ChatAdminPage isActive={currentPage === 'chat'} />,

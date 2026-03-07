@@ -35,7 +35,7 @@ class Banner {
   static async create(site_key, data) {
     const pool = getPool();
     const [result] = await pool.query(
-      'INSERT INTO banners (site_key, title, subtitle, icon, image_url, link, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO banners (site_key, title, subtitle, icon, image_url, link, is_active, sort_order, template_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         site_key,
         data.title || null,
@@ -44,7 +44,8 @@ class Banner {
         data.image_url || null,
         data.link || null,
         data.is_active !== false ? 1 : 0,
-        data.sort_order || 0
+        data.sort_order || 0,
+        data.template_id || null,
       ]
     );
     return this.findById(result.insertId, site_key);

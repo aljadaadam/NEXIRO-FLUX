@@ -17,6 +17,7 @@ async function runColumnMigrations(pool) {
   await migrateOrders(pool);
   await migrateProductIndexes(pool);
   await migrateSubscriptions(pool);
+  await migrateBanners(pool);
 }
 
 // ─── Sites Columns ───
@@ -137,6 +138,11 @@ async function migrateProductIndexes(pool) {
 // ─── Subscriptions Columns ───
 async function migrateSubscriptions(pool) {
   await ensureColumn(pool, 'subscriptions', 'warning_sent_at', "warning_sent_at DATETIME NULL COMMENT 'آخر مرة تم إرسال تحذير انتهاء الاشتراك'");
+}
+
+// ─── Banners Columns ───
+async function migrateBanners(pool) {
+  await ensureColumn(pool, 'banners', 'template_id', "template_id INT NULL COMMENT 'معرف قالب البنر'");
 }
 
 module.exports = { runColumnMigrations };

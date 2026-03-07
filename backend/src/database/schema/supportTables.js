@@ -119,6 +119,21 @@ const errorLogTable = `
   )
 `;
 
+const bannerTemplatesTable = `
+  CREATE TABLE IF NOT EXISTS banner_templates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    preview_image TEXT NULL,
+    category VARCHAR(100) DEFAULT 'عام',
+    design_data JSON NOT NULL COMMENT 'title, subtitle, icon, gradient, colors, style',
+    price DECIMAL(10,2) DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`;
+
 module.exports = {
   ticketsTable,
   ticketMessagesTable,
@@ -127,4 +142,5 @@ module.exports = {
   reservationsTable,
   emailBroadcastsTable,
   errorLogTable,
+  bannerTemplatesTable,
 };
