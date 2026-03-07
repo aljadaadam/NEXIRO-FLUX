@@ -75,9 +75,11 @@ router.post('/banner-store/install/:templateId', authenticateToken, requireRole(
     const banner = await Banner.create(site_key, {
       title: design.title || template.name,
       subtitle: design.subtitle || '',
+      description: design.description || '',
       icon: design.icon || '🚀',
       image_url: design.image_url || template.preview_image || '',
       link: design.link || '',
+      extra_data: JSON.stringify({ badges: design.badges || [], gradient: design.gradient || '' }),
       is_active: true,
       sort_order: 0,
       template_id: template.id,

@@ -143,6 +143,8 @@ async function migrateSubscriptions(pool) {
 // ─── Banners Columns ───
 async function migrateBanners(pool) {
   await ensureColumn(pool, 'banners', 'template_id', "template_id INT NULL COMMENT 'معرف قالب البنر'");
+  await ensureColumn(pool, 'banners', 'description', 'description TEXT NULL');
+  await ensureColumn(pool, 'banners', 'extra_data', "extra_data JSON NULL COMMENT 'badges, gradient, etc.'");
 }
 
 module.exports = { runColumnMigrations };

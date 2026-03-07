@@ -11,12 +11,18 @@ import SeoHead from '@/components/seo/SeoHead';
 import JsonLd from '@/components/seo/JsonLd';
 
 // ─── HeroBanner (Modern animated hero with particles, glassmorphism, progress bar) ───
+interface BannerItem {
+  icon: string; title: string; subtitle: string; desc: string;
+  gradient: string; meshColor1: string; meshColor2: string;
+  image_url?: string; link?: string; badges?: string[];
+}
+
 function HeroBanner() {
   const { currentTheme, showBanner, buttonRadius, t, isRTL } = useTheme();
   const [active, setActive] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [dbBanners, setDbBanners] = useState<Array<{ icon: string; title: string; subtitle: string; desc: string; gradient: string; meshColor1: string; meshColor2: string; link?: string }> | null>(null);
+  const [dbBanners, setDbBanners] = useState<BannerItem[] | null>(null);
   const btnR = buttonRadius === 'sharp' ? '4px' : buttonRadius === 'pill' ? '50px' : '10px';
 
   const gradientPresets = [
@@ -29,25 +35,31 @@ function HeroBanner() {
 
   // Fetch banners from DB
   useEffect(() => {
-    storeApi.getActiveBanners?.().then((data: { banners?: Array<{ icon?: string; title?: string; subtitle?: string; image_url?: string; link?: string }> }) => {
+    storeApi.getActiveBanners?.().then((data: { banners?: Array<{ icon?: string; title?: string; subtitle?: string; description?: string; image_url?: string; link?: string; extra_data?: string | { badges?: string[]; gradient?: string } }> }) => {
       const list = data?.banners;
       if (list && list.length > 0) {
-        setDbBanners(list.map((b, i) => ({
-          icon: b.icon || '🚀',
-          title: b.title || '',
-          subtitle: b.subtitle || '',
-          desc: '',
-          gradient: gradientPresets[i % gradientPresets.length].gradient,
-          meshColor1: gradientPresets[i % gradientPresets.length].meshColor1,
-          meshColor2: gradientPresets[i % gradientPresets.length].meshColor2,
-          link: b.link,
-        })));
+        setDbBanners(list.map((b, i) => {
+          const extra = typeof b.extra_data === 'string' ? (() => { try { return JSON.parse(b.extra_data); } catch { return {}; } })() : (b.extra_data || {});
+          const preset = gradientPresets[i % gradientPresets.length];
+          return {
+            icon: b.icon || '🚀',
+            title: b.title || '',
+            subtitle: b.subtitle || '',
+            desc: b.description || '',
+            image_url: b.image_url || '',
+            gradient: extra.gradient || preset.gradient,
+            meshColor1: preset.meshColor1,
+            meshColor2: preset.meshColor2,
+            link: b.link,
+            badges: extra.badges || [],
+          };
+        }));
       }
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const defaultBanners = [
+  const defaultBanners: BannerItem[] = [
     {
       icon: '🚀',
       title: t('مرحباً بك'),
@@ -105,6 +117,7 @@ function HeroBanner() {
 
   if (!showBanner) return null;
   const b = banners[active];
+  const hasImage = !!(b.image_url);
 
   // Floating particles/shapes positions
   const particles = [
@@ -121,7 +134,7 @@ function HeroBanner() {
       style={{
         position: 'relative', borderRadius: 20, overflow: 'hidden',
         background: b.gradient, marginBottom: '1.5rem',
-        minHeight: 200, padding: 0,
+        minHeight: hasImage ? 220 : 200, padding: 0,
         boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
@@ -149,6 +162,9 @@ function HeroBanner() {
           }} />
         ))}
 
+        {/* Shine sweep effect for image banners */}
+        {hasImage && <div className="hero-shine-sweep" />}
+
         {/* Grid pattern overlay */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -163,16 +179,38 @@ function HeroBanner() {
         padding: '2rem 2rem 1rem',
         display: 'flex', alignItems: 'center', gap: 20,
       }}>
-        {/* Animated icon bubble */}
-        <div className="hero-icon-bubble" style={{
-          width: 64, height: 64, borderRadius: 18, flexShrink: 0,
-          background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          display: 'grid', placeItems: 'center', fontSize: '1.8rem',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-        }}>
-          {b.icon}
-        </div>
+        {/* Product image (if available) — shown on the side */}
+        {hasImage ? (
+          <div className="hero-product-img" style={{
+            flexShrink: 0, position: 'relative',
+          }}>
+            {/* Glow ring behind image */}
+            <div className="hero-img-glow" style={{
+              position: 'absolute', inset: -8, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+              filter: 'blur(12px)',
+            }} />
+            <img
+              src={b.image_url}
+              alt={b.title}
+              style={{
+                width: 100, height: 100, objectFit: 'contain',
+                borderRadius: 20, position: 'relative',
+                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+              }}
+            />
+          </div>
+        ) : (
+          <div className="hero-icon-bubble" style={{
+            width: 64, height: 64, borderRadius: 18, flexShrink: 0,
+            background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'grid', placeItems: 'center', fontSize: '1.8rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+          }}>
+            {b.icon}
+          </div>
+        )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Animated tag */}
@@ -195,12 +233,31 @@ function HeroBanner() {
 
           <p style={{
             fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)',
-            marginBottom: 16, lineHeight: 1.5, maxWidth: 400,
+            marginBottom: hasImage ? 10 : 16, lineHeight: 1.5, maxWidth: 400,
           }}>
             {b.desc}
           </p>
 
-         <Link href="/services" style={{ textDecoration: 'none' }}>
+          {/* Badges row for offers */}
+          {b.badges && b.badges.length > 0 && (
+            <div className="hero-badges-row" style={{
+              display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12,
+            }}>
+              {b.badges.map((badge, bi) => (
+                <span key={bi} className="hero-badge-chip" style={{
+                  padding: '4px 12px', borderRadius: 20,
+                  background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  fontSize: '0.7rem', fontWeight: 700, color: '#fff',
+                  animationDelay: `${0.2 + bi * 0.1}s`,
+                }}>
+                  {badge}
+                </span>
+              ))}
+            </div>
+          )}
+
+         <Link href={b.link || '/services'} style={{ textDecoration: 'none' }}>
           <button className="hero-cta-btn" style={{
             padding: '0.6rem 1.5rem', borderRadius: btnR,
             background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(12px)',
