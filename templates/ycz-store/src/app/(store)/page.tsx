@@ -215,41 +215,41 @@ function HeroBanner() {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Animated tag */}
-          <div className="hero-tag" style={{
-            display: 'inline-block', padding: '3px 10px', borderRadius: 20,
+          <div className="hero-tag hero-banner-tag" style={{
+            display: 'inline-block', borderRadius: 20,
             background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.15)',
-            fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)',
-            marginBottom: 8, letterSpacing: '0.5px',
+            fontWeight: 600, color: 'rgba(255,255,255,0.9)',
+            letterSpacing: '0.5px',
           }}>
             {b.title}
           </div>
 
-          <h2 className="store-hero-title" style={{
-            fontSize: 'clamp(1.2rem, 4vw, 1.7rem)', fontWeight: 800, color: '#fff',
-            marginBottom: 6, lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          <h2 className="store-hero-title hero-banner-title" style={{
+            fontWeight: 800, color: '#fff',
+            lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.1)',
           }}>
             {b.subtitle}
           </h2>
 
-          <p style={{
-            fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)',
-            marginBottom: hasImage ? 10 : 16, lineHeight: 1.5, maxWidth: 400,
+          <p className="hero-banner-desc" style={{
+            color: 'rgba(255,255,255,0.75)',
+            maxWidth: 400,
           }}>
             {b.desc}
           </p>
 
           {/* Badges row for offers */}
           {b.badges && b.badges.length > 0 && (
-            <div className="hero-badges-row" style={{
-              display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12,
+            <div className="hero-badges-row hero-banner-badges" style={{
+              display: 'flex', flexWrap: 'wrap',
             }}>
               {b.badges.map((badge, bi) => (
                 <span key={bi} className="hero-badge-chip" style={{
-                  padding: '4px 12px', borderRadius: 20,
+                  borderRadius: 20,
                   background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(255,255,255,0.25)',
-                  fontSize: '0.7rem', fontWeight: 700, color: '#fff',
+                  fontWeight: 700, color: '#fff',
                   animationDelay: `${0.2 + bi * 0.1}s`,
                 }}>
                   {badge}
@@ -259,11 +259,11 @@ function HeroBanner() {
           )}
 
          <Link href={b.link || '/services'} style={{ textDecoration: 'none' }}>
-          <button className="hero-cta-btn" style={{
-            padding: '0.6rem 1.5rem', borderRadius: btnR,
+          <button className="hero-cta-btn hero-banner-cta" style={{
+            borderRadius: btnR,
             background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255,255,255,0.3)', color: '#fff',
-            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+            fontWeight: 700, cursor: 'pointer',
             fontFamily: 'inherit', transition: 'all 0.3s',
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
@@ -275,9 +275,8 @@ function HeroBanner() {
       </div>
 
       {/* ── Bottom bar: progress + dot indicators ── */}
-      <div style={{
+      <div className="hero-banner-bottom" style={{
         position: 'relative', zIndex: 2,
-        padding: '0 2rem 1.2rem',
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
         {/* Slide indicators */}
