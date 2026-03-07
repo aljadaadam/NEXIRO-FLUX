@@ -298,13 +298,22 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
   padding: 1rem 1rem 0.5rem;
   gap: 10px;
 }
-/* Mobile: bottom-positioned images show as small side icon */
+/* Mobile: bottom-positioned images - left side, bottom-aligned */
+.hero-content-img-bottom {
+  align-items: stretch !important;
+  padding-bottom: 0 !important;
+}
 .hero-product-img-bottom {
   animation: none !important;
+  order: 2;
+  align-self: flex-end;
+  display: flex;
+  align-items: flex-end;
 }
 .hero-product-img-bottom .hero-banner-img {
-  width: 56px !important;
-  height: 56px !important;
+  width: 70px !important;
+  height: 90px !important;
+  border-radius: 12px 12px 0 0 !important;
 }
 .hero-banner-img {
   width: 56px;
@@ -352,8 +361,8 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     height: 80px;
   }
   .hero-product-img-bottom .hero-banner-img {
-    width: 80px !important;
-    height: 80px !important;
+    width: 90px !important;
+    height: 120px !important;
   }
   .hero-banner-tag {
     font-size: 0.72rem;
