@@ -134,6 +134,24 @@ const bannerTemplatesTable = `
   )
 `;
 
+const bannerPurchasesTable = `
+  CREATE TABLE IF NOT EXISTS banner_purchases (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    site_key VARCHAR(100) NOT NULL,
+    user_id INT NOT NULL,
+    template_id INT NOT NULL,
+    payment_id INT NULL,
+    amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    status ENUM('pending','completed','failed','cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_bp_site (site_key),
+    INDEX idx_bp_template (template_id),
+    INDEX idx_bp_payment (payment_id),
+    INDEX idx_bp_status (status)
+  )
+`;
+
 module.exports = {
   ticketsTable,
   ticketMessagesTable,
@@ -143,4 +161,5 @@ module.exports = {
   emailBroadcastsTable,
   errorLogTable,
   bannerTemplatesTable,
+  bannerPurchasesTable,
 };

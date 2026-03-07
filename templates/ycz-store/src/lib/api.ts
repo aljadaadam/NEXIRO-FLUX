@@ -177,6 +177,12 @@ export const adminApi = {
   getMyBanners: () => adminFetch('/customization/banners'),
   deleteBanner: (id: number) => adminFetch(`/customization/banners/${id}`, { method: 'DELETE' }),
   toggleBanner: (id: number, is_active: boolean) => adminFetch(`/customization/banners/${id}`, { method: 'PUT', body: JSON.stringify({ is_active }) }),
+  // دفع البنرات
+  getBannerGateways: () => adminFetch('/customization/banner-store/gateways'),
+  purchaseBanner: (templateId: number, gateway_id: number) => adminFetch(`/customization/banner-store/purchase/${templateId}`, { method: 'POST', body: JSON.stringify({ gateway_id }) }),
+  checkBannerPurchase: (paymentId: number) => adminFetch(`/customization/banner-store/purchase/${paymentId}/status`),
+  uploadBannerReceipt: (paymentId: number, receipt_reference: string) => adminFetch(`/customization/banner-store/purchase/${paymentId}/receipt`, { method: 'POST', body: JSON.stringify({ receipt_reference }) }),
+  checkBannerUsdt: (paymentId: number) => adminFetch(`/customization/banner-store/purchase/${paymentId}/check-usdt`, { method: 'POST' }),
 };
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
