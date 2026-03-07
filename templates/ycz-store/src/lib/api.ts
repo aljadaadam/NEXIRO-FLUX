@@ -330,6 +330,10 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
 export const storeApi = {
   getActiveBanners: async () => {
     try {
+      if (isDemoMode()) {
+        const demo = getDemoResponse('/customization/banners/active', 'GET');
+        if (demo) return demo;
+      }
       const res = await fetch(`${API_BASE}/customization/banners/active`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
       return res.json();
     } catch { return { banners: [] }; }

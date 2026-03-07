@@ -620,6 +620,14 @@ export const getDemoResponse: DemoRouteHandler = (endpoint: string, method: stri
     return { success: true };
   }
 
+  if (ep === 'customization/banners/active' && method === 'GET') {
+    return { banners: [
+      { id: 1, title: '\ud83d\udd25 عروض حصرية', subtitle: 'UnlockTool - اقوى اداة فتح', description: 'احصل على افضل الاسعار لاشتراكات UnlockTool', icon: '\ud83d\udd13', image_url: 'https://file.unlocktool.net/uploads/logo/logo_1766854141_69500dfd06f2b.png', link: '/services', extra_data: '{"badges":["سنة","6 اشهر","3 اشهر"],"gradient":"linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)"}', is_active: 1 },
+      { id: 2, title: 'خدمة Honor FRP', subtitle: 'فتح قفل Honor FRP باسرع وقت', description: 'خدمة فتح حساب جوجل لاجهزة Honor - سريع وآمن ومضمون', icon: '\ud83d\ude80', image_url: 'https://www-file.honor.com/content/dam/honor/common/product-list/plp-banner/global/honor-magic8-lite/brown/Magic8-Lite-Reddish-Brown-pc.png', link: '/services', extra_data: '{"badges":["سريع","مضمون","جميع الموديلات"],"gradient":"linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #2d1b69 100%)","bg_image":"https://www-file.honor.com/content/dam/honor/common/product-list/plp-banner/global/honor-magic8-lite/brown/Magic8-Lite-Reddish-Brown-pc.png","imagePosition":"bottom"}', is_active: 1 },
+      { id: 3, title: 'اشتراكات UnlockTool', subtitle: 'افضل اداة فتح الاجهزة', description: 'اشتراك سنة كاملة بافضل سعر - تفعيل فوري', icon: '\u2b50', image_url: 'https://file.unlocktool.net/uploads/logo/logo_1766854141_69500dfd06f2b.png', link: '/services', extra_data: '{"badges":["تفعيل فوري","دعم 24/7","ضمان"],"gradient":"linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"}', is_active: 1 },
+    ] };
+  }
+
   if (ep === 'customization' && method === 'GET') {
     return demoSettings;
   }
