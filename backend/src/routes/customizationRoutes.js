@@ -296,10 +296,14 @@ router.get('/banner-store/purchase/:paymentId/status', authenticateToken, requir
   try {
     const payment = await Payment.findById(parseInt(req.params.paymentId));
     if (!payment) return res.status(404).json({ error: 'الدفعة غير موجودة' });
+    // التحقق من ملكية الدفعة
+    const meta = payment.meta || {};
+    if (meta.buyer_site_key !== req.user.site_key || meta.buyer_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'غير مصرح' });
+    }
 
     // إذا اكتملت الدفعة، تحقق وثبت البنر تلقائياً
     if (payment.status === 'completed') {
-      const meta = payment.meta || {};
       if (meta.purchase_type === 'banner' && meta.template_id && meta.buyer_site_key) {
         const pool = getPool();
         // تحديث سجل الشراء
@@ -345,6 +349,11 @@ router.post('/banner-store/purchase/:paymentId/receipt', authenticateToken, requ
   try {
     const payment = await Payment.findById(parseInt(req.params.paymentId));
     if (!payment) return res.status(404).json({ error: 'الدفعة غير موجودة' });
+    // التحقق من ملكية الدفعة
+    const pmeta = payment.meta || {};
+    if (pmeta.buyer_site_key !== req.user.site_key || pmeta.buyer_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'غير مصرح' });
+    }
     if (payment.status !== 'awaiting_receipt' && payment.status !== 'pending') {
       return res.status(400).json({ error: 'لا يمكن رفع إيصال لهذه الدفعة' });
     }
@@ -372,6 +381,11 @@ router.post('/banner-store/purchase/:paymentId/check-usdt', authenticateToken, r
     if (!payment || payment.status !== 'pending') {
       return res.status(400).json({ error: 'الدفعة غير صالحة' });
     }
+    // التحقق من ملكية الدفعة
+    const pmeta2 = payment.meta || {};
+    if (pmeta2.buyer_site_key !== req.user.site_key || pmeta2.buyer_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'غير مصرح' });
+    }
 
     const gateway = await PaymentGateway.findById(payment.payment_gateway_id, SITE_KEY);
     if (!gateway || gateway.type !== 'usdt') {
@@ -380,13 +394,12 @@ router.post('/banner-store/purchase/:paymentId/check-usdt', authenticateToken, r
 
     const usdt = new USDTProcessor(gateway.config);
     const meta = payment.meta || {};
-    const verified = await usdt.checkPayment({
-      walletAddress: meta.usdt_wallet_address,
-      expectedAmount: parseFloat(meta.usdt_unique_amount),
-      network: meta.usdt_network,
+    const result = await usdt.checkPayment({
+      amount: parseFloat(meta.usdt_unique_amount),
+      sinceTimestamp: new Date(payment.created_at).getTime(),
     });
 
-    if (verified) {
+    if (result && result.confirmed) {
       await Payment.updateStatus(payment.id, SITE_KEY, 'completed');
       // تثبيت البنر تلقائياً
       const pool = getPool();
