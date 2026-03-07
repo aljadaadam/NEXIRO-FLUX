@@ -15,6 +15,7 @@ interface BannerItem {
   icon: string; title: string; subtitle: string; desc: string;
   gradient: string; meshColor1: string; meshColor2: string;
   image_url?: string; link?: string; badges?: string[];
+  bg_image?: string; imagePosition?: string;
 }
 
 function HeroBanner() {
@@ -52,6 +53,8 @@ function HeroBanner() {
             meshColor2: preset.meshColor2,
             link: b.link,
             badges: extra.badges || [],
+            bg_image: extra.bg_image || '',
+            imagePosition: extra.imagePosition || '',
           };
         }));
       }
@@ -141,6 +144,15 @@ function HeroBanner() {
     >
       {/* ── Animated mesh/blob background ── */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        {/* Background image overlay */}
+        {b.bg_image && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${b.bg_image})`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.15,
+          }} />
+        )}
         {/* Large animated gradient orb */}
         <div className="hero-orb hero-orb-1" style={{
           position: 'absolute', width: 300, height: 300, borderRadius: '50%',
@@ -178,11 +190,13 @@ function HeroBanner() {
       <div key={animKey} className="hero-slide-in hero-banner-content" style={{
         position: 'relative', zIndex: 2,
         display: 'flex', alignItems: 'center',
+        ...(b.imagePosition === 'bottom' ? { paddingBottom: 0 } : {}),
       }}>
         {/* Product image (if available) — shown on the side */}
         {hasImage ? (
-          <div className="hero-product-img" style={{
+          <div className={b.imagePosition === 'bottom' ? '' : 'hero-product-img'} style={{
             flexShrink: 0, position: 'relative',
+            ...(b.imagePosition === 'bottom' ? { alignSelf: 'flex-end', display: 'flex', alignItems: 'flex-end', flex: 1, minWidth: 0 } : {}),
           }}>
             {/* Glow ring behind image */}
             <div className="hero-img-glow" style={{
@@ -196,7 +210,8 @@ function HeroBanner() {
               className="hero-banner-img"
               style={{
                 objectFit: 'contain',
-                borderRadius: 20, position: 'relative',
+                borderRadius: b.imagePosition === 'bottom' ? '20px 20px 0 0' : 20,
+                position: 'relative',
                 filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
               }}
             />
