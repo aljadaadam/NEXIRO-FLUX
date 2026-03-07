@@ -430,6 +430,18 @@ export default function BannerStorePage({ isActive }: { isActive?: boolean } = {
                       </div>
                     </div>
 
+                    {/* QR Code */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: 16, background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0' }}>
+                      <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>{t('امسح الباركود للتحويل')}</p>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(String(purchase.paymentData.walletAddress))}&bgcolor=ffffff&color=000000&margin=4`}
+                        alt="QR"
+                        width={140}
+                        height={140}
+                        style={{ display: 'block', borderRadius: 8 }}
+                      />
+                    </div>
+
                     {/* TRC20: auto-detection */}
                     {purchase.paymentData.network === 'TRC20' && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
