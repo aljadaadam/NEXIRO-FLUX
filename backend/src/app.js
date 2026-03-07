@@ -136,7 +136,21 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'حدث خطأ في السيرفر' });
+
+  const ErrorLog = require('./models/ErrorLog');
+  ErrorLog.log({
+    site_key: req.siteKey || null,
+    level: 'error',
+    source: err._source || 'global',
+    message: err.message || 'Unknown error',
+    stack: err.stack,
+    request_method: req.method,
+    request_url: req.originalUrl,
+    user_id: req.user?.id || null,
+    ip_address: req.ip,
+  });
+
+  res.status(err.status || 500).json({ error: 'حدث خطأ في السيرفر' });
 });
 
 // Initialize database and start server
@@ -168,5 +182,28 @@ async function startServer() {
 }
 
 startServer();
+
+// ─── Catch unhandled errors globally ───
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+  const ErrorLog = require('./models/ErrorLog');
+  ErrorLog.log({
+    level: 'error',
+    source: 'unhandledRejection',
+    message: reason?.message || String(reason),
+    stack: reason?.stack || null,
+  });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  const ErrorLog = require('./models/ErrorLog');
+  ErrorLog.log({
+    level: 'error',
+    source: 'uncaughtException',
+    message: err.message,
+    stack: err.stack,
+  });
+});
 
 module.exports = app;

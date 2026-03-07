@@ -100,6 +100,25 @@ const emailBroadcastsTable = `
   )
 `;
 
+const errorLogTable = `
+  CREATE TABLE IF NOT EXISTS error_log (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    site_key VARCHAR(255) NULL,
+    level ENUM('error', 'warn', 'info') DEFAULT 'error',
+    source VARCHAR(100) NULL COMMENT 'controller or module name',
+    message TEXT NOT NULL,
+    stack TEXT NULL,
+    request_method VARCHAR(10) NULL,
+    request_url VARCHAR(500) NULL,
+    user_id INT NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_error_log_site (site_key),
+    INDEX idx_error_log_level (level),
+    INDEX idx_error_log_created (created_at)
+  )
+`;
+
 module.exports = {
   ticketsTable,
   ticketMessagesTable,
@@ -107,4 +126,5 @@ module.exports = {
   activityLogTable,
   reservationsTable,
   emailBroadcastsTable,
+  errorLogTable,
 };

@@ -661,6 +661,20 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // ─── Platform: Error Log (سجل الأخطاء) ───
+
+  async getErrorLogs(params = {}) {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const query = new URLSearchParams(cleanParams).toString();
+    return this.request(`/platform/errors${query ? '?' + query : ''}`);
+  }
+
+  async clearErrorLogs() {
+    return this.request('/platform/errors', { method: 'DELETE' });
+  }
 }
 
 // Singleton

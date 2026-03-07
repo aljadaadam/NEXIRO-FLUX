@@ -27,7 +27,7 @@ import {
   AdminLoginPage, AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
   AdminAnnouncements, AdminSettings,
   AdminPaymentGateways, AdminPurchaseCodes, AdminTickets, AdminChat,
-  AdminReservations, AdminBroadcasts,
+  AdminReservations, AdminBroadcasts, AdminErrorLog,
 } from './routes';
 
 // Loading fallback
@@ -174,6 +174,7 @@ function AppContent() {
               <Route path="purchase-codes" element={<AdminPurchaseCodes />} />
               <Route path="payment-gateways" element={<AdminPaymentGateways />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="error-log" element={<AdminErrorLog />} />
             </Route>
           </Routes>
         </AdminGate>
