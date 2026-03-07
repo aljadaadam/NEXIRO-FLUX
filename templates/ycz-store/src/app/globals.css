@@ -306,9 +306,11 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
 .hero-product-img-bottom {
   animation: none !important;
   order: 2;
-  align-self: flex-end;
   display: flex;
   align-items: flex-end;
+  margin-bottom: -2rem;
+  position: relative;
+  z-index: 3;
 }
 .hero-product-img-bottom .hero-banner-img {
   width: 70px !important;
