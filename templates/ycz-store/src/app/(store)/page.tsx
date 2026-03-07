@@ -234,7 +234,6 @@ function HeroBanner() {
 
           <p className="hero-banner-desc" style={{
             color: 'rgba(255,255,255,0.75)',
-            maxWidth: 400,
           }}>
             {b.desc}
           </p>

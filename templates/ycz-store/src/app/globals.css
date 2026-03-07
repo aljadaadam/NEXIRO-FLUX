@@ -373,6 +373,53 @@ input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
     padding: 0 2rem 1rem;
   }
 }
+@media (min-width: 768px) {
+  .hero-banner-container {
+    min-height: 240px;
+  }
+  .hero-banner-content {
+    padding: 2.5rem 3rem 1.2rem;
+    gap: 2.5rem;
+    flex-direction: row-reverse;
+  }
+  .hero-banner-img {
+    width: 160px;
+    height: 160px;
+  }
+  .hero-product-img {
+    flex-shrink: 0;
+  }
+  .hero-banner-tag {
+    font-size: 0.85rem;
+    padding: 5px 16px;
+    margin-bottom: 10px;
+  }
+  .hero-banner-title {
+    font-size: clamp(1.5rem, 3vw, 2.2rem) !important;
+    margin-bottom: 8px !important;
+  }
+  .hero-banner-desc {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    line-height: 1.6;
+    max-width: 600px !important;
+  }
+  .hero-banner-badges {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .hero-banner-badges .hero-badge-chip {
+    padding: 6px 18px;
+    font-size: 0.82rem;
+  }
+  .hero-banner-cta {
+    padding: 0.75rem 2.5rem;
+    font-size: 0.95rem;
+  }
+  .hero-banner-bottom {
+    padding: 0 3rem 1.2rem;
+  }
+}
 
 /* ── Product image banner animations ── */
 .hero-product-img {
