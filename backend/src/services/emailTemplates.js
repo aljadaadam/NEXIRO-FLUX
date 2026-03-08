@@ -37,29 +37,31 @@ function hexToRgb(hex) {
 //  UI HELPERS FACTORY
 // ═══════════════════════════════════
 
-function createUI(primaryColor = '#7c3aed') {
+function createUI(primaryColor = '#7c3aed', secondaryColor = null) {
+  const accent = secondaryColor || lightenHex(primaryColor, 40);
   const darkColor = darkenHex(primaryColor);
   const lightColor = lightenHex(primaryColor);
   const rgb = hexToRgb(primaryColor);
+  const accentRgb = hexToRgb(accent);
 
   return {
     heading: (text) => `<h2 style="margin:0 0 16px;color:#fff;font-size:20px;font-weight:700;">${text}</h2>`,
     text: (text) => `<p style="margin:0 0 12px;color:#9ca3af;font-size:14px;line-height:1.7;">${text}</p>`,
-    highlight: (text) => `<span style="color:${lightColor};font-weight:600;">${text}</span>`,
+    highlight: (text) => `<span style="color:${accent};font-weight:600;">${text}</span>`,
     button: (text, url) => `<div style="text-align:center;margin:28px 0;">
-    <a href="${url}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,${primaryColor},${darkColor});color:#fff;text-decoration:none;border-radius:12px;font-size:14px;font-weight:700;">${text}</a>
+    <a href="${url}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,${primaryColor},${accent});color:#fff;text-decoration:none;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 4px 15px rgba(${rgb.r},${rgb.g},${rgb.b},0.3);">${text}</a>
   </div>`,
-    divider: () => `<div style="height:1px;background:rgba(255,255,255,0.05);margin:24px 0;"></div>`,
+    divider: () => `<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.15),transparent);margin:24px 0;"></div>`,
     infoRow: (label, value) => `<tr>
-    <td style="padding:8px 12px;color:#6b7280;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);">${label}</td>
-    <td style="padding:8px 12px;color:#e5e7eb;font-size:13px;font-weight:600;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);">${value}</td>
+    <td style="padding:8px 12px;color:#6b7280;font-size:13px;border-bottom:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.06);">${label}</td>
+    <td style="padding:8px 12px;color:#e5e7eb;font-size:13px;font-weight:600;text-align:left;border-bottom:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.06);">${value}</td>
   </tr>`,
-    infoTable: (rows) => `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border-radius:12px;overflow:hidden;margin:16px 0;">
+    infoTable: (rows) => `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(${rgb.r},${rgb.g},${rgb.b},0.04);border-radius:12px;overflow:hidden;margin:16px 0;border:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.08);">
     ${rows}
   </table>`,
     badge: (text, color = primaryColor) => `<span style="display:inline-block;padding:4px 12px;background:${color}20;color:${color};border-radius:8px;font-size:12px;font-weight:700;">${text}</span>`,
     icon: (emoji) => `<div style="text-align:center;margin-bottom:20px;"><span style="font-size:48px;">${emoji}</span></div>`,
-    accentBorder: () => `border-right:3px solid ${primaryColor};`,
+    accentBorder: () => `border-right:3px solid ${accent};`,
     accentBg: () => `background:rgba(${rgb.r},${rgb.g},${rgb.b},0.05);border:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.15);`,
   };
 }
@@ -72,7 +74,8 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
   const storeName = branding.storeName || 'المتجر';
   const logoUrl = branding.logoUrl || '';
   const primaryColor = branding.primaryColor || '#7c3aed';
-  const gradientEnd = darkenHex(primaryColor);
+  const secondaryColor = branding.secondaryColor || lightenHex(primaryColor, 40);
+  const rgb = hexToRgb(primaryColor);
   const isEn = branding.language === 'en';
   const dir = isEn ? 'ltr' : 'rtl';
   const lang = isEn ? 'en' : 'ar';
@@ -82,7 +85,7 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
   const contactUs = isEn ? 'Contact support' : 'تواصل مع الدعم';
 
   const supportLine = supportEmail
-    ? `<p style="margin:8px 0 0;font-size:11px;"><a href="mailto:${supportEmail}" style="color:${lightenHex(primaryColor)};text-decoration:none;">${contactUs}: ${supportEmail}</a></p>`
+    ? `<p style="margin:8px 0 0;font-size:11px;"><a href="mailto:${supportEmail}" style="color:${secondaryColor};text-decoration:none;">${contactUs}: ${supportEmail}</a></p>`
     : '';
 
   return `<!DOCTYPE html>
@@ -95,13 +98,16 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
 <body style="margin:0;padding:0;background:#0a0e1a;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e1a;padding:40px 0;">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111827;border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111827;border-radius:16px;border:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.12);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3),0 0 0 1px rgba(${rgb.r},${rgb.g},${rgb.b},0.06);">
 
 <!-- Header -->
-<tr><td style="background:linear-gradient(135deg,${primaryColor},${gradientEnd});padding:32px 40px;text-align:center;">
+<tr><td style="background:linear-gradient(135deg,${primaryColor},${secondaryColor});padding:32px 40px;text-align:center;">
   ${logoUrl ? `<img src="${logoUrl}" alt="${storeName}" style="max-height:48px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">` : ''}
-  <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">${storeName}</h1>
+  <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,0.15);">${storeName}</h1>
 </td></tr>
+
+<!-- Accent Line -->
+<tr><td style="height:3px;background:linear-gradient(90deg,${primaryColor},${secondaryColor},${primaryColor});font-size:0;line-height:0;">&nbsp;</td></tr>
 
 <!-- Content -->
 <tr><td style="padding:40px;">
@@ -109,7 +115,7 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
 </td></tr>
 
 <!-- Footer -->
-<tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;">
+<tr><td style="padding:24px 40px;border-top:1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.08);text-align:center;">
   ${footer || `<p style="margin:0;color:#6b7280;font-size:11px;">© ${new Date().getFullYear()} ${storeName}. ${allRights}</p>
   <p style="margin:6px 0 0;color:#4b5563;font-size:10px;">${autoMsg}</p>
   ${supportLine}`}
@@ -128,7 +134,7 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
 // ═══════════════════════════════════
 
 function welcomeAdmin({ name, siteName, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'مرحباً بك',
     branding,
@@ -148,7 +154,7 @@ function welcomeAdmin({ name, siteName, branding = {} }) {
 }
 
 function welcomeUser({ name, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const sName = branding.storeName || 'المتجر';
   return baseLayout({
     title: `مرحباً بك في ${sName}`,
@@ -167,7 +173,7 @@ function welcomeUser({ name, branding = {} }) {
 }
 
 function welcomeCustomer({ name, storeName, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const sName = storeName || branding.storeName || 'متجرنا';
   return baseLayout({
     title: `مرحباً بك في ${sName}`,
@@ -186,7 +192,7 @@ function welcomeCustomer({ name, storeName, branding = {} }) {
 }
 
 function passwordReset({ name, resetLink, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'إعادة تعيين كلمة المرور',
     branding,
@@ -205,7 +211,7 @@ function passwordReset({ name, resetLink, branding = {} }) {
 }
 
 function emailVerification({ name, code, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تأكيد البريد الإلكتروني',
     branding,
@@ -223,7 +229,7 @@ function emailVerification({ name, code, branding = {} }) {
 }
 
 function loginAlert({ name, ip, device, time, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تنبيه تسجيل دخول',
     branding,
@@ -244,7 +250,7 @@ function loginAlert({ name, ip, device, time, branding = {} }) {
 }
 
 function accountBlocked({ name, reason, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تعليق الحساب',
     branding,
@@ -261,7 +267,7 @@ function accountBlocked({ name, reason, branding = {} }) {
 }
 
 function accountUnblocked({ name, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'إعادة تفعيل الحساب',
     branding,
@@ -282,7 +288,7 @@ function accountUnblocked({ name, branding = {} }) {
 // ═══════════════════════════════════
 
 function orderConfirmation({ name, orderId, items, total, currency, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const itemsHtml = (items || []).map(item =>
     ui.infoRow(item.name || item.product_name || 'منتج', `${item.quantity || 1}x — ${currency || '$'}${item.price || 0}`)
   ).join('');
@@ -305,7 +311,7 @@ function orderConfirmation({ name, orderId, items, total, currency, branding = {
 }
 
 function newOrderAlert({ orderId, customerName, total, currency, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'طلب جديد',
     branding,
@@ -324,7 +330,7 @@ function newOrderAlert({ orderId, customerName, total, currency, branding = {} }
 }
 
 function orderStatusUpdate({ name, orderId, status, statusLabel, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const statusEmojis = {
     processing: '⏳',
     completed: '✅',
@@ -364,7 +370,7 @@ function orderStatusUpdate({ name, orderId, status, statusLabel, branding = {} }
 // ═══════════════════════════════════
 
 function paymentReceipt({ name, amount, currency, method, transactionId, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'إيصال الدفع',
     branding,
@@ -385,7 +391,7 @@ function paymentReceipt({ name, amount, currency, method, transactionId, brandin
 }
 
 function paymentFailed({ name, amount, currency, reason, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'فشل الدفع',
     branding,
@@ -403,7 +409,7 @@ function paymentFailed({ name, amount, currency, reason, branding = {} }) {
 }
 
 function paymentInstructions({ name, method, amount, currency, details, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تعليمات الدفع',
     branding,
@@ -422,7 +428,7 @@ function paymentInstructions({ name, method, amount, currency, details, branding
 }
 
 function bankReceiptReview({ orderId, customerName, amount, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'مراجعة إيصال بنكي',
     branding,
@@ -447,7 +453,7 @@ function bankReceiptReview({ orderId, customerName, amount, branding = {} }) {
 // ═══════════════════════════════════
 
 function newTicket({ ticketId, ticketSubject, customerName, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تذكرة دعم جديدة',
     branding,
@@ -466,7 +472,7 @@ function newTicket({ ticketId, ticketSubject, customerName, branding = {} }) {
 }
 
 function ticketReply({ name, ticketId, message, replierName, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'رد على تذكرة',
     branding,
@@ -484,7 +490,7 @@ function ticketReply({ name, ticketId, message, replierName, branding = {} }) {
 }
 
 function ticketClosed({ name, ticketId, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تم إغلاق التذكرة',
     branding,
@@ -506,7 +512,7 @@ function ticketClosed({ name, ticketId, branding = {} }) {
 // ═══════════════════════════════════
 
 function siteCreated({ name, siteName, siteKey, domain, plan, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تم إنشاء موقعك',
     branding,
@@ -533,7 +539,7 @@ function siteCreated({ name, siteName, siteKey, domain, plan, branding = {} }) {
 }
 
 function trialStarted({ name, siteName, trialDays, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'بدء الفترة التجريبية',
     branding,
@@ -553,7 +559,7 @@ function trialStarted({ name, siteName, trialDays, branding = {} }) {
 }
 
 function trialExpiring({ name, siteName, daysLeft, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'الفترة التجريبية تنتهي قريباً',
     branding,
@@ -571,7 +577,7 @@ function trialExpiring({ name, siteName, daysLeft, branding = {} }) {
 }
 
 function trialExpired({ name, siteName, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'انتهت الفترة التجريبية',
     branding,
@@ -589,7 +595,7 @@ function trialExpired({ name, siteName, branding = {} }) {
 }
 
 function subscriptionRenewed({ name, plan, nextBilling, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'تم تجديد الاشتراك',
     branding,
@@ -608,7 +614,7 @@ function subscriptionRenewed({ name, plan, nextBilling, branding = {} }) {
 }
 
 function subscriptionCancelled({ name, expiresAt, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   return baseLayout({
     title: 'إلغاء الاشتراك',
     branding,
@@ -632,7 +638,7 @@ function subscriptionCancelled({ name, expiresAt, branding = {} }) {
 // ═══════════════════════════════════
 
 function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const diff = (newBalance || 0) - (oldBalance || 0);
   const isDeposit = diff >= 0;
 
@@ -659,7 +665,7 @@ function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }
 // ═══════════════════════════════════
 
 function broadcast({ name, subject, message, branding = {} }) {
-  const ui = createUI(branding.primaryColor);
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
   const isEn = branding.language === 'en';
   const teamName = branding.storeName || (isEn ? 'Our Store' : 'المتجر');
   // Convert newlines to <br> for proper rendering

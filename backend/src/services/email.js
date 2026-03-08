@@ -57,6 +57,7 @@ class EmailService {
         storeName: custom.store_name || null,
         logoUrl: custom.logo_url || null,
         primaryColor: custom.primary_color || '#7c3aed',
+        secondaryColor: custom.secondary_color || null,
         supportEmail: custom.support_email || null,
         supportPhone: custom.support_phone || null,
         language: custom.store_language || 'ar',
