@@ -660,7 +660,7 @@ function broadcast({ name, subject, message, branding = {} }) {
       ${ui.text(`مرحباً ${name || ''},`)}
       <div style="margin:0 0 20px;color:#d1d5db;font-size:14px;line-height:1.8;">${formattedMessage}</div>
       ${ui.divider()}
-      ${ui.text('تم إرسال هذا الإعلان من فريق NEXIRO-FLUX')}
+      ${ui.text(`تم إرسال هذا الإعلان من فريق ${branding.storeName || 'المتجر'}`)}
     `,
   });
 }
