@@ -134,6 +134,7 @@ function HeroBanner() {
 
   return (
     <div
+      dir="rtl"
       className="hero-banner-container"
       style={{
         position: 'relative', borderRadius: 20, overflow: 'hidden',
@@ -280,7 +281,7 @@ function HeroBanner() {
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
             {t('تسوق الآن')}
-            <span style={{ transition: 'transform 0.3s' }}>{isRTL ? '←' : '→'}</span>
+            <span style={{ transition: 'transform 0.3s' }}>←</span>
           </button>
          </Link>
         </div>
