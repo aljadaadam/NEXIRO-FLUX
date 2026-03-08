@@ -73,9 +73,20 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
   const logoUrl = branding.logoUrl || '';
   const primaryColor = branding.primaryColor || '#7c3aed';
   const gradientEnd = darkenHex(primaryColor);
+  const isEn = branding.language === 'en';
+  const dir = isEn ? 'ltr' : 'rtl';
+  const lang = isEn ? 'en' : 'ar';
+  const supportEmail = branding.supportEmail || '';
+  const allRights = isEn ? 'All rights reserved.' : 'جميع الحقوق محفوظة.';
+  const autoMsg = isEn ? 'This is an automated message — please do not reply directly.' : 'هذه رسالة تلقائية — لا ترد عليها مباشرة.';
+  const contactUs = isEn ? 'Contact support' : 'تواصل مع الدعم';
+
+  const supportLine = supportEmail
+    ? `<p style="margin:8px 0 0;font-size:11px;"><a href="mailto:${supportEmail}" style="color:${lightenHex(primaryColor)};text-decoration:none;">${contactUs}: ${supportEmail}</a></p>`
+    : '';
 
   return `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="${lang}" dir="${dir}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -90,7 +101,6 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
 <tr><td style="background:linear-gradient(135deg,${primaryColor},${gradientEnd});padding:32px 40px;text-align:center;">
   ${logoUrl ? `<img src="${logoUrl}" alt="${storeName}" style="max-height:48px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">` : ''}
   <h1 style="margin:0;color:#fff;font-size:24px;font-weight:800;letter-spacing:-0.5px;">${storeName}</h1>
-  ${!branding.storeName ? '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">منصة بناء المواقع الاحترافية</p>' : ''}
 </td></tr>
 
 <!-- Content -->
@@ -100,8 +110,9 @@ function baseLayout({ title, content, footer = '', branding = {} }) {
 
 <!-- Footer -->
 <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;">
-  ${footer || `<p style="margin:0;color:#6b7280;font-size:11px;">© ${new Date().getFullYear()} ${storeName}. جميع الحقوق محفوظة.</p>
-  <p style="margin:6px 0 0;color:#4b5563;font-size:10px;">هذه رسالة تلقائية — لا ترد عليها مباشرة.</p>`}
+  ${footer || `<p style="margin:0;color:#6b7280;font-size:11px;">© ${new Date().getFullYear()} ${storeName}. ${allRights}</p>
+  <p style="margin:6px 0 0;color:#4b5563;font-size:10px;">${autoMsg}</p>
+  ${supportLine}`}
 </td></tr>
 
 </table>
@@ -649,6 +660,8 @@ function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }
 
 function broadcast({ name, subject, message, branding = {} }) {
   const ui = createUI(branding.primaryColor);
+  const isEn = branding.language === 'en';
+  const teamName = branding.storeName || (isEn ? 'Our Store' : 'المتجر');
   // Convert newlines to <br> for proper rendering
   const formattedMessage = (message || '').replace(/\n/g, '<br>');
   return baseLayout({
@@ -657,10 +670,11 @@ function broadcast({ name, subject, message, branding = {} }) {
     content: `
       ${ui.icon('📢')}
       ${ui.heading(subject)}
-      ${ui.text(`مرحباً ${name || ''},`)}
+      ${ui.text(`${isEn ? 'Hello' : 'مرحباً'} ${name || ''},`)}
       <div style="margin:0 0 20px;color:#d1d5db;font-size:14px;line-height:1.8;">${formattedMessage}</div>
       ${ui.divider()}
-      ${ui.text(`تم إرسال هذا الإعلان من فريق ${branding.storeName || 'المتجر'}`)}
+      ${ui.text(isEn ? `This announcement was sent by the ${teamName} team` : `تم إرسال هذا الإعلان من فريق ${teamName}`)}
+      <p style="margin:8px 0 0;color:#4b5563;font-size:10px;">${isEn ? 'If you no longer wish to receive these emails, contact support to unsubscribe.' : 'إذا لم تعد ترغب في استلام هذه الرسائل، تواصل مع الدعم لإلغاء الاشتراك.'}</p>
     `,
   });
 }
