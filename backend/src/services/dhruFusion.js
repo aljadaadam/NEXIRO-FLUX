@@ -199,10 +199,10 @@ class DhruFusionClient {
 
     // ─── CUSTOMFIELD: حقول مخصصة → JSON → Base64 داخل XML ───
     if (customFields && typeof customFields === 'object' && Object.keys(customFields).length > 0) {
-      // تحويل المفاتيح: Player_ID → Player ID (مسافة بدل underscore)
+      // نُرسل المفاتيح كما هي بدون تعديل — API الخارجي يتوقعها بصيغتها الأصلية
       const cleanFields = {};
       for (const [key, value] of Object.entries(customFields)) {
-        cleanFields[key.replace(/_/g, ' ')] = String(value);
+        cleanFields[key] = String(value);
       }
       const jsonStr = JSON.stringify(cleanFields);
       const base64 = Buffer.from(jsonStr).toString('base64');
