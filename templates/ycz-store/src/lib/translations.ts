@@ -299,7 +299,6 @@ const en: Record<string, string> = {
   'استعادة كلمة المرور': 'Reset Password',
   'أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور': 'Enter your email to reset your password',
   'إرسال رابط الاستعادة': 'Send Reset Link',
-  'جاري الإرسال...': 'Sending...',
   'تم إرسال رابط الاستعادة إلى بريدك الإلكتروني': 'Reset link has been sent to your email',
   'إعادة تعيين كلمة المرور': 'Reset Password',
   'أدخل كلمة المرور الجديدة': 'Enter new password',
