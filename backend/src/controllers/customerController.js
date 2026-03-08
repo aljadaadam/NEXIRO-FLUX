@@ -6,9 +6,12 @@ const { generateToken } = require('../utils/token');
 const emailService = require('../services/email');
 
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 // ─── OTP store (in-memory, short-lived) ───
-const otpStore = new Map(); // key: `${siteKey}:${email}` → { code, expires, customerId, attempts }
+const otpStore = new Map();
+// ─── Reset-token store (in-memory, short-lived) ───
+const customerResetTokens = new Map(); // key: `${siteKey}:${email}` → { code, expires, customerId, attempts }
 
 // تسجيل زبون جديد
 async function registerCustomer(req, res) {
@@ -469,6 +472,105 @@ async function updateCustomerVerification(req, res) {
   }
 }
 
+// ─── نسيت كلمة المرور (زبون) ───
+async function forgotCustomerPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'البريد الإلكتروني مطلوب', errorEn: 'Email is required' });
+    }
+
+    const siteKey = req.siteKey;
+    if (!siteKey) {
+      return res.status(400).json({ error: 'لم يتم تحديد الموقع', errorEn: 'Site not identified' });
+    }
+
+    const customer = await Customer.findByEmailAndSite(email.toLowerCase().trim(), siteKey);
+
+    // Always respond with success (don't reveal if email exists)
+    if (!customer) {
+      return res.json({
+        message: 'إذا كان البريد مسجلاً لدينا، سيتم إرسال رابط إعادة تعيين كلمة المرور',
+        messageEn: 'If this email is registered, a password reset link will be sent'
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    customerResetTokens.set(resetToken, {
+      email: customer.email,
+      site_key: siteKey,
+      customerId: customer.id,
+      expires: Date.now() + 30 * 60 * 1000 // 30 minutes
+    });
+
+    const baseUrl = req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || '';
+    const resetLink = `${baseUrl}/profile?reset_token=${resetToken}`;
+
+    emailService.sendPasswordReset({
+      to: customer.email,
+      name: customer.name,
+      resetLink,
+      siteKey,
+    }).catch(e => console.error('Password reset email error:', e.message));
+
+    res.json({
+      message: 'إذا كان البريد مسجلاً لدينا، سيتم إرسال رابط إعادة تعيين كلمة المرور',
+      messageEn: 'If this email is registered, a password reset link will be sent'
+    });
+
+  } catch (error) {
+    console.error('Error in forgotCustomerPassword:', error);
+    res.status(500).json({ error: 'حدث خطأ، حاول لاحقاً', errorEn: 'An error occurred, try again later' });
+  }
+}
+
+// ─── إعادة تعيين كلمة المرور (زبون) ───
+async function resetCustomerPassword(req, res) {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'الرمز وكلمة المرور مطلوبان', errorEn: 'Token and password are required' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل', errorEn: 'Password must be at least 8 characters' });
+    }
+
+    const tokenData = customerResetTokens.get(token);
+    if (!tokenData) {
+      return res.status(400).json({ error: 'رابط إعادة التعيين غير صالح أو منتهي', errorEn: 'Reset link is invalid or expired' });
+    }
+
+    if (tokenData.expires < Date.now()) {
+      customerResetTokens.delete(token);
+      return res.status(400).json({ error: 'انتهت صلاحية رابط إعادة التعيين', errorEn: 'Reset link has expired' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const pool = require('../config/db').getPool();
+    const [result] = await pool.query(
+      'UPDATE customers SET password = ? WHERE id = ? AND site_key = ?',
+      [hashedPassword, tokenData.customerId, tokenData.site_key]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ error: 'فشل تحديث كلمة المرور', errorEn: 'Failed to update password' });
+    }
+
+    customerResetTokens.delete(token);
+
+    res.json({
+      message: 'تم إعادة تعيين كلمة المرور بنجاح',
+      messageEn: 'Password has been reset successfully'
+    });
+
+  } catch (error) {
+    console.error('Error in resetCustomerPassword:', error);
+    res.status(500).json({ error: 'حدث خطأ، حاول لاحقاً', errorEn: 'An error occurred, try again later' });
+  }
+}
+
 module.exports = {
   registerCustomer,
   loginCustomer,
@@ -483,4 +585,6 @@ module.exports = {
   getCustomerNotifications,
   markCustomerNotificationRead,
   updateCustomerVerification,
+  forgotCustomerPassword,
+  resetCustomerPassword,
 };

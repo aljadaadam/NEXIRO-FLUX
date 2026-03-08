@@ -396,6 +396,8 @@ export const storeApi = {
   login: (data: { email: string; password: string }) => customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data: { name: string; email: string; password: string; phone?: string }) => customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
   verifyOtp: (data: { email: string; code: string }) => customerFetch('/customers/verify-otp', { method: 'POST', body: JSON.stringify(data) }),
+  forgotPassword: (data: { email: string }) => customerFetch('/customers/forgot-password', { method: 'POST', body: JSON.stringify(data) }),
+  resetPassword: (data: { token: string; password: string }) => customerFetch('/customers/reset-password', { method: 'POST', body: JSON.stringify(data) }),
   chargeWallet: (data: { amount: number; payment_method: string; description?: string }) => customerFetch('/customers/payments', { method: 'POST', body: JSON.stringify({ type: 'deposit', ...data }) }),
   getEnabledGateways: () => {
     if (isDemoMode()) {

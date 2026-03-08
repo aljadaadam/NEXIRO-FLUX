@@ -292,6 +292,25 @@ const en: Record<string, string> = {
   'جاري الحفظ...': 'Saving...',
   'فشل حفظ البيانات. تأكد من تسجيل الدخول.': 'Failed to save data. Make sure you are logged in.',
 
+  // ─── Forgot / Reset Password ───
+  'نسيت كلمة المرور؟': 'Forgot Password?',
+  'تأكيد كلمة المرور': 'Confirm Password',
+  'كلمات المرور غير متطابقة': 'Passwords do not match',
+  'استعادة كلمة المرور': 'Reset Password',
+  'أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور': 'Enter your email to reset your password',
+  'إرسال رابط الاستعادة': 'Send Reset Link',
+  'جاري الإرسال...': 'Sending...',
+  'تم إرسال رابط الاستعادة إلى بريدك الإلكتروني': 'Reset link has been sent to your email',
+  'إعادة تعيين كلمة المرور': 'Reset Password',
+  'أدخل كلمة المرور الجديدة': 'Enter new password',
+  'تأكيد كلمة المرور الجديدة': 'Confirm new password',
+  'تحديث كلمة المرور': 'Update Password',
+  'جاري التحديث...': 'Updating...',
+  'تم تعيين كلمة المرور بنجاح': 'Password has been reset successfully',
+  'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة': 'You can now log in with your new password',
+  'رابط غير صالح أو منتهي الصلاحية': 'Invalid or expired link',
+  'كلمة المرور يجب أن تكون 8 أحرف على الأقل': 'Password must be at least 8 characters',
+
   // ─── Privacy Page ───
   'العودة للرئيسية': 'Back to Home',
   'آخر تحديث: فبراير 2026': 'Last updated: February 2026',

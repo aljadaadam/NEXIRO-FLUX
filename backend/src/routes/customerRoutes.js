@@ -4,6 +4,8 @@ const {
   registerCustomer,
   loginCustomer,
   verifyOtp,
+  forgotCustomerPassword,
+  resetCustomerPassword,
   getMyCustomerProfile,
   updateMyCustomerProfile,
   getAllCustomers,
@@ -27,6 +29,8 @@ router.use(validateSite);
 router.post('/register', registerCustomer);
 router.post('/login', loginCustomer);
 router.post('/verify-otp', verifyOtp);
+router.post('/forgot-password', forgotCustomerPassword);
+router.post('/reset-password', resetCustomerPassword);
 
 // ===== Middleware: تتبع آخر نشاط للزبون + كشف الدولة تلقائياً =====
 const Customer = require('../models/Customer');

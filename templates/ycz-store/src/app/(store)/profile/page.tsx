@@ -1001,11 +1001,19 @@ export default function ProfilePage() {
   // Auth form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
+  // Forgot / Reset password state
+  const [forgotStep, setForgotStep] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   const [transactions, setTransactions] = useState<{ id: string; type: string; amount: string; method: string; date: string; status: string; statusColor: string; statusBg: string }[]>([]);
   const [walletStats, setWalletStats] = useState({ totalDeposits: 0, totalPurchases: 0, totalRefunded: 0 });
@@ -1037,6 +1045,14 @@ export default function ProfilePage() {
       loadProfile();
       loadNotifications();
       return;
+    }
+    // Check for password reset token in URL
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rt = urlParams.get('reset_token');
+      if (rt) {
+        setResetToken(rt);
+      }
     }
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (token) {
@@ -1239,6 +1255,10 @@ export default function ProfilePage() {
     setAuthLoading(true);
     setAuthError('');
     try {
+      if (tab === 'register' && password !== confirmPassword) {
+        setAuthError(t('كلمات المرور غير متطابقة'));
+        return;
+      }
       let res;
       if (tab === 'login') {
         res = await storeApi.login({ email, password });
@@ -1302,6 +1322,55 @@ export default function ProfilePage() {
     setView('menu');
   }
 
+  async function handleForgotPassword() {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const res = await storeApi.forgotPassword({ email });
+      if (res?.error) {
+        setAuthError(res.error);
+      } else {
+        setForgotSent(true);
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || t('فشل الاتصال بالخادم'));
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      if (resetNewPassword !== resetConfirm) {
+        setAuthError(t('كلمات المرور غير متطابقة'));
+        return;
+      }
+      if (resetNewPassword.length < 8) {
+        setAuthError(t('كلمة المرور يجب أن تكون 8 أحرف على الأقل'));
+        return;
+      }
+      const res = await storeApi.resetPassword({ token: resetToken, password: resetNewPassword });
+      if (res?.error) {
+        setAuthError(res.errorEn || res.error);
+      } else {
+        setResetSuccess(true);
+        setResetToken('');
+        // Clean URL
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('reset_token');
+          window.history.replaceState({}, '', url.toString());
+        }
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || t('فشل الاتصال بالخادم'));
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   // ─── Login / Register (Demo-style tabs) ───
   if (!isLoggedIn) {
     // ─── تنبيه الحساب المحظور ───
@@ -1310,6 +1379,75 @@ export default function ProfilePage() {
       // مسح العلامة بعد عرضها مرة واحدة
       sessionStorage.removeItem('account_blocked');
     }
+    // ─── Reset Password Step (from email link) ───
+    if (resetToken) {
+      return (
+        <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}22, ${currentTheme.primary}11)`, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <Shield size={26} color={currentTheme.primary} />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'inherit' }}>{t('إعادة تعيين كلمة المرور')}</h3>
+            {resetSuccess ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>{t('تم تعيين كلمة المرور بنجاح')}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'inherit' }}>{t('يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة')}</p>
+                <button onClick={() => { setResetSuccess(false); setResetToken(''); setAuthError(''); }} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {t('تسجيل الدخول')}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <input value={resetNewPassword} onChange={e => setResetNewPassword(e.target.value)} type="password" placeholder={t('أدخل كلمة المرور الجديدة')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+                <input value={resetConfirm} onChange={e => setResetConfirm(e.target.value)} type="password" placeholder={t('تأكيد كلمة المرور الجديدة')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+                <button onClick={handleResetPassword} disabled={authLoading || !resetNewPassword || !resetConfirm} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: (authLoading || !resetNewPassword || !resetConfirm) ? 0.6 : 1 }}>
+                  {authLoading ? t('جاري التحديث...') : t('تحديث كلمة المرور')}
+                </button>
+                <button onClick={() => { setResetToken(''); setAuthError(''); if (typeof window !== 'undefined') { const url = new URL(window.location.href); url.searchParams.delete('reset_token'); window.history.replaceState({}, '', url.toString()); } }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {t('← رجوع لتسجيل الدخول')}
+                </button>
+                {authError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{authError}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Forgot Password Step ───
+    if (forgotStep) {
+      return (
+        <div style={{ maxWidth: 420, margin: '0 auto', padding: '2rem 1rem' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '2rem', border: '1px solid var(--border-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: `linear-gradient(135deg, ${currentTheme.primary}22, ${currentTheme.primary}11)`, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <Shield size={26} color={currentTheme.primary} />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'inherit' }}>{t('استعادة كلمة المرور')}</h3>
+            {forgotSent ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>{t('تم إرسال رابط الاستعادة إلى بريدك الإلكتروني')}</p>
+                <button onClick={() => { setForgotStep(false); setForgotSent(false); setAuthError(''); }} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {t('← رجوع لتسجيل الدخول')}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 4, fontFamily: 'inherit' }}>{t('أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور')}</p>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t('البريد الإلكتروني')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+                <button onClick={handleForgotPassword} disabled={authLoading || !email} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: (authLoading || !email) ? 0.6 : 1 }}>
+                  {authLoading ? t('جاري الإرسال...') : t('إرسال رابط الاستعادة')}
+                </button>
+                <button onClick={() => { setForgotStep(false); setAuthError(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {t('← رجوع لتسجيل الدخول')}
+                </button>
+                {authError && <p style={{ color: '#ef4444', fontSize: '0.78rem', textAlign: 'center' }}>{authError}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     // ─── OTP Verification Step ───
     if (otpStep) {
       return (
@@ -1384,6 +1522,14 @@ export default function ProfilePage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {tab === 'register' && (
+              <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder={t('تأكيد كلمة المرور')} style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid var(--border-default)', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none' }} />
+            )}
+            {tab === 'login' && (
+              <button type="button" onClick={() => { setForgotStep(true); setAuthError(''); }} style={{ background: 'none', border: 'none', color: currentTheme.primary, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'right', padding: 0 }}>
+                {t('نسيت كلمة المرور؟')}
+              </button>
+            )}
             <button onClick={handleAuth} disabled={authLoading} style={{ padding: '0.75rem', borderRadius: btnR, background: currentTheme.primary, color: '#fff', border: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: authLoading ? 0.7 : 1 }}>
               {authLoading ? t('جاري...') : tab === 'login' ? t('دخول') : t('إنشاء حساب')}
             </button>
