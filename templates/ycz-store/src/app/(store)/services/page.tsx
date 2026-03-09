@@ -100,7 +100,10 @@ function OrderModal({ product, onClose }: { product: Product; onClose: () => voi
       const otherFields = Object.fromEntries(
         Object.entries(formValues)
           .filter(([k, v]) => k !== 'imei' && String(v || '').trim().length > 0)
-          .map(([k, v]) => [k, String(v).trim()])
+          .map(([k, v]) => {
+            const field = orderFields.find(f => f.key === k);
+            return [field?.originalKey || k, String(v).trim()];
+          })
       );
 
       const notes = Object.keys(otherFields).length > 0

@@ -187,7 +187,7 @@ export const adminApi = {
 
 // ─── تحويل منتج الباكند لشكل الفرونت ───
 export function mapBackendProduct(p: Record<string, unknown>): Record<string, unknown> {
-  type ProductCustomField = { key: string; label: string; placeholder: string; required: boolean };
+  type ProductCustomField = { key: string; originalKey: string; label: string; placeholder: string; required: boolean };
   const parseMaybeJson = (v: unknown): unknown => {
     if (typeof v !== 'string') return v;
     try { return JSON.parse(v); } catch { return v; }
@@ -196,9 +196,10 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
   const normalizeFieldDef = (field: unknown, index: number): ProductCustomField | null => {
     if (!field) return null;
     if (typeof field === 'string') {
-      const key = field.trim();
-      if (!key) return null;
-      return { key, label: key, placeholder: `أدخل ${key}`, required: true };
+      const raw = field.trim();
+      if (!raw) return null;
+      const key = raw.replace(/\s+/g, '_');
+      return { key, originalKey: raw, label: raw, placeholder: `أدخل ${raw}`, required: true };
     }
     if (typeof field === 'object') {
       const f = field as Record<string, unknown>;
@@ -213,6 +214,7 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
         `حقل ${index + 1}`
       ).trim();
       const rawKey = String(f.key || f.fieldname || f.name || f.field || f.id || `field_${index + 1}`).trim();
+      const originalKey = rawKey;
       const key = rawKey.replace(/\s+/g, '_');
       const requiredValue = f.required;
       const required =
@@ -222,6 +224,7 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
 
       return {
         key,
+        originalKey,
         label,
         placeholder: String(f.placeholder || f.description || `أدخل ${label}`),
         required,
@@ -268,6 +271,7 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
     if (!alreadyExists) {
       customFields.push({
         key: 'imei',
+        originalKey: 'imei',
         label: imeiLabel,
         placeholder: cj.custominfo ? String(cj.custominfo) : `أدخل ${imeiLabel}`,
         required: true,
@@ -280,6 +284,7 @@ export function mapBackendProduct(p: Record<string, unknown>): Record<string, un
     if (!alreadyExists) {
       customFields.push({
         key: 'imei',
+        originalKey: 'imei',
         label: 'رقم IMEI',
         placeholder: 'مثال: 356938035643809',
         required: true,

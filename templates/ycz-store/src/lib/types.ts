@@ -33,6 +33,7 @@ export interface Product {
   custom_json?: unknown;
   customFields?: Array<{
     key: string;
+    originalKey?: string;
     label: string;
     placeholder?: string;
     required?: boolean;
