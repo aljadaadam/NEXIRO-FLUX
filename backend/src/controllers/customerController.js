@@ -207,17 +207,25 @@ async function updateCustomerWallet(req, res) {
     const { id } = req.params;
     const { amount, reason } = req.body;
 
-    if (!amount || isNaN(amount)) {
+    if (!amount || isNaN(amount) || parseFloat(amount) === 0) {
       return res.status(400).json({ error: 'المبلغ مطلوب' });
     }
 
-    // Prevent negative amounts (wallet drain attack)
-    if (parseFloat(amount) < 0) {
-      return res.status(400).json({ error: 'المبلغ يجب أن يكون موجباً' });
+    // Cap maximum single operation (add or deduct)
+    if (Math.abs(parseFloat(amount)) > 10000) {
+      return res.status(400).json({ error: 'الحد الأقصى للعملية هو $10,000' });
     }
-    // Cap maximum single top-up
-    if (parseFloat(amount) > 10000) {
-      return res.status(400).json({ error: 'الحد الأقصى للشحن هو $10,000' });
+
+    // For deductions, ensure wallet won't go negative
+    if (parseFloat(amount) < 0) {
+      const customer = await Customer.findById(id);
+      if (!customer || customer.site_key !== site_key) {
+        return res.status(404).json({ error: 'الزبون غير موجود' });
+      }
+      const currentBalance = parseFloat(customer.wallet_balance) || 0;
+      if (currentBalance + parseFloat(amount) < 0) {
+        return res.status(400).json({ error: `الرصيد غير كافٍ. الرصيد الحالي: $${currentBalance.toFixed(2)}` });
+      }
     }
 
     const success = await Customer.updateWallet(id, site_key, parseFloat(amount));
