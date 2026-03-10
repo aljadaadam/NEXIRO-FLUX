@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Send, Loader2, CheckCircle2, XCircle, Mail, Users, User, Trash2,
   Plus, X, Inbox, Clock, ChevronDown, Megaphone, Search, AlertTriangle,
-  Image, FileText
+  Image, FileText, Eye, EyeOff
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -47,6 +47,7 @@ export default function AdminBroadcasts() {
   const [bannerTemplates, setBannerTemplates] = useState([]);
   const [selectedBanner, setSelectedBanner] = useState(null);
   const [loadingBanners, setLoadingBanners] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const fetchBroadcasts = useCallback(async () => {
     setLoading(true);
@@ -568,7 +569,7 @@ export default function AdminBroadcasts() {
             />
           </div>
 
-          {/* Send Button */}
+          {/* Preview Toggle + Send Button */}
           <div className="flex items-center justify-between pt-2">
             <p className="text-dark-500 text-xs">
               {recipientType === 'all_users'
@@ -579,15 +580,144 @@ export default function AdminBroadcasts() {
                 ? (isRTL ? `سيصل إلى ${segments.non_subscribers} غير مشترك` : `Will reach ${segments.non_subscribers} non-subscribers`)
                 : (isRTL ? `${selectedRecipients.length} مستلم محدد` : `${selectedRecipients.length} recipients selected`)}
             </p>
-            <button
-              onClick={handleSend}
-              disabled={sending}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {isRTL ? 'إرسال الإعلان' : 'Send Broadcast'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                  showPreview
+                    ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+                    : 'bg-white/5 text-dark-400 border-white/5 hover:text-white hover:border-white/10'
+                }`}
+              >
+                {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {isRTL ? 'معاينة' : 'Preview'}
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isRTL ? 'إرسال الإعلان' : 'Send Broadcast'}
+              </button>
+            </div>
           </div>
+
+          {/* ═══ Email Preview ═══ */}
+          {showPreview && (
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-3.5 h-3.5 text-dark-400" />
+                <span className="text-xs text-dark-400">{isRTL ? 'معاينة البريد الإلكتروني' : 'Email Preview'}</span>
+              </div>
+              <div className="rounded-2xl border border-white/10 overflow-hidden bg-[#0b0f19]">
+                {/* Email header bar */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-[#111827] border-b border-white/5">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                  </div>
+                  <div className="flex-1 text-center">
+                    <p className="text-dark-500 text-[10px] truncate m-0">{subject || (isRTL ? 'عنوان البريد' : 'Email Subject')}</p>
+                  </div>
+                </div>
+
+                {/* Email body */}
+                <div className="p-6" style={{ background: 'linear-gradient(135deg, #0b0f19 0%, #111827 100%)' }}>
+                  {/* Gradient Header */}
+                  <div
+                    className="rounded-t-xl p-6 text-center"
+                    style={{
+                      background: templateType === 'banner_promo' && selectedBanner?.design_data?.gradient
+                        ? selectedBanner.design_data.gradient
+                        : 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)'
+                    }}
+                  >
+                    <div className="text-3xl mb-2">{templateType === 'banner_promo' ? '🎨' : '📢'}</div>
+                    <h3 className="text-white text-lg font-bold m-0">
+                      {templateType === 'banner_promo'
+                        ? (selectedBanner?.name || (isRTL ? 'بانر جديد متاح الآن!' : 'New Banner Available!'))
+                        : (subject || (isRTL ? 'عنوان الإعلان' : 'Broadcast Title'))}
+                    </h3>
+                  </div>
+
+                  {/* Content area */}
+                  <div className="bg-[#161b22] rounded-b-xl p-5 border border-white/5 border-t-0">
+                    <p className="text-dark-400 text-sm mb-3 m-0">
+                      {isRTL ? 'مرحباً [اسم المستلم],' : 'Hello [Recipient Name],'}
+                    </p>
+
+                    {/* Custom message */}
+                    {message.trim() && (
+                      <div className="text-dark-300 text-sm leading-relaxed mb-4 whitespace-pre-wrap">
+                        {message}
+                      </div>
+                    )}
+
+                    {/* Banner Preview Card (banner_promo only) */}
+                    {templateType === 'banner_promo' && selectedBanner && (() => {
+                      const design = selectedBanner.design_data || {};
+                      const gradient = design.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
+                      const badges = design.badges || [];
+                      return (
+                        <div className="rounded-xl overflow-hidden border border-white/10 my-4">
+                          <div className="p-5 text-center" style={{ background: gradient }}>
+                            {design.icon && <div className="text-3xl mb-2">{design.icon}</div>}
+                            <h4 className="text-white text-base font-bold m-0">{design.title || selectedBanner.name}</h4>
+                            {design.subtitle && <p className="text-white/70 text-xs mt-1 m-0">{design.subtitle}</p>}
+                            {badges.length > 0 && (
+                              <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                                {badges.map((b, i) => (
+                                  <span key={i} className="inline-block px-3 py-1 bg-white/15 text-white rounded-full text-[10px] font-semibold">{b}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {design.image_url && (
+                            <div className="bg-[#0d1117] p-4 text-center">
+                              <img src={design.image_url} alt={selectedBanner.name} className="max-w-full max-h-48 mx-auto rounded-lg object-contain" />
+                            </div>
+                          )}
+                          <div className="bg-[#161b22] p-4">
+                            {design.description && <p className="text-dark-400 text-xs leading-relaxed m-0 mb-2">{design.description}</p>}
+                            <div className="text-center">
+                              <span className="inline-block px-5 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
+                                {selectedBanner.price > 0 ? `$${Number(selectedBanner.price).toFixed(2)}` : (isRTL ? 'مجاني' : 'Free')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Text-only placeholder */}
+                    {templateType === 'text' && !message.trim() && (
+                      <div className="text-dark-500 text-sm italic">
+                        {isRTL ? 'نص الرسالة سيظهر هنا...' : 'Message content will appear here...'}
+                      </div>
+                    )}
+
+                    {/* CTA Button */}
+                    <div className="text-center mt-5">
+                      <span className="inline-block px-6 py-2.5 rounded-lg text-white text-sm font-semibold" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' }}>
+                        {templateType === 'banner_promo'
+                          ? (isRTL ? 'تصفح متجر البانرات' : 'Browse Banner Store')
+                          : (isRTL ? 'زيارة المنصة' : 'Visit Platform')}
+                      </span>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-white/5 mt-5 pt-4">
+                      <p className="text-dark-500 text-[10px] text-center m-0">
+                        {isRTL ? 'تم إرسال هذا الإعلان من فريق NEXIRO-FLUX' : 'This announcement was sent by NEXIRO-FLUX team'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
