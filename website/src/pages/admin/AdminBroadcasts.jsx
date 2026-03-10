@@ -658,33 +658,72 @@ export default function AdminBroadcasts() {
                     {templateType === 'banner_promo' && selectedBanner && (() => {
                       const gradient = selectedBanner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
                       const badges = selectedBanner.badges || [];
+                      const isBottom = selectedBanner.imagePosition === 'bottom';
                       return (
-                        <div className="rounded-xl overflow-hidden border border-white/10 my-4">
-                          <div className="p-5 text-center" style={{ background: gradient }}>
-                            {selectedBanner.icon && <div className="text-3xl mb-2">{selectedBanner.icon}</div>}
-                            <h4 className="text-white text-base font-bold m-0">{selectedBanner.title || selectedBanner.name}</h4>
-                            {selectedBanner.subtitle && <p className="text-white/70 text-xs mt-1 m-0">{selectedBanner.subtitle}</p>}
-                            {badges.length > 0 && (
-                              <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-                                {badges.map((b, i) => (
-                                  <span key={i} className="inline-block px-3 py-1 bg-white/15 text-white rounded-full text-[10px] font-semibold">{b}</span>
-                                ))}
-                              </div>
+                        <div className="rounded-2xl overflow-hidden border border-white/10 my-4" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+                          {/* Banner Hero - like the real store banner */}
+                          <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl' }}>
+                            {/* Background image overlay */}
+                            {selectedBanner.bg_image && (
+                              <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: `url(${selectedBanner.bg_image})` }} />
                             )}
-                          </div>
-                          {selectedBanner.image_url && (
-                            <div className="bg-[#0d1117] p-4 text-center">
-                              <img src={selectedBanner.image_url} alt={selectedBanner.name} className="max-w-full max-h-48 mx-auto rounded-lg object-contain" />
+                            {/* Dark gradient overlay */}
+                            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.3) 100%)' }} />
+                            {/* Content */}
+                            <div className={`relative z-10 flex ${isBottom ? 'flex-col' : 'items-center'} gap-4 p-6`}>
+                              {/* Text side */}
+                              <div className="flex-1">
+                                {selectedBanner.title && (
+                                  <span className="inline-block px-3 py-1 bg-white/[0.18] text-white rounded-xl text-[11px] font-bold mb-2">
+                                    {selectedBanner.title}
+                                  </span>
+                                )}
+                                <h4 className="text-white text-lg font-extrabold m-0 leading-snug">
+                                  {selectedBanner.subtitle || selectedBanner.name}
+                                </h4>
+                                {selectedBanner.description && (
+                                  <p className="text-white/60 text-[11px] leading-relaxed mt-2 m-0 max-w-[300px]">{selectedBanner.description}</p>
+                                )}
+                                {badges.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mt-3">
+                                    {badges.map((b, i) => (
+                                      <span key={i} className="inline-block px-3 py-1 bg-white/[0.18] text-white rounded-full text-[10px] font-semibold">{b}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {/* Product image */}
+                              {selectedBanner.image_url && !isBottom && (
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={selectedBanner.image_url}
+                                    alt={selectedBanner.name}
+                                    className="object-contain rounded-2xl"
+                                    style={{ maxWidth: 120, maxHeight: 120, filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}
+                                  />
+                                </div>
+                              )}
+                              {/* Bottom position image */}
+                              {selectedBanner.image_url && isBottom && (
+                                <div className="text-center">
+                                  <img
+                                    src={selectedBanner.image_url}
+                                    alt={selectedBanner.name}
+                                    className="object-contain mx-auto rounded-2xl"
+                                    style={{ maxWidth: 140, maxHeight: 120, filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}
+                                  />
+                                </div>
+                              )}
                             </div>
-                          )}
-                          <div className="bg-[#161b22] p-4">
-                            {selectedBanner.description && <p className="text-dark-400 text-xs leading-relaxed m-0 mb-2">{selectedBanner.description}</p>}
-                            <div className="text-center">
-                              <span className="inline-block px-5 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
-                                {selectedBanner.price > 0 ? `$${Number(selectedBanner.price).toFixed(2)}` : (isRTL ? 'مجاني' : 'Free')}
+                          </div>
+                          {/* Price bar */}
+                          {selectedBanner.price > 0 && (
+                            <div className="bg-[#0d1117] py-3 text-center">
+                              <span className="inline-block px-6 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
+                                ${Number(selectedBanner.price).toFixed(2)}
                               </span>
                             </div>
-                          </div>
+                          )}
                         </div>
                       );
                     })()}

@@ -697,18 +697,54 @@ function bannerPromo({ name, banner, customMessage, branding = {} }) {
   const subtitle = banner.subtitle || '';
   const description = banner.description || '';
   const imageUrl = banner.image_url || banner.preview_image || '';
+  const bgImage = banner.bg_image || '';
   const gradient = banner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
   const badges = banner.badges || [];
   const price = banner.price || 0;
+  const isBottom = banner.imagePosition === 'bottom';
   const formattedMessage = (customMessage || '').replace(/\n/g, '<br>');
 
   const badgesHtml = badges.length > 0
-    ? `<div style="text-align:center;margin:16px 0;">${badges.map(b => `<span style="display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.15);color:#fff;border-radius:20px;font-size:12px;font-weight:600;margin:0 4px 8px;">${b}</span>`).join('')}</div>`
+    ? `<div style="margin:14px 0 0;">${badges.map(b => `<span style="display:inline-block;padding:5px 14px;background:rgba(255,255,255,0.18);color:#fff;border-radius:20px;font-size:11px;font-weight:600;margin:0 3px 6px;backdrop-filter:blur(4px);">${b}</span>`).join('')}</div>`
     : '';
 
   const priceHtml = price > 0
-    ? `<div style="text-align:center;margin:12px 0;"><span style="display:inline-block;padding:8px 24px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:12px;font-size:16px;font-weight:700;">$${Number(price).toFixed(2)}</span></div>`
-    : `<div style="text-align:center;margin:12px 0;"><span style="display:inline-block;padding:8px 24px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:12px;font-size:16px;font-weight:700;">مجاني</span></div>`;
+    ? `<div style="text-align:center;margin:16px 0 8px;"><span style="display:inline-block;padding:8px 28px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:12px;font-size:18px;font-weight:700;">$${Number(price).toFixed(2)}</span></div>`
+    : '';
+
+  // Build the banner card to look like the actual store banner
+  const productImageHtml = imageUrl
+    ? `<td style="width:${isBottom ? '120' : '140'}px;vertical-align:${isBottom ? 'bottom' : 'middle'};padding:0;">
+        <img src="${imageUrl}" alt="${title}" style="display:block;max-width:${isBottom ? '120' : '140'}px;max-height:${isBottom ? '160' : '140'}px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.3));" />
+      </td>`
+    : '';
+
+  const bannerCardHtml = `
+    <div style="border-radius:20px;overflow:hidden;margin:20px 0;border:1px solid rgba(255,255,255,0.08);box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <!-- Banner Hero - matches store appearance -->
+      <div style="background:${gradient};position:relative;overflow:hidden;direction:rtl;">
+        ${bgImage ? `<div style="position:absolute;top:0;left:0;right:0;bottom:0;background-image:url('${bgImage}');background-size:cover;background-position:center;opacity:0.15;"></div>` : ''}
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.3) 100%);"></div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="position:relative;z-index:1;">
+          <tr>
+            <!-- Text content -->
+            <td style="padding:${isBottom ? '28px 28px 20px' : '28px'};vertical-align:middle;">
+              ${title ? `<div style="display:inline-block;padding:4px 14px;background:rgba(255,255,255,0.18);border-radius:14px;color:#fff;font-size:12px;font-weight:700;margin-bottom:10px;">${title}</div>` : ''}
+              <h3 style="margin:0;color:#fff;font-size:20px;font-weight:800;line-height:1.5;">${subtitle || title}</h3>
+              ${description ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:12px;line-height:1.7;max-width:340px;">${description}</p>` : ''}
+              ${badgesHtml}
+            </td>
+            ${!isBottom ? productImageHtml : ''}
+          </tr>
+          ${isBottom && imageUrl ? `<tr><td colspan="2" style="text-align:center;padding:0 28px 0;">
+            <img src="${imageUrl}" alt="${title}" style="display:block;margin:0 auto;max-width:160px;max-height:140px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.3));" />
+          </td></tr>` : ''}
+        </table>
+      </div>
+      <!-- Price section -->
+      ${priceHtml ? `<div style="background:#0d1117;padding:12px 20px;">${priceHtml}</div>` : ''}
+    </div>
+  `;
 
   return baseLayout({
     title: `🎨 ${title}`,
@@ -718,30 +754,7 @@ function bannerPromo({ name, banner, customMessage, branding = {} }) {
       ${ui.heading('بانر جديد متاح الآن!')}
       ${ui.text(`مرحباً ${name || ''},`)}
       ${formattedMessage ? `<div style="margin:0 0 20px;color:#d1d5db;font-size:14px;line-height:1.8;">${formattedMessage}</div>` : ''}
-      
-      <!-- Banner Preview Card -->
-      <div style="border-radius:16px;overflow:hidden;margin:20px 0;border:1px solid rgba(255,255,255,0.1);">
-        <!-- Banner Header with gradient -->
-        <div style="background:${gradient};padding:24px;text-align:center;position:relative;min-height:120px;">
-          ${banner.icon ? `<div style="font-size:36px;margin-bottom:8px;">${banner.icon}</div>` : ''}
-          <h3 style="margin:0;color:#fff;font-size:22px;font-weight:800;">${title}</h3>
-          ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">${subtitle}</p>` : ''}
-          ${badgesHtml}
-        </div>
-        
-        ${imageUrl ? `
-        <!-- Banner Image -->
-        <div style="text-align:center;background:#0d1117;padding:16px;">
-          <img src="${imageUrl}" alt="${title}" style="max-width:100%;max-height:250px;border-radius:12px;object-fit:contain;" />
-        </div>` : ''}
-        
-        <!-- Banner Details -->
-        <div style="background:#161b22;padding:20px;">
-          ${description ? `<p style="margin:0 0 12px;color:#9ca3af;font-size:13px;line-height:1.7;">${description}</p>` : ''}
-          ${priceHtml}
-        </div>
-      </div>
-      
+      ${bannerCardHtml}
       ${ui.button('تصفح متجر البانرات', 'https://nexiroflux.com')}
       ${ui.divider()}
       ${ui.text(`تم إرسال هذا الإعلان من فريق ${teamName}`)}

@@ -105,6 +105,8 @@ async function sendBroadcast(req, res) {
         icon: design.icon || '',
         image_url: design.image_url || template.preview_image || '',
         preview_image: template.preview_image || design.image_url || '',
+        bg_image: design.bg_image || '',
+        imagePosition: design.imagePosition || '',
         gradient: design.gradient || '',
         badges: design.badges || [],
         price: parseFloat(template.price) || 0,
@@ -288,6 +290,8 @@ async function getBannerTemplates(req, res) {
         gradient: design.gradient || '',
         badges: design.badges || [],
         image_url: design.image_url || t.preview_image || '',
+        bg_image: design.bg_image || '',
+        imagePosition: design.imagePosition || '',
       };
     });
 
