@@ -14,7 +14,8 @@ async function sendBroadcast(req, res) {
       });
     }
 
-    if (!recipient_type || !['all_users', 'individual', 'custom_list'].includes(recipient_type)) {
+    const validTypes = ['all_users', 'individual', 'custom_list', 'banner_buyers', 'non_banner_buyers'];
+    if (!recipient_type || !validTypes.includes(recipient_type)) {
       return res.status(400).json({
         error: 'نوع المستلمين غير صالح',
         errorEn: 'Invalid recipient type',
@@ -30,6 +31,26 @@ async function sendBroadcast(req, res) {
         `SELECT DISTINCT email, name FROM users
          WHERE email IS NOT NULL AND email != ''
          ORDER BY name ASC`
+      );
+      emailList = rows;
+    } else if (recipient_type === 'banner_buyers') {
+      // المستخدمون الذين أتموا شراء بانر واحد على الأقل
+      const [rows] = await pool.query(
+        `SELECT DISTINCT u.email, u.name
+         FROM users u
+         INNER JOIN banner_purchases bp ON u.id = bp.user_id AND bp.status = 'completed'
+         WHERE u.email IS NOT NULL AND u.email != ''
+         ORDER BY u.name ASC`
+      );
+      emailList = rows;
+    } else if (recipient_type === 'non_banner_buyers') {
+      // المستخدمون الذين لم يشتروا أي بانر
+      const [rows] = await pool.query(
+        `SELECT DISTINCT u.email, u.name
+         FROM users u
+         WHERE u.email IS NOT NULL AND u.email != ''
+           AND u.id NOT IN (SELECT DISTINCT user_id FROM banner_purchases WHERE status = 'completed')
+         ORDER BY u.name ASC`
       );
       emailList = rows;
     } else if (recipient_type === 'individual') {
@@ -178,12 +199,24 @@ async function getAvailableRecipients(req, res) {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT id, email, name, role, is_platform_admin, created_at
-       FROM users
-       WHERE email IS NOT NULL AND email != ''
-       ORDER BY created_at DESC`
+      `SELECT u.id, u.email, u.name, u.role, u.is_platform_admin, u.created_at,
+              (SELECT COUNT(*) FROM banner_purchases bp WHERE bp.user_id = u.id AND bp.status = 'completed') as banner_purchases_count
+       FROM users u
+       WHERE u.email IS NOT NULL AND u.email != ''
+       ORDER BY u.created_at DESC`
     );
-    res.json({ recipients: rows, total: rows.length });
+
+    const bannerBuyersCount = rows.filter(r => r.banner_purchases_count > 0).length;
+    const nonBuyersCount = rows.filter(r => r.banner_purchases_count === 0).length;
+
+    res.json({
+      recipients: rows,
+      total: rows.length,
+      segments: {
+        banner_buyers: bannerBuyersCount,
+        non_banner_buyers: nonBuyersCount,
+      }
+    });
   } catch (error) {
     console.error('Error in getAvailableRecipients:', error);
     res.status(500).json({ error: 'حدث خطأ' });

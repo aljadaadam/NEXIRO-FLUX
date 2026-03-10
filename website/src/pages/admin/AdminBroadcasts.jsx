@@ -7,9 +7,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
 
 const recipientTypeConfig = {
-  all_users:   { labelAr: 'جميع مستخدمي المنصة', labelEn: 'All Platform Users', icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10' },
-  individual:  { labelAr: 'مستلم محدد',           labelEn: 'Specific Recipients', icon: User,  color: 'text-cyan-400',    bg: 'bg-cyan-500/10' },
-  custom_list: { labelAr: 'قائمة مخصصة',          labelEn: 'Custom Email List',   icon: Mail,  color: 'text-amber-400',   bg: 'bg-amber-500/10' },
+  all_users:         { labelAr: 'جميع مستخدمي المنصة',  labelEn: 'All Platform Users',      icon: Users, color: 'text-primary-400',  bg: 'bg-primary-500/10' },
+  banner_buyers:     { labelAr: 'مشترو البانرات',        labelEn: 'Banner Buyers',           icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  non_banner_buyers: { labelAr: 'لم يشتروا بانرات',      labelEn: 'Non Banner Buyers',       icon: AlertTriangle, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  individual:        { labelAr: 'مستلم محدد',            labelEn: 'Specific Recipients',     icon: User,  color: 'text-cyan-400',    bg: 'bg-cyan-500/10' },
+  custom_list:       { labelAr: 'قائمة مخصصة',           labelEn: 'Custom Email List',       icon: Mail,  color: 'text-amber-400',   bg: 'bg-amber-500/10' },
 };
 
 const statusConfig = {
@@ -37,6 +39,7 @@ export default function AdminBroadcasts() {
   const [customName, setCustomName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showRecipientPicker, setShowRecipientPicker] = useState(false);
+  const [segments, setSegments] = useState({ banner_buyers: 0, non_banner_buyers: 0 });
 
   const fetchBroadcasts = useCallback(async () => {
     setLoading(true);
@@ -54,6 +57,7 @@ export default function AdminBroadcasts() {
     try {
       const data = await api.getAvailableRecipients();
       setAvailableRecipients(data.recipients || []);
+      if (data.segments) setSegments(data.segments);
     } catch (err) {
       console.error('Failed to fetch recipients:', err);
     }
@@ -208,7 +212,7 @@ export default function AdminBroadcasts() {
             <label className="block text-xs text-dark-400 mb-2">
               {isRTL ? 'نوع المستلمين' : 'Recipient Type'}
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Object.entries(recipientTypeConfig).map(([key, cfg]) => {
                 const Icon = cfg.icon;
                 return (
@@ -229,13 +233,29 @@ export default function AdminBroadcasts() {
             </div>
           </div>
 
-          {/* Recipients info for all types */}
-          {(recipientType === 'all_users' || recipientType === 'all_reservations') && (
+          {/* Recipients info for bulk types */}
+          {recipientType === 'all_users' && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-500/5 border border-primary-500/10 text-xs text-dark-400">
               <Users className="w-3.5 h-3.5 text-primary-400" />
               {isRTL
                 ? `سيتم الإرسال إلى ${availableRecipients.length} مستخدم`
                 : `Will send to ${availableRecipients.length} users`}
+            </div>
+          )}
+          {recipientType === 'banner_buyers' && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs text-dark-400">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              {isRTL
+                ? `سيتم الإرسال إلى ${segments.banner_buyers} مستخدم اشتروا بانرات`
+                : `Will send to ${segments.banner_buyers} users who purchased banners`}
+            </div>
+          )}
+          {recipientType === 'non_banner_buyers' && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/5 border border-orange-500/10 text-xs text-dark-400">
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+              {isRTL
+                ? `سيتم الإرسال إلى ${segments.non_banner_buyers} مستخدم لم يشتروا بانرات`
+                : `Will send to ${segments.non_banner_buyers} users who haven't purchased banners`}
             </div>
           )}
 
@@ -406,8 +426,12 @@ export default function AdminBroadcasts() {
           {/* Send Button */}
           <div className="flex items-center justify-between pt-2">
             <p className="text-dark-500 text-xs">
-              {(recipientType === 'all_users' || recipientType === 'all_reservations')
+              {recipientType === 'all_users'
                 ? (isRTL ? `سيصل إلى ${availableRecipients.length} مستلم` : `Will reach ${availableRecipients.length} recipients`)
+                : recipientType === 'banner_buyers'
+                ? (isRTL ? `سيصل إلى ${segments.banner_buyers} مشتري بانرات` : `Will reach ${segments.banner_buyers} banner buyers`)
+                : recipientType === 'non_banner_buyers'
+                ? (isRTL ? `سيصل إلى ${segments.non_banner_buyers} لم يشتروا` : `Will reach ${segments.non_banner_buyers} non-buyers`)
                 : (isRTL ? `${selectedRecipients.length} مستلم محدد` : `${selectedRecipients.length} recipients selected`)}
             </p>
             <button
@@ -438,7 +462,7 @@ export default function AdminBroadcasts() {
             <div className="divide-y divide-white/5">
               {broadcasts.map(b => {
                 const st = statusConfig[b.status] || statusConfig.completed;
-                const typeConfig = recipientTypeConfig[b.recipient_type] || recipientTypeConfig.all_reservations;
+                const typeConfig = recipientTypeConfig[b.recipient_type] || recipientTypeConfig.all_users;
                 return (
                   <div key={b.id} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
                     <div className={`w-10 h-10 rounded-xl ${st.bg} flex items-center justify-center flex-shrink-0`}>
