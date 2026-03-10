@@ -496,55 +496,87 @@ export default function AdminBroadcasts() {
                             setSubject(banner.name || '');
                           }
                         }}
-                        className={`relative overflow-hidden rounded-xl border text-start transition-all ${
+                        className={`relative overflow-hidden text-start transition-all ${
                           isSelected
-                            ? 'border-violet-500/50 ring-2 ring-violet-500/20'
-                            : 'border-white/5 hover:border-white/15'
+                            ? 'ring-2 ring-violet-500/40'
+                            : 'hover:brightness-110'
                         }`}
+                        style={{ borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)' }}
                       >
-                        {/* Banner card - like the real store */}
-                        <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 130 }}>
+                        {/* === Exact YCZ HeroBanner replica === */}
+                        <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 150, borderRadius: 20 }}>
+                          {/* Background image overlay */}
                           {banner.bg_image && (
-                            <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: `url(${banner.bg_image})` }} />
+                            <div className="absolute inset-0" style={{ backgroundImage: `url(${banner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
                           )}
+                          {/* Grid pattern overlay */}
+                          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                          {/* Dark gradient overlay */}
                           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 100%)' }} />
-                          <div className={`relative z-10 flex ${isBottom ? 'flex-col' : 'items-center'} gap-3 p-4`}>
-                            <div className="flex-1 min-w-0">
+
+                          {/* Content — flex row-reverse like ycz desktop (image start, text end) */}
+                          <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.2rem 1.5rem 0' : '1.5rem' }}>
+                            {/* Product image */}
+                            {banner.image_url && (
+                              <div className={`flex-shrink-0 flex items-center justify-center ${isBottom ? 'self-center mt-1' : ''}`} style={{ flex: isBottom ? undefined : 1, minWidth: 0 }}>
+                                {/* Glow ring */}
+                                <div className="relative">
+                                  <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
+                                  <img
+                                    src={banner.image_url}
+                                    alt={banner.name}
+                                    className="relative object-contain"
+                                    style={{
+                                      maxWidth: isBottom ? 100 : 100,
+                                      maxHeight: isBottom ? 90 : 100,
+                                      borderRadius: isBottom ? '20px 20px 0 0' : 20,
+                                      filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {/* Icon bubble fallback */}
+                            {!banner.image_url && banner.icon && (
+                              <div className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+                                {banner.icon}
+                              </div>
+                            )}
+                            {/* Text content */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
                               {banner.title && (
-                                <span className="inline-block px-2.5 py-0.5 bg-white/[0.18] text-white rounded-lg text-[10px] font-bold mb-1.5">{banner.title}</span>
+                                <div className="inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '3px 12px', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
+                                  {banner.title}
+                                </div>
                               )}
-                              <h4 className="text-white text-sm font-extrabold m-0 leading-snug">{banner.subtitle || banner.name}</h4>
+                              <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', lineHeight: 1.3, textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                                {banner.subtitle || banner.name}
+                              </h4>
                               {banner.description && (
-                                <p className="text-white/50 text-[10px] leading-relaxed mt-1 m-0 line-clamp-2">{banner.description}</p>
+                                <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', lineHeight: 1.5 }}>
+                                  {banner.description}
+                                </p>
                               )}
                               {badges.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
+                                <div className="flex flex-wrap gap-1.5 mt-2">
                                   {badges.map((b, i) => (
-                                    <span key={i} className="inline-block px-2 py-0.5 bg-white/[0.15] text-white rounded-full text-[9px] font-semibold">{b}</span>
+                                    <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '2px 10px', fontSize: '0.62rem', fontWeight: 700, color: '#fff' }}>
+                                      {b}
+                                    </span>
                                   ))}
                                 </div>
                               )}
                             </div>
-                            {banner.image_url && !isBottom && (
-                              <div className="flex-shrink-0">
-                                <img src={banner.image_url} alt={banner.name} className="object-contain rounded-lg" style={{ maxWidth: 80, maxHeight: 80, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
-                              </div>
-                            )}
-                            {banner.image_url && isBottom && (
-                              <div className="text-center">
-                                <img src={banner.image_url} alt={banner.name} className="object-contain mx-auto rounded-lg" style={{ maxWidth: 90, maxHeight: 70, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
-                              </div>
-                            )}
                           </div>
                         </div>
                         {/* Price bar */}
-                        <div className="flex items-center justify-between px-3 py-2 bg-[#0d1221]">
+                        <div className="flex items-center justify-between px-4 py-2" style={{ background: '#0d1117', borderRadius: '0 0 20px 20px' }}>
                           <p className="text-white text-[11px] font-medium truncate m-0">{banner.name}</p>
                           <span className="text-emerald-400 text-[11px] font-bold ms-2">${banner.price}</span>
                         </div>
                         {/* Selected check */}
                         {isSelected && (
-                          <div className="absolute top-2 end-2 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center shadow-lg">
+                          <div className="absolute top-3 end-3 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center shadow-lg" style={{ border: '2px solid rgba(255,255,255,0.3)' }}>
                             <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                           </div>
                         )}
@@ -643,21 +675,24 @@ export default function AdminBroadcasts() {
 
                 {/* Email body */}
                 <div className="p-6" style={{ background: 'linear-gradient(135deg, #0b0f19 0%, #111827 100%)' }}>
-                  {/* Gradient Header */}
+                  {/* Gradient Header — YCZ-style pattern overlay */}
                   <div
-                    className="rounded-t-xl p-6 text-center"
+                    className="relative rounded-t-xl p-6 text-center overflow-hidden"
                     style={{
                       background: templateType === 'banner_promo' && selectedBanner?.gradient
                         ? selectedBanner.gradient
                         : 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)'
                     }}
                   >
-                    <div className="text-3xl mb-2">{templateType === 'banner_promo' ? '🎨' : '📢'}</div>
-                    <h3 className="text-white text-lg font-bold m-0">
-                      {templateType === 'banner_promo'
-                        ? (selectedBanner?.name || (isRTL ? 'بانر جديد متاح الآن!' : 'New Banner Available!'))
-                        : (subject || (isRTL ? 'عنوان الإعلان' : 'Broadcast Title'))}
-                    </h3>
+                    <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                    <div className="relative z-10">
+                      <div className="text-3xl mb-2">{templateType === 'banner_promo' ? '🎨' : '📢'}</div>
+                      <h3 className="text-white text-lg font-bold m-0" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                        {templateType === 'banner_promo'
+                          ? (selectedBanner?.name || (isRTL ? 'بانر جديد متاح الآن!' : 'New Banner Available!'))
+                          : (subject || (isRTL ? 'عنوان الإعلان' : 'Broadcast Title'))}
+                      </h3>
+                    </div>
                   </div>
 
                   {/* Content area */}
@@ -673,71 +708,80 @@ export default function AdminBroadcasts() {
                       </div>
                     )}
 
-                    {/* Banner Preview Card (banner_promo only) */}
+                    {/* Banner Preview Card (banner_promo only) — exact YCZ HeroBanner replica */}
                     {templateType === 'banner_promo' && selectedBanner && (() => {
                       const gradient = selectedBanner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
                       const badges = selectedBanner.badges || [];
                       const isBottom = selectedBanner.imagePosition === 'bottom';
                       return (
-                        <div className="rounded-2xl overflow-hidden border border-white/10 my-4" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-                          {/* Banner Hero - like the real store banner */}
-                          <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl' }}>
+                        <div className="overflow-hidden my-4" style={{ borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)' }}>
+                          <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 140, borderRadius: '20px 20px 0 0' }}>
                             {/* Background image overlay */}
                             {selectedBanner.bg_image && (
-                              <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: `url(${selectedBanner.bg_image})` }} />
+                              <div className="absolute inset-0" style={{ backgroundImage: `url(${selectedBanner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
                             )}
+                            {/* Grid pattern overlay */}
+                            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
                             {/* Dark gradient overlay */}
-                            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.3) 100%)' }} />
-                            {/* Content */}
-                            <div className={`relative z-10 flex ${isBottom ? 'flex-col' : 'items-center'} gap-4 p-6`}>
-                              {/* Text side */}
-                              <div className="flex-1">
+                            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 100%)' }} />
+                            {/* Content — flex row-reverse like ycz desktop */}
+                            <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.5rem 1.5rem 0' : '1.5rem' }}>
+                              {/* Product image with glow ring */}
+                              {selectedBanner.image_url && !isBottom && (
+                                <div className="flex-shrink-0 flex items-center justify-center" style={{ flex: 1, minWidth: 0 }}>
+                                  <div className="relative">
+                                    <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
+                                    <img
+                                      src={selectedBanner.image_url}
+                                      alt={selectedBanner.name}
+                                      className="relative object-contain"
+                                      style={{ maxWidth: 120, maxHeight: 120, borderRadius: 20, filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))' }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {/* Bottom position image with glow */}
+                              {selectedBanner.image_url && isBottom && (
+                                <div className="self-center mt-1">
+                                  <div className="relative">
+                                    <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
+                                    <img
+                                      src={selectedBanner.image_url}
+                                      alt={selectedBanner.name}
+                                      className="relative object-contain"
+                                      style={{ maxWidth: 140, maxHeight: 110, borderRadius: '20px 20px 0 0', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))' }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {/* Text content */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
                                 {selectedBanner.title && (
-                                  <span className="inline-block px-3 py-1 bg-white/[0.18] text-white rounded-xl text-[11px] font-bold mb-2">
+                                  <div className="inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '3px 12px', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
                                     {selectedBanner.title}
-                                  </span>
+                                  </div>
                                 )}
-                                <h4 className="text-white text-lg font-extrabold m-0 leading-snug">
+                                <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.95rem, 2vw, 1.15rem)', lineHeight: 1.3, textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                                   {selectedBanner.subtitle || selectedBanner.name}
                                 </h4>
                                 {selectedBanner.description && (
-                                  <p className="text-white/60 text-[11px] leading-relaxed mt-2 m-0 max-w-[300px]">{selectedBanner.description}</p>
+                                  <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', lineHeight: 1.5 }}>{selectedBanner.description}</p>
                                 )}
                                 {badges.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5 mt-3">
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
                                     {badges.map((b, i) => (
-                                      <span key={i} className="inline-block px-3 py-1 bg-white/[0.18] text-white rounded-full text-[10px] font-semibold">{b}</span>
+                                      <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '2px 10px', fontSize: '0.62rem', fontWeight: 700, color: '#fff' }}>
+                                        {b}
+                                      </span>
                                     ))}
                                   </div>
                                 )}
                               </div>
-                              {/* Product image */}
-                              {selectedBanner.image_url && !isBottom && (
-                                <div className="flex-shrink-0">
-                                  <img
-                                    src={selectedBanner.image_url}
-                                    alt={selectedBanner.name}
-                                    className="object-contain rounded-2xl"
-                                    style={{ maxWidth: 120, maxHeight: 120, filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}
-                                  />
-                                </div>
-                              )}
-                              {/* Bottom position image */}
-                              {selectedBanner.image_url && isBottom && (
-                                <div className="text-center">
-                                  <img
-                                    src={selectedBanner.image_url}
-                                    alt={selectedBanner.name}
-                                    className="object-contain mx-auto rounded-2xl"
-                                    style={{ maxWidth: 140, maxHeight: 120, filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}
-                                  />
-                                </div>
-                              )}
                             </div>
                           </div>
                           {/* Price bar */}
                           {selectedBanner.price > 0 && (
-                            <div className="bg-[#0d1117] py-3 text-center">
+                            <div className="flex items-center justify-center px-4 py-2.5" style={{ background: '#0d1117', borderRadius: '0 0 20px 20px' }}>
                               <span className="inline-block px-6 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
                                 ${Number(selectedBanner.price).toFixed(2)}
                               </span>
