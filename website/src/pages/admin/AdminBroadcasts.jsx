@@ -484,8 +484,7 @@ export default function AdminBroadcasts() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {bannerTemplates.map(banner => {
                     const isSelected = selectedBanner?.id === banner.id;
-                    const design = banner.design_data || {};
-                    const gradient = design.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    const gradient = banner.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                     return (
                       <button
                         key={banner.id}
@@ -506,9 +505,9 @@ export default function AdminBroadcasts() {
                           className="h-20 w-full flex items-center justify-center"
                           style={{ background: gradient }}
                         >
-                          {design.image_url ? (
+                          {banner.image_url ? (
                             <img
-                              src={design.image_url}
+                              src={banner.image_url}
                               alt={banner.name}
                               className="h-16 w-auto object-contain drop-shadow-lg"
                             />
@@ -520,7 +519,7 @@ export default function AdminBroadcasts() {
                         <div className="p-3 bg-[#0d1221]">
                           <p className="text-white text-xs font-medium truncate">{banner.name}</p>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-dark-500 text-[10px] truncate flex-1">{design.subtitle || banner.description || ''}</p>
+                            <p className="text-dark-500 text-[10px] truncate flex-1">{banner.subtitle || banner.description || ''}</p>
                             <span className="text-emerald-400 text-[10px] font-bold ms-2">${banner.price}</span>
                           </div>
                         </div>
@@ -629,8 +628,8 @@ export default function AdminBroadcasts() {
                   <div
                     className="rounded-t-xl p-6 text-center"
                     style={{
-                      background: templateType === 'banner_promo' && selectedBanner?.design_data?.gradient
-                        ? selectedBanner.design_data.gradient
+                      background: templateType === 'banner_promo' && selectedBanner?.gradient
+                        ? selectedBanner.gradient
                         : 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)'
                     }}
                   >
@@ -657,15 +656,14 @@ export default function AdminBroadcasts() {
 
                     {/* Banner Preview Card (banner_promo only) */}
                     {templateType === 'banner_promo' && selectedBanner && (() => {
-                      const design = selectedBanner.design_data || {};
-                      const gradient = design.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
-                      const badges = design.badges || [];
+                      const gradient = selectedBanner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
+                      const badges = selectedBanner.badges || [];
                       return (
                         <div className="rounded-xl overflow-hidden border border-white/10 my-4">
                           <div className="p-5 text-center" style={{ background: gradient }}>
-                            {design.icon && <div className="text-3xl mb-2">{design.icon}</div>}
-                            <h4 className="text-white text-base font-bold m-0">{design.title || selectedBanner.name}</h4>
-                            {design.subtitle && <p className="text-white/70 text-xs mt-1 m-0">{design.subtitle}</p>}
+                            {selectedBanner.icon && <div className="text-3xl mb-2">{selectedBanner.icon}</div>}
+                            <h4 className="text-white text-base font-bold m-0">{selectedBanner.title || selectedBanner.name}</h4>
+                            {selectedBanner.subtitle && <p className="text-white/70 text-xs mt-1 m-0">{selectedBanner.subtitle}</p>}
                             {badges.length > 0 && (
                               <div className="flex flex-wrap justify-center gap-1.5 mt-3">
                                 {badges.map((b, i) => (
@@ -674,13 +672,13 @@ export default function AdminBroadcasts() {
                               </div>
                             )}
                           </div>
-                          {design.image_url && (
+                          {selectedBanner.image_url && (
                             <div className="bg-[#0d1117] p-4 text-center">
-                              <img src={design.image_url} alt={selectedBanner.name} className="max-w-full max-h-48 mx-auto rounded-lg object-contain" />
+                              <img src={selectedBanner.image_url} alt={selectedBanner.name} className="max-w-full max-h-48 mx-auto rounded-lg object-contain" />
                             </div>
                           )}
                           <div className="bg-[#161b22] p-4">
-                            {design.description && <p className="text-dark-400 text-xs leading-relaxed m-0 mb-2">{design.description}</p>}
+                            {selectedBanner.description && <p className="text-dark-400 text-xs leading-relaxed m-0 mb-2">{selectedBanner.description}</p>}
                             <div className="text-center">
                               <span className="inline-block px-5 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
                                 {selectedBanner.price > 0 ? `$${Number(selectedBanner.price).toFixed(2)}` : (isRTL ? 'مجاني' : 'Free')}
