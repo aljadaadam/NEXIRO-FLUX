@@ -21,6 +21,21 @@ const statusConfig = {
   failed:    { labelAr: 'فشل',          labelEn: 'Failed',    color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20' },
 };
 
+/* ── YCZ HeroBanner CSS Animations ── */
+const heroBannerCSS = `
+@keyframes heroFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-12px) scale(1.05)}}
+@keyframes heroOrb1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-30px,20px) scale(1.1)}66%{transform:translate(15px,-10px) scale(.95)}}
+@keyframes heroOrb2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-15px) scale(1.08)}66%{transform:translate(-10px,10px) scale(.92)}}
+@keyframes heroTagSlide{0%{opacity:0;transform:translateX(-10px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes heroPulse{0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.1)}50%{transform:scale(1.05);box-shadow:0 6px 24px rgba(0,0,0,0.15)}}
+.adm-hero-orb-1{animation:heroOrb1 8s ease-in-out infinite}
+.adm-hero-orb-2{animation:heroOrb2 10s ease-in-out infinite}
+.adm-hero-particle{animation:heroFloat 6s ease-in-out infinite}
+.adm-hero-tag{animation:heroTagSlide .6s cubic-bezier(.16,1,.3,1) .15s backwards}
+.adm-hero-icon{animation:heroPulse 3s ease-in-out infinite}
+.adm-hero-img{animation:heroFloat 4s ease-in-out infinite}
+`;
+
 export default function AdminBroadcasts() {
   const { isRTL } = useLanguage();
   const [tab, setTab] = useState('compose'); // compose | history
@@ -194,6 +209,8 @@ export default function AdminBroadcasts() {
 
   return (
     <div className="space-y-6">
+      {/* Inject HeroBanner animation CSS */}
+      <style dangerouslySetInnerHTML={{ __html: heroBannerCSS }} />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-white flex items-center gap-3">
@@ -481,86 +498,98 @@ export default function AdminBroadcasts() {
                   {isRTL ? 'لا توجد قوالب بنرات' : 'No banner templates available'}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {bannerTemplates.map(banner => {
                     const isSelected = selectedBanner?.id === banner.id;
                     const gradient = banner.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                     const badges = banner.badges || [];
                     const isBottom = banner.imagePosition === 'bottom';
+                    const hasImage = !!banner.image_url;
+                    /* particles — same as YCZ HeroBanner */
+                    const particles = [
+                      { size: 6, top: '15%', right: '20%', delay: '0s', dur: '7s', op: 0.08 },
+                      { size: 4, top: '60%', right: '80%', delay: '2s', dur: '8s', op: 0.06 },
+                      { size: 8, top: '70%', right: '50%', delay: '0.5s', dur: '9s', op: 0.07 },
+                      { size: 5, top: '5%', right: '60%', delay: '1.5s', dur: '6.5s', op: 0.06 },
+                    ];
                     return (
                       <button
                         key={banner.id}
                         onClick={() => {
                           setSelectedBanner(banner);
-                          if (!subject.trim() || selectedBanner) {
-                            setSubject(banner.name || '');
-                          }
+                          if (!subject.trim() || selectedBanner) setSubject(banner.name || '');
                         }}
-                        className={`relative overflow-hidden text-start transition-all ${
-                          isSelected
-                            ? 'ring-2 ring-violet-500/40'
-                            : 'hover:brightness-110'
-                        }`}
+                        className={`relative overflow-hidden text-start transition-all ${isSelected ? 'ring-2 ring-violet-500/60 ring-offset-2 ring-offset-[#0b0f19]' : 'hover:scale-[1.02]'}`}
                         style={{ borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)' }}
                       >
-                        {/* === Exact YCZ HeroBanner replica === */}
-                        <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 150, borderRadius: 20 }}>
-                          {/* Background image overlay */}
-                          {banner.bg_image && (
-                            <div className="absolute inset-0" style={{ backgroundImage: `url(${banner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
-                          )}
-                          {/* Grid pattern overlay */}
-                          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                          {/* Dark gradient overlay */}
-                          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 100%)' }} />
+                        {/* === Real YCZ HeroBanner === */}
+                        <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 170, borderRadius: 20 }}>
+                          {/* Animated mesh background - same layers as ycz */}
+                          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            {/* bg_image overlay */}
+                            {banner.bg_image && (
+                              <div className="absolute inset-0" style={{ backgroundImage: `url(${banner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+                            )}
+                            {/* Animated gradient orb 1 */}
+                            <div className="adm-hero-orb-1" style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)', top: '-20%', right: '-10%', filter: 'blur(40px)' }} />
+                            {/* Animated gradient orb 2 */}
+                            <div className="adm-hero-orb-2" style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)', bottom: '-15%', left: '-5%', filter: 'blur(30px)' }} />
+                            {/* Floating particles */}
+                            {particles.map((p, i) => (
+                              <div key={i} className="adm-hero-particle" style={{ position: 'absolute', width: p.size, height: p.size, borderRadius: '50%', background: `rgba(255,255,255,${p.op})`, top: p.top, right: p.right, animationDelay: p.delay, animationDuration: p.dur }} />
+                            ))}
+                            {/* Grid pattern overlay */}
+                            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                          </div>
 
-                          {/* Content — flex row-reverse like ycz desktop (image start, text end) */}
-                          <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.2rem 1.5rem 0' : '1.5rem' }}>
-                            {/* Product image */}
-                            {banner.image_url && (
-                              <div className={`flex-shrink-0 flex items-center justify-center ${isBottom ? 'self-center mt-1' : ''}`} style={{ flex: isBottom ? undefined : 1, minWidth: 0 }}>
-                                {/* Glow ring */}
-                                <div className="relative">
-                                  <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
+                          {/* Content — flex row-reverse like ycz desktop */}
+                          <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.2rem 1.5rem 0.5rem' : '1.5rem' }}>
+                            {/* Product image with glow ring + float animation */}
+                            {hasImage && (
+                              <div className={`flex-shrink-0 flex items-center justify-center ${isBottom ? 'self-center mt-1' : ''}`} style={{ flex: isBottom ? undefined : '0 0 auto', minWidth: 0 }}>
+                                <div className="relative adm-hero-img">
+                                  <div className="absolute -inset-3 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', filter: 'blur(12px)' }} />
                                   <img
                                     src={banner.image_url}
                                     alt={banner.name}
                                     className="relative object-contain"
                                     style={{
-                                      maxWidth: isBottom ? 100 : 100,
-                                      maxHeight: isBottom ? 90 : 100,
+                                      width: isBottom ? 110 : 100,
+                                      height: isBottom ? 95 : 100,
                                       borderRadius: isBottom ? '20px 20px 0 0' : 20,
-                                      filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+                                      filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))',
                                     }}
                                   />
                                 </div>
                               </div>
                             )}
-                            {/* Icon bubble fallback */}
-                            {!banner.image_url && banner.icon && (
-                              <div className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+                            {/* Icon bubble fallback with pulse animation */}
+                            {!hasImage && banner.icon && (
+                              <div className="adm-hero-icon flex-shrink-0 flex items-center justify-center" style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', fontSize: '1.8rem', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
                                 {banner.icon}
                               </div>
                             )}
                             {/* Text content */}
                             <div style={{ flex: 1, minWidth: 0 }}>
+                              {/* Glassmorphism tag with slide animation */}
                               {banner.title && (
-                                <div className="inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '3px 12px', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
+                                <div className="adm-hero-tag inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '4px 14px', fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
                                   {banner.title}
                                 </div>
                               )}
-                              <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', lineHeight: 1.3, textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                              <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.85rem, 2vw, 1.05rem)', lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                 {banner.subtitle || banner.name}
                               </h4>
                               {banner.description && (
-                                <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', lineHeight: 1.5 }}>
+                                <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.68rem', lineHeight: 1.5 }}>
                                   {banner.description}
                                 </p>
                               )}
+                              {/* Badges with glassmorphism */}
                               {badges.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                   {badges.map((b, i) => (
-                                    <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '2px 10px', fontSize: '0.62rem', fontWeight: 700, color: '#fff' }}>
+                                    <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '3px 10px', fontSize: '0.6rem', fontWeight: 700, color: '#fff' }}>
                                       {b}
                                     </span>
                                   ))}
@@ -708,69 +737,68 @@ export default function AdminBroadcasts() {
                       </div>
                     )}
 
-                    {/* Banner Preview Card (banner_promo only) — exact YCZ HeroBanner replica */}
+                    {/* Banner Preview Card — Real YCZ HeroBanner */}
                     {templateType === 'banner_promo' && selectedBanner && (() => {
                       const gradient = selectedBanner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
                       const badges = selectedBanner.badges || [];
                       const isBottom = selectedBanner.imagePosition === 'bottom';
+                      const hasImage = !!selectedBanner.image_url;
+                      const particles = [
+                        { size: 6, top: '15%', right: '20%', delay: '0s', dur: '7s', op: 0.08 },
+                        { size: 4, top: '60%', right: '80%', delay: '2s', dur: '8s', op: 0.06 },
+                        { size: 8, top: '70%', right: '50%', delay: '0.5s', dur: '9s', op: 0.07 },
+                      ];
                       return (
                         <div className="overflow-hidden my-4" style={{ borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)' }}>
-                          <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 140, borderRadius: '20px 20px 0 0' }}>
-                            {/* Background image overlay */}
-                            {selectedBanner.bg_image && (
-                              <div className="absolute inset-0" style={{ backgroundImage: `url(${selectedBanner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
-                            )}
-                            {/* Grid pattern overlay */}
-                            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                            {/* Dark gradient overlay */}
-                            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 100%)' }} />
-                            {/* Content — flex row-reverse like ycz desktop */}
-                            <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.5rem 1.5rem 0' : '1.5rem' }}>
-                              {/* Product image with glow ring */}
-                              {selectedBanner.image_url && !isBottom && (
-                                <div className="flex-shrink-0 flex items-center justify-center" style={{ flex: 1, minWidth: 0 }}>
-                                  <div className="relative">
-                                    <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
+                          <div className="relative overflow-hidden" style={{ background: gradient, direction: 'rtl', minHeight: 160, borderRadius: '20px 20px 0 0' }}>
+                            {/* Animated mesh background */}
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                              {selectedBanner.bg_image && (
+                                <div className="absolute inset-0" style={{ backgroundImage: `url(${selectedBanner.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+                              )}
+                              <div className="adm-hero-orb-1" style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)', top: '-20%', right: '-10%', filter: 'blur(40px)' }} />
+                              <div className="adm-hero-orb-2" style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)', bottom: '-15%', left: '-5%', filter: 'blur(30px)' }} />
+                              {particles.map((p, i) => (
+                                <div key={i} className="adm-hero-particle" style={{ position: 'absolute', width: p.size, height: p.size, borderRadius: '50%', background: `rgba(255,255,255,${p.op})`, top: p.top, right: p.right, animationDelay: p.delay, animationDuration: p.dur }} />
+                              ))}
+                              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                            </div>
+                            {/* Content */}
+                            <div className={`relative z-10 flex ${isBottom ? 'flex-col items-stretch' : 'flex-row-reverse items-center'} gap-4`} style={{ padding: isBottom ? '1.5rem 1.5rem 0.5rem' : '1.5rem' }}>
+                              {hasImage && (
+                                <div className={`flex-shrink-0 flex items-center justify-center ${isBottom ? 'self-center mt-1' : ''}`} style={{ flex: isBottom ? undefined : '0 0 auto', minWidth: 0 }}>
+                                  <div className="relative adm-hero-img">
+                                    <div className="absolute -inset-3 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', filter: 'blur(12px)' }} />
                                     <img
                                       src={selectedBanner.image_url}
                                       alt={selectedBanner.name}
                                       className="relative object-contain"
-                                      style={{ maxWidth: 120, maxHeight: 120, borderRadius: 20, filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))' }}
+                                      style={{ width: isBottom ? 120 : 110, height: isBottom ? 100 : 110, borderRadius: isBottom ? '20px 20px 0 0' : 20, filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))' }}
                                     />
                                   </div>
                                 </div>
                               )}
-                              {/* Bottom position image with glow */}
-                              {selectedBanner.image_url && isBottom && (
-                                <div className="self-center mt-1">
-                                  <div className="relative">
-                                    <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', filter: 'blur(8px)' }} />
-                                    <img
-                                      src={selectedBanner.image_url}
-                                      alt={selectedBanner.name}
-                                      className="relative object-contain"
-                                      style={{ maxWidth: 140, maxHeight: 110, borderRadius: '20px 20px 0 0', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))' }}
-                                    />
-                                  </div>
+                              {!hasImage && selectedBanner.icon && (
+                                <div className="adm-hero-icon flex-shrink-0 flex items-center justify-center" style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', fontSize: '1.8rem', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+                                  {selectedBanner.icon}
                                 </div>
                               )}
-                              {/* Text content */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 {selectedBanner.title && (
-                                  <div className="inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '3px 12px', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
+                                  <div className="adm-hero-tag inline-block mb-2" style={{ borderRadius: 20, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', padding: '4px 14px', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.5px' }}>
                                     {selectedBanner.title}
                                   </div>
                                 )}
-                                <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.95rem, 2vw, 1.15rem)', lineHeight: 1.3, textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                                <h4 className="m-0" style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(0.95rem, 2vw, 1.15rem)', lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                   {selectedBanner.subtitle || selectedBanner.name}
                                 </h4>
                                 {selectedBanner.description && (
-                                  <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', lineHeight: 1.5 }}>{selectedBanner.description}</p>
+                                  <p className="m-0 mt-1 line-clamp-2" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', lineHeight: 1.5 }}>{selectedBanner.description}</p>
                                 )}
                                 {badges.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mt-2">
                                     {badges.map((b, i) => (
-                                      <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '2px 10px', fontSize: '0.62rem', fontWeight: 700, color: '#fff' }}>
+                                      <span key={i} style={{ borderRadius: 20, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', padding: '3px 10px', fontSize: '0.62rem', fontWeight: 700, color: '#fff' }}>
                                         {b}
                                       </span>
                                     ))}
@@ -779,7 +807,6 @@ export default function AdminBroadcasts() {
                               </div>
                             </div>
                           </div>
-                          {/* Price bar */}
                           {selectedBanner.price > 0 && (
                             <div className="flex items-center justify-center px-4 py-2.5" style={{ background: '#0d1117', borderRadius: '0 0 20px 20px' }}>
                               <span className="inline-block px-6 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-bold">
