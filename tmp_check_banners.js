@@ -7,29 +7,42 @@ const db = mysql.createPool({
 });
 (async () => {
   try {
-    const imgUrl = 'https://6990ab01681c79fa0bccfe99.imgix.net/pic-banner.png';
-    const designData = JSON.stringify({
-      title: "خدمة Samsung FRP",
-      subtitle: "فتح حساب جوجل لأجهزة سامسونج",
-      description: "خدمة فتح قفل FRP لجميع أجهزة سامسونج - سريع وآمن ومضمون بأفضل الأسعار",
-      icon: "",
-      image_url: imgUrl,
-      link: "/services",
-      badges: ["جميع الموديلات", "سريع ومضمون", "أفضل سعر"],
-      gradient: "linear-gradient(135deg, #1428a0 0%, #0b1a5e 40%, #000000 100%)",
-      imagePosition: "bottom",
-      bg_image: imgUrl
-    });
+    // Check subscriptions (template purchases)
+    const [cols] = await db.query('DESCRIBE subscriptions');
+    console.log('=== SUBSCRIPTIONS COLUMNS ===');
+    cols.forEach(c => console.log('  ', c.Field, c.Type));
 
-    await db.query(
-      'UPDATE banner_templates SET design_data = ?, preview_image = ? WHERE id = 5',
-      [designData, imgUrl]
-    );
+    const [siteCols] = await db.query('DESCRIBE sites');
+    console.log('\n=== SITES COLUMNS ===');
+    siteCols.forEach(c => console.log('  ', c.Field, c.Type));
 
-    console.log('Updated Samsung FRP banner with new image');
+    const [subs] = await db.query('SELECT s.* FROM subscriptions s ORDER BY s.created_at DESC');
+    console.log('\n=== SUBSCRIPTIONS (اشتراكات القوالب) ===');
+    console.log('Total:', subs.length);
+    const active = subs.filter(s => s.status === 'active');
+    const trial = subs.filter(s => s.status === 'trial');
+    const expired = subs.filter(s => s.status === 'expired');
+    console.log('Active:', active.length, '| Trial:', trial.length, '| Expired:', expired.length);
+    subs.forEach(s => console.log('  #' + s.id, '|', s.site_key, '| plan:', s.plan_id, '| template:', s.template_id, '| $' + s.price, '|', s.status, '|', s.billing_cycle));
 
-    const [check] = await db.query('SELECT id, name, preview_image FROM banner_templates WHERE id = 5');
-    console.log('Verified:', check[0].name, '| image:', check[0].preview_image);
+    // Check plans
+    const [plans] = await db.query('SELECT * FROM subscription_plans ORDER BY id');
+    console.log('\n=== SUBSCRIPTION PLANS ===');
+    plans.forEach(p => console.log('  #' + p.id, '|', p.name, '| $' + p.price, '|', p.billing_cycle, '| active:', p.is_active));
+
+    // Check payments related to subscriptions
+    const [payments] = await db.query("SELECT id, site_key, amount, status, payment_method, type, description, created_at FROM payments WHERE type LIKE '%subscription%' OR description LIKE '%اشتراك%' OR description LIKE '%template%' ORDER BY created_at DESC LIMIT 20");
+    console.log('\n=== SUBSCRIPTION PAYMENTS ===');
+    console.log('Total shown:', payments.length);
+    payments.forEach(p => console.log('  #' + p.id, '|', p.site_key, '| $' + p.amount, '|', p.status, '|', p.type, '|', p.description));
+
+    // Total unique paying users
+    const [buyers] = await db.query("SELECT COUNT(DISTINCT s.site_key) as c FROM subscriptions s WHERE s.status = 'active'");
+    console.log('\n=== SUMMARY ===');
+    console.log('Unique template buyers (active/completed):', buyers[0].c);
+
+    const [allUsers] = await db.query("SELECT COUNT(*) as c FROM users WHERE email IS NOT NULL AND email != ''");
+    console.log('Total platform users:', allUsers[0].c);
 
     process.exit(0);
   } catch (e) {

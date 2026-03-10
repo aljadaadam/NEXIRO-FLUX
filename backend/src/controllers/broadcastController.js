@@ -14,7 +14,7 @@ async function sendBroadcast(req, res) {
       });
     }
 
-    const validTypes = ['all_users', 'individual', 'custom_list', 'banner_buyers', 'non_banner_buyers'];
+    const validTypes = ['all_users', 'individual', 'custom_list', 'subscribers', 'non_subscribers'];
     if (!recipient_type || !validTypes.includes(recipient_type)) {
       return res.status(400).json({
         error: 'نوع المستلمين غير صالح',
@@ -33,24 +33,24 @@ async function sendBroadcast(req, res) {
          ORDER BY name ASC`
       );
       emailList = rows;
-    } else if (recipient_type === 'banner_buyers') {
-      // المستخدمون الذين أتموا شراء بانر واحد على الأقل
+    } else if (recipient_type === 'subscribers') {
+      // أصحاب المواقع المشتركين في قالب (لديهم اشتراك فعّال)
       const [rows] = await pool.query(
-        `SELECT DISTINCT u.email, u.name
-         FROM users u
-         INNER JOIN banner_purchases bp ON u.id = bp.user_id AND bp.status = 'completed'
-         WHERE u.email IS NOT NULL AND u.email != ''
-         ORDER BY u.name ASC`
+        `SELECT DISTINCT s.owner_email AS email, s.name
+         FROM sites s
+         INNER JOIN subscriptions sub ON s.site_key = sub.site_key AND sub.status = 'active'
+         WHERE s.owner_email IS NOT NULL AND s.owner_email != ''
+         ORDER BY s.name ASC`
       );
       emailList = rows;
-    } else if (recipient_type === 'non_banner_buyers') {
-      // المستخدمون الذين لم يشتروا أي بانر
+    } else if (recipient_type === 'non_subscribers') {
+      // أصحاب المواقع بدون اشتراك فعّال
       const [rows] = await pool.query(
-        `SELECT DISTINCT u.email, u.name
-         FROM users u
-         WHERE u.email IS NOT NULL AND u.email != ''
-           AND u.id NOT IN (SELECT DISTINCT user_id FROM banner_purchases WHERE status = 'completed')
-         ORDER BY u.name ASC`
+        `SELECT DISTINCT s.owner_email AS email, s.name
+         FROM sites s
+         WHERE s.owner_email IS NOT NULL AND s.owner_email != ''
+           AND s.site_key NOT IN (SELECT DISTINCT site_key FROM subscriptions WHERE status = 'active')
+         ORDER BY s.name ASC`
       );
       emailList = rows;
     } else if (recipient_type === 'individual') {
@@ -199,22 +199,29 @@ async function getAvailableRecipients(req, res) {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT u.id, u.email, u.name, u.role, u.is_platform_admin, u.created_at,
-              (SELECT COUNT(*) FROM banner_purchases bp WHERE bp.user_id = u.id AND bp.status = 'completed') as banner_purchases_count
+      `SELECT u.id, u.email, u.name, u.role, u.is_platform_admin, u.created_at
        FROM users u
        WHERE u.email IS NOT NULL AND u.email != ''
        ORDER BY u.created_at DESC`
     );
 
-    const bannerBuyersCount = rows.filter(r => r.banner_purchases_count > 0).length;
-    const nonBuyersCount = rows.filter(r => r.banner_purchases_count === 0).length;
+    const [[{ subscribers }]] = await pool.query(
+      `SELECT COUNT(DISTINCT s.owner_email) as subscribers FROM sites s
+       INNER JOIN subscriptions sub ON s.site_key = sub.site_key AND sub.status = 'active'
+       WHERE s.owner_email IS NOT NULL AND s.owner_email != ''`
+    );
+    const [[{ nonSubscribers }]] = await pool.query(
+      `SELECT COUNT(DISTINCT s.owner_email) as nonSubscribers FROM sites s
+       WHERE s.owner_email IS NOT NULL AND s.owner_email != ''
+         AND s.site_key NOT IN (SELECT DISTINCT site_key FROM subscriptions WHERE status = 'active')`
+    );
 
     res.json({
       recipients: rows,
       total: rows.length,
       segments: {
-        banner_buyers: bannerBuyersCount,
-        non_banner_buyers: nonBuyersCount,
+        subscribers,
+        non_subscribers: nonSubscribers,
       }
     });
   } catch (error) {

@@ -8,8 +8,8 @@ import api from '../../services/api';
 
 const recipientTypeConfig = {
   all_users:         { labelAr: 'جميع مستخدمي المنصة',  labelEn: 'All Platform Users',      icon: Users, color: 'text-primary-400',  bg: 'bg-primary-500/10' },
-  banner_buyers:     { labelAr: 'مشترو البانرات',        labelEn: 'Banner Buyers',           icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  non_banner_buyers: { labelAr: 'لم يشتروا بانرات',      labelEn: 'Non Banner Buyers',       icon: AlertTriangle, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  subscribers:       { labelAr: 'مشتركو القوالب',        labelEn: 'Template Subscribers',    icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  non_subscribers:   { labelAr: 'غير المشتركين',        labelEn: 'Non Subscribers',         icon: AlertTriangle, color: 'text-orange-400', bg: 'bg-orange-500/10' },
   individual:        { labelAr: 'مستلم محدد',            labelEn: 'Specific Recipients',     icon: User,  color: 'text-cyan-400',    bg: 'bg-cyan-500/10' },
   custom_list:       { labelAr: 'قائمة مخصصة',           labelEn: 'Custom Email List',       icon: Mail,  color: 'text-amber-400',   bg: 'bg-amber-500/10' },
 };
@@ -39,7 +39,7 @@ export default function AdminBroadcasts() {
   const [customName, setCustomName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showRecipientPicker, setShowRecipientPicker] = useState(false);
-  const [segments, setSegments] = useState({ banner_buyers: 0, non_banner_buyers: 0 });
+  const [segments, setSegments] = useState({ subscribers: 0, non_subscribers: 0 });
 
   const fetchBroadcasts = useCallback(async () => {
     setLoading(true);
@@ -242,20 +242,20 @@ export default function AdminBroadcasts() {
                 : `Will send to ${availableRecipients.length} users`}
             </div>
           )}
-          {recipientType === 'banner_buyers' && (
+          {recipientType === 'subscribers' && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs text-dark-400">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               {isRTL
-                ? `سيتم الإرسال إلى ${segments.banner_buyers} مستخدم اشتروا بانرات`
-                : `Will send to ${segments.banner_buyers} users who purchased banners`}
+                ? `سيتم الإرسال إلى ${segments.subscribers} مشترك في القوالب`
+                : `Will send to ${segments.subscribers} template subscribers`}
             </div>
           )}
-          {recipientType === 'non_banner_buyers' && (
+          {recipientType === 'non_subscribers' && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/5 border border-orange-500/10 text-xs text-dark-400">
               <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
               {isRTL
-                ? `سيتم الإرسال إلى ${segments.non_banner_buyers} مستخدم لم يشتروا بانرات`
-                : `Will send to ${segments.non_banner_buyers} users who haven't purchased banners`}
+                ? `سيتم الإرسال إلى ${segments.non_subscribers} غير مشترك`
+                : `Will send to ${segments.non_subscribers} non-subscribers`}
             </div>
           )}
 
@@ -428,10 +428,10 @@ export default function AdminBroadcasts() {
             <p className="text-dark-500 text-xs">
               {recipientType === 'all_users'
                 ? (isRTL ? `سيصل إلى ${availableRecipients.length} مستلم` : `Will reach ${availableRecipients.length} recipients`)
-                : recipientType === 'banner_buyers'
-                ? (isRTL ? `سيصل إلى ${segments.banner_buyers} مشتري بانرات` : `Will reach ${segments.banner_buyers} banner buyers`)
-                : recipientType === 'non_banner_buyers'
-                ? (isRTL ? `سيصل إلى ${segments.non_banner_buyers} لم يشتروا` : `Will reach ${segments.non_banner_buyers} non-buyers`)
+                : recipientType === 'subscribers'
+                ? (isRTL ? `سيصل إلى ${segments.subscribers} مشترك` : `Will reach ${segments.subscribers} subscribers`)
+                : recipientType === 'non_subscribers'
+                ? (isRTL ? `سيصل إلى ${segments.non_subscribers} غير مشترك` : `Will reach ${segments.non_subscribers} non-subscribers`)
                 : (isRTL ? `${selectedRecipients.length} مستلم محدد` : `${selectedRecipients.length} recipients selected`)}
             </p>
             <button
