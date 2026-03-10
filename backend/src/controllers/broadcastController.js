@@ -5,9 +5,9 @@ const emailTemplates = require('../services/emailTemplates');
 // ─── إرسال إعلان جماعي عبر البريد الإلكتروني ───
 async function sendBroadcast(req, res) {
   try {
-    const { subject, message, recipients, recipient_type } = req.body;
+    const { subject, message, recipients, recipient_type, template_type, banner_template_id } = req.body;
 
-    if (!subject || !message) {
+    if (!subject || (!message && template_type !== 'banner_promo')) {
       return res.status(400).json({
         error: 'العنوان والرسالة مطلوبان',
         errorEn: 'Subject and message are required',
@@ -86,6 +86,31 @@ async function sendBroadcast(req, res) {
       });
     }
 
+    // جلب بيانات البانر إذا كان القالب بانر برومو
+    let bannerData = null;
+    if (template_type === 'banner_promo') {
+      if (!banner_template_id) {
+        return res.status(400).json({ error: 'يجب تحديد البانر', errorEn: 'Banner template is required' });
+      }
+      const [bannerRows] = await pool.query('SELECT * FROM banner_templates WHERE id = ?', [parseInt(banner_template_id)]);
+      if (!bannerRows[0]) {
+        return res.status(404).json({ error: 'البانر غير موجود', errorEn: 'Banner template not found' });
+      }
+      const template = bannerRows[0];
+      const design = typeof template.design_data === 'string' ? JSON.parse(template.design_data) : template.design_data;
+      bannerData = {
+        title: design.title || template.name,
+        subtitle: design.subtitle || '',
+        description: design.description || '',
+        icon: design.icon || '',
+        image_url: design.image_url || template.preview_image || '',
+        preview_image: template.preview_image || design.image_url || '',
+        gradient: design.gradient || '',
+        badges: design.badges || [],
+        price: parseFloat(template.price) || 0,
+      };
+    }
+
     // حفظ الإعلان في قاعدة البيانات
     const [insertResult] = await pool.query(
       `INSERT INTO email_broadcasts (subject, message, recipient_type, recipient_count, sent_by, status)
@@ -101,12 +126,22 @@ async function sendBroadcast(req, res) {
 
     for (const recipient of emailList) {
       try {
-        const html = emailTemplates.broadcast({
-          name: recipient.name,
-          subject,
-          message,
-          branding: { storeName: 'NEXIRO-FLUX', primaryColor: '#7c3aed' },
-        });
+        let html;
+        if (template_type === 'banner_promo' && bannerData) {
+          html = emailTemplates.bannerPromo({
+            name: recipient.name,
+            banner: bannerData,
+            customMessage: message || '',
+            branding: { storeName: 'NEXIRO-FLUX', primaryColor: '#7c3aed' },
+          });
+        } else {
+          html = emailTemplates.broadcast({
+            name: recipient.name,
+            subject,
+            message,
+            branding: { storeName: 'NEXIRO-FLUX', primaryColor: '#7c3aed' },
+          });
+        }
 
         const result = await emailService.send({
           to: recipient.email,
@@ -230,9 +265,43 @@ async function getAvailableRecipients(req, res) {
   }
 }
 
+// ─── جلب قوالب البانرات (لاختيارها في الإعلان) ───
+async function getBannerTemplates(req, res) {
+  try {
+    const pool = getPool();
+    const [templates] = await pool.query(
+      'SELECT id, name, category, price, preview_image, design_data, is_active FROM banner_templates WHERE is_active = 1 ORDER BY sort_order ASC, id DESC'
+    );
+
+    const result = templates.map(t => {
+      const design = typeof t.design_data === 'string' ? JSON.parse(t.design_data) : (t.design_data || {});
+      return {
+        id: t.id,
+        name: t.name,
+        category: t.category,
+        price: parseFloat(t.price) || 0,
+        preview_image: t.preview_image || design.image_url || '',
+        title: design.title || t.name,
+        subtitle: design.subtitle || '',
+        description: design.description || '',
+        icon: design.icon || '',
+        gradient: design.gradient || '',
+        badges: design.badges || [],
+        image_url: design.image_url || t.preview_image || '',
+      };
+    });
+
+    res.json({ templates: result, total: result.length });
+  } catch (error) {
+    console.error('Error in getBannerTemplates:', error);
+    res.status(500).json({ error: 'حدث خطأ' });
+  }
+}
+
 module.exports = {
   sendBroadcast,
   getBroadcasts,
   deleteBroadcast,
   getAvailableRecipients,
+  getBannerTemplates,
 };

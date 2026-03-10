@@ -5,6 +5,7 @@ const {
   getBroadcasts,
   deleteBroadcast,
   getAvailableRecipients,
+  getBannerTemplates,
 } = require('../controllers/broadcastController');
 const { authenticateToken, requirePlatformAdmin } = require('../middlewares/authMiddleware');
 
@@ -18,6 +19,9 @@ router.get('/', authenticateToken, requirePlatformAdmin, getBroadcasts);
 
 // جلب المستلمين المتاحين
 router.get('/recipients', authenticateToken, requirePlatformAdmin, getAvailableRecipients);
+
+// جلب قوالب البانرات للإعلانات
+router.get('/banner-templates', authenticateToken, requirePlatformAdmin, getBannerTemplates);
 
 // حذف إعلان
 router.delete('/:id', authenticateToken, requirePlatformAdmin, deleteBroadcast);

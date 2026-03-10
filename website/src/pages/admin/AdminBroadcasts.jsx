@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Send, Loader2, CheckCircle2, XCircle, Mail, Users, User, Trash2,
-  Plus, X, Inbox, Clock, ChevronDown, Megaphone, Search, AlertTriangle
+  Plus, X, Inbox, Clock, ChevronDown, Megaphone, Search, AlertTriangle,
+  Image, FileText
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
@@ -41,6 +42,12 @@ export default function AdminBroadcasts() {
   const [showRecipientPicker, setShowRecipientPicker] = useState(false);
   const [segments, setSegments] = useState({ subscribers: 0, non_subscribers: 0 });
 
+  // Banner promo
+  const [templateType, setTemplateType] = useState('text'); // text | banner_promo
+  const [bannerTemplates, setBannerTemplates] = useState([]);
+  const [selectedBanner, setSelectedBanner] = useState(null);
+  const [loadingBanners, setLoadingBanners] = useState(false);
+
   const fetchBroadcasts = useCallback(async () => {
     setLoading(true);
     try {
@@ -63,14 +70,39 @@ export default function AdminBroadcasts() {
     }
   }, []);
 
+  const fetchBannerTemplates = useCallback(async () => {
+    setLoadingBanners(true);
+    try {
+      const data = await api.getBannerTemplates();
+      setBannerTemplates(data.templates || []);
+    } catch (err) {
+      console.error('Failed to fetch banner templates:', err);
+    } finally {
+      setLoadingBanners(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === 'history') fetchBroadcasts();
-    if (tab === 'compose') fetchRecipients();
-  }, [tab, fetchBroadcasts, fetchRecipients]);
+    if (tab === 'compose') {
+      fetchRecipients();
+      fetchBannerTemplates();
+    }
+  }, [tab, fetchBroadcasts, fetchRecipients, fetchBannerTemplates]);
 
   const handleSend = async () => {
-    if (!subject.trim() || !message.trim()) {
-      setError(isRTL ? 'العنوان والرسالة مطلوبان' : 'Subject and message are required');
+    if (!subject.trim()) {
+      setError(isRTL ? 'العنوان مطلوب' : 'Subject is required');
+      return;
+    }
+
+    if (templateType === 'text' && !message.trim()) {
+      setError(isRTL ? 'نص الرسالة مطلوب' : 'Message is required');
+      return;
+    }
+
+    if (templateType === 'banner_promo' && !selectedBanner) {
+      setError(isRTL ? 'اختر بنر للترويج' : 'Select a banner to promote');
       return;
     }
 
@@ -86,7 +118,11 @@ export default function AdminBroadcasts() {
         subject: subject.trim(),
         message: message.trim(),
         recipient_type: recipientType,
+        template_type: templateType,
       };
+      if (templateType === 'banner_promo' && selectedBanner) {
+        payload.banner_template_id = selectedBanner.id;
+      }
       if (recipientType !== 'all_reservations') {
         payload.recipients = selectedRecipients;
       }
@@ -97,6 +133,8 @@ export default function AdminBroadcasts() {
       setSubject('');
       setMessage('');
       setSelectedRecipients([]);
+      setSelectedBanner(null);
+      setTemplateType('text');
     } catch (err) {
       setError(err.error || err.errorEn || (isRTL ? 'فشل الإرسال' : 'Send failed'));
       setTimeout(() => setError(''), 5000);
@@ -396,6 +434,109 @@ export default function AdminBroadcasts() {
             </div>
           )}
 
+          {/* Template Type */}
+          <div>
+            <label className="block text-xs text-dark-400 mb-2">
+              {isRTL ? 'نوع القالب' : 'Template Type'}
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { setTemplateType('text'); setSelectedBanner(null); }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                  templateType === 'text'
+                    ? 'bg-primary-500/10 text-primary-400 border-primary-500/30'
+                    : 'bg-white/[0.02] text-dark-400 border-white/5 hover:border-white/10'
+                }`}
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                {isRTL ? 'رسالة نصية' : 'Text Message'}
+              </button>
+              <button
+                onClick={() => setTemplateType('banner_promo')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                  templateType === 'banner_promo'
+                    ? 'bg-violet-500/10 text-violet-400 border-violet-500/30'
+                    : 'bg-white/[0.02] text-dark-400 border-white/5 hover:border-white/10'
+                }`}
+              >
+                <Image className="w-4 h-4 flex-shrink-0" />
+                {isRTL ? 'ترويج بنر' : 'Banner Promo'}
+              </button>
+            </div>
+          </div>
+
+          {/* Banner Picker */}
+          {templateType === 'banner_promo' && (
+            <div>
+              <label className="block text-xs text-dark-400 mb-2">
+                {isRTL ? 'اختر البنر' : 'Select Banner'} <span className="text-red-400">*</span>
+              </label>
+              {loadingBanners ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+                </div>
+              ) : bannerTemplates.length === 0 ? (
+                <div className="text-center py-8 text-dark-500 text-xs">
+                  {isRTL ? 'لا توجد قوالب بنرات' : 'No banner templates available'}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {bannerTemplates.map(banner => {
+                    const isSelected = selectedBanner?.id === banner.id;
+                    const design = banner.design_data || {};
+                    const gradient = design.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    return (
+                      <button
+                        key={banner.id}
+                        onClick={() => {
+                          setSelectedBanner(banner);
+                          if (!subject.trim() || selectedBanner) {
+                            setSubject(banner.name || '');
+                          }
+                        }}
+                        className={`relative overflow-hidden rounded-xl border text-start transition-all ${
+                          isSelected
+                            ? 'border-violet-500/50 ring-2 ring-violet-500/20'
+                            : 'border-white/5 hover:border-white/15'
+                        }`}
+                      >
+                        {/* Gradient header */}
+                        <div
+                          className="h-20 w-full flex items-center justify-center"
+                          style={{ background: gradient }}
+                        >
+                          {design.image_url ? (
+                            <img
+                              src={design.image_url}
+                              alt={banner.name}
+                              className="h-16 w-auto object-contain drop-shadow-lg"
+                            />
+                          ) : (
+                            <Image className="w-8 h-8 text-white/50" />
+                          )}
+                        </div>
+                        {/* Info */}
+                        <div className="p-3 bg-[#0d1221]">
+                          <p className="text-white text-xs font-medium truncate">{banner.name}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-dark-500 text-[10px] truncate flex-1">{design.subtitle || banner.description || ''}</p>
+                            <span className="text-emerald-400 text-[10px] font-bold ms-2">${banner.price}</span>
+                          </div>
+                        </div>
+                        {/* Selected check */}
+                        {isSelected && (
+                          <div className="absolute top-2 end-2 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Subject */}
           <div>
             <label className="block text-xs text-dark-400 mb-1.5">
@@ -413,13 +554,17 @@ export default function AdminBroadcasts() {
           {/* Message */}
           <div>
             <label className="block text-xs text-dark-400 mb-1.5">
-              {isRTL ? 'نص الرسالة' : 'Message'} <span className="text-red-400">*</span>
+              {templateType === 'banner_promo'
+                ? (isRTL ? 'رسالة إضافية (اختياري)' : 'Custom Message (optional)')
+                : (isRTL ? 'نص الرسالة' : 'Message')} {templateType === 'text' && <span className="text-red-400">*</span>}
             </label>
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder={isRTL ? 'محتوى الإعلان...' : 'Broadcast content...'}
-              className={`${inputClass} resize-none h-40`}
+              placeholder={templateType === 'banner_promo'
+                ? (isRTL ? 'أضف رسالة مخصصة تظهر فوق بطاقة البنر...' : 'Add a custom message above the banner card...')
+                : (isRTL ? 'محتوى الإعلان...' : 'Broadcast content...')}
+              className={`${inputClass} resize-none ${templateType === 'banner_promo' ? 'h-24' : 'h-40'}`}
             />
           </div>
 

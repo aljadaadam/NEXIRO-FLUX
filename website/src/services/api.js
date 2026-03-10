@@ -433,6 +433,10 @@ class ApiService {
     return this.request('/platform/broadcasts/recipients');
   }
 
+  async getBannerTemplates() {
+    return this.request('/platform/broadcasts/banner-templates');
+  }
+
   // ─── Customization ───
 
   async getCustomization() {

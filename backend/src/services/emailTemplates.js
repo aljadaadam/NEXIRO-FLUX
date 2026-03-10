@@ -687,6 +687,71 @@ function broadcast({ name, subject, message, branding = {} }) {
 
 
 // ═══════════════════════════════════
+//  BANNER PROMO EMAIL
+// ═══════════════════════════════════
+
+function bannerPromo({ name, banner, customMessage, branding = {} }) {
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
+  const teamName = branding.storeName || 'NEXIRO-FLUX';
+  const title = banner.title || 'بانر جديد';
+  const subtitle = banner.subtitle || '';
+  const description = banner.description || '';
+  const imageUrl = banner.image_url || banner.preview_image || '';
+  const gradient = banner.gradient || 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
+  const badges = banner.badges || [];
+  const price = banner.price || 0;
+  const formattedMessage = (customMessage || '').replace(/\n/g, '<br>');
+
+  const badgesHtml = badges.length > 0
+    ? `<div style="text-align:center;margin:16px 0;">${badges.map(b => `<span style="display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.15);color:#fff;border-radius:20px;font-size:12px;font-weight:600;margin:0 4px 8px;">${b}</span>`).join('')}</div>`
+    : '';
+
+  const priceHtml = price > 0
+    ? `<div style="text-align:center;margin:12px 0;"><span style="display:inline-block;padding:8px 24px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:12px;font-size:16px;font-weight:700;">$${Number(price).toFixed(2)}</span></div>`
+    : `<div style="text-align:center;margin:12px 0;"><span style="display:inline-block;padding:8px 24px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:12px;font-size:16px;font-weight:700;">مجاني</span></div>`;
+
+  return baseLayout({
+    title: `🎨 ${title}`,
+    branding,
+    content: `
+      ${ui.icon('🎨')}
+      ${ui.heading('بانر جديد متاح الآن!')}
+      ${ui.text(`مرحباً ${name || ''},`)}
+      ${formattedMessage ? `<div style="margin:0 0 20px;color:#d1d5db;font-size:14px;line-height:1.8;">${formattedMessage}</div>` : ''}
+      
+      <!-- Banner Preview Card -->
+      <div style="border-radius:16px;overflow:hidden;margin:20px 0;border:1px solid rgba(255,255,255,0.1);">
+        <!-- Banner Header with gradient -->
+        <div style="background:${gradient};padding:24px;text-align:center;position:relative;min-height:120px;">
+          ${banner.icon ? `<div style="font-size:36px;margin-bottom:8px;">${banner.icon}</div>` : ''}
+          <h3 style="margin:0;color:#fff;font-size:22px;font-weight:800;">${title}</h3>
+          ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">${subtitle}</p>` : ''}
+          ${badgesHtml}
+        </div>
+        
+        ${imageUrl ? `
+        <!-- Banner Image -->
+        <div style="text-align:center;background:#0d1117;padding:16px;">
+          <img src="${imageUrl}" alt="${title}" style="max-width:100%;max-height:250px;border-radius:12px;object-fit:contain;" />
+        </div>` : ''}
+        
+        <!-- Banner Details -->
+        <div style="background:#161b22;padding:20px;">
+          ${description ? `<p style="margin:0 0 12px;color:#9ca3af;font-size:13px;line-height:1.7;">${description}</p>` : ''}
+          ${priceHtml}
+        </div>
+      </div>
+      
+      ${ui.button('تصفح متجر البانرات', 'https://nexiroflux.com')}
+      ${ui.divider()}
+      ${ui.text(`تم إرسال هذا الإعلان من فريق ${teamName}`)}
+      <p style="margin:8px 0 0;color:#4b5563;font-size:10px;">إذا لم تعد ترغب في استلام هذه الرسائل، تواصل مع الدعم لإلغاء الاشتراك.</p>
+    `,
+  });
+}
+
+
+// ═══════════════════════════════════
 //  EXPORTS
 // ═══════════════════════════════════
 
@@ -724,4 +789,5 @@ module.exports = {
   walletUpdated,
   // Broadcast
   broadcast,
+  bannerPromo,
 };
