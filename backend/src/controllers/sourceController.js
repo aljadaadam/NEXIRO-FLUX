@@ -6,6 +6,9 @@ const { DhruFusionClient, DhruFusionError } = require('../services/dhruFusion');
 const { ImeiCheckClient, ImeiCheckError } = require('../services/imeiCheck');
 const { invalidatePublicProductsCache } = require('./productController');
 
+// قفل المزامنة — يمنع تشغيل مزامنتين على نفس المصدر بنفس الوقت
+const activeSyncs = new Map();
+
 function isPrivateOrLocalHostname(hostname) {
   const host = String(hostname || '').trim().toLowerCase();
   if (!host) return true;
@@ -551,6 +554,10 @@ async function deleteSource(req, res) {
     });
   } catch (error) {
     console.error('Error in deleteSource:', error);
+    // إذا كان الخطأ بسبب طلبات معلقة، نرجع 400 مع الرسالة
+    if (error.message && error.message.includes('لا يمكن حذف المصدر')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ 
       error: 'حدث خطأ أثناء حذف المصدر' 
     });
@@ -935,6 +942,15 @@ async function syncSourceProducts(req, res) {
   try {
     const { site_key, id: user_id } = req.user;
     const { id } = req.params;
+
+    // قفل المزامنة — منع التشغيل المتزامن
+    const lockKey = `${site_key}:${id}`;
+    if (activeSyncs.has(lockKey)) {
+      return res.status(409).json({ error: 'المزامنة قيد التشغيل بالفعل لهذا المصدر' });
+    }
+    activeSyncs.set(lockKey, Date.now());
+    // ضمان إزالة القفل دائماً
+    res.on('close', () => activeSyncs.delete(lockKey));
 
     const source = await Source.findById(id);
     if (!source || source.site_key !== site_key) {

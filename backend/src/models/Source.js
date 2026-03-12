@@ -108,9 +108,17 @@ class Source {
     return result.affectedRows > 0;
   }
 
-  // حذف مصدر
+  // حذف مصدر — ممنوع إذا عنده طلبات معلقة
   static async delete(id, site_key) {
     const pool = getPool();
+    // فحص الطلبات المعلقة المرتبطة بهذا المصدر
+    const [pendingOrders] = await pool.query(
+      "SELECT COUNT(*) as cnt FROM orders WHERE source_id = ? AND site_key = ? AND status IN ('pending', 'processing')",
+      [id, site_key]
+    );
+    if (pendingOrders[0].cnt > 0) {
+      throw new Error(`لا يمكن حذف المصدر — لديه ${pendingOrders[0].cnt} طلب معلق`);
+    }
     const [result] = await pool.query(
       'DELETE FROM sources WHERE id = ? AND site_key = ?', 
       [id, site_key]

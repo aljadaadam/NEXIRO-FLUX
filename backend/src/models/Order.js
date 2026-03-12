@@ -6,18 +6,29 @@ class Order {
     const pool = getPool();
 
     // إنشاء رقم طلب فريد — يبدأ من 10000 ويزيد 43 لكل طلب
-    const [lastRow] = await pool.query(
-      'SELECT order_number FROM orders WHERE site_key = ? AND order_number REGEXP "^[0-9]+$" ORDER BY CAST(order_number AS UNSIGNED) DESC LIMIT 1',
-      [site_key]
-    );
-    const lastNum = lastRow.length > 0 ? parseInt(lastRow[0].order_number) : 0;
-    const order_number = String(lastNum < 10000 ? 10000 : lastNum + 43);
+    // محمي ضد تكرار الرقم بإعادة المحاولة
+    let result;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const [lastRow] = await pool.query(
+        'SELECT order_number FROM orders WHERE site_key = ? AND order_number REGEXP "^[0-9]+$" ORDER BY CAST(order_number AS UNSIGNED) DESC LIMIT 1',
+        [site_key]
+      );
+      const lastNum = lastRow.length > 0 ? parseInt(lastRow[0].order_number) : 0;
+      const order_number = String(lastNum < 10000 ? 10000 : lastNum + 43 + attempt);
 
-    const [result] = await pool.query(
-      `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null, source_price ?? null]
-    );
+      try {
+        const [insertResult] = await pool.query(
+          `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null, source_price ?? null]
+        );
+        result = insertResult;
+        break;
+      } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' && attempt < 2) continue;
+        throw err;
+      }
+    }
 
     return this.findById(result.insertId);
   }

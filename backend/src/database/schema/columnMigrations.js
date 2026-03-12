@@ -18,6 +18,7 @@ async function runColumnMigrations(pool) {
   await migrateProductIndexes(pool);
   await migrateSubscriptions(pool);
   await migrateBanners(pool);
+  await migrateOrdersFKSafe(pool);
 }
 
 // ─── Sites Columns ───
@@ -146,6 +147,29 @@ async function migrateBanners(pool) {
   await ensureColumn(pool, 'banners', 'template_id', "template_id INT NULL COMMENT 'معرف قالب البنر'");
   await ensureColumn(pool, 'banners', 'description', 'description TEXT NULL');
   await ensureColumn(pool, 'banners', 'extra_data', "extra_data JSON NULL COMMENT 'badges, gradient, etc.'");
+}
+
+// ─── Orders FK: CASCADE → SET NULL (حماية بيانات الطلبات عند حذف الزبون) ───
+async function migrateOrdersFKSafe(pool) {
+  try {
+    // فحص هل FK الحالي هو CASCADE
+    const [rows] = await pool.query(
+      `SELECT CONSTRAINT_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
+       WHERE CONSTRAINT_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'orders'
+         AND REFERENCED_TABLE_NAME = 'customers'`
+    );
+    if (rows.length > 0 && rows[0].DELETE_RULE === 'CASCADE') {
+      const fkName = rows[0].CONSTRAINT_NAME;
+      await pool.query(`ALTER TABLE orders DROP FOREIGN KEY \`${fkName}\``);
+      await pool.query(
+        `ALTER TABLE orders ADD CONSTRAINT \`${fkName}\` FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL`
+      );
+      console.log(`✓ Migration: orders.customer_id FK changed from CASCADE to SET NULL`);
+    }
+  } catch (err) {
+    console.error('Migration migrateOrdersFKSafe skipped:', err.message);
+  }
 }
 
 module.exports = { runColumnMigrations };

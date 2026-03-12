@@ -82,9 +82,21 @@ class Customer {
     return rows[0].count;
   }
 
-  // تحديث الرصيد
+  // تحديث الرصيد — محمي ضد الرصيد السالب عند الخصم
   static async updateWallet(id, site_key, amount) {
     const pool = getPool();
+    if (amount < 0) {
+      // خصم: تأكد أن الرصيد كافٍ
+      const [result] = await pool.query(
+        'UPDATE customers SET wallet_balance = wallet_balance + ? WHERE id = ? AND site_key = ? AND wallet_balance >= ?',
+        [amount, id, site_key, Math.abs(amount)]
+      );
+      if (result.affectedRows === 0) {
+        throw new Error('رصيد المحفظة غير كافٍ');
+      }
+      return true;
+    }
+    // إضافة (refund/deposit): لا حاجة لفحص
     const [result] = await pool.query(
       'UPDATE customers SET wallet_balance = wallet_balance + ? WHERE id = ? AND site_key = ?',
       [amount, id, site_key]
@@ -227,9 +239,16 @@ class Customer {
     return result.affectedRows > 0;
   }
 
-  // حذف زبون
+  // حذف زبون — ممنوع إذا عنده طلبات
   static async delete(id, site_key) {
     const pool = getPool();
+    const [orderCheck] = await pool.query(
+      'SELECT COUNT(*) as cnt FROM orders WHERE customer_id = ? AND site_key = ?',
+      [id, site_key]
+    );
+    if (orderCheck[0].cnt > 0) {
+      throw new Error(`لا يمكن حذف الزبون — لديه ${orderCheck[0].cnt} طلب مرتبط`);
+    }
     const [result] = await pool.query(
       'DELETE FROM customers WHERE id = ? AND site_key = ?',
       [id, site_key]
