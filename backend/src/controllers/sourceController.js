@@ -1147,8 +1147,8 @@ async function syncSourceProducts(req, res) {
         const pool = getPool();
         for (const cp of savedCustomPrices) {
           await pool.query(
-            'UPDATE products SET price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
-            [cp.price, site_key, source.id, cp.external_service_key]
+            'UPDATE products SET price = ?, final_price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
+            [cp.price, cp.price, site_key, source.id, cp.external_service_key]
           );
         }
         logs.push(`✓ Restored ${savedCustomPrices.length} custom prices`);
@@ -1363,8 +1363,8 @@ async function syncSourceProducts(req, res) {
       const pool = getPool();
       for (const cp of savedCustomPrices2) {
         await pool.query(
-          'UPDATE products SET price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
-          [cp.price, site_key, source.id, cp.external_service_key]
+          'UPDATE products SET price = ?, final_price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
+          [cp.price, cp.price, site_key, source.id, cp.external_service_key]
         );
       }
       logs.push(`✓ Restored ${savedCustomPrices2.length} custom prices`);
