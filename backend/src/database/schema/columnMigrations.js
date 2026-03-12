@@ -161,6 +161,9 @@ async function migrateOrdersFKSafe(pool) {
     );
     if (rows.length > 0 && rows[0].DELETE_RULE === 'CASCADE') {
       const fkName = rows[0].CONSTRAINT_NAME;
+      // أولاً: جعل العمود يقبل NULL
+      await pool.query('ALTER TABLE orders MODIFY customer_id INT NULL');
+      // ثانياً: حذف FK القديم وإنشاء الجديد
       await pool.query(`ALTER TABLE orders DROP FOREIGN KEY \`${fkName}\``);
       await pool.query(
         `ALTER TABLE orders ADD CONSTRAINT \`${fkName}\` FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL`
