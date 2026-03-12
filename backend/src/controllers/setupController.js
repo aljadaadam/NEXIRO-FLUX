@@ -591,17 +591,12 @@ async function getMySite(req, res) {
           const m = typeof p.meta === 'string' ? JSON.parse(p.meta) : (p.meta || {});
           return m.customer_email === currentUser.email;
         });
-        
-        // fallback: أي دفعة مكتملة بدون إيميل وبدون موقع مُجهز
-        if (!matchedPayment && pendingPayments.length > 0) {
-          matchedPayment = pendingPayments[0];
-        }
 
         if (matchedPayment) {
           const meta = typeof matchedPayment.meta === 'string' ? JSON.parse(matchedPayment.meta) : (matchedPayment.meta || {});
           pendingSetup = {
             payment_id: matchedPayment.id,
-            template_id: meta.template_id || meta.product_id || null,
+            template_id: String(meta.template_id || meta.product_id || ''),
             plan: meta.plan || null,
             amount: matchedPayment.amount,
             currency: matchedPayment.currency,

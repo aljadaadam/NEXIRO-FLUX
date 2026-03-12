@@ -60,8 +60,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (form.password.length < 6) {
-      setLocalError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
+    if (form.password.length < 8) {
+      setLocalError(isRTL ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Password must be at least 8 characters');
       return;
     }
 

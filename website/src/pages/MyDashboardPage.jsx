@@ -195,7 +195,7 @@ export default function MyDashboardPage() {
                     {pendingSetup.template_id && (
                       <span className="inline-flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-lg">
                         <LayoutDashboard className="w-3 h-3" />
-                        {pendingSetup.template_id.replace(/-/g, ' ')}
+                        {String(pendingSetup.template_id).replace(/-/g, ' ')}
                       </span>
                     )}
                     {pendingSetup.plan && (
