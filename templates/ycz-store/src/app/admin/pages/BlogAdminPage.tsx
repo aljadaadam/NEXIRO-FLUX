@@ -89,7 +89,7 @@ export default function BlogAdminPage({ isActive }: { isActive?: boolean } = {})
       setShowForm(false);
       resetForm();
       loadPosts();
-    } catch { /* ignore */ }
+    } catch { alert(t('حدث خطأ أثناء الحفظ')); }
     finally { setSaving(false); }
   }
 
@@ -98,14 +98,14 @@ export default function BlogAdminPage({ isActive }: { isActive?: boolean } = {})
     try {
       await adminApi.deleteBlogPost(id);
       setPosts(prev => prev.filter(p => p.id !== id));
-    } catch { /* ignore */ }
+    } catch { alert(t('حدث خطأ أثناء الحذف')); }
   }
 
   async function handleTogglePublish(id: number) {
     try {
       await adminApi.toggleBlogPublish(id);
       setPosts(prev => prev.map(p => p.id === id ? { ...p, is_published: !p.is_published } : p));
-    } catch { /* ignore */ }
+    } catch { alert(t('حدث خطأ')); }
   }
 
   const inputStyle: React.CSSProperties = {

@@ -216,7 +216,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           setSlugVerified(true);
           return;
         }
-        setSlugVerified(true); // let them in, pages will show connection error
+        setSlugVerified(false);
         return;
       }
 
@@ -260,7 +260,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     }
     window.addEventListener('admin-navigate', onAdminNav);
     return () => window.removeEventListener('admin-navigate', onAdminNav);
-  });
+  }, []);
 
   // Admin login handler
   async function handleAdminLogin(e: React.FormEvent) {

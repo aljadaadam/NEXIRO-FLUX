@@ -126,6 +126,13 @@ export default function OrdersAdminPage({ theme, isActive }: { theme: ColorTheme
     finally { if (!silent) setLoading(false); }
   }
 
+  // Escape HTML to prevent XSS
+  function esc(str: string): string {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
   // Print order details
   function printOrder(order: Order) {
     const fields: Array<{k: string; v: string}> = [];
@@ -143,7 +150,7 @@ export default function OrdersAdminPage({ theme, isActive }: { theme: ColorTheme
     const si = getStatus(order.status);
     const w = window.open('', '_blank', 'width=420,height=600');
     if (!w) return;
-    w.document.write(`<!DOCTYPE html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Order #${order.order_number}</title>
+    w.document.write(`<!DOCTYPE html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Order #${esc(order.order_number)}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Tajawal,Arial,sans-serif;padding:24px;color:#1e293b;font-size:13px}
 h1{font-size:16px;margin-bottom:4px}h2{font-size:13px;color:#64748b;margin-bottom:16px;font-weight:400}
 .badge{display:inline-block;padding:3px 12px;border-radius:6px;font-weight:700;font-size:12px;background:${si.color}20;color:${si.color}}
@@ -153,19 +160,19 @@ td:first-child{color:#64748b;font-weight:600;width:35%}td:last-child{font-weight
 .section h3{font-size:12px;color:#64748b;margin-bottom:6px}.field{padding:3px 0;font-size:12px}
 .field span{color:#64748b}.field strong{color:#1e293b}hr{border:none;border-top:1px solid #e2e8f0;margin:14px 0}
 @media print{body{padding:12px}}</style></head><body>
-<h1>📋 ${isRTL ? 'تفاصيل الطلب' : 'Order Details'} #${order.order_number}</h1>
+<h1>📋 ${isRTL ? 'تفاصيل الطلب' : 'Order Details'} #${esc(order.order_number)}</h1>
 <h2>${order.created_at ? new Date(order.created_at).toLocaleString(isRTL ? 'ar-EG' : 'en-US') : ''}</h2>
-<span class="badge">${t(si.label)}</span>
+<span class="badge">${esc(t(si.label))}</span>
 <table>
-<tr><td>${isRTL ? 'المنتج' : 'Product'}</td><td>${order.product_name}${order.quantity > 1 ? ` ×${order.quantity}` : ''}</td></tr>
-<tr><td>${isRTL ? 'العميل' : 'Customer'}</td><td>${order.customer_name || '—'}</td></tr>
-<tr><td>${isRTL ? 'الإيميل' : 'Email'}</td><td>${order.customer_email || '—'}</td></tr>
+<tr><td>${isRTL ? 'المنتج' : 'Product'}</td><td>${esc(order.product_name)}${order.quantity > 1 ? ` ×${order.quantity}` : ''}</td></tr>
+<tr><td>${isRTL ? 'العميل' : 'Customer'}</td><td>${esc(order.customer_name || '—')}</td></tr>
+<tr><td>${isRTL ? 'الإيميل' : 'Email'}</td><td>${esc(order.customer_email || '—')}</td></tr>
 <tr><td>${isRTL ? 'المبلغ' : 'Amount'}</td><td>$${Number(order.total_price).toFixed(2)}</td></tr>
-<tr><td>${isRTL ? 'طريقة الدفع' : 'Payment'}</td><td>${order.payment_method || '—'}</td></tr>
+<tr><td>${isRTL ? 'طريقة الدفع' : 'Payment'}</td><td>${esc(order.payment_method || '—')}</td></tr>
 </table>
-${fields.length > 0 ? `<div class="section"><h3>${isRTL ? 'الحقول' : 'Fields'}</h3>${fields.map(f => `<div class="field"><span>${f.k}: </span><strong>${f.v}</strong></div>`).join('')}</div>` : ''}
-${order.server_response ? `<div class="section" style="background:#fffbeb;border-color:#fde68a"><h3 style="color:#b45309">${isRTL ? 'رد الخدمة' : 'Service Response'}</h3><p style="font-size:12px;color:#92400e;word-break:break-all;white-space:pre-wrap">${order.server_response}</p></div>` : ''}
-${order.external_reference_id ? `<hr><p style="font-size:12px;color:#15803d"><strong>${isRTL ? 'رقم المرجع' : 'Reference'}:</strong> ${order.external_reference_id}</p>` : ''}
+${fields.length > 0 ? `<div class="section"><h3>${isRTL ? 'الحقول' : 'Fields'}</h3>${fields.map(f => `<div class="field"><span>${esc(f.k)}: </span><strong>${esc(f.v)}</strong></div>`).join('')}</div>` : ''}
+${order.server_response ? `<div class="section" style="background:#fffbeb;border-color:#fde68a"><h3 style="color:#b45309">${isRTL ? 'رد الخدمة' : 'Service Response'}</h3><p style="font-size:12px;color:#92400e;word-break:break-all;white-space:pre-wrap">${esc(order.server_response)}</p></div>` : ''}
+${order.external_reference_id ? `<hr><p style="font-size:12px;color:#15803d"><strong>${isRTL ? 'رقم المرجع' : 'Reference'}:</strong> ${esc(order.external_reference_id)}</p>` : ''}
 <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),500)}</script>
 </body></html>`);
     w.document.close();
