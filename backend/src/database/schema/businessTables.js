@@ -45,7 +45,7 @@ const ordersTable = `
   CREATE TABLE IF NOT EXISTS orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
     site_key VARCHAR(255) NOT NULL,
-    customer_id INT NOT NULL,
+    customer_id INT NULL,
     order_number VARCHAR(50) NOT NULL,
     product_id INT NULL,
     product_name VARCHAR(200) NOT NULL,
@@ -63,7 +63,7 @@ const ordersTable = `
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_order_number_site (order_number, site_key),
     FOREIGN KEY (site_key) REFERENCES sites(site_key) ON DELETE CASCADE,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
   )
 `;
 
