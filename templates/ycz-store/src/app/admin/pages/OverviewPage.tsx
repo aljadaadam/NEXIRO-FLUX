@@ -23,7 +23,7 @@ const EMPTY_STATS: StatsCard[] = [
   { label: 'إجمالي الأرباح', value: '$0', change: '0%', positive: true, icon: 'earnings', color: '#7c5cff', bg: '#f5f3ff' },
   { label: 'الطلبات', value: '0', change: '0%', positive: true, icon: 'orders', color: '#0ea5e9', bg: '#eff6ff' },
   { label: 'المستخدمين', value: '0', change: '0%', positive: true, icon: 'users', color: '#22c55e', bg: '#f0fdf4' },
-  { label: 'معدل الإكمال', value: '0%', change: '0%', positive: true, icon: 'rate', color: '#f59e0b', bg: '#fffbeb' },
+  { label: 'نسبة الأرباح', value: '0%', change: '0%', positive: true, icon: 'rate', color: '#f59e0b', bg: '#fffbeb' },
 ];
 
 const EMPTY_CHART: { month: string; value: number }[] = [];
@@ -132,11 +132,11 @@ export default function OverviewPage({ theme, isActive }: { theme: ColorTheme; i
         setStats(res.stats);
       } else {
         const totalOrders = Number(res?.totalOrders || 0);
-        const completedOrders = Number(res?.completedOrders || 0);
         const totalCustomers = Number(res?.totalCustomers || 0);
+        const totalRevenue = Number(res?.totalRevenue || 0);
         const totalProfit = Number(res?.totalProfit || 0);
         const todayProfit = Number(res?.todayProfit || 0);
-        const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
         setStats([
           {
@@ -167,10 +167,10 @@ export default function OverviewPage({ theme, isActive }: { theme: ColorTheme; i
             bg: '#f0fdf4',
           },
           {
-            label: 'معدل الإكمال',
-            value: `${completionRate.toFixed(1)}%`,
-            change: `${completedOrders}/${totalOrders}`,
-            positive: completionRate >= 50,
+            label: 'نسبة الأرباح',
+            value: `${profitMargin.toFixed(1)}%`,
+            change: `$${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            positive: profitMargin > 0,
             icon: 'rate',
             color: '#f59e0b',
             bg: '#fffbeb',

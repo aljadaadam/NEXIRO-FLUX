@@ -7,6 +7,7 @@ export const demoStats = {
   totalOrders: 1247,
   completedOrders: 1089,
   totalCustomers: 384,
+  totalRevenue: 52450.00,
   totalProfit: 18750.50,
   todayProfit: 425.00,
   ordersToday: 23,

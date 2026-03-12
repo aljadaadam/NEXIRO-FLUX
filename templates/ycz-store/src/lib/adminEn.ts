@@ -55,6 +55,7 @@ const adminEn: Record<string, string> = {
   // ─── Overview Page ───
   'إجمالي الأرباح': 'Total Revenue',
   'معدل الإكمال': 'Completion Rate',
+  'نسبة الأرباح': 'Profit Margin',
   'الزبائن': 'Customers',
   'إجمالي': 'Total',
   'اليوم': 'Today',

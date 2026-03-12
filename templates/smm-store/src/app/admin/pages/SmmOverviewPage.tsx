@@ -41,7 +41,23 @@ export default function SmmOverviewPage({ theme, darkMode, t, reload }: Props) {
           adminApi.getStats(),
           adminApi.getOrders(),
         ]);
-        setStats(s.stats || []);
+        if (s?.stats && Array.isArray(s.stats)) {
+          setStats(s.stats);
+        } else {
+          const totalOrders = Number(s?.totalOrders || 0);
+          const totalCustomers = Number(s?.totalCustomers || 0);
+          const totalRevenue = Number(s?.totalRevenue || 0);
+          const totalProfit = Number(s?.totalProfit || 0);
+          const todayProfit = Number(s?.todayProfit || 0);
+          const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+          setStats([
+            { label: 'إجمالي الأرباح', value: `$${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, change: todayProfit, key: 'revenue', icon: 'earnings', color: '#7c5cff', bg: '#f5f3ff' },
+            { label: 'الطلبات', value: String(totalOrders), change: Number(s?.ordersToday || 0), key: 'orders', icon: 'orders', color: '#0ea5e9', bg: '#eff6ff' },
+            { label: 'الزبائن', value: String(totalCustomers), key: 'customers', icon: 'users', color: '#22c55e', bg: '#f0fdf4' },
+            { label: 'المنتجات', value: String(s?.totalProducts || 0), key: 'products', icon: 'products', color: '#f59e0b', bg: '#fffbeb' },
+            { label: 'نسبة الأرباح', value: `${profitMargin.toFixed(1)}%`, key: 'profit_margin', icon: 'rate', color: '#ec4899', bg: '#fdf2f8' },
+          ]);
+        }
         const orders = (o.orders || o || []);
         setRecentOrders(Array.isArray(orders) ? orders.slice(0, 8) : []);
         try { const on = await adminApi.getOnlineStats(); setOnlineStats(on); } catch {}

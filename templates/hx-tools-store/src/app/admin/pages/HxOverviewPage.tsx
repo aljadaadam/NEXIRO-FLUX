@@ -25,7 +25,23 @@ export default function HxOverviewPage({ theme, darkMode, t, reload }: Props) {
           hxAdminApi.getStats(),
           hxAdminApi.getOrders(),
         ]);
-        setStats(s.stats || []);
+        if (s?.stats && Array.isArray(s.stats)) {
+          setStats(s.stats);
+        } else {
+          const totalOrders = Number(s?.totalOrders || 0);
+          const totalCustomers = Number(s?.totalCustomers || 0);
+          const totalRevenue = Number(s?.totalRevenue || 0);
+          const totalProfit = Number(s?.totalProfit || 0);
+          const todayProfit = Number(s?.todayProfit || 0);
+          const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+          setStats([
+            { label: 'إجمالي الأرباح', value: `$${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, change: todayProfit, key: 'revenue' },
+            { label: 'الطلبات', value: String(totalOrders), change: Number(s?.ordersToday || 0), key: 'orders' },
+            { label: 'الزبائن', value: String(totalCustomers), key: 'customers' },
+            { label: 'المنتجات', value: String(s?.totalProducts || 0), key: 'products' },
+            { label: 'نسبة الأرباح', value: `${profitMargin.toFixed(1)}%`, key: 'profit_margin' },
+          ]);
+        }
         setRecentOrders((o.orders || []).slice(0, 5));
       } catch {}
       setLoading(false);

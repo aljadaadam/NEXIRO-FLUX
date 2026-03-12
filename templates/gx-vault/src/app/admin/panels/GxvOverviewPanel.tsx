@@ -65,6 +65,16 @@ export default function GxvOverviewPanel() {
       bg: 'rgba(6,182,212,0.08)',
     },
     {
+      label: 'نسبة الأرباح',
+      value: (() => {
+        const rev = Number(stats?.totalRevenue ?? stats?.total_revenue ?? 0);
+        const prof = Number(stats?.totalProfit ?? stats?.total_profit ?? 0);
+        return rev > 0 ? `${((prof / rev) * 100).toFixed(1)}%` : '0%';
+      })(),
+      icon: BarChart3, color: '#f43f5e',
+      bg: 'rgba(244,63,94,0.08)',
+    },
+    {
       label: 'طلبات اليوم',
       value: String(stats?.todayOrders ?? stats?.today_orders ?? 0),
       icon: Zap, color: '#ec4899',
