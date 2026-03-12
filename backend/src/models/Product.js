@@ -95,7 +95,7 @@ class Product {
         credit = VALUES(credit),
         credit_raw = VALUES(credit_raw),
         source_price = VALUES(source_price),
-        final_price = VALUES(final_price),
+        final_price = IF(is_custom_price = 1, price, VALUES(final_price)),
         profit_percentage_applied = VALUES(profit_percentage_applied),
         service_time = VALUES(service_time),
         service_info = VALUES(service_info),
@@ -205,8 +205,10 @@ class Product {
     if (price !== undefined) { 
       updates.push('price = ?'); 
       values.push(price);
-      // Mark as custom price when manually edited
+      // Mark as custom price when manually edited + sync final_price
       updates.push('is_custom_price = 1');
+      updates.push('final_price = ?');
+      values.push(price);
     }
     if (price_yearly !== undefined) { updates.push('price_yearly = ?'); values.push(price_yearly); }
     if (price_lifetime !== undefined) { updates.push('price_lifetime = ?'); values.push(price_lifetime); }

@@ -899,7 +899,7 @@ async function applyProfitToSourceProducts(req, res) {
       await pool.query(
         `UPDATE products
          SET
-           final_price = ROUND(source_price + ?, 3),
+           final_price = IF(is_custom_price = 1, price, ROUND(source_price + ?, 3)),
            price = IF(is_custom_price = 1, price, ROUND(source_price + ?, 3)),
            profit_percentage_applied = ?
          WHERE site_key = ? AND source_id = ? AND source_price IS NOT NULL`,
@@ -910,7 +910,7 @@ async function applyProfitToSourceProducts(req, res) {
       await pool.query(
         `UPDATE products
          SET
-           final_price = ROUND(source_price * (1 + (? / 100)), 3),
+           final_price = IF(is_custom_price = 1, price, ROUND(source_price * (1 + (? / 100)), 3)),
            price = IF(is_custom_price = 1, price, ROUND(source_price * (1 + (? / 100)), 3)),
            profit_percentage_applied = ?
          WHERE site_key = ? AND source_id = ? AND source_price IS NOT NULL`,
