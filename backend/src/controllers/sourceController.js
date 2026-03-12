@@ -1044,24 +1044,14 @@ async function syncSourceProducts(req, res) {
       }
 
       // حذف المنتجات القديمة إذا طُلب ذلك
-      let savedCustomPrices = [];
       if (deleteAllBrandModel || syncMode === 'delete_then_sync') {
         logs.push('Deleting old products from this source...');
         const pool = getPool();
-        // حفظ الأسعار المخصصة قبل الحذف
-        const [customs] = await pool.query(
-          'SELECT external_service_key, price FROM products WHERE site_key = ? AND source_id = ? AND is_custom_price = 1',
-          [site_key, source.id]
-        );
-        savedCustomPrices = customs;
         const [deleteResult] = await pool.query(
           'DELETE FROM products WHERE site_key = ? AND source_id = ?',
           [site_key, source.id]
         );
-        logs.push(`✓ Deleted ${deleteResult.affectedRows} old products`);
-        if (savedCustomPrices.length > 0) {
-          logs.push(`→ Saved ${savedCustomPrices.length} custom prices for restore`);
-        }
+        logs.push(`✓ Deleted ${deleteResult.affectedRows} old products (clean start)`);
       }
 
       logs.push('Updating services list');
@@ -1140,18 +1130,6 @@ async function syncSourceProducts(req, res) {
       logs.push('✓ Successfully synchronize');
       if (skipped > 0) {
         logs.push(`→ Skipped ${skipped} products (not matching setup filters)`);
-      }
-
-      // استعادة الأسعار المخصصة بعد المزامنة
-      if (savedCustomPrices.length > 0) {
-        const pool = getPool();
-        for (const cp of savedCustomPrices) {
-          await pool.query(
-            'UPDATE products SET price = ?, final_price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
-            [cp.price, cp.price, site_key, source.id, cp.external_service_key]
-          );
-        }
-        logs.push(`✓ Restored ${savedCustomPrices.length} custom prices`);
       }
 
       await Source.updateConnectionStatus(source.id, site_key, {
@@ -1253,24 +1231,14 @@ async function syncSourceProducts(req, res) {
     }
 
     // حذف المنتجات القديمة إذا طُلب ذلك
-    let savedCustomPrices2 = [];
     if (deleteAllBrandModel || syncMode === 'delete_then_sync') {
       logs.push('Deleting old products from this source...');
       const pool = getPool();
-      // حفظ الأسعار المخصصة قبل الحذف
-      const [customs] = await pool.query(
-        'SELECT external_service_key, price FROM products WHERE site_key = ? AND source_id = ? AND is_custom_price = 1',
-        [site_key, source.id]
-      );
-      savedCustomPrices2 = customs;
       const [deleteResult] = await pool.query(
         'DELETE FROM products WHERE site_key = ? AND source_id = ?',
         [site_key, source.id]
       );
-      logs.push(`✓ Deleted ${deleteResult.affectedRows} old products`);
-      if (savedCustomPrices2.length > 0) {
-        logs.push(`→ Saved ${savedCustomPrices2.length} custom prices for restore`);
-      }
+      logs.push(`✓ Deleted ${deleteResult.affectedRows} old products (clean start)`);
     }
 
     logs.push('Updating services list');
@@ -1356,18 +1324,6 @@ async function syncSourceProducts(req, res) {
     logs.push('✓ Successfully synchronize');
     if (skipped > 0) {
       logs.push(`→ Skipped ${skipped} products (not matching setup filters)`);
-    }
-
-    // استعادة الأسعار المخصصة بعد المزامنة
-    if (savedCustomPrices2.length > 0) {
-      const pool = getPool();
-      for (const cp of savedCustomPrices2) {
-        await pool.query(
-          'UPDATE products SET price = ?, final_price = ?, is_custom_price = 1 WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
-          [cp.price, cp.price, site_key, source.id, cp.external_service_key]
-        );
-      }
-      logs.push(`✓ Restored ${savedCustomPrices2.length} custom prices`);
     }
 
     await Source.updateConnectionStatus(source.id, site_key, {
