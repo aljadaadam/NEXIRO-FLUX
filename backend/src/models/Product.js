@@ -48,8 +48,8 @@ class Product {
 
     // Check if this product exists and has a custom price
     const [existing] = await pool.query(
-      'SELECT id, is_custom_price, price FROM products WHERE site_key = ? AND external_service_key = ?',
-      [site_key, safeExternalKey]
+      'SELECT id, is_custom_price, price FROM products WHERE site_key = ? AND source_id = ? AND external_service_key = ?',
+      [site_key, source_id, safeExternalKey]
     );
 
     const hasCustomPrice = existing.length > 0 && existing[0].is_custom_price === 1;

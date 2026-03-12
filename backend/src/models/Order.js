@@ -2,7 +2,7 @@ const { getPool } = require('../config/db');
 
 class Order {
   // إنشاء طلب جديد
-  static async create({ site_key, customer_id, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes }) {
+  static async create({ site_key, customer_id, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price }) {
     const pool = getPool();
 
     // إنشاء رقم طلب فريد — يبدأ من 10000 ويزيد 43 لكل طلب
@@ -14,9 +14,9 @@ class Order {
     const order_number = String(lastNum < 10000 ? 10000 : lastNum + 43);
 
     const [result] = await pool.query(
-      `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null]
+      `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null, source_price ?? null]
     );
 
     return this.findById(result.insertId);
@@ -125,7 +125,7 @@ class Order {
     const [profitRows] = await pool.query(
       `SELECT COALESCE(SUM(
          GREATEST(
-           ((o.unit_price - COALESCE(p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
+           ((o.unit_price - COALESCE(o.source_price, p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
            0
          )
        ), 0) as profit
@@ -137,7 +137,7 @@ class Order {
     const [todayProfitRows] = await pool.query(
       `SELECT COALESCE(SUM(
          GREATEST(
-           ((o.unit_price - COALESCE(p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
+           ((o.unit_price - COALESCE(o.source_price, p.source_price, o.unit_price)) * COALESCE(o.quantity, 1)),
            0
          )
        ), 0) as profit

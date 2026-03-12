@@ -81,6 +81,7 @@ async function createOrder(req, res) {
 
     // ─── حماية: جلب السعر الحقيقي من قاعدة البيانات — لا نثق بسعر الكلاينت ───
     let verifiedPrice;
+    let productSourcePrice = null;
     const pool = getPool();
 
     // الزبون يجب أن يرسل product_id — لا نقبل سعر يدوي من الزبون
@@ -90,13 +91,14 @@ async function createOrder(req, res) {
 
     if (product_id) {
       const [productRows] = await pool.query(
-        'SELECT price FROM products WHERE id = ? AND site_key = ?',
+        'SELECT price, source_price FROM products WHERE id = ? AND site_key = ?',
         [product_id, site_key]
       );
       if (!productRows.length || !productRows[0].price || productRows[0].price <= 0) {
         return res.status(404).json({ error: 'المنتج غير موجود أو بدون سعر' });
       }
       verifiedPrice = parseFloat(productRows[0].price);
+      productSourcePrice = productRows[0].source_price != null ? parseFloat(productRows[0].source_price) : null;
     } else {
       // فقط الأدمن يمكنه تحديد سعر يدوي
       verifiedPrice = parseFloat(unit_price);
@@ -160,7 +162,7 @@ async function createOrder(req, res) {
 
     const order = await Order.create({
       site_key, customer_id: effectiveCustomerId, product_id, product_name, quantity: qty,
-      unit_price: verifiedPrice, total_price, payment_method, imei, notes
+      unit_price: verifiedPrice, total_price, payment_method, imei, notes, source_price: productSourcePrice
     });
 
     // تسجيل الدفع
