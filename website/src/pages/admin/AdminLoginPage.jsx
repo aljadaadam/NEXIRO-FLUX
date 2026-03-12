@@ -29,9 +29,11 @@ export default function AdminLoginPage() {
       // تحقق من أنه أدمن منصة
       if (!data.user?.is_platform_admin) {
         setLocalError('هذا الحساب ليس أدمن منصة — تسجيل الدخول مرفوض');
-        // مسح التوكن فوراً لأنه ليس أدمن منصة
+        // مسح التوكن والحالة فوراً لأنه ليس أدمن منصة
         const api = (await import('../../services/api')).default;
         api.removeToken();
+        api.setUser && localStorage.removeItem('nf_user');
+        window.dispatchEvent(new Event('auth:logout'));
         setLoading(false);
         return;
       }

@@ -255,7 +255,7 @@ export default function TerminalSetupPage() {
       case 1:
         if (!ownerName.trim()) { setError(t.required); return false; }
         if (!ownerEmail.trim() || !ownerEmail.includes('@')) { setError(t.invalidEmail); return false; }
-        if (!ownerPassword || ownerPassword.length < 6) { setError(t.shortPassword); return false; }
+        if (!ownerPassword || ownerPassword.length < 8) { setError(t.shortPassword); return false; }
         return true;
       case 2:
         if (!storeName.trim()) { setError(t.required); return false; }
@@ -497,7 +497,7 @@ export default function TerminalSetupPage() {
               <input type="text" value={smtpHost} onChange={e => setSmtpHost(e.target.value)} onKeyDown={handleKeyDown} placeholder={t.smtpHostPlaceholder} className={inputClass} dir="ltr" autoFocus />
               <div className="grid grid-cols-2 gap-3">
                 <input type="text" value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder={t.smtpUserPlaceholder} className={inputClass} dir="ltr" />
-                <input type="text" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder={t.smtpPortPlaceholder} className={inputClass} dir="ltr" />
+                <input type="number" min="1" max="65535" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder={t.smtpPortPlaceholder} className={inputClass} dir="ltr" />
               </div>
               <input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder={t.smtpPassPlaceholder} className={inputClass} dir="ltr" />
 

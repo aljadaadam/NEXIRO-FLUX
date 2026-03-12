@@ -57,7 +57,7 @@ export default function CheckoutPage() {
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
       .then(d => setCountry(d.country_code))
-      .catch(() => setCountry(null));
+      .catch(() => setCountry(''));
   }, []);
 
   // Load gateways

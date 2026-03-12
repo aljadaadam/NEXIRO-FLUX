@@ -9,8 +9,13 @@ import api from '../services/api';
 
 export default function LoginPage() {
   const { t, isRTL } = useLanguage();
-  const { login, googleLogin, error: authError, setError } = useAuth();
+  const { login, googleLogin, error: authError, setError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) navigate('/my-dashboard', { replace: true });
+  }, [isAuthenticated, navigate]);
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -112,8 +117,8 @@ export default function LoginPage() {
     e.preventDefault();
     clearMessages();
 
-    if (!newPassword || newPassword.length < 6) {
-      setLocalError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
+    if (!newPassword || newPassword.length < 8) {
+      setLocalError(isRTL ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Password must be at least 8 characters');
       return;
     }
     if (newPassword !== confirmPassword) {

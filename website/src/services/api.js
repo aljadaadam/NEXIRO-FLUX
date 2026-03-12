@@ -73,7 +73,12 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw { status: response.status, error: `Server error (${response.status})` };
+      }
 
       if (!response.ok) {
         // If token expired/invalid, logout (401 only — 403 means forbidden, not session-invalid)
@@ -264,11 +269,7 @@ class ApiService {
   }
 
   async getPublicProducts() {
-    const url = `${this.baseUrl}/products/public`;
-    const response = await fetch(url);
-    const data = await response.json();
-    if (!response.ok) throw data;
-    return data;
+    return this.request('/products/public');
   }
 
   async createProduct(productData) {
@@ -542,7 +543,6 @@ class ApiService {
   async checkUsdtPayment(paymentId, txHash) {
     return this.request(`/checkout/check-usdt/${paymentId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ txHash: txHash || undefined }),
     });
   }

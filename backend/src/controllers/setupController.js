@@ -217,6 +217,18 @@ async function provisionSite(req, res) {
       });
     }
 
+    // ─── ⛔ تحقق أن المبلغ المدفوع يطابق سعر القالب (منع التلاعب بالسعر) ───
+    if (verifiedPayment && verifiedPayment.status === 'completed' && verifiedPayment.payment_method !== 'bank_transfer') {
+      const paidAmount = parseFloat(verifiedPayment.amount);
+      if (paidAmount < price * 0.95) { // 5% tolerance for rounding/fees
+        console.warn(`⚠️ Price mismatch: paid=${paidAmount}, expected=${price}, template=${template_id}, cycle=${cycle}`);
+        return res.status(402).json({
+          error: 'المبلغ المدفوع لا يتطابق مع سعر القالب المحدد',
+          errorEn: 'The paid amount does not match the selected template price',
+        });
+      }
+    }
+
     // ─── تطبيق خصم الكود (حساب المبلغ المدفوع فعلياً) ───
     let paymentStatus = 'pending';
     let discountedPrice = price; // المبلغ بعد الخصم (للتتبع فقط)

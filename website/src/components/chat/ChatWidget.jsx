@@ -162,6 +162,7 @@ export default function ChatWidget() {
   const inputRef = useRef(null);
   const pollRef = useRef(null);
   const convId = useRef(getConversationId());
+  const lastMsgIdRef = useRef(0);
 
   // ── Restore visitor ──
   useEffect(() => {
@@ -193,30 +194,34 @@ export default function ChatWidget() {
   }, [messages]);
 
   // ── Polling ──
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
+
   const pollMessages = useCallback(async () => {
     try {
-      const data = await chatApi(`/chat/public/messages?conversation_id=${convId.current}&after=${lastMsgId}`);
+      const data = await chatApi(`/chat/public/messages?conversation_id=${convId.current}&after=${lastMsgIdRef.current}`);
       if (data.messages?.length) {
         setMessages(prev => {
           const existingIds = new Set(prev.map(m => m.id));
           const newOnes = data.messages.filter(m => !existingIds.has(m.id));
           if (newOnes.length) {
             const hasAdminMsg = newOnes.some(m => m.sender_type === 'admin');
-            if (hasAdminMsg && !isOpen) {
+            if (hasAdminMsg && !isOpenRef.current) {
               setUnread(u => u + newOnes.filter(m => m.sender_type === 'admin').length);
               playNotifSound();
             }
-            if (hasAdminMsg && isOpen) {
+            if (hasAdminMsg && isOpenRef.current) {
               playNotifSound();
             }
           }
           return [...prev, ...newOnes];
         });
         const maxId = Math.max(...data.messages.map(m => m.id));
+        lastMsgIdRef.current = maxId;
         setLastMsgId(maxId);
       }
     } catch {}
-  }, [lastMsgId, isOpen]);
+  }, []);
 
   useEffect(() => {
     if (phase === 'chat') {
