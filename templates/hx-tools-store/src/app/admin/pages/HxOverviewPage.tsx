@@ -35,11 +35,11 @@ export default function HxOverviewPage({ theme, darkMode, t, reload }: Props) {
           const todayProfit = Number(s?.todayProfit || 0);
           const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
           setStats([
-            { label: 'إجمالي الأرباح', value: `$${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, change: todayProfit, key: 'revenue' },
-            { label: 'الطلبات', value: String(totalOrders), change: Number(s?.ordersToday || 0), key: 'orders' },
-            { label: 'الزبائن', value: String(totalCustomers), key: 'customers' },
-            { label: 'المنتجات', value: String(s?.totalProducts || 0), key: 'products' },
-            { label: 'نسبة الأرباح', value: `${profitMargin.toFixed(1)}%`, key: 'profit_margin' },
+            { label: 'إجمالي الأرباح', value: `$${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, change: todayProfit, positive: todayProfit >= 0, key: 'revenue', icon: 'earnings', color: '#7c5cff', bg: '#f5f3ff' },
+            { label: 'الطلبات', value: String(totalOrders), change: Number(s?.ordersToday || 0), positive: true, key: 'orders', icon: 'orders', color: '#0ea5e9', bg: '#eff6ff' },
+            { label: 'الزبائن', value: String(totalCustomers), change: 0, positive: true, key: 'customers', icon: 'users', color: '#22c55e', bg: '#f0fdf4' },
+            { label: 'المنتجات', value: String(s?.totalProducts || 0), change: 0, positive: true, key: 'products', icon: 'products', color: '#f59e0b', bg: '#fffbeb' },
+            { label: 'نسبة الأرباح', value: `${profitMargin.toFixed(1)}%`, change: 0, positive: profitMargin > 0, key: 'profit_margin', icon: 'rate', color: '#ec4899', bg: '#fdf2f8' },
           ]);
         }
         setRecentOrders((o.orders || []).slice(0, 5));
