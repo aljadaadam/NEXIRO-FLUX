@@ -266,7 +266,7 @@ export const storeApi = {
 };
 
 export function mapBackendProduct(p: Record<string, unknown>): Product {
-  let custom_fields = p.custom_fields;
+  let custom_fields = p.customFields || p.requires_custom_json || p.custom_fields;
   if (typeof custom_fields === 'string') {
     try { custom_fields = JSON.parse(custom_fields); } catch { custom_fields = []; }
   }

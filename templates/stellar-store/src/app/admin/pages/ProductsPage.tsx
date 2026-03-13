@@ -113,7 +113,7 @@ function ProductModal({ product, onClose, onSave, categories }: {
         image,
         qnt: parseInt(qnt) || 0,
         status,
-        custom_fields: customFields.filter(f => f.label.trim()),
+        requires_custom_json: customFields.filter(f => f.label.trim()),
       });
       onClose();
     } catch {

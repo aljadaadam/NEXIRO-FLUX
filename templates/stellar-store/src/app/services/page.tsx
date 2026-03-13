@@ -60,7 +60,7 @@ export default function ServicesPage() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((p: Record<string, unknown>) => {
-            let custom_fields = p.custom_fields;
+            let custom_fields = p.requires_custom_json || p.customFields || p.custom_fields;
             if (typeof custom_fields === 'string') {
               try { custom_fields = JSON.parse(custom_fields); } catch { custom_fields = []; }
             }

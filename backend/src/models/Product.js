@@ -1,14 +1,14 @@
 const { getPool } = require('../config/db');
 
 class Product {
-  static async create({ site_key, name, arabic_name, description, price, service_type = 'SERVER', category = null, status = 'active', image = null, qnt = null, group_name = null, is_game = 0 }) {
+  static async create({ site_key, name, arabic_name, description, price, service_type = 'SERVER', category = null, status = 'active', image = null, qnt = null, group_name = null, is_game = 0, requires_custom_json = null }) {
     const pool = getPool();
     
     const [result] = await pool.query(
       `INSERT INTO products
-       (site_key, name, arabic_name, description, price, service_type, category, status, image, qnt, group_name, is_game)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [site_key, name, arabic_name || null, description, price, service_type, category, status, image, qnt, group_name, is_game ? 1 : 0]
+       (site_key, name, arabic_name, description, price, service_type, category, status, image, qnt, group_name, is_game, requires_custom_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [site_key, name, arabic_name || null, description, price, service_type, category, status, image, qnt, group_name, is_game ? 1 : 0, requires_custom_json == null ? null : JSON.stringify(requires_custom_json)]
     );
     
     return this.findById(result.insertId);

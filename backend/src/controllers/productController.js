@@ -136,6 +136,7 @@ async function createProduct(req, res) {
       });
     }
 
+    const requiresCustomJson = req.body.requires_custom_json;
     const product = await Product.create({
       site_key,
       name,
@@ -149,6 +150,7 @@ async function createProduct(req, res) {
       qnt: normalizedStock,
       group_name: group_name || null,
       is_game,
+      requires_custom_json: requiresCustomJson || null,
     });
 
     invalidatePublicProductsCache(site_key);
