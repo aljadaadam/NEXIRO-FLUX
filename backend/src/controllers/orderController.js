@@ -376,6 +376,13 @@ async function cancelCustomerOrder(req, res) {
     const { site_key, id: customerId } = req.user;
     const { id } = req.params;
 
+    // تحقق من إعداد السماح بالإلغاء
+    const Customization = require('../models/Customization');
+    const settings = await Customization.findBySiteKey(site_key);
+    if (!settings || !settings.allow_customer_cancel) {
+      return res.status(403).json({ error: 'إلغاء الطلبات غير مفعّل حالياً' });
+    }
+
     const order = await Order.findById(id);
     if (!order || order.site_key !== site_key) {
       return res.status(404).json({ error: 'الطلب غير موجود' });

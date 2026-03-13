@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [allowCancel, setAllowCancel] = useState(false);
 
   // Edit fields
   const [editName, setEditName] = useState('');
@@ -83,6 +84,14 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
+  useEffect(() => {
+    storeApi.getStoreSettings()
+      .then((data: Record<string, unknown>) => {
+        const c = data?.customization as Record<string, unknown> | undefined;
+        if (c?.allow_customer_cancel) setAllowCancel(true);
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => { if (customer && activeTab === 'orders') loadOrders(); }, [customer, activeTab, loadOrders]);
 
   const handleSaveProfile = async () => {
@@ -257,7 +266,7 @@ export default function ProfilePage() {
                                   <p className="text-sm text-white break-all select-all">{order.server_response || order.response}</p>
                                 </div>
                               )}
-                              {order.status === 'pending' && (
+                              {allowCancel && order.status === 'pending' && (
                                 <div className="mt-3 pt-3 border-t border-navy-700/30">
                                   <button
                                     onClick={async () => {

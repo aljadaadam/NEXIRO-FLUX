@@ -307,7 +307,7 @@ export const storeApi = {
     fetch(`/api/checkout/status/${paymentId}`).then(r => r.ok ? r.json() : null),
 
   getStoreSettings: () => {
-    if (isDemoMode()) return Promise.resolve({ customization: { store_name: 'متجر ستيلار', whatsapp_number: '', telegram_link: '', facebook_link: '', instagram_link: '', support_email: '' } });
+    if (isDemoMode()) return Promise.resolve({ customization: { store_name: 'متجر ستيلار', whatsapp_number: '', telegram_link: '', facebook_link: '', instagram_link: '', support_email: '', allow_customer_cancel: false } });
     return fetch('/api/customization/store').then(r => r.ok ? r.json() : {});
   },
 };

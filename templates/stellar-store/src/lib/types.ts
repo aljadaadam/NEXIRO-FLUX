@@ -127,4 +127,5 @@ export interface Customization {
   smtp_user?: string;
   smtp_pass?: string;
   support_email?: string;
+  allow_customer_cancel?: boolean;
 }

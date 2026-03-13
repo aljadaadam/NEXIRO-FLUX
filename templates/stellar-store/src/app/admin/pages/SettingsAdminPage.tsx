@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi } from '@/lib/api';
 import type { Customization, PaymentGateway } from '@/lib/types';
-import { Settings, Save, Loader2, Palette, Globe, MessageSquare, CreditCard, Plus, Trash2, ToggleLeft, ToggleRight, Mail, Eye, EyeOff } from 'lucide-react';
+import { Settings, Save, Loader2, Palette, Globe, MessageSquare, CreditCard, Plus, Trash2, ToggleLeft, ToggleRight, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 export default function SettingsAdminPage() {
   const [settings, setSettings] = useState<Customization>({});
@@ -178,6 +178,26 @@ export default function SettingsAdminPage() {
               placeholder="وصف قصير للمتجر..."
             />
           </div>
+        </div>
+      </div>
+
+      {/* Appearance */}
+      <div className="bg-navy-900/60 border border-navy-700/40 rounded-2xl p-6 space-y-5">
+        <h2 className="text-white font-bold text-lg flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-gold-500" />
+          خيارات المتجر
+        </h2>
+        <div className="flex items-center justify-between p-4 bg-navy-800/40 border border-navy-700/30 rounded-xl">
+          <div>
+            <h4 className="text-white font-bold text-sm">السماح للعميل بإلغاء الطلب</h4>
+            <p className="text-navy-500 text-xs mt-1">يتيح للعميل إلغاء طلبه إذا كان في حالة &quot;قيد الانتظار&quot; فقط</p>
+          </div>
+          <button
+            onClick={() => update('allow_customer_cancel', !settings.allow_customer_cancel)}
+            className={`p-2 rounded-lg transition-all ${settings.allow_customer_cancel ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-navy-500 hover:bg-navy-700/50'}`}
+          >
+            {settings.allow_customer_cancel ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7" />}
+          </button>
         </div>
       </div>
 

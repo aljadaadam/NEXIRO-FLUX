@@ -48,6 +48,7 @@ class Customization {
       flash_btn_url: data.flash_btn_url,
       flash_font_style: data.flash_font_style,
       product_layout: data.product_layout,
+      allow_customer_cancel: data.allow_customer_cancel != null ? (data.allow_customer_cancel ? 1 : 0) : undefined,
     };
 
     // تصفية الحقول غير المعرّفة
