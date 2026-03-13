@@ -62,14 +62,17 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
 }
 
 // ─── Product Form Modal ───
-function ProductModal({ product, onClose, onSave }: {
+function ProductModal({ product, onClose, onSave, categories }: {
   product: Product | null;
   onClose: () => void;
   onSave: (data: Record<string, unknown>) => Promise<void>;
+  categories: string[];
 }) {
   const [name, setName] = useState(product?.arabic_name || product?.name || '');
   const [price, setPrice] = useState(product?.price?.toString() || '');
   const [category, setCategory] = useState(product?.group_name || product?.category || '');
+  const [customCategory, setCustomCategory] = useState('');
+  const [showNewCategory, setShowNewCategory] = useState(false);
   const [description, setDescription] = useState(product?.description || '');
   const [image, setImage] = useState(product?.image || '');
   const [qnt, setQnt] = useState(product?.qnt?.toString() || '0');
@@ -85,8 +88,8 @@ function ProductModal({ product, onClose, onSave }: {
         name,
         arabic_name: name,
         price: parseFloat(price),
-        group_name: category,
-        category,
+        group_name: showNewCategory ? customCategory : category,
+        category: showNewCategory ? customCategory : category,
         description,
         image,
         qnt: parseInt(qnt) || 0,
@@ -156,12 +159,43 @@ function ProductModal({ product, onClose, onSave }: {
 
           <div>
             <label className="text-sm text-navy-300 font-bold mb-1.5 block">القسم</label>
-            <input
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-              placeholder="تفعيلات، ألعاب، اشتراكات..."
-            />
+            {!showNewCategory ? (
+              <div className="space-y-2">
+                <select
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                >
+                  <option value="">اختر القسم</option>
+                  {categories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCategory(true)}
+                  className="text-xs text-gold-500 hover:text-gold-400 font-bold"
+                >
+                  + إضافة قسم جديد
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  value={customCategory}
+                  onChange={e => setCustomCategory(e.target.value)}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="اسم القسم الجديد..."
+                />
+                <button
+                  type="button"
+                  onClick={() => { setShowNewCategory(false); setCustomCategory(''); }}
+                  className="text-xs text-navy-400 hover:text-navy-300 font-bold"
+                >
+                  ← اختر من الأقسام الموجودة
+                </button>
+              </div>
+            )}
           </div>
 
           <div>
@@ -232,6 +266,9 @@ export default function ProductsPage() {
   const filtered = products.filter(p =>
     (p.name || '').includes(search) || (p.arabic_name || '').includes(search) || (p.category || '').includes(search)
   );
+
+  // Extract unique categories from products
+  const categories = [...new Set(products.map(p => p.group_name || p.category || '').filter(Boolean))];
 
   const handleSave = async (data: Record<string, unknown>) => {
     if (editProduct) {
@@ -361,6 +398,7 @@ export default function ProductsPage() {
           product={editProduct}
           onClose={() => { setShowModal(false); setEditProduct(null); }}
           onSave={handleSave}
+          categories={categories}
         />
       )}
     </div>

@@ -1,13 +1,46 @@
 const DEMO_PRODUCTS = [
-  { id: 1, name: 'Windows 11 Pro', arabic_name: 'تفعيل ويندوز 11 برو', price: 25000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 50 },
-  { id: 2, name: 'Office 365', arabic_name: 'تفعيل أوفيس 365', price: 35000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 30 },
-  { id: 3, name: 'Kaspersky', arabic_name: 'تفعيل كاسبرسكي', price: 20000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 20 },
-  { id: 4, name: 'PUBG 660 UC', arabic_name: 'شحن PUBG 660 UC', price: 18000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/default-product.svg', status: 'active', qnt: 100 },
-  { id: 5, name: 'Free Fire 1080', arabic_name: 'شحن فري فاير 1080 جوهرة', price: 15000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/default-product.svg', status: 'active', qnt: 80 },
-  { id: 6, name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', price: 45000, category: 'beIN Sports', group_name: 'beIN Sports', image: '/images/default-product.svg', status: 'active', qnt: 15 },
+  { id: 1, name: 'Windows 11 Pro', arabic_name: 'تفعيل ويندوز 11 برو', price: 25000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/windows.png', status: 'active', qnt: 50 },
+  { id: 2, name: 'Office 365', arabic_name: 'تفعيل أوفيس 365', price: 35000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/office.png', status: 'active', qnt: 30 },
+  { id: 3, name: 'PUBG 660 UC', arabic_name: 'شحن PUBG 660 UC', price: 18000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/pubg.jpg', status: 'active', qnt: 100 },
+  { id: 4, name: 'Free Fire 1080', arabic_name: 'شحن فري فاير 1080 جوهرة', price: 15000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/freefire.jpg', status: 'active', qnt: 80 },
+  { id: 5, name: 'PlayStation $10', arabic_name: 'بطاقة PlayStation $10', price: 22000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/playstation.jpg', status: 'active', qnt: 40 },
+  { id: 6, name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', price: 45000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/bein.jpg', status: 'active', qnt: 15 },
+  { id: 7, name: 'Netflix Month', arabic_name: 'نتفلكس شهر', price: 12000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/netflix.jpg', status: 'active', qnt: 25 },
+  { id: 8, name: 'Spotify Premium', arabic_name: 'سبوتيفاي بريميوم', price: 8000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/spotify.jpg', status: 'active', qnt: 60 },
+  { id: 9, name: 'Starlink Kit', arabic_name: 'ستارلينك', price: 380000, category: 'ستارلينك', group_name: 'ستارلينك', image: '/images/starlink-default.png', status: 'active', qnt: 5 },
 ];
 
-const DEMO_STATS = { totalProducts: 12, totalOrders: 156, totalRevenue: 2450000, totalCustomers: 89 };
+const DEMO_STATS = { totalProducts: 9, totalOrders: 156, totalRevenue: 2450000, totalCustomers: 89 };
+
+const DEMO_CUSTOMERS = [
+  { id: 1, name: 'أحمد محمد', email: 'ahmed@example.com', phone: '+249912345678', wallet_balance: 500000, country: 'السودان', status: 'active', joined: '2026-01-15T10:00:00Z', last_login_at: '2026-03-13T08:30:00Z' },
+  { id: 2, name: 'سارة علي', email: 'sara@example.com', phone: '+249923456789', wallet_balance: 120000, country: 'السودان', status: 'active', joined: '2026-02-01T14:00:00Z', last_login_at: '2026-03-12T16:45:00Z' },
+  { id: 3, name: 'محمد خالد', email: 'moh@example.com', phone: '+249934567890', wallet_balance: 75000, country: 'مصر', status: 'active', joined: '2026-02-10T09:00:00Z', last_login_at: '2026-03-11T12:00:00Z' },
+  { id: 4, name: 'فاطمة حسن', email: 'fatima@example.com', phone: '+249945678901', wallet_balance: 250000, country: 'السودان', status: 'active', joined: '2026-01-20T18:00:00Z', last_login_at: '2026-03-13T07:15:00Z' },
+  { id: 5, name: 'عمر يوسف', email: 'omar@example.com', phone: '+249956789012', wallet_balance: 0, country: 'السعودية', status: 'blocked', joined: '2026-03-01T11:00:00Z', last_login_at: '2026-03-05T14:30:00Z' },
+];
+
+const DEMO_ADMIN_ORDERS = [
+  { id: 101, order_number: 'ORD-2026-001', product_name: 'تفعيل ويندوز 11 برو', customer_name: 'أحمد محمد', customer_email: 'ahmed@example.com', quantity: 1, total_price: 25000, status: 'completed', payment_method: 'wallet', notes: '', response: 'XXXX-XXXX-XXXX-XXXX', server_response: 'XXXX-XXXX-XXXX-XXXX', created_at: '2026-03-10T14:30:00Z' },
+  { id: 102, order_number: 'ORD-2026-002', product_name: 'شحن PUBG 660 UC', customer_name: 'سارة علي', customer_email: 'sara@example.com', quantity: 1, total_price: 18000, status: 'processing', payment_method: 'wallet', notes: 'Player ID: 51234567', response: '', server_response: '', created_at: '2026-03-12T09:15:00Z' },
+  { id: 103, order_number: 'ORD-2026-003', product_name: 'اشتراك beIN شهري', customer_name: 'محمد خالد', customer_email: 'moh@example.com', quantity: 1, total_price: 45000, status: 'completed', payment_method: 'wallet', notes: '', response: 'تم تفعيل الاشتراك بنجاح', server_response: 'تم تفعيل الاشتراك بنجاح', created_at: '2026-03-08T18:00:00Z' },
+  { id: 104, order_number: 'ORD-2026-004', product_name: 'تفعيل أوفيس 365', customer_name: 'فاطمة حسن', customer_email: 'fatima@example.com', quantity: 1, total_price: 35000, status: 'pending', payment_method: 'wallet', notes: '', response: '', server_response: '', created_at: '2026-03-13T06:00:00Z' },
+  { id: 105, order_number: 'ORD-2026-005', product_name: 'نتفلكس شهر', customer_name: 'أحمد محمد', customer_email: 'ahmed@example.com', quantity: 1, total_price: 12000, status: 'completed', payment_method: 'wallet', notes: '', response: 'email: demo@netflix.com', server_response: 'email: demo@netflix.com', created_at: '2026-03-07T20:00:00Z' },
+  { id: 106, order_number: 'ORD-2026-006', product_name: 'سبوتيفاي بريميوم', customer_name: 'سارة علي', customer_email: 'sara@example.com', quantity: 1, total_price: 8000, status: 'cancelled', payment_method: 'wallet', notes: '', response: '', server_response: '', created_at: '2026-03-06T15:30:00Z' },
+];
+
+const DEMO_PAYMENTS = [
+  { id: 1, customer_name: 'أحمد محمد', customer_email: 'ahmed@example.com', amount: 500000, type: 'deposit', status: 'completed', payment_method: 'بنكك', reference: 'PAY-001', created_at: '2026-01-15T10:30:00Z' },
+  { id: 2, customer_name: 'سارة علي', customer_email: 'sara@example.com', amount: 200000, type: 'deposit', status: 'completed', payment_method: 'بنكك', reference: 'PAY-002', created_at: '2026-02-01T14:30:00Z' },
+  { id: 3, customer_name: 'محمد خالد', customer_email: 'moh@example.com', amount: 100000, type: 'deposit', status: 'pending', payment_method: 'تحويل بنكي', reference: 'PAY-003', created_at: '2026-03-11T12:30:00Z' },
+  { id: 4, customer_name: 'فاطمة حسن', customer_email: 'fatima@example.com', amount: 250000, type: 'deposit', status: 'completed', payment_method: 'بنكك', reference: 'PAY-004', created_at: '2026-01-20T18:30:00Z' },
+];
+
+const DEMO_NOTIFICATIONS = [
+  { id: 1, title: 'مرحباً بكم في متجر ستيلار', message: 'نرحب بكم في متجرنا الإلكتروني. تصفحوا منتجاتنا واستمتعوا بأفضل الأسعار!', type: 'info', created_at: '2026-03-01T10:00:00Z' },
+  { id: 2, title: 'عرض خاص على التفعيلات', message: 'خصم 20% على جميع تفعيلات ويندوز وأوفيس لفترة محدودة.', type: 'success', created_at: '2026-03-10T12:00:00Z' },
+  { id: 3, title: 'صيانة مجدولة', message: 'سيتم إجراء صيانة للسيرفر يوم الجمعة من الساعة 2-4 صباحاً.', type: 'warning', created_at: '2026-03-12T15:00:00Z' },
+];
 
 function isDemoMode(): boolean {
   if (typeof window === 'undefined') return false;
@@ -56,11 +89,11 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
 function getDemoResponse(endpoint: string, method: string) {
   if (endpoint.includes('/dashboard/stats')) return Promise.resolve(DEMO_STATS);
   if (endpoint.includes('/products') && method === 'GET') return Promise.resolve(DEMO_PRODUCTS);
-  if (endpoint.includes('/orders') && method === 'GET') return Promise.resolve({ orders: [], stats: {} });
-  if (endpoint.includes('/customers') && method === 'GET') return Promise.resolve({ customers: [], total: 0 });
-  if (endpoint.includes('/payments') && method === 'GET') return Promise.resolve({ payments: [] });
-  if (endpoint.includes('/notifications') && method === 'GET') return Promise.resolve({ notifications: [], unreadCount: 0 });
-  if (endpoint.includes('/customization') && method === 'GET') return Promise.resolve({ customization: {} });
+  if (endpoint.includes('/orders') && method === 'GET') return Promise.resolve({ orders: DEMO_ADMIN_ORDERS, stats: { total: 6, completed: 3, processing: 1, pending: 1, cancelled: 1 } });
+  if (endpoint.includes('/customers') && method === 'GET') return Promise.resolve({ customers: DEMO_CUSTOMERS, total: DEMO_CUSTOMERS.length });
+  if (endpoint.includes('/payments') && method === 'GET') return Promise.resolve({ payments: DEMO_PAYMENTS });
+  if (endpoint.includes('/notifications') && method === 'GET') return Promise.resolve({ notifications: DEMO_NOTIFICATIONS, unreadCount: 1 });
+  if (endpoint.includes('/customization') && method === 'GET') return Promise.resolve({ customization: { store_name: 'متجر ستيلار', store_description: 'متجر تفعيلات وألعاب وخدمات رقمية', primary_color: '#f5a623', secondary_color: '#d4911e', font_family: 'Tajawal', store_language: 'ar' } });
   if (method === 'POST') return Promise.resolve({ id: Date.now(), success: true });
   if (method === 'PUT') return Promise.resolve({ success: true });
   if (method === 'PATCH') return Promise.resolve({ success: true });
