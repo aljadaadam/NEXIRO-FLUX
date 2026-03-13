@@ -1,0 +1,279 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html[lang="ar"] body { font-family: Tajawal, Cairo, sans-serif; }
+html[lang="en"] body { font-family: Inter, system-ui, -apple-system, sans-serif; }
+body { font-family: Tajawal, Cairo, sans-serif; }
+
+/* ─── Aflatoon Dark Theme — Always Dark ─── */
+:root {
+  --bg-page: #0a0e1a;
+  --bg-card: #131829;
+  --bg-subtle: #1a2035;
+  --bg-input: #0d1220;
+  --bg-muted: #1e2640;
+  --border-default: #2a3352;
+  --border-light: #1e2640;
+  --border-gold: rgba(245, 166, 35, 0.3);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --gold: #f5a623;
+  --gold-light: #fbbf24;
+  --gold-dark: #d97706;
+  --nav-bg: rgba(10, 14, 26, 0.95);
+  --nav-border: rgba(245, 166, 35, 0.12);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-nav: 0 2px 20px rgba(0,0,0,0.3);
+  --shadow-gold: 0 4px 20px rgba(245, 166, 35, 0.15);
+}
+
+html.dark {
+  --bg-page: #0a0e1a;
+  --bg-card: #131829;
+  --bg-subtle: #1a2035;
+  --bg-input: #0d1220;
+  --bg-muted: #1e2640;
+  --border-default: #2a3352;
+  --border-light: #1e2640;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --nav-bg: rgba(10, 14, 26, 0.95);
+  --nav-border: rgba(245, 166, 35, 0.12);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-nav: 0 2px 20px rgba(0,0,0,0.3);
+}
+
+body { background: var(--bg-page); color: var(--text-primary); transition: background 0.3s, color 0.3s; }
+a { text-decoration: none; color: inherit; }
+input, textarea, select, button { font-family: 'Tajawal', 'Cairo', sans-serif; }
+
+.dash-bottom-nav { display: none; }
+.dash-bottom-nav-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+
+/* ─── Store Responsive ─── */
+.store-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.store-products-list {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+}
+.store-products-list > * { min-width: 0; overflow: hidden; }
+
+@media (max-width: 1024px) {
+  .store-products-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .store-products-list { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 768px) {
+  .afl-hero-title { font-size: 1.5rem !important; }
+  .afl-hero-desc { font-size: 0.85rem !important; }
+  .store-products-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .store-products-list { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .store-steps-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .store-header-nav { display: none !important; }
+  .store-mobile-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .store-mobile-toggle { display: block !important; }
+  .store-main { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
+  .store-footer { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
+  .store-footer-grid { grid-template-columns: 1fr !important; }
+  .store-about-grid { grid-template-columns: 1fr 1fr !important; }
+  .afl-features-grid { grid-template-columns: 1fr !important; }
+  .afl-hero-buttons { flex-direction: column !important; }
+  .afl-hero-buttons button, .afl-hero-buttons a { width: 100% !important; }
+  .afl-hero-container { flex-direction: column-reverse !important; padding: 1.5rem !important; }
+  .afl-hero-image { width: 100% !important; max-width: 280px !important; margin: 0 auto !important; }
+  .afl-hero-badge { font-size: 0.7rem !important; }
+}
+
+@media (max-width: 480px) {
+  .store-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .store-products-list { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .afl-product-card { border-radius: 12px !important; }
+  .store-steps-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .store-about-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 360px) {
+  .store-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+}
+
+/* ─── Aflatoon Product Card ─── */
+.afl-product-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+}
+.afl-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3), 0 0 20px rgba(245, 166, 35, 0.08);
+}
+.afl-product-card-img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s;
+}
+.afl-product-card:hover .afl-product-card-img {
+  transform: scale(1.05);
+}
+
+/* ─── Admin Responsive ─── */
+@media (max-width: 768px) {
+  [dir="rtl"] .dash-sidebar { transform: translateX(100%); box-shadow: -12px 0 30px rgba(2, 6, 23, 0.12); }
+  [dir="ltr"] .dash-sidebar { transform: translateX(-100%); box-shadow: 12px 0 30px rgba(2, 6, 23, 0.12); }
+  .dash-sidebar { width: min(82vw, 300px) !important; top: 0 !important; height: 100dvh !important; z-index: 55 !important; }
+  .dash-sidebar-open { transform: translateX(0) !important; }
+  .dash-main-content { margin-right: 0 !important; margin-left: 0 !important; padding-bottom: 5.25rem !important; }
+  .dash-menu-btn { display: block !important; }
+  .dash-search { width: 160px !important; }
+  .dash-profile-text { display: none !important; }
+  .dash-bottom-nav {
+    display: flex !important; flex-direction: row !important;
+    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 48 !important;
+  }
+  .dash-bottom-nav-inner { display: flex !important; flex-direction: row !important; justify-content: space-around !important; align-items: center !important; width: 100% !important; }
+  .dash-mobile-close { display: grid !important; }
+  .dash-collapse-btn { display: none !important; }
+  .dash-drawer-open .dash-bottom-nav { display: none !important; }
+  .dash-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .dash-stats-grid > div { padding: 0.85rem !important; }
+  .dash-stats-grid p:first-of-type { font-size: 1.15rem !important; }
+  .dash-overview-grid { grid-template-columns: 1fr !important; }
+  .dash-toast { bottom: 5.5rem !important; }
+}
+
+@media (max-width: 480px) {
+  .dash-search { width: 140px !important; }
+  .dash-stats-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3352; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4562; }
+
+/* ─── Modal & Animations ─── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  display: grid; place-items: center;
+  animation: aflFadeIn 0.2s ease;
+}
+@keyframes aflFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aflSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content { animation: aflSlideUp 0.3s ease; }
+
+/* ─── Hero Animations ─── */
+@keyframes aflFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes aflGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(245, 166, 35, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(245, 166, 35, 0.4); }
+}
+@keyframes aflSlideIn {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes aflPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+@keyframes nf-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+@keyframes nf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nf-slide-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes nf-slide-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+/* ─── WhatsApp Floating Button ─── */
+.afl-whatsapp-float {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 999;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #25D366;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: none;
+}
+.afl-whatsapp-float:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.5);
+}
+@media (max-width: 768px) {
+  .afl-whatsapp-float { bottom: 5rem; left: 1rem; width: 46px; height: 46px; }
+}
+
+/* ─── Dark Mode Toggle ─── */
+.afl-theme-toggle {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.3s, background 0.3s;
+  color: var(--gold);
+}
+.afl-theme-toggle:hover {
+  transform: scale(1.1);
+  background: var(--bg-muted);
+}
+@media (max-width: 768px) {
+  .afl-theme-toggle { bottom: 5rem; right: 1rem; width: 40px; height: 40px; }
+}
+
+/* ─── Feature Cards ─── */
+.afl-feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s, border-color 0.3s;
+}
+.afl-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-gold);
+}
+
+/* ─── Store Footer ─── */
+.store-footer {
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
