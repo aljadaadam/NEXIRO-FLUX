@@ -44,6 +44,10 @@ const DEMO_NOTIFICATIONS = [
   { id: 3, title: 'صيانة مجدولة', message: 'سيتم إجراء صيانة للسيرفر يوم الجمعة من الساعة 2-4 صباحاً.', type: 'warning', created_at: '2026-03-12T15:00:00Z' },
 ];
 
+const DEMO_GATEWAYS = [
+  { id: 1, name: 'بنكك - بنك الخرطوم', type: 'bankak', is_enabled: true, logo: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png', config: { account_number: '2490912345678', full_name: 'محمد أحمد عبدالله', receipt_note: 'يرجى كتابة اسمك في خانة الملاحظات عند التحويل' }, created_at: '2026-03-01T10:00:00Z' },
+];
+
 function isDemoMode(): boolean {
   if (typeof window === 'undefined') return false;
   return sessionStorage.getItem('demo_mode') === '1';
@@ -95,6 +99,8 @@ function getDemoResponse(endpoint: string, method: string) {
   if (endpoint.includes('/customers') && method === 'GET') return Promise.resolve({ customers: DEMO_CUSTOMERS, total: DEMO_CUSTOMERS.length });
   if (endpoint.includes('/payments') && method === 'GET') return Promise.resolve({ payments: DEMO_PAYMENTS });
   if (endpoint.includes('/notifications') && method === 'GET') return Promise.resolve({ notifications: DEMO_NOTIFICATIONS, unreadCount: 1 });
+  if (endpoint.includes('/payment-gateways') && method === 'GET') return Promise.resolve({ gateways: DEMO_GATEWAYS });
+  if (endpoint.includes('/payment-gateways') && (method === 'POST' || method === 'PUT' || method === 'PATCH')) return Promise.resolve({ gateway: { ...DEMO_GATEWAYS[0], id: Date.now() }, success: true, message: 'تم بنجاح (وضع تجريبي)' });
   if (endpoint.includes('/customization') && method === 'GET') return Promise.resolve({ customization: { store_name: 'متجر ستيلار', store_description: 'متجر تفعيلات وألعاب وخدمات رقمية', primary_color: '#f5a623', secondary_color: '#d4911e', font_family: 'Tajawal', store_language: 'ar' } });
   if (method === 'POST') return Promise.resolve({ id: Date.now(), success: true });
   if (method === 'PUT') return Promise.resolve({ success: true });
@@ -213,6 +219,10 @@ function getDemoCustomerResponse(endpoint: string, method: string, body?: string
   }
   if (ep === 'customers/verify-otp') return Promise.resolve({ token: 'demo-token-stellar', customer: DEMO_CUSTOMER });
   if (ep === 'customers/forgot-password') return Promise.resolve({ message: 'تم إرسال رابط إعادة التعيين (وضع تجريبي)' });
+  if (ep.includes('checkout/init') && method === 'POST')
+    return Promise.resolve({ payment: { id: Date.now(), status: 'awaiting_receipt' }, gateway: DEMO_GATEWAYS[0], message: 'تم إنشاء طلب الدفع (وضع تجريبي)' });
+  if (ep.includes('checkout/receipt') && method === 'POST')
+    return Promise.resolve({ success: true, message: 'تم إرسال الإيصال بنجاح (وضع تجريبي)' });
 
   return Promise.resolve({});
 }
@@ -275,8 +285,10 @@ export const storeApi = {
   getProducts: () =>
     fetch('/api/products/public').then(r => r.ok ? r.json() : []),
 
-  getEnabledGateways: () =>
-    fetch('/api/payment-gateways/enabled').then(r => r.ok ? r.json() : []),
+  getEnabledGateways: () => {
+    if (isDemoMode()) return Promise.resolve(DEMO_GATEWAYS.filter(g => g.is_enabled));
+    return fetch('/api/payment-gateways/enabled').then(r => r.ok ? r.json() : []);
+  },
 
   initCheckout: (data: { gateway_id: number; amount: number; type?: string }) =>
     customerFetch('/checkout/init', { method: 'POST', body: JSON.stringify(data) }),
