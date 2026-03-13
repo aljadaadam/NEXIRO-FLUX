@@ -15,7 +15,7 @@ const countries = [
 
 export default function StarlinkSection() {
   return (
-    <section className="py-20 px-4 sm:px-6">
+    <section className="py-8 sm:py-20 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-right mb-12">

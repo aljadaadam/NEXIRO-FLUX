@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { Monitor, Gamepad2, Tv, Key } from 'lucide-react';
 
 const categories = [
@@ -42,21 +43,43 @@ const categories = [
 ];
 
 export default function CategoriesSection() {
+  const catScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = catScrollRef.current;
+    if (!el) return;
+    let pos = 0;
+    const speed = 0.5;
+    let raf: number;
+    const step = () => {
+      pos += speed;
+      if (pos >= el.scrollWidth - el.clientWidth) pos = 0;
+      el.scrollLeft = pos;
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    const stop = () => cancelAnimationFrame(raf);
+    const resume = () => { raf = requestAnimationFrame(step); };
+    el.addEventListener('touchstart', stop);
+    el.addEventListener('touchend', resume);
+    return () => { cancelAnimationFrame(raf); el.removeEventListener('touchstart', stop); el.removeEventListener('touchend', resume); };
+  }, []);
+
   return (
-    <section className="py-20 px-4 sm:px-6">
+    <section className="py-8 sm:py-20 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+        <div className="text-center mb-6 sm:mb-12">
+          <h2 className="text-2xl sm:text-4xl font-black text-white mb-2 sm:mb-3">
             تصفح <span className="text-gold-gradient">أقسامنا</span>
           </h2>
-          <p className="text-navy-400 text-lg max-w-xl mx-auto">
+          <p className="text-navy-400 text-sm sm:text-lg max-w-xl mx-auto">
             اختر من بين مجموعة واسعة من الخدمات والمنتجات الرقمية
           </p>
         </div>
 
         {/* Mobile: single horizontal scroll strip */}
-        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+        <div ref={catScrollRef} className="sm:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
           {categories.map((cat, i) => {
             const Icon = cat.icon;
             return (

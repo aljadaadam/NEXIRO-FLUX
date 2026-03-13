@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { Zap, Shield, Headphones } from 'lucide-react';
 
 const features = [
@@ -30,11 +31,33 @@ const features = [
 ];
 
 export default function FeaturesSection() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let pos = 0;
+    const speed = 0.5;
+    let raf: number;
+    const step = () => {
+      pos += speed;
+      if (pos >= el.scrollWidth - el.clientWidth) pos = 0;
+      el.scrollLeft = pos;
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    const stop = () => cancelAnimationFrame(raf);
+    const resume = () => { raf = requestAnimationFrame(step); };
+    el.addEventListener('touchstart', stop);
+    el.addEventListener('touchend', resume);
+    return () => { cancelAnimationFrame(raf); el.removeEventListener('touchstart', stop); el.removeEventListener('touchend', resume); };
+  }, []);
+
   return (
-    <section className="py-16 px-4 sm:px-6">
+    <section className="py-8 sm:py-16 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Mobile: horizontal scroll strip */}
-        <div className="md:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+        <div ref={scrollRef} className="md:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
           {features.map((feature, i) => {
             const Icon = feature.icon;
             return (
