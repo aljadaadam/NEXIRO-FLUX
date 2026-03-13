@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import CategoriesSection from '@/components/CategoriesSection';
-import StarlinkSection from '@/components/StarlinkSection';
+import FeaturedSection from '@/components/StarlinkSection';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 
@@ -19,7 +19,7 @@ export default function HomePage() {
         <HeroSection onLoginClick={() => setShowLogin(true)} />
         <FeaturesSection />
         <CategoriesSection />
-        <StarlinkSection />
+        <FeaturedSection />
       </main>
       <Footer />
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
