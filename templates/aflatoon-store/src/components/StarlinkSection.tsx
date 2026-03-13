@@ -32,7 +32,8 @@ export default function StarlinkSection() {
           {countries.map((country, i) => (
             <div
               key={i}
-              className="group relative rounded-2xl overflow-hidden bg-navy-900/80 border border-navy-700/50 hover:border-gold-500/30 transition-all hover:-translate-y-1"
+              className="group relative rounded-2xl overflow-hidden bg-navy-900/80 border border-navy-700/50 hover:border-gold-500/30 transition-all hover:-translate-y-1 animate-fadeInUp"
+              style={{ animationDelay: `${i * 0.1}s` }}
             >
               {/* Satellite dish image */}
               <div className="relative h-36 bg-gradient-to-b from-navy-800/50 to-navy-900 overflow-hidden">
