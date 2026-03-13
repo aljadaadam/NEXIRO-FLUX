@@ -120,4 +120,10 @@ export interface Customization {
   telegram?: string;
   instagram?: string;
   twitter?: string;
+  // SMTP
+  smtp_host?: string;
+  smtp_port?: string;
+  smtp_user?: string;
+  smtp_pass?: string;
+  support_email?: string;
 }

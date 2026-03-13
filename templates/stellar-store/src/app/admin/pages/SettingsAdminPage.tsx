@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi } from '@/lib/api';
 import type { Customization, PaymentGateway } from '@/lib/types';
-import { Settings, Save, Loader2, Palette, Globe, MessageSquare, CreditCard, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings, Save, Loader2, Palette, Globe, MessageSquare, CreditCard, Plus, Trash2, ToggleLeft, ToggleRight, Mail, Eye, EyeOff } from 'lucide-react';
 
 export default function SettingsAdminPage() {
   const [settings, setSettings] = useState<Customization>({});
@@ -14,6 +14,9 @@ export default function SettingsAdminPage() {
   const [showAddGateway, setShowAddGateway] = useState(false);
   const [newGateway, setNewGateway] = useState({ name: '', account_number: '', full_name: '', receipt_note: '' });
   const [gatewayLoading, setGatewayLoading] = useState(false);
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const loadGateways = async () => {
     try {
@@ -294,6 +297,114 @@ export default function SettingsAdminPage() {
               dir="ltr"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Email / SMTP */}
+      <div className="bg-navy-900/60 border border-navy-700/40 rounded-2xl p-6 space-y-5">
+        <h2 className="text-white font-bold text-lg flex items-center gap-2">
+          <Mail className="w-5 h-5 text-gold-500" />
+          إعدادات البريد الإلكتروني
+        </h2>
+        <p className="text-navy-400 text-xs">يُستخدم لإرسال إشعارات الطلبات، تأكيد الحسابات، وتنبيهات المحفظة</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">سيرفر SMTP</label>
+            <input
+              value={settings.smtp_host || ''}
+              onChange={e => update('smtp_host', e.target.value)}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 font-mono text-sm"
+              placeholder="smtp.example.com"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">المنفذ (Port)</label>
+            <select
+              value={settings.smtp_port || '465'}
+              onChange={e => update('smtp_port', e.target.value)}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+            >
+              <option value="465">465 (SSL)</option>
+              <option value="587">587 (TLS)</option>
+              <option value="25">25 (غير مشفّر)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">اسم المستخدم / البريد</label>
+            <input
+              value={settings.smtp_user || ''}
+              onChange={e => update('smtp_user', e.target.value)}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 font-mono text-sm"
+              placeholder="info@yourstore.com"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">كلمة مرور SMTP</label>
+            <div className="relative">
+              <input
+                type={showSmtpPass ? 'text' : 'password'}
+                value={settings.smtp_pass || ''}
+                onChange={e => update('smtp_pass', e.target.value)}
+                className="w-full px-4 py-3 pl-12 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 font-mono text-sm"
+                placeholder="••••••••"
+                dir="ltr"
+              />
+              <button
+                type="button"
+                onClick={() => setShowSmtpPass(!showSmtpPass)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-400 hover:text-white transition-colors"
+              >
+                {showSmtpPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">بريد الدعم (يظهر للعملاء)</label>
+            <input
+              value={settings.support_email || ''}
+              onChange={e => update('support_email', e.target.value)}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 font-mono text-sm"
+              placeholder="support@yourstore.com"
+              dir="ltr"
+            />
+          </div>
+        </div>
+        {testEmailResult && (
+          <div className={`text-sm rounded-xl px-4 py-3 font-bold ${
+            testEmailResult.ok
+              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+              : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
+            {testEmailResult.ok ? '✓' : '✗'} {testEmailResult.msg}
+          </div>
+        )}
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={async () => {
+              if (!settings.smtp_host || !settings.smtp_user || !settings.smtp_pass) {
+                setTestEmailResult({ ok: false, msg: 'أكمل بيانات SMTP أولاً' });
+                return;
+              }
+              setTestingEmail(true);
+              setTestEmailResult(null);
+              try {
+                await handleSave();
+                setTestEmailResult({ ok: true, msg: 'تم حفظ الإعدادات. أرسل بريد تجريبي من صفحة الإشعارات للتأكد.' });
+              } catch {
+                setTestEmailResult({ ok: false, msg: 'فشل في حفظ إعدادات SMTP' });
+              } finally {
+                setTestingEmail(false);
+              }
+            }}
+            disabled={testingEmail}
+            className="flex items-center gap-2 px-4 py-2 bg-navy-800 border border-navy-700/50 text-navy-200 hover:text-gold-500 hover:border-gold-500/30 font-bold rounded-xl transition-all text-sm disabled:opacity-50"
+          >
+            {testingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+            حفظ واختبار
+          </button>
+          <p className="text-navy-500 text-xs">احفظ الإعدادات أولاً ثم أرسل بريد تجريبي من صفحة الإشعارات</p>
         </div>
       </div>
 
