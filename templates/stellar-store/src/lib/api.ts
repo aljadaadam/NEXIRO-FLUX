@@ -1,13 +1,15 @@
+import type { Product, ProductField } from './types';
+
 const DEMO_PRODUCTS = [
-  { id: 1, name: 'Windows 11 Pro', arabic_name: 'تفعيل ويندوز 11 برو', price: 25000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/windows.png', status: 'active', qnt: 50 },
-  { id: 2, name: 'Office 365', arabic_name: 'تفعيل أوفيس 365', price: 35000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/office.png', status: 'active', qnt: 30 },
-  { id: 3, name: 'PUBG 660 UC', arabic_name: 'شحن PUBG 660 UC', price: 18000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/pubg.jpg', status: 'active', qnt: 100 },
-  { id: 4, name: 'Free Fire 1080', arabic_name: 'شحن فري فاير 1080 جوهرة', price: 15000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/freefire.jpg', status: 'active', qnt: 80 },
-  { id: 5, name: 'PlayStation $10', arabic_name: 'بطاقة PlayStation $10', price: 22000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/playstation.jpg', status: 'active', qnt: 40 },
-  { id: 6, name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', price: 45000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/bein.jpg', status: 'active', qnt: 15 },
-  { id: 7, name: 'Netflix Month', arabic_name: 'نتفلكس شهر', price: 12000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/netflix.jpg', status: 'active', qnt: 25 },
-  { id: 8, name: 'Spotify Premium', arabic_name: 'سبوتيفاي بريميوم', price: 8000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/spotify.jpg', status: 'active', qnt: 60 },
-  { id: 9, name: 'Starlink Kit', arabic_name: 'ستارلينك', price: 380000, category: 'ستارلينك', group_name: 'ستارلينك', image: '/images/starlink-default.png', status: 'active', qnt: 5 },
+  { id: 1, name: 'Windows 11 Pro', arabic_name: 'تفعيل ويندوز 11 برو', price: 25000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/windows.png', status: 'active', qnt: 50, custom_fields: [] },
+  { id: 2, name: 'Office 365', arabic_name: 'تفعيل أوفيس 365', price: 35000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/office.png', status: 'active', qnt: 30, custom_fields: [] },
+  { id: 3, name: 'PUBG 660 UC', arabic_name: 'شحن PUBG 660 UC', price: 18000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/pubg.jpg', status: 'active', qnt: 100, custom_fields: [{ name: 'player_id', label: 'Player ID', required: true, type: 'text' }] },
+  { id: 4, name: 'Free Fire 1080', arabic_name: 'شحن فري فاير 1080 جوهرة', price: 15000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/freefire.jpg', status: 'active', qnt: 80, custom_fields: [{ name: 'player_id', label: 'Player ID', required: true, type: 'text' }] },
+  { id: 5, name: 'PlayStation $10', arabic_name: 'بطاقة PlayStation $10', price: 22000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/playstation.jpg', status: 'active', qnt: 40, custom_fields: [{ name: 'psn_email', label: 'البريد الإلكتروني PSN', required: true, type: 'email' }] },
+  { id: 6, name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', price: 45000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/bein.jpg', status: 'active', qnt: 15, custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' }] },
+  { id: 7, name: 'Netflix Month', arabic_name: 'نتفلكس شهر', price: 12000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/netflix.jpg', status: 'active', qnt: 25, custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' }] },
+  { id: 8, name: 'Spotify Premium', arabic_name: 'سبوتيفاي بريميوم', price: 8000, category: 'اشتراكات', group_name: 'اشتراكات', image: '/images/spotify.jpg', status: 'active', qnt: 60, custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' }] },
+  { id: 9, name: 'Starlink Kit', arabic_name: 'ستارلينك', price: 380000, category: 'ستارلينك', group_name: 'ستارلينك', image: '/images/starlink-default.png', status: 'active', qnt: 5, custom_fields: [{ name: 'address', label: 'العنوان', required: true, type: 'text' }, { name: 'phone', label: 'رقم الهاتف', required: true, type: 'tel' }] },
 ];
 
 const DEMO_STATS = { totalProducts: 9, totalOrders: 156, totalRevenue: 2450000, totalCustomers: 89 };
@@ -263,7 +265,11 @@ export const storeApi = {
     fetch('/api/products/public').then(r => r.ok ? r.json() : []),
 };
 
-export function mapBackendProduct(p: Record<string, unknown>) {
+export function mapBackendProduct(p: Record<string, unknown>): Product {
+  let custom_fields = p.custom_fields;
+  if (typeof custom_fields === 'string') {
+    try { custom_fields = JSON.parse(custom_fields); } catch { custom_fields = []; }
+  }
   return {
     id: p.id as number,
     name: (p.arabic_name || p.name) as string,
@@ -276,6 +282,7 @@ export function mapBackendProduct(p: Record<string, unknown>) {
     status: (p.status || 'active') as string,
     qnt: (p.qnt || 0) as number,
     service_type: p.service_type as string,
+    custom_fields: (Array.isArray(custom_fields) ? custom_fields : []) as ProductField[],
     created_at: p.created_at as string,
   };
 }

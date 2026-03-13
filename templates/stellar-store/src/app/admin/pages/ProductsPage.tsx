@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Pencil, Trash2, X, Upload, Loader2, ImageIcon, Package } from 'lucide-react';
 import { adminApi, mapBackendProduct } from '@/lib/api';
-import type { Product } from '@/lib/types';
+import type { Product, ProductField } from '@/lib/types';
 
 function ImageUploader({ currentImage, onImageChange }: { currentImage: string; onImageChange: (base64: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +77,26 @@ function ProductModal({ product, onClose, onSave, categories }: {
   const [image, setImage] = useState(product?.image || '');
   const [qnt, setQnt] = useState(product?.qnt?.toString() || '0');
   const [status, setStatus] = useState(product?.status || 'active');
+  const [customFields, setCustomFields] = useState<ProductField[]>(product?.custom_fields || []);
   const [saving, setSaving] = useState(false);
+
+  const addField = () => {
+    setCustomFields([...customFields, { name: '', label: '', required: true, type: 'text' }]);
+  };
+
+  const updateField = (index: number, key: keyof ProductField, value: string | boolean) => {
+    const updated = [...customFields];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (updated[index] as any)[key] = value;
+    if (key === 'label') {
+      updated[index].name = (value as string).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\u0600-\u06FF]/g, '');
+    }
+    setCustomFields(updated);
+  };
+
+  const removeField = (index: number) => {
+    setCustomFields(customFields.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +113,7 @@ function ProductModal({ product, onClose, onSave, categories }: {
         image,
         qnt: parseInt(qnt) || 0,
         status,
+        custom_fields: customFields.filter(f => f.label.trim()),
       });
       onClose();
     } catch {
@@ -219,6 +239,65 @@ function ProductModal({ product, onClose, onSave, categories }: {
               <option value="active">نشط</option>
               <option value="inactive">غير نشط</option>
             </select>
+          </div>
+
+          {/* Custom Fields */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm text-navy-300 font-bold">حقول مخصصة للعميل</label>
+              <button
+                type="button"
+                onClick={addField}
+                className="flex items-center gap-1 text-xs text-gold-500 hover:text-gold-400 font-bold"
+              >
+                <Plus className="w-3.5 h-3.5" /> إضافة حقل
+              </button>
+            </div>
+            <p className="text-navy-500 text-[11px] mb-3">حقول يجب على العميل تعبئتها عند تقديم الطلب</p>
+            {customFields.length > 0 && (
+              <div className="space-y-3">
+                {customFields.map((field, idx) => (
+                  <div key={idx} className="flex items-start gap-2 p-3 bg-navy-800/40 border border-navy-700/30 rounded-xl">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        value={field.label}
+                        onChange={e => updateField(idx, 'label', e.target.value)}
+                        className="w-full px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                        placeholder="اسم الحقل (مثال: Player ID)"
+                      />
+                      <div className="flex gap-2">
+                        <select
+                          value={field.type || 'text'}
+                          onChange={e => updateField(idx, 'type', e.target.value)}
+                          className="flex-1 px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
+                        >
+                          <option value="text">نص</option>
+                          <option value="email">بريد إلكتروني</option>
+                          <option value="number">رقم</option>
+                          <option value="tel">هاتف</option>
+                        </select>
+                        <label className="flex items-center gap-1.5 text-xs text-navy-400 cursor-pointer whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={field.required !== false}
+                            onChange={e => updateField(idx, 'required', e.target.checked)}
+                            className="accent-gold-500"
+                          />
+                          مطلوب
+                        </label>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeField(idx)}
+                      className="mt-1 w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">

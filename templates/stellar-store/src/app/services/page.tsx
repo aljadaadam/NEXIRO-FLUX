@@ -22,12 +22,20 @@ const fallbackProducts = [
   { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/spotify.jpg' },
 ];
 
+interface ProductField {
+  name: string;
+  label: string;
+  required?: boolean;
+  type?: 'text' | 'email' | 'number' | 'tel';
+}
+
 interface DisplayProduct {
   id: number;
   name: string;
   category: string;
   price: number;
   image: string;
+  custom_fields?: ProductField[];
 }
 
 export default function ServicesPage() {
@@ -41,6 +49,7 @@ export default function ServicesPage() {
   // Order modal state
   const [orderProduct, setOrderProduct] = useState<DisplayProduct | null>(null);
   const [orderNotes, setOrderNotes] = useState('');
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState('');
   const [orderError, setOrderError] = useState('');
@@ -50,13 +59,20 @@ export default function ServicesPage() {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((p: Record<string, unknown>) => ({
-            id: p.id as number,
-            name: (p.arabic_name || p.name) as string,
-            category: (p.group_name || p.category || '') as string,
-            price: (p.final_price || p.price) as number,
-            image: (p.image || '/images/default-product.svg') as string,
-          }));
+          const mapped = data.map((p: Record<string, unknown>) => {
+            let custom_fields = p.custom_fields;
+            if (typeof custom_fields === 'string') {
+              try { custom_fields = JSON.parse(custom_fields); } catch { custom_fields = []; }
+            }
+            return {
+              id: p.id as number,
+              name: (p.arabic_name || p.name) as string,
+              category: (p.group_name || p.category || '') as string,
+              price: (p.final_price || p.price) as number,
+              image: (p.image || '/images/default-product.svg') as string,
+              custom_fields: Array.isArray(custom_fields) ? custom_fields as ProductField[] : [],
+            };
+          });
           setProducts(mapped);
           const cats = ['الكل', ...Array.from(new Set(mapped.map((p: DisplayProduct) => p.category).filter(Boolean)))];
           setCategories(cats as string[]);
@@ -86,21 +102,35 @@ export default function ServicesPage() {
     }
     setOrderProduct(product);
     setOrderNotes('');
+    setFieldValues({});
     setOrderSuccess('');
     setOrderError('');
   };
 
   const handleSubmitOrder = async () => {
     if (!orderProduct) return;
+    // Validate required custom fields
+    const fields = orderProduct.custom_fields || [];
+    for (const f of fields) {
+      if (f.required !== false && !fieldValues[f.name]?.trim()) {
+        setOrderError(`يرجى تعبئة حقل "${f.label}"`);
+        return;
+      }
+    }
     setOrderLoading(true);
     setOrderError('');
+    // Build notes with field values
+    const fieldParts = fields
+      .filter(f => fieldValues[f.name]?.trim())
+      .map(f => `${f.label}: ${fieldValues[f.name].trim()}`);
+    const allNotes = [...fieldParts, ...(orderNotes.trim() ? [orderNotes.trim()] : [])].join('\n');
     try {
       await storeApi.createOrder({
         product_id: orderProduct.id,
         product_name: orderProduct.name,
         quantity: 1,
         payment_method: 'wallet',
-        notes: orderNotes || undefined,
+        notes: allNotes || undefined,
       });
       setOrderSuccess('تم تقديم الطلب بنجاح! يمكنك متابعته من صفحة حسابي.');
     } catch (e: unknown) {
@@ -235,6 +265,27 @@ export default function ServicesPage() {
                   المحفظة (خصم من الرصيد)
                 </div>
               </div>
+
+              {/* Custom Fields */}
+              {orderProduct.custom_fields && orderProduct.custom_fields.length > 0 && (
+                <div className="mb-4 space-y-3">
+                  {orderProduct.custom_fields.map((field) => (
+                    <div key={field.name}>
+                      <label className="block text-navy-400 text-sm mb-2">
+                        {field.label} {field.required !== false && <span className="text-red-400">*</span>}
+                      </label>
+                      <input
+                        type={field.type || 'text'}
+                        value={fieldValues[field.name] || ''}
+                        onChange={e => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                        placeholder={field.label}
+                        required={field.required !== false}
+                        className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Notes */}
               <div className="mb-6">

@@ -1,3 +1,10 @@
+export interface ProductField {
+  name: string;
+  label: string;
+  required?: boolean;
+  type?: 'text' | 'email' | 'number' | 'tel';
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -12,6 +19,7 @@ export interface Product {
   qnt?: number;
   is_custom_price?: boolean;
   service_type?: string;
+  custom_fields?: ProductField[];
   created_at?: string;
   updated_at?: string;
 }
