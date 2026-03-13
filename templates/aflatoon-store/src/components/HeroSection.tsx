@@ -2,7 +2,7 @@
 
 export default function HeroSection({ onLoginClick }: { onLoginClick: () => void }) {
   return (
-    <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+    <section className="relative min-h-[520px] lg:min-h-[560px] flex items-center overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-l from-navy-950 via-navy-950/80 to-transparent z-10" />
 
