@@ -116,10 +116,11 @@ export interface Customization {
   store_name?: string;
   store_description?: string;
   logo_url?: string;
-  whatsapp?: string;
-  telegram?: string;
-  instagram?: string;
-  twitter?: string;
+  whatsapp_number?: string;
+  telegram_link?: string;
+  instagram_link?: string;
+  twitter_link?: string;
+  facebook_link?: string;
   // SMTP
   smtp_host?: string;
   smtp_port?: string;

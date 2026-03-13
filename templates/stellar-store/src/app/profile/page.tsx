@@ -48,6 +48,14 @@ export default function ProfilePage() {
   const [chargeError, setChargeError] = useState('');
   const [chargeStep, setChargeStep] = useState<'amount' | 'pay'>('amount');
 
+  // Password change state
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
   const loadProfile = useCallback(async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) { setLoading(false); setShowLogin(true); return; }
@@ -476,7 +484,7 @@ export default function ProfilePage() {
                                           ? `رقم الإيصال: ${chargeReceiptRef.trim()} | مرفق: صورة إيصال`
                                           : `رقم الإيصال: ${chargeReceiptRef.trim()}`;
                                         await storeApi.uploadReceipt(paymentId, {
-                                          receipt_url: `ref:${chargeReceiptRef.trim()}`,
+                                          receipt_url: chargeReceiptPreview || `ref:${chargeReceiptRef.trim()}`,
                                           notes,
                                         });
                                       }
@@ -512,14 +520,86 @@ export default function ProfilePage() {
                   <>
                     <h2 className="text-xl font-bold text-white mb-6">الإعدادات</h2>
                     <div className="space-y-4">
-                      <div className="p-4 bg-navy-800/30 border border-navy-700/40 rounded-xl flex items-center justify-between">
-                        <div>
-                          <h4 className="text-white font-bold text-sm">تغيير كلمة المرور</h4>
-                          <p className="text-navy-500 text-xs mt-1">قم بتحديث كلمة مرور حسابك</p>
+                      <div className="p-4 bg-navy-800/30 border border-navy-700/40 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-white font-bold text-sm">تغيير كلمة المرور</h4>
+                            <p className="text-navy-500 text-xs mt-1">قم بتحديث كلمة مرور حسابك</p>
+                          </div>
+                          {!showPasswordForm && (
+                            <button onClick={() => { setShowPasswordForm(true); setPasswordMessage(''); setPasswordError(''); }} className="text-sm text-gold-500 hover:text-gold-400 font-medium">
+                              تغيير
+                            </button>
+                          )}
                         </div>
-                        <button onClick={() => { setShowLogin(true); }} className="text-sm text-gold-500 hover:text-gold-400 font-medium">
-                          تغيير
-                        </button>
+                        {showPasswordForm && (
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <label className="block text-navy-400 text-xs mb-1.5">كلمة المرور الجديدة</label>
+                              <input
+                                type="password"
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                placeholder="8 أحرف على الأقل"
+                                className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                                autoComplete="new-password"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-navy-400 text-xs mb-1.5">تأكيد كلمة المرور</label>
+                              <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                placeholder="أعد إدخال كلمة المرور"
+                                className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                                autoComplete="new-password"
+                              />
+                            </div>
+                            {passwordError && (
+                              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 shrink-0" /> {passwordError}
+                              </div>
+                            )}
+                            {passwordMessage && (
+                              <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 shrink-0" /> {passwordMessage}
+                              </div>
+                            )}
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => { setShowPasswordForm(false); setNewPassword(''); setConfirmPassword(''); setPasswordError(''); }}
+                                disabled={passwordLoading}
+                                className="flex-1 py-3 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all"
+                              >
+                                إلغاء
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (newPassword.length < 8) { setPasswordError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+                                  if (newPassword !== confirmPassword) { setPasswordError('كلمتا المرور غير متطابقتين'); return; }
+                                  setPasswordLoading(true);
+                                  setPasswordError('');
+                                  try {
+                                    await storeApi.updateProfile({ password: newPassword });
+                                    setPasswordMessage('تم تغيير كلمة المرور بنجاح');
+                                    setNewPassword('');
+                                    setConfirmPassword('');
+                                    setTimeout(() => setShowPasswordForm(false), 2000);
+                                  } catch (e: unknown) {
+                                    setPasswordError(e instanceof Error ? e.message : 'خطأ في تغيير كلمة المرور');
+                                  } finally {
+                                    setPasswordLoading(false);
+                                  }
+                                }}
+                                disabled={passwordLoading}
+                                className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gold-500 rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'حفظ كلمة المرور'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>

@@ -282,8 +282,10 @@ export const storeApi = {
   createOrder: (data: { product_id: number; product_name: string; quantity?: number; payment_method: string; notes?: string }) =>
     customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
 
-  getProducts: () =>
-    fetch('/api/products/public').then(r => r.ok ? r.json() : []),
+  getProducts: () => {
+    if (isDemoMode()) return Promise.resolve(DEMO_PRODUCTS);
+    return fetch('/api/products/public').then(r => r.ok ? r.json() : []);
+  },
 
   getEnabledGateways: () => {
     if (isDemoMode()) return Promise.resolve(DEMO_GATEWAYS.filter(g => g.is_enabled));
@@ -298,6 +300,11 @@ export const storeApi = {
 
   checkPaymentStatus: (paymentId: number) =>
     fetch(`/api/checkout/status/${paymentId}`).then(r => r.ok ? r.json() : null),
+
+  getStoreSettings: () => {
+    if (isDemoMode()) return Promise.resolve({ customization: { store_name: 'متجر ستيلار', whatsapp_number: '', telegram_link: '', facebook_link: '', instagram_link: '', support_email: '' } });
+    return fetch('/api/customization/store').then(r => r.ok ? r.json() : {});
+  },
 };
 
 export function mapBackendProduct(p: Record<string, unknown>): Product {

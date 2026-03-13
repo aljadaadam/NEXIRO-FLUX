@@ -260,8 +260,8 @@ export default function SettingsAdminPage() {
           <div>
             <label className="text-sm text-navy-300 font-bold mb-1.5 block">واتساب</label>
             <input
-              value={settings.whatsapp || ''}
-              onChange={e => update('whatsapp', e.target.value)}
+              value={settings.whatsapp_number || ''}
+              onChange={e => update('whatsapp_number', e.target.value)}
               className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
               placeholder="+249..."
               dir="ltr"
@@ -270,18 +270,18 @@ export default function SettingsAdminPage() {
           <div>
             <label className="text-sm text-navy-300 font-bold mb-1.5 block">تلقرام</label>
             <input
-              value={settings.telegram || ''}
-              onChange={e => update('telegram', e.target.value)}
+              value={settings.telegram_link || ''}
+              onChange={e => update('telegram_link', e.target.value)}
               className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-              placeholder="@username"
+              placeholder="https://t.me/username"
               dir="ltr"
             />
           </div>
           <div>
             <label className="text-sm text-navy-300 font-bold mb-1.5 block">انستقرام</label>
             <input
-              value={settings.instagram || ''}
-              onChange={e => update('instagram', e.target.value)}
+              value={settings.instagram_link || ''}
+              onChange={e => update('instagram_link', e.target.value)}
               className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
               placeholder="https://instagram.com/..."
               dir="ltr"
@@ -290,10 +290,20 @@ export default function SettingsAdminPage() {
           <div>
             <label className="text-sm text-navy-300 font-bold mb-1.5 block">تويتر / X</label>
             <input
-              value={settings.twitter || ''}
-              onChange={e => update('twitter', e.target.value)}
+              value={settings.twitter_link || ''}
+              onChange={e => update('twitter_link', e.target.value)}
               className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
               placeholder="https://x.com/..."
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-navy-300 font-bold mb-1.5 block">فيسبوك</label>
+            <input
+              value={settings.facebook_link || ''}
+              onChange={e => update('facebook_link', e.target.value)}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+              placeholder="https://facebook.com/..."
               dir="ltr"
             />
           </div>

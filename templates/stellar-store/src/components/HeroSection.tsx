@@ -10,7 +10,7 @@ export default function HeroSection({ onLoginClick }: { onLoginClick: () => void
       <div className="absolute inset-y-0 left-0 w-full lg:w-[55%]">
         <div className="relative w-full h-full">
           <img
-            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80"
+            src="/images/hero-bg.jpg"
             alt="Stellar Store"
             className="w-full h-full object-cover"
           />

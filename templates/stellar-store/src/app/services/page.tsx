@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 import { storeApi } from '@/lib/api';
 import type { PaymentGateway } from '@/lib/types';
 import { Search, ShoppingCart, Loader2, X, CheckCircle, AlertCircle, Upload } from 'lucide-react';
+
+const CAT_PARAM_MAP: Record<string, string> = {
+  starlink: 'ستارلينك',
+  bein: 'beIN Sports',
+  games: 'ألعاب',
+  offers: 'عروض خاصة',
+};
 
 const fallbackProducts = [
   { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png', custom_fields: [] },
@@ -40,12 +48,23 @@ interface DisplayProduct {
 }
 
 export default function ServicesPage() {
+  return (
+    <Suspense>
+      <ServicesContent />
+    </Suspense>
+  );
+}
+
+function ServicesContent() {
+  const searchParams = useSearchParams();
+  const catParam = searchParams.get('cat');
   const [showLogin, setShowLogin] = useState(false);
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<DisplayProduct[]>(fallbackProducts);
   const [categories, setCategories] = useState<string[]>(['الكل']);
   const [loading, setLoading] = useState(true);
+  const [catApplied, setCatApplied] = useState(false);
 
   // Order modal state
   const [orderProduct, setOrderProduct] = useState<DisplayProduct | null>(null);
@@ -64,8 +83,7 @@ export default function ServicesPage() {
   const [receiptPreview, setReceiptPreview] = useState<string>('');
 
   useEffect(() => {
-    fetch('/api/products/public')
-      .then(r => r.ok ? r.json() : null)
+    storeApi.getProducts()
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((p: Record<string, unknown>) => {
@@ -105,9 +123,20 @@ export default function ServicesPage() {
       .catch(() => {});
   }, []);
 
+  // Apply ?cat= param when categories load
+  useEffect(() => {
+    if (catParam && !catApplied && categories.length > 1) {
+      const mapped = CAT_PARAM_MAP[catParam];
+      if (mapped && categories.includes(mapped)) {
+        setActiveCategory(mapped);
+      }
+      setCatApplied(true);
+    }
+  }, [catParam, categories, catApplied]);
+
   const filtered = products.filter((p) => {
     const matchCategory = activeCategory === 'الكل' || p.category === activeCategory;
-    const matchSearch = p.name.includes(search);
+    const matchSearch = !search || p.name.includes(search);
     return matchCategory && matchSearch;
   });
 
@@ -160,19 +189,20 @@ export default function ServicesPage() {
       if (receiptRef.trim()) {
         fieldParts.push(`رقم الإيصال: ${receiptRef.trim()}`);
       }
-      if (receiptFile) {
-        fieldParts.push(`مرفق: صورة إيصال`);
-      }
     }
     const allNotes = [...fieldParts, ...(orderNotes.trim() ? [orderNotes.trim()] : [])].join('\n');
     try {
-      await storeApi.createOrder({
+      const orderData: Record<string, unknown> = {
         product_id: orderProduct.id,
         product_name: orderProduct.name,
         quantity: 1,
         payment_method: paymentMethod,
         notes: allNotes || undefined,
-      });
+      };
+      if (paymentMethod === 'bankak' && receiptPreview) {
+        orderData.receipt_image = receiptPreview;
+      }
+      await storeApi.createOrder(orderData as Parameters<typeof storeApi.createOrder>[0]);
       setOrderSuccess(paymentMethod === 'bankak'
         ? 'تم تقديم الطلب بنجاح! سيتم مراجعة الإيصال وتأكيد الطلب.'
         : 'تم تقديم الطلب بنجاح! يمكنك متابعته من صفحة حسابي.');

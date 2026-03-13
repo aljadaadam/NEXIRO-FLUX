@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Moon } from 'lucide-react';
+import { storeApi } from '@/lib/api';
 
 const quickLinks = [
   { label: 'الرئيسية', href: '/' },
@@ -14,13 +15,32 @@ const quickLinks = [
   { label: 'آراء العملاء', href: '/reviews' },
 ];
 
-const socialLinks = [
-  { icon: '📘', href: '#', label: 'Facebook' },
-  { icon: '✈️', href: '#', label: 'Telegram' },
-  { icon: '📸', href: '#', label: 'Instagram' },
-];
+interface StoreSettings {
+  whatsapp_number?: string;
+  telegram_link?: string;
+  facebook_link?: string;
+  instagram_link?: string;
+  support_email?: string;
+}
 
 export default function Footer() {
+  const [settings, setSettings] = useState<StoreSettings>({});
+
+  useEffect(() => {
+    storeApi.getStoreSettings()
+      .then((res: Record<string, unknown>) => setSettings((res?.customization || {}) as StoreSettings))
+      .catch(() => {});
+  }, []);
+
+  const whatsappUrl = settings.whatsapp_number
+    ? `https://wa.me/${settings.whatsapp_number.replace(/[^0-9]/g, '')}`
+    : '';
+
+  const socialLinks = [
+    settings.facebook_link ? { icon: '📘', href: settings.facebook_link, label: 'Facebook' } : null,
+    settings.telegram_link ? { icon: '✈️', href: settings.telegram_link, label: 'Telegram' } : null,
+    settings.instagram_link ? { icon: '📸', href: settings.instagram_link, label: 'Instagram' } : null,
+  ].filter(Boolean) as { icon: string; href: string; label: string }[];
   return (
     <footer className="bg-navy-900/80 border-t border-navy-700/40 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
@@ -56,9 +76,9 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">تواصل معنا</h3>
             <div className="space-y-3 text-navy-400 text-sm">
-              <p>واتساب: دعم فوري عبر WhatsApp</p>
-              <p>تيليجرام: iflatoon2026</p>
-              <p>البريد: support@stellar.store</p>
+              {settings.whatsapp_number && <p>واتساب: {settings.whatsapp_number}</p>}
+              {settings.telegram_link && <p>تيليجرام: <a href={settings.telegram_link} target="_blank" rel="noopener noreferrer" className="hover:text-gold-500">{settings.telegram_link.replace('https://t.me/', '@')}</a></p>}
+              {settings.support_email && <p>البريد: {settings.support_email}</p>}
               <p>الموقع: السودان</p>
             </div>
           </div>
@@ -67,15 +87,19 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">تابعنا</h3>
             <div className="flex gap-3">
-              {socialLinks.map((social) => (
+              {socialLinks.length > 0 ? socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-navy-800 border border-navy-700/50 hover:border-gold-500/40 flex items-center justify-center text-lg transition-all hover:-translate-y-0.5"
                 >
                   {social.icon}
                 </a>
-              ))}
+              )) : (
+                <p className="text-navy-500 text-sm">لا توجد روابط بعد</p>
+              )}
             </div>
           </div>
         </div>
@@ -85,22 +109,20 @@ export default function Footer() {
       <div className="border-t border-navy-700/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
           <p className="text-navy-500 text-xs">
-            © Stellar Store. All rights reserved {new Date().getFullYear()}.
+            © متجر ستيلار. جميع الحقوق محفوظة {new Date().getFullYear()}.
           </p>
           <p className="text-navy-600 text-xs hidden sm:block">
-            Crafted for premium digital experiences.
+            تصميم فاخر لتجارب رقمية مميزة.
           </p>
-          <button className="w-8 h-8 rounded-full bg-navy-800 border border-navy-700/50 text-navy-400 hover:text-gold-500 hover:border-gold-500/30 flex items-center justify-center transition-all">
-            <Moon className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
       {/* WhatsApp Floating Button */}
-      <a
-        href="https://wa.me/249123456789"
-        target="_blank"
-        rel="noopener noreferrer"
+      {whatsappUrl && (
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
         className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-green-500 hover:bg-green-400 text-white flex items-center justify-center shadow-lg shadow-green-500/30 hover:-translate-y-1 transition-all"
       >
         <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -108,6 +130,7 @@ export default function Footer() {
           <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.325 0-4.47-.745-6.221-2.01l-.435-.326-3.278 1.098 1.098-3.278-.326-.435A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z" />
         </svg>
       </a>
+      )}
     </footer>
   );
 }

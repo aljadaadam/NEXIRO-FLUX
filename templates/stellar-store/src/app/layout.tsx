@@ -24,9 +24,9 @@ export const metadata: Metadata = {
     description: 'أكبر منصة تفعيلات في السودان. تفعيلات ويندوز، أوفيس، ألعاب، beIN، ستارلينك واشتراكات بريميوم. تسليم فوري ودفع محلي.',
     url: 'https://demo-stellar.nexiroflux.com',
     images: [{
-      url: '/images/og-stellar.png',
-      width: 1200,
-      height: 630,
+      url: '/favicon.svg',
+      width: 512,
+      height: 512,
       alt: 'متجر ستيلار — تفعيلات وألعاب واشتراكات رقمية',
     }],
   },
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'متجر ستيلار — أفضل متجر رقمي في السودان',
     description: 'تفعيلات ويندوز، ألعاب، beIN، ستارلينك، نتفلكس واشتراكات بريميوم. تسليم فوري ودفع محلي عبر بنكك.',
-    images: ['/images/og-stellar.png'],
+    images: ['/favicon.svg'],
   },
   robots: {
     index: true,
@@ -46,7 +46,6 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.svg',
-    apple: '/apple-touch-icon.png',
   },
   manifest: '/manifest.json',
 };
