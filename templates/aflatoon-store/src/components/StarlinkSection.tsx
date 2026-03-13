@@ -31,7 +31,7 @@ export default function FeaturedSection() {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.slice(0, 8).map((p: Record<string, unknown>) => ({
+          const mapped = data.map((p: Record<string, unknown>) => ({
             id: p.id as number,
             name: (p.arabic_name || p.name) as string,
             category: (p.group_name || p.category || '') as string,
