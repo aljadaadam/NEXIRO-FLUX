@@ -57,6 +57,8 @@ export default function CustomersPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleBlock = async (id: number, blocked: boolean) => {
+    const msg = blocked ? 'هل أنت متأكد من حظر هذا العميل؟' : 'هل أنت متأكد من إلغاء حظر هذا العميل؟';
+    if (!confirm(msg)) return;
     try {
       await adminApi.toggleBlockCustomer(id, blocked);
       load();
@@ -74,7 +76,9 @@ export default function CustomersPage() {
         const d = await adminApi.getCustomerById(selected.id);
         setSelected(d.customer || d);
       } catch { /* empty */ }
-    } catch { /* empty */ }
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'فشل تعديل المحفظة');
+    }
   };
 
   const isBlocked = (c: Customer) => c.is_blocked || c.status === 'blocked';

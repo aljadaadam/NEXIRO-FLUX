@@ -58,6 +58,20 @@ export default function ProfilePage() {
   const [passwordMessage, setPasswordMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // Set page title
+  useEffect(() => { document.title = 'حسابي | متجر ستيلار'; }, []);
+
+  // Escape key closes modals
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showLogin) setShowLogin(false);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showLogin]);
+
   const loadProfile = useCallback(async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) { setLoading(false); setShowLogin(true); return; }
@@ -95,6 +109,8 @@ export default function ProfilePage() {
   useEffect(() => { if (customer && activeTab === 'orders') loadOrders(); }, [customer, activeTab, loadOrders]);
 
   const handleSaveProfile = async () => {
+    if (!editName.trim()) { setError('يرجى إدخال الاسم'); return; }
+    if (editEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) { setError('يرجى إدخال بريد إلكتروني صحيح'); return; }
     setSaving(true); setError(''); setMessage('');
     try {
       const res = await storeApi.updateProfile({ name: editName, email: editEmail, phone: editPhone });
@@ -271,6 +287,7 @@ export default function ProfilePage() {
                                   <button
                                     onClick={async () => {
                                       if (cancellingId) return;
+                                      if (!confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) return;
                                       setCancellingId(order.id);
                                       try {
                                         await storeApi.cancelOrder(order.id);
@@ -353,9 +370,10 @@ export default function ProfilePage() {
                                 <input
                                   type="number"
                                   value={chargeAmount}
-                                  onChange={e => setChargeAmount(e.target.value)}
+                                  onChange={e => setChargeAmount(e.target.value.replace(/[^0-9]/g, ''))}
                                   placeholder="أدخل المبلغ"
                                   min="1"
+                                  step="1"
                                   className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
                                   dir="ltr"
                                 />

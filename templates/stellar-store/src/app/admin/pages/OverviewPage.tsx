@@ -90,12 +90,32 @@ const TOP_PRODUCTS = [
 export default function OverviewPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentOrders, setRecentOrders] = useState(DEMO_RECENT_ORDERS);
 
   useEffect(() => {
     adminApi.getStats()
       .then(data => setStats(data))
       .catch(() => setStats({ totalProducts: 0, totalOrders: 0, totalRevenue: 0, totalCustomers: 0 }))
       .finally(() => setLoading(false));
+
+    // Fetch real recent orders
+    adminApi.getOrders(1, 5)
+      .then(data => {
+        const orders = data?.orders || (Array.isArray(data) ? data : []);
+        if (orders.length > 0) {
+          const statusMap: Record<string, string> = { completed: 'completed', processing: 'processing', pending: 'pending', cancelled: 'pending' };
+          const mapped = orders.slice(0, 5).map((o: Record<string, unknown>) => ({
+            id: o.order_number as string || `ORD-${o.id}`,
+            product: (o.product_name || 'منتج') as string,
+            customer: (o.customer_name || 'عميل') as string,
+            amount: (o.total_price || 0) as number,
+            status: statusMap[(o.status as string) || 'pending'] || 'pending',
+            time: o.created_at ? new Date(o.created_at as string).toLocaleDateString('ar') : '',
+          }));
+          setRecentOrders(mapped);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   if (loading) {
@@ -271,7 +291,7 @@ export default function OverviewPage() {
             <span className="text-navy-500 text-xs">آخر تحديث: الآن</span>
           </div>
           <div className="space-y-3">
-            {DEMO_RECENT_ORDERS.map((order, i) => {
+            {recentOrders.map((order, i) => {
               const st = statusIcons[order.status] || statusIcons.pending;
               const StIcon = st.icon;
               return (

@@ -452,6 +452,7 @@ export default function ProductsPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => { setEditProduct(product); setShowModal(true); }}
+                      aria-label="تعديل المنتج"
                       className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -459,6 +460,7 @@ export default function ProductsPage() {
                     <button
                       onClick={() => handleDelete(product.id)}
                       disabled={deleting === product.id}
+                      aria-label="حذف المنتج"
                       className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all disabled:opacity-50"
                     >
                       {deleting === product.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}

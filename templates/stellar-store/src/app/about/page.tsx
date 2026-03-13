@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 
 export default function AboutPage() {
   const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => { document.title = 'من نحن | متجر ستيلار'; }, []);
 
   return (
     <>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2, CheckCircle, Sparkles } from 'lucide-react';
 import { storeApi } from '@/lib/api';
 
@@ -39,6 +39,11 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
   const [otpCode, setOtpCode] = useState('');
 
   if (!isOpen) return null;
+
+  // Escape key handler (using effect-free approach since modal only renders when open)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && !loading) onClose();
+  };
 
   const clearFields = () => {
     setError(''); setSuccess('');
@@ -128,7 +133,7 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
   const btnClass = "w-full py-3.5 text-base font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl hover:from-gold-400 hover:to-gold-300 transition-all shadow-lg shadow-gold-500/20 mt-2 disabled:opacity-50 flex items-center justify-center gap-2";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop" onClick={onClose} onKeyDown={handleKeyDown} role="dialog" aria-modal="true" aria-label="تسجيل الدخول">
       <div
         className="relative w-full max-w-md rounded-2xl bg-navy-900/95 backdrop-blur-2xl border border-navy-700/60 shadow-2xl shadow-black/40 animate-fadeInUp"
         onClick={(e) => e.stopPropagation()}

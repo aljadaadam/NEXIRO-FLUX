@@ -34,7 +34,7 @@ export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
     // Listen for auth changes
     const onStorage = () => {
       const s = localStorage.getItem('customer');
-      setCustomer(s ? JSON.parse(s) : null);
+      try { setCustomer(s ? JSON.parse(s) : null); } catch { setCustomer(null); }
     };
     window.addEventListener('storage', onStorage);
     window.addEventListener('auth-change', onStorage);
@@ -112,6 +112,7 @@ export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
           <button
             className="lg:hidden p-2 text-navy-200 hover:text-gold-500 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

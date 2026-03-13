@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
@@ -17,6 +17,8 @@ const reviews = [
 
 export default function ReviewsPage() {
   const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => { document.title = 'آراء العملاء | متجر ستيلار'; }, []);
 
   return (
     <>

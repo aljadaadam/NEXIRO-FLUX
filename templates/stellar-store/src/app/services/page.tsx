@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -124,6 +124,21 @@ function ServicesContent() {
       })
       .catch(() => {});
   }, []);
+
+  // Set page title
+  useEffect(() => { document.title = 'التصنيفات | متجر ستيلار'; }, []);
+
+  // Escape key closes modals
+  const handleEscKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (orderProduct && !orderLoading) setOrderProduct(null);
+      else if (showLogin) setShowLogin(false);
+    }
+  }, [orderProduct, orderLoading, showLogin]);
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [handleEscKey]);
 
   // Apply ?cat= param when categories load
   useEffect(() => {
@@ -308,15 +323,18 @@ function ServicesContent() {
                 </div>
                 {/* Info */}
                 <div className="p-3 sm:p-5">
-                  <span className="text-[10px] sm:text-xs text-gold-500 font-medium bg-gold-500/10 px-2 py-1 rounded-lg">
-                    {product.category}
-                  </span>
+                  {product.category && (
+                    <span className="text-[10px] sm:text-xs text-gold-500 font-medium bg-gold-500/10 px-2 py-1 rounded-lg">
+                      {product.category}
+                    </span>
+                  )}
                   <h3 className="text-white font-bold text-sm sm:text-base mt-2 sm:mt-3 mb-2 line-clamp-1">{product.name}</h3>
                   <div className="flex items-center justify-between">
                     <span className="text-gold-500 font-black text-sm sm:text-lg">{product.price.toLocaleString()} <span className="text-[10px] sm:text-xs text-navy-500">SDG</span></span>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (!outOfStock) handleOrderClick(product); }}
                       disabled={outOfStock}
+                      aria-label={`طلب ${product.name}`}
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gold-500/10 disabled:hover:text-gold-500"
                     >
                       <ShoppingCart className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
@@ -340,7 +358,7 @@ function ServicesContent() {
 
       {/* Order Confirmation Modal */}
       {orderProduct && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop" onClick={() => !orderLoading && setOrderProduct(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop" onClick={() => !orderLoading && setOrderProduct(null)} role="dialog" aria-modal="true" aria-label="تأكيد الطلب">
           <div className="relative w-full max-w-md rounded-2xl bg-navy-900/95 backdrop-blur-2xl border border-navy-700/60 shadow-2xl shadow-black/40 animate-fadeInUp" onClick={e => e.stopPropagation()}>
             <button onClick={() => !orderLoading && setOrderProduct(null)} className="absolute top-4 left-4 p-1.5 text-navy-400 hover:text-white transition-colors rounded-lg hover:bg-navy-800/50">
               <X className="w-5 h-5" />

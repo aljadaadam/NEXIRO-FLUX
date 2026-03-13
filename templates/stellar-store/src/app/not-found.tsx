@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-navy-950 flex items-center justify-center px-4" dir="rtl">
+    <main className="min-h-screen bg-navy-950 flex items-center justify-center px-4" dir="rtl">
       <div className="text-center max-w-md">
         <div className="text-8xl font-black text-gold-500 mb-4">404</div>
         <h1 className="text-2xl font-bold text-white mb-3">الصفحة غير موجودة</h1>
@@ -16,6 +16,6 @@ export default function NotFound() {
           العودة للرئيسية
         </Link>
       </div>
-    </div>
+    </main>
   );
 }
