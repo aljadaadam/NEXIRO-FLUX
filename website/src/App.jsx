@@ -23,6 +23,7 @@ import {
   HxToolsStoreLiveDemo, HxToolsDashboardLiveDemo,
   CarStoreLiveDemo, CarDashboardLiveDemo,
   SmmStoreLiveDemo, SmmDashboardLiveDemo,
+  AflatoonStoreLiveDemo, AflatoonDashboardLiveDemo,
   // Admin
   AdminLoginPage, AdminLayout, AdminOverview, AdminTemplates, AdminUsers,
   AdminAnnouncements, AdminSettings,
@@ -105,6 +106,8 @@ function AppContent() {
           <Route path="/demo/car-dashboard" element={<CarDashboardLiveDemo />} />
           <Route path="/demo/smm-store" element={<SmmStoreLiveDemo />} />
           <Route path="/demo/smm-dashboard" element={<SmmDashboardLiveDemo />} />
+          <Route path="/demo/aflatoon-store" element={<AflatoonStoreLiveDemo />} />
+          <Route path="/demo/aflatoon-dashboard" element={<AflatoonDashboardLiveDemo />} />
         </Routes>
       </Suspense>
     );
