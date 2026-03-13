@@ -92,7 +92,7 @@ export const templates = [
     description: 'قالب متجر خدمات رقمية متكامل لبيع التفعيلات والاشتراكات والألعاب وخدمات beIN و ستارلينك مع مركز ألعاب ونظام طلبات فوري ولوحة تحكم شاملة',
     descriptionEn: 'Complete digital services store for selling activations, subscriptions, games, beIN & Starlink services with game center, instant order system, and full admin dashboard',
     category: 'stellar',
-    image: 'https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-13%20164133.png',
+    image: 'https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-13%20164406.png',
     demoUrl: '/template/stellar-store',
     features: ['تفعيلات واشتراكات', 'مركز ألعاب', 'خدمات beIN Sports', 'ستارلينك', 'محفظة إلكترونية', 'بوابات دفع متعددة', 'دعم كامل RTL', 'لوحة تحكم إدارية', 'API متكامل', 'Next.js 15'],
     featuresEn: ['Activations & Subscriptions', 'Game Center', 'beIN Sports Services', 'Starlink', 'E-Wallet System', 'Multiple Payment Gateways', 'Full RTL Support', 'Admin Dashboard', 'Full API', 'Next.js 15'],
