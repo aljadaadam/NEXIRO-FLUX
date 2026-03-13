@@ -269,6 +269,22 @@ async function initCheckout(req, res) {
           localAmount,
           referenceId,
         };
+
+        // بريد تعليمات الدفع للزبون
+        if (customer_email) {
+          emailService.sendPaymentInstructions({
+            to: customer_email, name: customer_name,
+            method: 'بنكك', amount: parseFloat(amount),
+            currency: currency || 'USD',
+            details: {
+              account_number: bConfig.account_number,
+              full_name: bConfig.full_name,
+              exchange_rate: bConfig.exchange_rate,
+              local_amount: localAmount,
+            },
+            siteKey: getSiteKey(req)
+          }).catch(() => {});
+        }
         break;
       }
 
@@ -671,6 +687,18 @@ async function uploadBankReceipt(req, res) {
         amount: payment.amount,
         siteKey: getSiteKey(req)
       }).catch(() => {});
+
+      // إذا كان شحن محفظة، أرسل تنبيه إضافي للأدمن
+      if (meta?.checkout_type === 'deposit') {
+        emailService.sendWalletChargeRequest({
+          customerName: meta?.customer_name || 'عميل',
+          amount: payment.amount,
+          currency: meta?.currency || 'USD',
+          method: 'بنكك',
+          referenceId: payment.external_id,
+          siteKey: getSiteKey(req)
+        }).catch(() => {});
+      }
     } catch (e) { /* ignore */ }
 
     res.json({

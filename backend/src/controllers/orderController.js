@@ -201,6 +201,16 @@ async function createOrder(req, res) {
       }
     } catch (e) { /* ignore */ }
 
+    // تنبيه الأدمن بالطلب الجديد
+    try {
+      const cust2 = await Customer.findById(effectiveCustomerId);
+      emailService.sendNewOrderAlert({
+        orderId: order.order_number,
+        customerName: cust2?.name || product_name,
+        total: total_price, currency: 'USD', siteKey: site_key
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
+
     // ─── إرسال تلقائي للمصدر الخارجي (إذا المنتج مرتبط بمصدر) ───
     // محاولة واحدة فقط — أي فشل → رفض + استرجاع رصيد
     let externalResult = null;

@@ -634,8 +634,29 @@ function subscriptionCancelled({ name, expiresAt, branding = {} }) {
 
 
 // ═══════════════════════════════════
-//  WALLET TEMPLATE
+//  WALLET TEMPLATES
 // ═══════════════════════════════════
+
+function walletChargeRequest({ customerName, amount, currency, method, referenceId, branding = {} }) {
+  const ui = createUI(branding.primaryColor, branding.secondaryColor);
+  return baseLayout({
+    title: 'طلب شحن محفظة',
+    branding,
+    content: `
+      ${ui.icon('💰')}
+      ${ui.heading('طلب شحن محفظة جديد')}
+      ${ui.text(`العميل ${ui.highlight(customerName || 'غير معروف')} قدّم طلب شحن محفظة ويحتاج مراجعتك.`)}
+      ${ui.infoTable(
+        ui.infoRow('العميل', customerName || 'غير معروف') +
+        ui.infoRow('المبلغ', `${currency || '$'}${parseFloat(amount || 0).toFixed(2)}`) +
+        ui.infoRow('طريقة الدفع', method || 'بنكك') +
+        (referenceId ? ui.infoRow('رقم المرجع', referenceId) : '')
+      )}
+      ${ui.divider()}
+      ${ui.text('يرجى التحقق من الإيصال وتأكيد الشحن من لوحة التحكم.')}
+    `,
+  });
+}
 
 function walletUpdated({ name, oldBalance, newBalance, currency, branding = {} }) {
   const ui = createUI(branding.primaryColor, branding.secondaryColor);
@@ -799,6 +820,7 @@ module.exports = {
   subscriptionRenewed,
   subscriptionCancelled,
   // Wallet
+  walletChargeRequest,
   walletUpdated,
   // Broadcast
   broadcast,

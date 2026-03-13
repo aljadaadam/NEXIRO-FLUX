@@ -103,6 +103,22 @@ class EmailService {
     }
   }
 
+  // ─── Resolve admin email for a site ───
+  async _getAdminEmail(siteKey) {
+    if (!siteKey) return null;
+    try {
+      const { getPool } = require('../config/db');
+      const pool = getPool();
+      const [rows] = await pool.query(
+        "SELECT email FROM users WHERE site_key = ? AND role = 'admin' LIMIT 1",
+        [siteKey]
+      );
+      return rows[0]?.email || null;
+    } catch (err) {
+      return null;
+    }
+  }
+
   // ─── Core send method ───
   async send({ to, subject, html, siteSettings = null, storeName = null }) {
     const transport = this._getSiteTransporter(siteSettings) || this.transporter;
@@ -245,6 +261,8 @@ class EmailService {
 
   async sendNewOrderAlert({ to, orderId, customerName, total, currency, siteSettings, siteKey }) {
     const branding = await this._getBranding(siteKey);
+    if (!to && siteKey) to = await this._getAdminEmail(siteKey);
+    if (!to) return { sent: false, error: 'no admin email' };
     if (!siteSettings && siteKey) siteSettings = await this._getSiteSettingsFromDB(siteKey);
     return this.send({
       to,
@@ -316,6 +334,8 @@ class EmailService {
 
   async sendBankReceiptReview({ to, orderId, customerName, amount, siteSettings, siteKey }) {
     const branding = await this._getBranding(siteKey);
+    if (!to && siteKey) to = await this._getAdminEmail(siteKey);
+    if (!to) return { sent: false, error: 'no admin email' };
     if (!siteSettings && siteKey) siteSettings = await this._getSiteSettingsFromDB(siteKey);
     return this.send({
       to,
@@ -445,6 +465,20 @@ class EmailService {
   // ══════════════════════════════════════
   //  WALLET EMAILS
   // ══════════════════════════════════════
+
+  async sendWalletChargeRequest({ to, customerName, amount, currency, method, referenceId, siteSettings, siteKey }) {
+    const branding = await this._getBranding(siteKey);
+    if (!to && siteKey) to = await this._getAdminEmail(siteKey);
+    if (!to) return { sent: false, error: 'no admin email' };
+    if (!siteSettings && siteKey) siteSettings = await this._getSiteSettingsFromDB(siteKey);
+    return this.send({
+      to,
+      subject: `💰 طلب شحن محفظة — ${customerName || 'عميل'}`,
+      html: templates.walletChargeRequest({ customerName, amount, currency, method, referenceId, branding }),
+      siteSettings,
+      storeName: branding.storeName,
+    });
+  }
 
   async sendWalletUpdated({ to, name, oldBalance, newBalance, currency, siteSettings, siteKey }) {
     const branding = await this._getBranding(siteKey);
