@@ -6,8 +6,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 import { storeApi } from '@/lib/api';
-import type { Customer, Order } from '@/lib/types';
-import { User, Package, Wallet, Settings, LogOut, Loader2, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
+import type { Customer, Order, PaymentGateway } from '@/lib/types';
+import { User, Package, Wallet, Settings, LogOut, Loader2, CheckCircle, Clock, XCircle, AlertCircle, Upload, X, Plus } from 'lucide-react';
 
 type ActiveTab = 'info' | 'orders' | 'wallet' | 'settings';
 
@@ -34,6 +34,19 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
+
+  // Wallet charge state
+  const [showCharge, setShowCharge] = useState(false);
+  const [chargeAmount, setChargeAmount] = useState('');
+  const [enabledGateways, setEnabledGateways] = useState<PaymentGateway[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
+  const [chargeReceiptRef, setChargeReceiptRef] = useState('');
+  const [chargeReceiptFile, setChargeReceiptFile] = useState<File | null>(null);
+  const [chargeReceiptPreview, setChargeReceiptPreview] = useState('');
+  const [chargeLoading, setChargeLoading] = useState(false);
+  const [chargeSuccess, setChargeSuccess] = useState('');
+  const [chargeError, setChargeError] = useState('');
+  const [chargeStep, setChargeStep] = useState<'amount' | 'pay'>('amount');
 
   const loadProfile = useCallback(async () => {
     const token = localStorage.getItem('auth_token');
@@ -254,7 +267,237 @@ export default function ProfilePage() {
                       <p className="text-navy-400 text-sm mb-1">رصيدك الحالي</p>
                       <p className="text-4xl font-black text-gold-500">{(customer.wallet_balance || 0).toLocaleString()}</p>
                       <p className="text-navy-500 text-sm">SDG</p>
-                      <p className="text-navy-500 text-sm mt-6">لشحن المحفظة تواصل مع إدارة المتجر</p>
+
+                      {!showCharge ? (
+                        <button
+                          onClick={() => {
+                            setShowCharge(true);
+                            setChargeStep('amount');
+                            setChargeAmount('');
+                            setSelectedGateway(null);
+                            setChargeReceiptRef('');
+                            setChargeReceiptFile(null);
+                            setChargeReceiptPreview('');
+                            setChargeSuccess('');
+                            setChargeError('');
+                            storeApi.getEnabledGateways()
+                              .then(data => setEnabledGateways(Array.isArray(data) ? data : data?.gateways || []))
+                              .catch(() => {});
+                          }}
+                          className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-navy-950 font-bold rounded-xl hover:bg-gold-400 transition-all text-sm"
+                        >
+                          <Plus className="w-4 h-4" />
+                          شحن المحفظة
+                        </button>
+                      ) : chargeSuccess ? (
+                        <div className="mt-6 max-w-sm mx-auto">
+                          <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm flex items-center gap-2 mb-4">
+                            <CheckCircle className="w-4 h-4 shrink-0" /> {chargeSuccess}
+                          </div>
+                          <button
+                            onClick={() => { setShowCharge(false); setChargeSuccess(''); loadProfile(); }}
+                            className="w-full py-3 bg-gold-500 text-navy-950 font-bold rounded-xl hover:bg-gold-400 transition-all text-sm"
+                          >
+                            إغلاق
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-6 max-w-sm mx-auto text-right space-y-4">
+                          {chargeStep === 'amount' && (
+                            <>
+                              <div>
+                                <label className="block text-navy-400 text-sm mb-2">المبلغ المراد شحنه (SDG)</label>
+                                <input
+                                  type="number"
+                                  value={chargeAmount}
+                                  onChange={e => setChargeAmount(e.target.value)}
+                                  placeholder="أدخل المبلغ"
+                                  min="1"
+                                  className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                                  dir="ltr"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-navy-400 text-sm mb-2">اختر بوابة الدفع</label>
+                                <div className="space-y-2">
+                                  {enabledGateways.length === 0 ? (
+                                    <p className="text-navy-500 text-sm text-center py-4">لا توجد بوابات دفع متاحة</p>
+                                  ) : (
+                                    enabledGateways.map(gw => (
+                                      <button
+                                        key={gw.id}
+                                        type="button"
+                                        onClick={() => setSelectedGateway(gw)}
+                                        className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
+                                          selectedGateway?.id === gw.id
+                                            ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
+                                            : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
+                                        }`}
+                                      >
+                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedGateway?.id === gw.id ? 'border-gold-500' : 'border-navy-600'}`}>
+                                          {selectedGateway?.id === gw.id && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                                        </div>
+                                        {gw.logo && <img src={gw.logo} alt={gw.name} className="w-6 h-6 rounded object-contain" />}
+                                        {gw.name}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-3 pt-2">
+                                <button
+                                  onClick={() => setShowCharge(false)}
+                                  className="flex-1 py-3 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all"
+                                >
+                                  إلغاء
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!chargeAmount || Number(chargeAmount) <= 0) { setChargeError('أدخل مبلغ صحيح'); return; }
+                                    if (!selectedGateway) { setChargeError('اختر بوابة دفع'); return; }
+                                    setChargeError('');
+                                    setChargeStep('pay');
+                                  }}
+                                  disabled={!chargeAmount || !selectedGateway}
+                                  className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gold-500 rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50"
+                                >
+                                  التالي
+                                </button>
+                              </div>
+                            </>
+                          )}
+
+                          {chargeStep === 'pay' && selectedGateway && (
+                            <>
+                              <div className="p-4 bg-navy-800/50 border border-gold-500/20 rounded-xl space-y-3">
+                                <h4 className="text-gold-500 font-bold text-sm flex items-center gap-2">
+                                  {selectedGateway.logo && <img src={selectedGateway.logo} alt="" className="w-5 h-5 rounded object-contain" />}
+                                  بيانات التحويل
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-navy-400">رقم الحساب:</span>
+                                    <span className="text-white font-bold" dir="ltr">{selectedGateway.config?.account_number}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-navy-400">اسم الحساب:</span>
+                                    <span className="text-white font-bold">{selectedGateway.config?.full_name}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-navy-400">المبلغ المطلوب:</span>
+                                    <span className="text-gold-500 font-black">{Number(chargeAmount).toLocaleString()} SDG</span>
+                                  </div>
+                                  {selectedGateway.config?.receipt_note && (
+                                    <div className="mt-2 p-2 bg-gold-500/5 border border-gold-500/10 rounded-lg text-navy-300 text-xs">
+                                      💡 {selectedGateway.config.receipt_note}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-navy-400 text-xs mb-1.5">رقم الإيصال / مرجع التحويل <span className="text-red-400">*</span></label>
+                                <input
+                                  value={chargeReceiptRef}
+                                  onChange={e => setChargeReceiptRef(e.target.value)}
+                                  placeholder="أدخل رقم الإيصال أو مرجع العملية"
+                                  className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                                  dir="ltr"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-navy-400 text-xs mb-1.5">صورة الإيصال (اختياري)</label>
+                                <label className="flex items-center gap-2 px-3 py-2.5 bg-navy-800/50 border border-navy-700/50 rounded-xl text-navy-400 hover:border-gold-500/30 transition-all cursor-pointer text-sm">
+                                  <Upload className="w-4 h-4 shrink-0" />
+                                  <span className="truncate">{chargeReceiptFile ? chargeReceiptFile.name : 'اختر صورة الإيصال'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        setChargeReceiptFile(file);
+                                        const reader = new FileReader();
+                                        reader.onload = () => setChargeReceiptPreview(reader.result as string);
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                                {chargeReceiptPreview && (
+                                  <div className="mt-2 relative">
+                                    <img src={chargeReceiptPreview} alt="إيصال" className="w-full max-h-40 object-contain rounded-lg border border-navy-700/30" />
+                                    <button
+                                      type="button"
+                                      onClick={() => { setChargeReceiptFile(null); setChargeReceiptPreview(''); }}
+                                      className="absolute top-1 left-1 p-1 bg-navy-900/80 rounded-full text-navy-400 hover:text-white"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {chargeError && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4 shrink-0" /> {chargeError}
+                                </div>
+                              )}
+
+                              <div className="flex gap-3 pt-2">
+                                <button
+                                  onClick={() => setChargeStep('amount')}
+                                  disabled={chargeLoading}
+                                  className="flex-1 py-3 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all"
+                                >
+                                  رجوع
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!chargeReceiptRef.trim()) { setChargeError('أدخل رقم الإيصال'); return; }
+                                    setChargeLoading(true);
+                                    setChargeError('');
+                                    try {
+                                      const res = await storeApi.initCheckout({
+                                        gateway_id: selectedGateway.id,
+                                        amount: Number(chargeAmount),
+                                        type: 'deposit',
+                                      });
+                                      const paymentId = res?.payment?.id || res?.paymentId || res?.id;
+                                      if (paymentId) {
+                                        const notes = chargeReceiptFile
+                                          ? `رقم الإيصال: ${chargeReceiptRef.trim()} | مرفق: صورة إيصال`
+                                          : `رقم الإيصال: ${chargeReceiptRef.trim()}`;
+                                        await storeApi.uploadReceipt(paymentId, {
+                                          receipt_url: `ref:${chargeReceiptRef.trim()}`,
+                                          notes,
+                                        });
+                                      }
+                                      setChargeSuccess('تم إرسال طلب الشحن بنجاح! سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك.');
+                                    } catch (e: unknown) {
+                                      setChargeError(e instanceof Error ? e.message : 'حدث خطأ أثناء إرسال الطلب');
+                                    } finally {
+                                      setChargeLoading(false);
+                                    }
+                                  }}
+                                  disabled={chargeLoading || !chargeReceiptRef.trim()}
+                                  className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gold-500 rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                  {chargeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'إرسال الإيصال'}
+                                </button>
+                              </div>
+                            </>
+                          )}
+
+                          {chargeError && chargeStep === 'amount' && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 shrink-0" /> {chargeError}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
