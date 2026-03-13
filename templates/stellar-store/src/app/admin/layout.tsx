@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { LayoutDashboard, Package, FolderOpen, Settings, LogIn, Eye, EyeOff, Loader2, Menu, X, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Package, FolderOpen, Settings, LogIn, Eye, EyeOff, Loader2, Menu, X, LogOut, ChevronRight, ShoppingCart, Users, CreditCard, Bell } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 
 import OverviewPage from './pages/OverviewPage';
 import ProductsPage from './pages/ProductsPage';
 import CategoriesPage from './pages/CategoriesPage';
+import OrdersAdminPage from './pages/OrdersAdminPage';
+import CustomersPage from './pages/CustomersPage';
+import PaymentsPage from './pages/PaymentsPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
+import SettingsAdminPage from './pages/SettingsAdminPage';
 
 // ─── Sidebar ───
 function Sidebar({ currentPage, setCurrentPage, collapsed, setCollapsed }: {
@@ -18,6 +23,10 @@ function Sidebar({ currentPage, setCurrentPage, collapsed, setCollapsed }: {
     { id: 'overview', icon: LayoutDashboard, label: 'الرئيسية' },
     { id: 'products', icon: Package, label: 'المنتجات' },
     { id: 'categories', icon: FolderOpen, label: 'الأقسام' },
+    { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
+    { id: 'customers', icon: Users, label: 'العملاء' },
+    { id: 'payments', icon: CreditCard, label: 'المدفوعات' },
+    { id: 'announcements', icon: Bell, label: 'الإعلانات' },
     { id: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
 
@@ -69,8 +78,9 @@ function Sidebar({ currentPage, setCurrentPage, collapsed, setCollapsed }: {
 function MobileNav({ currentPage, setCurrentPage }: { currentPage: string; setCurrentPage: (p: string) => void }) {
   const items = [
     { id: 'overview', icon: LayoutDashboard, label: 'الرئيسية' },
+    { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
     { id: 'products', icon: Package, label: 'المنتجات' },
-    { id: 'categories', icon: FolderOpen, label: 'الأقسام' },
+    { id: 'customers', icon: Users, label: 'العملاء' },
     { id: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
 
@@ -246,7 +256,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     overview: <OverviewPage />,
     products: <ProductsPage />,
     categories: <CategoriesPage />,
-    settings: <div className="p-6 text-navy-400">الإعدادات - قريباً</div>,
+    orders: <OrdersAdminPage />,
+    customers: <CustomersPage />,
+    payments: <PaymentsPage />,
+    announcements: <AnnouncementsPage />,
+    settings: <SettingsAdminPage />,
   };
 
   return (

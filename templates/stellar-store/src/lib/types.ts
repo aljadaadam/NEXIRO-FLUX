@@ -42,11 +42,59 @@ export interface Order {
   id: number;
   order_number: string;
   product_name: string;
+  product_id?: number;
   quantity: number;
   total_price: number;
   status: string;
   payment_method: string;
   notes?: string;
   response?: string;
+  server_response?: string;
+  imei?: string;
+  customer_name?: string;
+  customer_email?: string;
   created_at: string;
+}
+
+export interface Payment {
+  id: number;
+  customer_name?: string;
+  customer_email?: string;
+  amount: number;
+  type: string;
+  status: string;
+  payment_method?: string;
+  reference?: string;
+  receipt_url?: string;
+  created_at?: string;
+}
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: string;
+  link?: string;
+  is_read?: boolean;
+  recipient_type?: string;
+  created_at?: string;
+}
+
+export interface Customization {
+  theme_id?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  dark_mode?: boolean;
+  button_radius?: string;
+  header_style?: string;
+  show_banner?: boolean;
+  font_family?: string;
+  store_language?: string;
+  store_name?: string;
+  store_description?: string;
+  logo_url?: string;
+  whatsapp?: string;
+  telegram?: string;
+  instagram?: string;
+  twitter?: string;
 }

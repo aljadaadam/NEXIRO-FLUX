@@ -56,8 +56,14 @@ async function adminFetch(endpoint: string, options: RequestInit = {}) {
 function getDemoResponse(endpoint: string, method: string) {
   if (endpoint.includes('/dashboard/stats')) return Promise.resolve(DEMO_STATS);
   if (endpoint.includes('/products') && method === 'GET') return Promise.resolve(DEMO_PRODUCTS);
+  if (endpoint.includes('/orders') && method === 'GET') return Promise.resolve({ orders: [], stats: {} });
+  if (endpoint.includes('/customers') && method === 'GET') return Promise.resolve({ customers: [], total: 0 });
+  if (endpoint.includes('/payments') && method === 'GET') return Promise.resolve({ payments: [] });
+  if (endpoint.includes('/notifications') && method === 'GET') return Promise.resolve({ notifications: [], unreadCount: 0 });
+  if (endpoint.includes('/customization') && method === 'GET') return Promise.resolve({ customization: {} });
   if (method === 'POST') return Promise.resolve({ id: Date.now(), success: true });
   if (method === 'PUT') return Promise.resolve({ success: true });
+  if (method === 'PATCH') return Promise.resolve({ success: true });
   if (method === 'DELETE') return Promise.resolve({ success: true });
   return Promise.resolve({});
 }
@@ -88,6 +94,40 @@ export const adminApi = {
   // Image upload (base64)
   uploadImage: (base64: string) =>
     adminFetch('/upload/image', { method: 'POST', body: JSON.stringify({ image: base64 }) }),
+
+  // Orders
+  getOrders: (page = 1, limit = 50, status?: string) =>
+    adminFetch(`/orders?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`),
+  updateOrderStatus: (id: number, data: { status: string; server_response?: string }) =>
+    adminFetch(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
+  getOrderStats: () => adminFetch('/orders/stats'),
+
+  // Customers
+  getCustomers: (page = 1, limit = 50, search?: string) =>
+    adminFetch(`/customers?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+  getCustomerById: (id: number) => adminFetch(`/customers/${id}`),
+  toggleBlockCustomer: (id: number, blocked: boolean) =>
+    adminFetch(`/customers/${id}/block`, { method: 'PATCH', body: JSON.stringify({ blocked }) }),
+  updateCustomerWallet: (id: number, amount: number, reason?: string) =>
+    adminFetch(`/customers/${id}/wallet`, { method: 'PATCH', body: JSON.stringify({ amount, reason }) }),
+
+  // Payments
+  getPayments: (page = 1, limit = 50) =>
+    adminFetch(`/payments?page=${page}&limit=${limit}`),
+  updatePaymentStatus: (id: number, status: string) =>
+    adminFetch(`/payments/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // Notifications / Announcements
+  getNotifications: () => adminFetch('/notifications'),
+  createNotification: (data: { title: string; message: string; type?: string; link?: string }) =>
+    adminFetch('/notifications', { method: 'POST', body: JSON.stringify(data) }),
+  deleteNotification: (id: number) =>
+    adminFetch(`/notifications/${id}`, { method: 'DELETE' }),
+
+  // Customization
+  getCustomization: () => adminFetch('/customization'),
+  updateCustomization: (data: Record<string, unknown>) =>
+    adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // ─── Demo Customer Data ───
