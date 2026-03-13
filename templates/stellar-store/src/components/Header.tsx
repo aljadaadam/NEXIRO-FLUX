@@ -67,7 +67,7 @@ export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <span className="text-gold-500 text-xs font-bold bg-gold-500/10 border border-gold-500/30 rounded px-1.5 py-0.5">STORE</span>
             <span className="text-xl font-black text-white">
-              متجر <span className="text-gold-gradient">الأفلاطون</span>
+              متجر <span className="text-gold-gradient">ستيلار</span>
             </span>
           </Link>
 

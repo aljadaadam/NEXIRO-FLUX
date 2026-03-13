@@ -18,7 +18,7 @@ export default function AboutPage() {
           </h1>
           <div className="glass-card rounded-2xl p-8 space-y-6">
             <p className="text-navy-300 text-lg leading-relaxed">
-              <strong className="text-white">متجر الأفلاطون</strong> هو أكبر منصة تفعيلات رقمية في السودان، نوفر لك كل ما تحتاجه من تفعيلات ويندوز وأوفيس، اشتراكات بريميوم، خدمات beIN Sports، حلول ستارلينك، وبطاقات شحن الألعاب.
+              <strong className="text-white">متجر ستيلار</strong> هو أكبر منصة تفعيلات رقمية في السودان، نوفر لك كل ما تحتاجه من تفعيلات ويندوز وأوفيس، اشتراكات بريميوم، خدمات beIN Sports، حلول ستارلينك، وبطاقات شحن الألعاب.
             </p>
             <p className="text-navy-300 text-lg leading-relaxed">
               نؤمن بأن التقنية حق للجميع، ولهذا نسعى لتقديم منتجات أصلية بأسعار تنافسية مع تسليم فوري وضمان كامل. فريقنا يعمل على مدار الساعة لضمان أفضل تجربة شراء ممكنة.

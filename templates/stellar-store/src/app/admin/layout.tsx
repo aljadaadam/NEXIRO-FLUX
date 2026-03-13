@@ -105,7 +105,7 @@ function DashHeader({ onMenuClick }: { onMenuClick: () => void }) {
       <button onClick={onMenuClick} className="md:hidden w-10 h-10 rounded-xl bg-navy-800 flex items-center justify-center text-navy-400">
         <Menu className="w-5 h-5" />
       </button>
-      <h2 className="text-white font-bold text-lg">متجر الأفلاطون</h2>
+      <h2 className="text-white font-bold text-lg">متجر ستيلار</h2>
       <a href="/" target="_blank" className="text-xs text-gold-500 bg-gold-500/10 px-3 py-1.5 rounded-lg font-bold hover:bg-gold-500/20 transition-all">
         زيارة المتجر ←
       </a>
@@ -149,7 +149,7 @@ function LoginScreen() {
             <LogIn className="w-8 h-8 text-gold-500" />
           </div>
           <h1 className="text-2xl font-black text-white">لوحة التحكم</h1>
-          <p className="text-navy-400 mt-1">متجر الأفلاطون</p>
+          <p className="text-navy-400 mt-1">متجر ستيلار</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-navy-900/60 border border-navy-700/50 rounded-2xl p-6 space-y-4">

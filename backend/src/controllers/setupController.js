@@ -163,7 +163,7 @@ async function provisionSite(req, res) {
       'landing-starter': 'landing',
       'medical-clinic': 'medical',
       'smm-store': 'smm',
-      'aflatoon-store': 'aflatoon',
+      'stellar-store': 'stellar',
     };
 
     // الأسعار الافتراضية (fallback إذا لم يوجد سعر في قاعدة البيانات)
@@ -179,7 +179,7 @@ async function provisionSite(req, res) {
       'landing-starter': { monthly: 14.9, yearly: 149, lifetime: 372.5 },
       'medical-clinic': { monthly: 34.9, yearly: 349, lifetime: 872.5 },
       'smm-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
-      'aflatoon-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
+      'stellar-store': { monthly: 14.9, yearly: 149, lifetime: 499.9 },
     };
 
     // محاولة قراءة السعر من قاعدة البيانات (أسعار الأدمن)

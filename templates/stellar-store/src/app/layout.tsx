@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'متجر الأفلاطون — تفعيلات، ألعاب، ستارلينك',
-  description: 'أكبر منصة تفعيلات في السودان. متجر الأفلاطون يوفر لك تفعيلات ويندوز، ألعاب، beIN، ستارلينك واشتراكات بريميوم بأمان تام وتسليم فوري.',
+  title: 'متجر ستيلار — تفعيلات، ألعاب، ستارلينك',
+  description: 'أكبر منصة تفعيلات في السودان. متجر ستيلار يوفر لك تفعيلات ويندوز، ألعاب، beIN، ستارلينك واشتراكات بريميوم بأمان تام وتسليم فوري.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

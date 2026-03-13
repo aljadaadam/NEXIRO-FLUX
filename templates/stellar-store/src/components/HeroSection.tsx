@@ -11,7 +11,7 @@ export default function HeroSection({ onLoginClick }: { onLoginClick: () => void
         <div className="relative w-full h-full">
           <img
             src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80"
-            alt="Aflatoon Store"
+            alt="Stellar Store"
             className="w-full h-full object-cover"
           />
           {/* Gold overlay glow */}
@@ -41,7 +41,7 @@ export default function HeroSection({ onLoginClick }: { onLoginClick: () => void
 
           {/* Subtitle */}
           <p className="text-navy-300 text-lg leading-relaxed mb-8 animate-fadeInUp delay-200">
-            متجر الأفلاطون يوفر لك تفعيلات ويندوز، ألعاب، beIN، ستارلينك واشتراكات
+            متجر ستيلار يوفر لك تفعيلات ويندوز، ألعاب، beIN، ستارلينك واشتراكات
             <br className="hidden sm:block" />
             بريميوم بأمان تام وتسليم فوري.
           </p>

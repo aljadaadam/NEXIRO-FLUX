@@ -10,7 +10,7 @@ import GxVaultDemo from '../components/templates/GxVaultDemo';
 import HxToolsDemo from '../components/templates/HxToolsDemo';
 import CarStoreDemo from '../components/templates/CarStoreDemo';
 import SmmStoreDemo from '../components/templates/SmmStoreDemo';
-import AflatoonStoreDemo from '../components/templates/AflatoonStoreDemo';
+import StellarStoreDemo from '../components/templates/StellarStoreDemo';
 
 // Map of template IDs to their custom demo components
 const customDemos = {
@@ -19,7 +19,7 @@ const customDemos = {
   'hardware-tools-store': HxToolsDemo,
   'car-dealership-store': CarStoreDemo,
   'smm-store': SmmStoreDemo,
-  'aflatoon-store': AflatoonStoreDemo,
+  'stellar-store': StellarStoreDemo,
 };
 
 export default function TemplatePreviewPage() {

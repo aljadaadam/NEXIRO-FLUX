@@ -28,10 +28,10 @@ export default function Footer() {
           {/* About */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">
-              عن <span className="text-gold-gradient">Aflatoon Store</span>
+              عن <span className="text-gold-gradient">Stellar Store</span>
             </h3>
             <p className="text-navy-400 text-sm leading-relaxed">
-              Aflatoon Store هو متجر رقمي متخصص في توفير التفعيلات الأصلية، الاشتراكات، وحلول الشحن الإلكتروني لعملاء السودان والمنطقة بمستوى خدمة فائق.
+              Stellar Store هو متجر رقمي متخصص في توفير التفعيلات الأصلية، الاشتراكات، وحلول الشحن الإلكتروني لعملاء السودان والمنطقة بمستوى خدمة فائق.
             </p>
           </div>
 
@@ -58,7 +58,7 @@ export default function Footer() {
             <div className="space-y-3 text-navy-400 text-sm">
               <p>واتساب: دعم فوري عبر WhatsApp</p>
               <p>تيليجرام: iflatoon2026</p>
-              <p>البريد: support@aflatoon.store</p>
+              <p>البريد: support@stellar.store</p>
               <p>الموقع: السودان</p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function Footer() {
       <div className="border-t border-navy-700/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
           <p className="text-navy-500 text-xs">
-            © Aflatoon Store. All rights reserved {new Date().getFullYear()}.
+            © Stellar Store. All rights reserved {new Date().getFullYear()}.
           </p>
           <p className="text-navy-600 text-xs hidden sm:block">
             Crafted for premium digital experiences.

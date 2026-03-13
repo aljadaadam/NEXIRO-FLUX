@@ -12,13 +12,13 @@ import { templates as staticTemplates } from '../../data/templates';
 import api from '../../services/api';
 import ReservationModal from '../common/ReservationModal';
 
-export default function AflatoonStoreDemo() {
+export default function StellarStoreDemo() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [showReservation, setShowReservation] = useState(false);
 
-  const staticT = staticTemplates.find(tp => tp.id === 'aflatoon-store');
+  const staticT = staticTemplates.find(tp => tp.id === 'stellar-store');
   const [basePrice, setBasePrice] = useState(staticT?.price?.monthly || 14.9);
   const [yearlyPrice, setYearlyPrice] = useState(staticT?.price?.yearly || 149);
   const [lifetimePrice, setLifetimePrice] = useState(staticT?.price?.lifetime || 499.9);
@@ -97,7 +97,7 @@ export default function AflatoonStoreDemo() {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-display font-black text-white mb-3">
-            {isRTL ? 'متجر الأفلاطون' : 'Aflatoon Store'}
+            {isRTL ? 'متجر ستيلار' : 'Stellar Store'}
           </h1>
           <p className="text-dark-400 text-lg max-w-2xl">
             {isRTL 
@@ -115,7 +115,7 @@ export default function AflatoonStoreDemo() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 tpl-entrance tpl-d3">
               {/* Store Demo Card */}
               <a
-                href="/demo/aflatoon-store"
+                href="/demo/stellar-store"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-amber-500/50 transition-all duration-300"
@@ -143,7 +143,7 @@ export default function AflatoonStoreDemo() {
 
               {/* Dashboard Demo Card */}
               <a
-                href="/demo/aflatoon-dashboard"
+                href="/demo/stellar-dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-yellow-500/50 transition-all duration-300"
@@ -244,8 +244,8 @@ export default function AflatoonStoreDemo() {
               </h3>
               <p className="text-dark-300 leading-relaxed text-lg">
                 {isRTL 
-                  ? 'قالب متجر الأفلاطون هو قالب خدمات رقمية متكامل مبني بتقنية Next.js 15 مع TypeScript. مصمم لبيع التفعيلات والاشتراكات الرقمية والألعاب وخدمات beIN Sports و ستارلينك. يتميز بتصميم داكن احترافي مع ألوان ذهبية (Amber) وتجربة مستخدم سلسة. يتضمن مركز ألعاب متكامل، نظام طلبات فوري، محفظة إلكترونية، لوحة تحكم إدارية شاملة، وبوابات دفع متعددة.'
-                  : 'Aflatoon Store is a complete digital services template built with Next.js 15 and TypeScript. Designed for selling digital activations, subscriptions, games, beIN Sports & Starlink services. Features a professional dark design with golden (Amber) accents and smooth UX. Includes a full game center, instant order system, e-wallet, comprehensive admin dashboard, and multiple payment gateways.'
+                  ? 'قالب متجر ستيلار هو قالب خدمات رقمية متكامل مبني بتقنية Next.js 15 مع TypeScript. مصمم لبيع التفعيلات والاشتراكات الرقمية والألعاب وخدمات beIN Sports و ستارلينك. يتميز بتصميم داكن احترافي مع ألوان ذهبية (Amber) وتجربة مستخدم سلسة. يتضمن مركز ألعاب متكامل، نظام طلبات فوري، محفظة إلكترونية، لوحة تحكم إدارية شاملة، وبوابات دفع متعددة.'
+                  : 'Stellar Store is a complete digital services template built with Next.js 15 and TypeScript. Designed for selling digital activations, subscriptions, games, beIN Sports & Starlink services. Features a professional dark design with golden (Amber) accents and smooth UX. Includes a full game center, instant order system, e-wallet, comprehensive admin dashboard, and multiple payment gateways.'
                 }
               </p>
             </div>
@@ -299,7 +299,7 @@ export default function AflatoonStoreDemo() {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/buy?template=aflatoon-store&plan=${billingCycle}`)}
+                  onClick={() => navigate(`/buy?template=stellar-store&plan=${billingCycle}`)}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-white font-bold text-base transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <div className="flex items-center justify-center gap-2">
@@ -396,7 +396,7 @@ export default function AflatoonStoreDemo() {
     <ReservationModal
       isOpen={showReservation}
       onClose={() => setShowReservation(false)}
-      templateId="aflatoon-store"
+      templateId="stellar-store"
       templateName={isRTL ? staticT?.name : staticT?.nameEn}
     />
     </>
