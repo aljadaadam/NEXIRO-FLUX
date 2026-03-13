@@ -80,13 +80,16 @@ function MobileNav({ currentPage, setCurrentPage }: { currentPage: string; setCu
     { id: 'overview', icon: LayoutDashboard, label: 'الرئيسية' },
     { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
     { id: 'products', icon: Package, label: 'المنتجات' },
+    { id: 'categories', icon: FolderOpen, label: 'الأقسام' },
     { id: 'customers', icon: Users, label: 'العملاء' },
+    { id: 'payments', icon: CreditCard, label: 'المدفوعات' },
+    { id: 'announcements', icon: Bell, label: 'الإعلانات' },
     { id: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-navy-900/95 backdrop-blur-md border-t border-navy-700/50 px-2 py-2">
-      <div className="flex justify-around">
+      <div className="flex overflow-x-auto gap-1 scrollbar-hide">
         {items.map(item => {
           const Icon = item.icon;
           const active = currentPage === item.id;
@@ -94,7 +97,7 @@ function MobileNav({ currentPage, setCurrentPage }: { currentPage: string; setCu
             <button
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all shrink-0 ${
                 active ? 'text-gold-500' : 'text-navy-500'
               }`}
             >
@@ -105,6 +108,66 @@ function MobileNav({ currentPage, setCurrentPage }: { currentPage: string; setCu
         })}
       </div>
     </nav>
+  );
+}
+
+// ─── Mobile Drawer Sidebar ───
+function MobileDrawer({ isOpen, onClose, currentPage, setCurrentPage }: {
+  isOpen: boolean; onClose: () => void;
+  currentPage: string; setCurrentPage: (p: string) => void;
+}) {
+  const items = [
+    { id: 'overview', icon: LayoutDashboard, label: 'الرئيسية' },
+    { id: 'products', icon: Package, label: 'المنتجات' },
+    { id: 'categories', icon: FolderOpen, label: 'الأقسام' },
+    { id: 'orders', icon: ShoppingCart, label: 'الطلبات' },
+    { id: 'customers', icon: Users, label: 'العملاء' },
+    { id: 'payments', icon: CreditCard, label: 'المدفوعات' },
+    { id: 'announcements', icon: Bell, label: 'الإعلانات' },
+    { id: 'settings', icon: Settings, label: 'الإعدادات' },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="md:hidden fixed inset-0 z-50" dir="rtl">
+      <div className="absolute inset-0 bg-navy-950/80 backdrop-blur-sm" onClick={onClose} />
+      <aside className="absolute right-0 top-0 bottom-0 w-[260px] bg-navy-900 border-l border-navy-700/50 flex flex-col animate-fadeInUp">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-navy-700/50">
+          <span className="text-gold-500 font-black text-lg">لوحة التحكم</span>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-navy-800 flex items-center justify-center text-navy-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
+          {items.map(item => {
+            const Icon = item.icon;
+            const active = currentPage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { setCurrentPage(item.id); onClose(); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  active ? 'bg-gold-500/10 text-gold-500 border border-gold-500/20' : 'text-navy-400 hover:text-white hover:bg-navy-800/60'
+                }`}
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-navy-700/50">
+          <button
+            onClick={() => { localStorage.removeItem('admin_key'); window.location.reload(); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </aside>
+    </div>
   );
 }
 
@@ -217,6 +280,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState('overview');
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
 
   const isDemoParam = searchParams.get('demo') === '1';
@@ -274,12 +338,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-navy-950 flex" dir="rtl">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} collapsed={collapsed} setCollapsed={setCollapsed} />
       <div className="flex-1 flex flex-col min-h-screen">
-        <DashHeader onMenuClick={() => {}} />
+        <DashHeader onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
           {pages[currentPage] || pages.overview}
         </main>
         <MobileNav currentPage={currentPage} setCurrentPage={setCurrentPage} />
       </div>
+      <MobileDrawer isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPage={currentPage} setCurrentPage={setCurrentPage} />
       {children}
     </div>
   );

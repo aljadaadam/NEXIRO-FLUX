@@ -17,7 +17,7 @@ const {
   markCustomerNotificationRead,
   updateCustomerVerification,
 } = require('../controllers/customerController');
-const { getAllOrders, createOrder } = require('../controllers/orderController');
+const { getAllOrders, createOrder, cancelCustomerOrder } = require('../controllers/orderController');
 const { getAllPayments, createPayment } = require('../controllers/paymentController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { requireRole } = require('../middlewares/authMiddleware');
@@ -148,6 +148,7 @@ router.patch('/notifications/:id/read', authenticateToken, requireRole('customer
 // ===== طلبات الزبون (/api/customers/orders) — مسارات فريدة للزبائن =====
 router.get('/orders', authenticateToken, requireRole('customer'), checkBlocked, trackActivity, getAllOrders);
 router.post('/orders', authenticateToken, requireRole('customer'), checkBlocked, trackActivity, createOrder);
+router.patch('/orders/:id/cancel', authenticateToken, requireRole('customer'), checkBlocked, trackActivity, cancelCustomerOrder);
 
 // ===== مدفوعات الزبون (/api/customers/payments) — مسارات فريدة للزبائن =====
 router.get('/payments', authenticateToken, requireRole('customer'), checkBlocked, trackActivity, getAllPayments);

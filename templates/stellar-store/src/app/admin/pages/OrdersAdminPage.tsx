@@ -32,6 +32,9 @@ export default function OrdersAdminPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [responseOrderId, setResponseOrderId] = useState<number | null>(null);
+  const [responsePendingStatus, setResponsePendingStatus] = useState<string>('');
+  const [responseText, setResponseText] = useState('');
 
   const loadOrders = useCallback(async () => {
     try {
@@ -52,12 +55,30 @@ export default function OrdersAdminPage() {
   });
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
+    if (newStatus === 'completed') {
+      setResponseOrderId(orderId);
+      setResponsePendingStatus(newStatus);
+      setResponseText('');
+      return;
+    }
     setUpdatingId(orderId);
     try {
       await adminApi.updateOrderStatus(orderId, { status: newStatus });
       loadOrders();
     } catch { /* empty */ }
     setUpdatingId(null);
+  };
+
+  const handleConfirmWithResponse = async () => {
+    if (!responseOrderId) return;
+    setUpdatingId(responseOrderId);
+    try {
+      await adminApi.updateOrderStatus(responseOrderId, { status: responsePendingStatus, server_response: responseText || undefined });
+      loadOrders();
+    } catch { /* empty */ }
+    setUpdatingId(null);
+    setResponseOrderId(null);
+    setResponseText('');
   };
 
   if (loading) {
@@ -160,6 +181,39 @@ export default function OrdersAdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Server response modal */}
+      {responseOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
+          <div className="absolute inset-0 bg-navy-950/80 backdrop-blur-sm" onClick={() => setResponseOrderId(null)} />
+          <div className="relative w-full max-w-md bg-navy-900 border border-navy-700/50 rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="text-lg font-black text-white">رد الطلب</h3>
+            <p className="text-navy-400 text-sm">أدخل الرد / الكود / بيانات التفعيل للعميل (اختياري)</p>
+            <textarea
+              value={responseText}
+              onChange={e => setResponseText(e.target.value)}
+              placeholder="مثال: XXXX-XXXX-XXXX أو رابط التحميل..."
+              rows={3}
+              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm resize-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setResponseOrderId(null)}
+                className="flex-1 py-3 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleConfirmWithResponse}
+                disabled={updatingId === responseOrderId}
+                className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gold-500 rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {updatingId === responseOrderId ? <Loader2 className="w-4 h-4 animate-spin" /> : 'تأكيد الإكمال'}
+              </button>
+            </div>
           </div>
         </div>
       )}

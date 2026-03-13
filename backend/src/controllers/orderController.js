@@ -370,6 +370,53 @@ async function createOrder(req, res) {
   }
 }
 
+// إلغاء طلب (من الزبون — فقط الطلبات المعلقة)
+async function cancelCustomerOrder(req, res) {
+  try {
+    const { site_key, id: customerId } = req.user;
+    const { id } = req.params;
+
+    const order = await Order.findById(id);
+    if (!order || order.site_key !== site_key) {
+      return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+    if (order.customer_id !== customerId) {
+      return res.status(403).json({ error: 'غير مصرح' });
+    }
+    if (order.status !== 'pending') {
+      return res.status(400).json({ error: 'لا يمكن إلغاء هذا الطلب — فقط الطلبات المعلقة يمكن إلغاؤها' });
+    }
+
+    const updated = await Order.updateStatus(id, site_key, 'cancelled');
+    if (!updated) {
+      return res.status(500).json({ error: 'فشل في إلغاء الطلب' });
+    }
+
+    // استرجاع الرصيد إذا كان الدفع بالمحفظة
+    if (order.payment_method === 'wallet' && order.payment_status === 'paid') {
+      const pool = getPool();
+      const [refundResult] = await pool.query(
+        "UPDATE orders SET payment_status = 'refunded' WHERE id = ? AND site_key = ? AND payment_status = 'paid'",
+        [id, site_key]
+      );
+      if (refundResult.affectedRows > 0 && order.customer_id) {
+        await Customer.updateWallet(order.customer_id, site_key, parseFloat(order.total_price));
+        await Payment.create({
+          site_key, customer_id: order.customer_id, order_id: order.id,
+          amount: parseFloat(order.total_price), type: 'refund',
+          payment_method: 'wallet', status: 'completed',
+          note: `استرجاع رصيد - إلغاء الطلب #${order.order_number} من قبل العميل`,
+        });
+      }
+    }
+
+    res.json({ message: 'تم إلغاء الطلب بنجاح', order: updated });
+  } catch (error) {
+    console.error('Error in cancelCustomerOrder:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إلغاء الطلب' });
+  }
+}
+
 // تحديث حالة الطلب (أدمن)
 async function updateOrderStatus(req, res) {
   try {
@@ -986,6 +1033,7 @@ async function bulkCheckExternalOrders(req, res) {
 module.exports = {
   getAllOrders,
   createOrder,
+  cancelCustomerOrder,
   updateOrderStatus,
   getOrderStats,
   placeExternalOrder,

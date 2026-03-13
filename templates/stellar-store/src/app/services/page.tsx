@@ -44,6 +44,7 @@ interface DisplayProduct {
   category: string;
   price: number;
   image: string;
+  qnt?: number;
   custom_fields?: ProductField[];
 }
 
@@ -97,6 +98,7 @@ function ServicesContent() {
               category: (p.group_name || p.category || '') as string,
               price: (p.final_price || p.price) as number,
               image: (p.image || '/images/default-product.svg') as string,
+              qnt: p.qnt as number | undefined,
               custom_fields: Array.isArray(custom_fields) ? custom_fields as ProductField[] : [],
             };
           });
@@ -174,6 +176,19 @@ function ServicesContent() {
         setOrderError('يرجى إدخال رقم الإيصال أو إرفاق صورة الإيصال');
         return;
       }
+    }
+    // Validate wallet balance
+    if (paymentMethod === 'wallet') {
+      try {
+        const stored = localStorage.getItem('customer');
+        if (stored) {
+          const cust = JSON.parse(stored);
+          if (typeof cust.wallet_balance === 'number' && cust.wallet_balance < orderProduct.price) {
+            setOrderError(`رصيد المحفظة غير كافي (${cust.wallet_balance.toLocaleString()} SDG). يرجى شحن المحفظة أولاً.`);
+            return;
+          }
+        }
+      } catch { /* ignore parse errors */ }
     }
     setOrderLoading(true);
     setOrderError('');
@@ -263,21 +278,33 @@ function ServicesContent() {
           </div>
 
           {/* Products Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+            </div>
+          ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-            {filtered.map((product, idx) => (
+            {filtered.map((product, idx) => {
+              const outOfStock = product.qnt !== undefined && product.qnt <= 0;
+              return (
               <div
                 key={product.id}
-                onClick={() => handleOrderClick(product)}
-                className="group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden animate-fadeInUp cursor-pointer"
+                onClick={() => !outOfStock && handleOrderClick(product)}
+                className={`group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden animate-fadeInUp ${outOfStock ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 style={{ animationDelay: `${idx * 0.08}s` }}
               >
                 {/* Image area */}
-                <div className="h-32 sm:h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
+                <div className="relative h-32 sm:h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
                   <img
                     src={product.image || '/images/default-product.svg'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  {outOfStock && (
+                    <div className="absolute inset-0 bg-navy-950/60 flex items-center justify-center">
+                      <span className="bg-red-500/90 text-white text-xs font-bold px-3 py-1 rounded-lg">نفد المخزون</span>
+                    </div>
+                  )}
                 </div>
                 {/* Info */}
                 <div className="p-3 sm:p-5">
@@ -288,18 +315,21 @@ function ServicesContent() {
                   <div className="flex items-center justify-between">
                     <span className="text-gold-500 font-black text-sm sm:text-lg">{product.price.toLocaleString()} <span className="text-[10px] sm:text-xs text-navy-500">SDG</span></span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleOrderClick(product); }}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center"
+                      onClick={(e) => { e.stopPropagation(); if (!outOfStock) handleOrderClick(product); }}
+                      disabled={outOfStock}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gold-500/10 disabled:hover:text-gold-500"
                     >
                       <ShoppingCart className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+          )}
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-20">
               <p className="text-navy-400 text-lg">لا توجد منتجات مطابقة</p>
             </div>

@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 import { storeApi } from '@/lib/api';
 import type { Customer, Order, PaymentGateway } from '@/lib/types';
-import { User, Package, Wallet, Settings, LogOut, Loader2, CheckCircle, Clock, XCircle, AlertCircle, Upload, X, Plus } from 'lucide-react';
+import { User, Package, Wallet, Settings, LogOut, Loader2, CheckCircle, Clock, XCircle, AlertCircle, Upload, X, Plus, Ban } from 'lucide-react';
 
 type ActiveTab = 'info' | 'orders' | 'wallet' | 'settings';
 
@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   // Edit fields
   const [editName, setEditName] = useState('');
@@ -250,10 +251,35 @@ export default function ProfilePage() {
                                 <span className="text-gold-500 font-bold text-sm">{(order.total_price || 0).toLocaleString()} SDG</span>
                                 <span className="text-navy-500 text-xs">{order.created_at ? new Date(order.created_at).toLocaleDateString('ar') : ''}</span>
                               </div>
-                              {order.response && (
+                              {(order.server_response || order.response) && (
                                 <div className="mt-3 p-3 bg-navy-900/50 rounded-lg">
                                   <p className="text-xs text-navy-400 mb-1">الرد:</p>
-                                  <p className="text-sm text-white break-all select-all">{order.response}</p>
+                                  <p className="text-sm text-white break-all select-all">{order.server_response || order.response}</p>
+                                </div>
+                              )}
+                              {order.status === 'pending' && (
+                                <div className="mt-3 pt-3 border-t border-navy-700/30">
+                                  <button
+                                    onClick={async () => {
+                                      if (cancellingId) return;
+                                      setCancellingId(order.id);
+                                      try {
+                                        await storeApi.cancelOrder(order.id);
+                                        setMessage('تم إلغاء الطلب بنجاح');
+                                        loadOrders();
+                                        loadProfile();
+                                      } catch (e: unknown) {
+                                        setError(e instanceof Error ? e.message : 'خطأ في إلغاء الطلب');
+                                      } finally {
+                                        setCancellingId(null);
+                                      }
+                                    }}
+                                    disabled={cancellingId === order.id}
+                                    className="flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                                  >
+                                    {cancellingId === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                                    إلغاء الطلب
+                                  </button>
                                 </div>
                               )}
                             </div>

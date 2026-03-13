@@ -83,6 +83,7 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
 
   const handleRegister = async () => {
     if (!regName || !regEmail || !regPassword) { setError('يرجى ملء جميع الحقول المطلوبة'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) { setError('يرجى إدخال بريد إلكتروني صحيح'); return; }
     if (regPassword.length < 8) { setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
     setLoading(true); setError('');
     try {

@@ -217,6 +217,8 @@ function getDemoCustomerResponse(endpoint: string, method: string, body?: string
     };
     return Promise.resolve({ order: newOrder, message: 'تم تقديم الطلب بنجاح (وضع تجريبي)' });
   }
+  if (ep.startsWith('customers/orders/') && ep.endsWith('/cancel') && method === 'PATCH')
+    return Promise.resolve({ message: 'تم إلغاء الطلب بنجاح (وضع تجريبي)' });
   if (ep === 'customers/verify-otp') return Promise.resolve({ token: 'demo-token-stellar', customer: DEMO_CUSTOMER });
   if (ep === 'customers/forgot-password') return Promise.resolve({ message: 'تم إرسال رابط إعادة التعيين (وضع تجريبي)' });
   if (ep.includes('checkout/init') && method === 'POST')
@@ -281,6 +283,9 @@ export const storeApi = {
 
   createOrder: (data: { product_id: number; product_name: string; quantity?: number; payment_method: string; notes?: string }) =>
     customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
+
+  cancelOrder: (orderId: number) =>
+    customerFetch(`/customers/orders/${orderId}/cancel`, { method: 'PATCH' }),
 
   getProducts: () => {
     if (isDemoMode()) return Promise.resolve(DEMO_PRODUCTS);
