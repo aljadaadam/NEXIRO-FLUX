@@ -7,18 +7,18 @@ import LoginModal from '@/components/LoginModal';
 import { Search, ShoppingCart, Loader2 } from 'lucide-react';
 
 const fallbackProducts = [
-  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/default-product.svg' },
-  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/office.webp' },
+  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png' },
+  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/office.png' },
   { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: 20000, image: '/images/default-product.svg' },
   { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/pubg.jpg' },
   { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: 15000, image: '/images/freefire.jpg' },
-  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/default-product.svg' },
+  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/playstation.jpg' },
   { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/bein.jpg' },
   { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: 380000, image: '/images/bein.jpg' },
   { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
   { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/starlink-default.png' },
   { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/netflix.jpg' },
-  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/default-product.svg' },
+  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/spotify.jpg' },
 ];
 
 interface DisplayProduct {
