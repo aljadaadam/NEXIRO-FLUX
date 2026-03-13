@@ -8,18 +8,18 @@ import { storeApi } from '@/lib/api';
 import { Search, ShoppingCart, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react';
 
 const fallbackProducts = [
-  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png' },
-  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/office.png' },
-  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: 20000, image: '/images/default-product.svg' },
-  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/pubg.jpg' },
-  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: 15000, image: '/images/freefire.jpg' },
-  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/playstation.jpg' },
-  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/bein.jpg' },
-  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: 380000, image: '/images/bein.jpg' },
-  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
-  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/starlink-default.png' },
-  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/netflix.jpg' },
-  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/spotify.jpg' },
+  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png', custom_fields: [] },
+  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/office.png', custom_fields: [] },
+  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: 20000, image: '/images/default-product.svg', custom_fields: [] },
+  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/pubg.jpg', custom_fields: [{ name: 'player_id', label: 'Player ID', required: true, type: 'text' as const }] },
+  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: 15000, image: '/images/freefire.jpg', custom_fields: [{ name: 'player_id', label: 'Player ID', required: true, type: 'text' as const }] },
+  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/playstation.jpg', custom_fields: [{ name: 'psn_email', label: 'البريد الإلكتروني PSN', required: true, type: 'email' as const }] },
+  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/bein.jpg', custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' as const }] },
+  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: 380000, image: '/images/bein.jpg', custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' as const }] },
+  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png', custom_fields: [{ name: 'address', label: 'العنوان', required: true, type: 'text' as const }, { name: 'phone', label: 'رقم الهاتف', required: true, type: 'tel' as const }] },
+  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/starlink-default.png', custom_fields: [{ name: 'address', label: 'العنوان', required: true, type: 'text' as const }, { name: 'phone', label: 'رقم الهاتف', required: true, type: 'tel' as const }] },
+  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/netflix.jpg', custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' as const }] },
+  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/spotify.jpg', custom_fields: [{ name: 'email', label: 'البريد الإلكتروني', required: true, type: 'email' as const }] },
 ];
 
 interface ProductField {
