@@ -160,7 +160,7 @@ export default function ServicesPage() {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filtered.map((product, idx) => (
               <div
                 key={product.id}
@@ -169,7 +169,7 @@ export default function ServicesPage() {
                 style={{ animationDelay: `${idx * 0.08}s` }}
               >
                 {/* Image area */}
-                <div className="h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
+                <div className="h-32 sm:h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
                   <img
                     src={product.image || '/images/default-product.svg'}
                     alt={product.name}
@@ -177,18 +177,18 @@ export default function ServicesPage() {
                   />
                 </div>
                 {/* Info */}
-                <div className="p-5">
-                  <span className="text-xs text-gold-500 font-medium bg-gold-500/10 px-2 py-1 rounded-lg">
+                <div className="p-3 sm:p-5">
+                  <span className="text-[10px] sm:text-xs text-gold-500 font-medium bg-gold-500/10 px-2 py-1 rounded-lg">
                     {product.category}
                   </span>
-                  <h3 className="text-white font-bold mt-3 mb-2">{product.name}</h3>
+                  <h3 className="text-white font-bold text-sm sm:text-base mt-2 sm:mt-3 mb-2 line-clamp-1">{product.name}</h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-gold-500 font-black text-lg">{product.price.toLocaleString()} <span className="text-xs text-navy-500">SDG</span></span>
+                    <span className="text-gold-500 font-black text-sm sm:text-lg">{product.price.toLocaleString()} <span className="text-[10px] sm:text-xs text-navy-500">SDG</span></span>
                     <button
-                      onClick={() => handleOrderClick(product)}
-                      className="w-10 h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center"
+                      onClick={(e) => { e.stopPropagation(); handleOrderClick(product); }}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center"
                     >
-                      <ShoppingCart className="w-5 h-5" />
+                      <ShoppingCart className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
