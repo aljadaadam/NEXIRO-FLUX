@@ -126,7 +126,7 @@ export default function OverviewPage() {
   const customerGrowth = 78;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1400px]">
+    <div className="p-4 sm:p-6 space-y-6 w-full">
       {/* ─── Header ─── */}
       <div className="animate-fadeInUp">
         <div className="flex items-center gap-3 mb-1">
