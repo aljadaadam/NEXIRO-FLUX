@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const fallbackProducts = [
   { id: 0, name: 'ستارلينك', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
@@ -26,6 +27,7 @@ interface FeaturedProduct {
 
 export default function FeaturedSection() {
   const [products, setProducts] = useState<FeaturedProduct[]>(fallbackProducts);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/products/public')
@@ -76,7 +78,8 @@ export default function FeaturedSection() {
           {products.map((product, i) => (
             <div
               key={product.id}
-              className="group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden animate-fadeInUp"
+              onClick={() => router.push('/services')}
+              className="group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden animate-fadeInUp cursor-pointer"
               style={{ animationDelay: `${i * 0.08}s` }}
             >
               {/* Image */}
