@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
 import { Zap, Shield, Headphones } from 'lucide-react';
 
 const features = [
@@ -31,50 +30,32 @@ const features = [
 ];
 
 export default function FeaturesSection() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let pos = 0;
-    const speed = 0.5;
-    let raf: number;
-    const step = () => {
-      pos += speed;
-      if (pos >= el.scrollWidth - el.clientWidth) pos = 0;
-      el.scrollLeft = pos;
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    const stop = () => cancelAnimationFrame(raf);
-    const resume = () => { raf = requestAnimationFrame(step); };
-    el.addEventListener('touchstart', stop);
-    el.addEventListener('touchend', resume);
-    return () => { cancelAnimationFrame(raf); el.removeEventListener('touchstart', stop); el.removeEventListener('touchend', resume); };
-  }, []);
+  const allFeatures = [...features, ...features];
 
   return (
     <section className="py-8 sm:py-16 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Mobile: horizontal scroll strip */}
-        <div ref={scrollRef} className="md:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
-          {features.map((feature, i) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={i}
-                className={`flex items-center gap-3 p-4 rounded-xl bg-navy-900/60 border ${feature.border} min-w-[260px] shrink-0`}
-              >
-                <div className={`w-11 h-11 rounded-lg ${feature.bg} flex items-center justify-center shrink-0`}>
-                  <Icon className={`w-5 h-5 ${feature.color}`} />
+        {/* Mobile: auto-scrolling marquee */}
+        <div className="md:hidden overflow-hidden">
+          <div className="flex gap-3 animate-marquee w-max">
+            {allFeatures.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 p-4 rounded-xl bg-navy-900/60 border ${feature.border} min-w-[260px] shrink-0`}
+                >
+                  <div className={`w-11 h-11 rounded-lg ${feature.bg} flex items-center justify-center shrink-0`}>
+                    <Icon className={`w-5 h-5 ${feature.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white mb-0.5">{feature.title}</h3>
+                    <p className="text-navy-400 text-[11px] leading-relaxed">{feature.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white mb-0.5">{feature.title}</h3>
-                  <p className="text-navy-400 text-[11px] leading-relaxed">{feature.description}</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Desktop: grid */}

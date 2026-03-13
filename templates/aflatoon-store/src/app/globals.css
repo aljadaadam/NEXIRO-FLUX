@@ -85,6 +85,19 @@ body {
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
 
+/* ─── Marquee auto-scroll (RTL) ─── */
+@keyframes marqueeRTL {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(50%); }
+}
+.animate-marquee {
+  animation: marqueeRTL 20s linear infinite;
+}
+.animate-marquee:hover,
+.animate-marquee:active {
+  animation-play-state: paused;
+}
+
 /* ─── Modal backdrop ─── */
 .modal-backdrop {
   background: rgba(6, 11, 24, 0.75);

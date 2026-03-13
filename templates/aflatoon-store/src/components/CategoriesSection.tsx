@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
 import { Monitor, Gamepad2, Tv, Key } from 'lucide-react';
 
 const categories = [
@@ -43,27 +42,7 @@ const categories = [
 ];
 
 export default function CategoriesSection() {
-  const catScrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = catScrollRef.current;
-    if (!el) return;
-    let pos = 0;
-    const speed = 0.5;
-    let raf: number;
-    const step = () => {
-      pos += speed;
-      if (pos >= el.scrollWidth - el.clientWidth) pos = 0;
-      el.scrollLeft = pos;
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    const stop = () => cancelAnimationFrame(raf);
-    const resume = () => { raf = requestAnimationFrame(step); };
-    el.addEventListener('touchstart', stop);
-    el.addEventListener('touchend', resume);
-    return () => { cancelAnimationFrame(raf); el.removeEventListener('touchstart', stop); el.removeEventListener('touchend', resume); };
-  }, []);
+  const allCategories = [...categories, ...categories];
 
   return (
     <section className="py-8 sm:py-20 px-4 sm:px-6">
@@ -78,25 +57,27 @@ export default function CategoriesSection() {
           </p>
         </div>
 
-        {/* Mobile: single horizontal scroll strip */}
-        <div ref={catScrollRef} className="sm:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
-          {categories.map((cat, i) => {
-            const Icon = cat.icon;
-            return (
-              <a
-                key={i}
-                href="/services"
-                className={`group relative p-3 min-w-[140px] shrink-0 rounded-xl bg-gradient-to-b ${cat.color} bg-navy-900/60 border ${cat.borderColor} transition-all text-center`}
-              >
-                <div className="flex justify-center mb-2">
-                  <Icon className={`w-7 h-7 ${cat.iconColor}`} />
-                </div>
-                <h3 className="text-white font-bold text-sm mb-1">{cat.title}</h3>
-                <p className="text-navy-400 text-[10px] leading-relaxed mb-1 line-clamp-2">{cat.description}</p>
-                <span className="text-[10px] text-navy-500 font-medium">{cat.count}</span>
-              </a>
-            );
-          })}
+        {/* Mobile: auto-scrolling marquee */}
+        <div className="sm:hidden overflow-hidden">
+          <div className="flex gap-3 animate-marquee w-max">
+            {allCategories.map((cat, i) => {
+              const Icon = cat.icon;
+              return (
+                <a
+                  key={i}
+                  href="/services"
+                  className={`group relative p-3 min-w-[140px] shrink-0 rounded-xl bg-gradient-to-b ${cat.color} bg-navy-900/60 border ${cat.borderColor} transition-all text-center`}
+                >
+                  <div className="flex justify-center mb-2">
+                    <Icon className={`w-7 h-7 ${cat.iconColor}`} />
+                  </div>
+                  <h3 className="text-white font-bold text-sm mb-1">{cat.title}</h3>
+                  <p className="text-navy-400 text-[10px] leading-relaxed mb-1 line-clamp-2">{cat.description}</p>
+                  <span className="text-[10px] text-navy-500 font-medium">{cat.count}</span>
+                </a>
+              );
+            })}
+          </div>
         </div>
 
         {/* Desktop: grid layout */}
