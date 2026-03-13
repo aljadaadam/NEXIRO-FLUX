@@ -34,9 +34,13 @@ export default function StarlinkSection() {
               key={i}
               className="group relative rounded-2xl overflow-hidden bg-navy-900/80 border border-navy-700/50 hover:border-gold-500/30 transition-all hover:-translate-y-1"
             >
-              {/* Satellite dish image placeholder */}
-              <div className="relative h-36 bg-gradient-to-b from-navy-800/50 to-navy-900 flex items-center justify-center overflow-hidden">
-                <div className="text-6xl opacity-30 group-hover:opacity-50 transition-opacity">📡</div>
+              {/* Satellite dish image */}
+              <div className="relative h-36 bg-gradient-to-b from-navy-800/50 to-navy-900 overflow-hidden">
+                <img
+                  src="/images/starlink.svg"
+                  alt={`ستارلينك ${country.name}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
                 {/* Flag badge */}
                 <div className="absolute top-3 right-3">
                   <span className="text-2xl">{country.flag}</span>

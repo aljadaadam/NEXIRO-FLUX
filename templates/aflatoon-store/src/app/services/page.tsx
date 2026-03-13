@@ -9,18 +9,18 @@ import { Search, Filter, ShoppingCart } from 'lucide-react';
 const categories = ['الكل', 'تفعيلات', 'ألعاب', 'beIN Sports', 'ستارلينك', 'اشتراكات', 'عروض خاصة'];
 
 const demoProducts = [
-  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: '25,000', image: '🪟' },
-  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: '35,000', image: '📎' },
-  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: '20,000', image: '🛡️' },
-  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: '18,000', image: '🎮' },
-  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: '15,000', image: '🔥' },
-  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: '22,000', image: '🕹️' },
-  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: '45,000', image: '📺' },
-  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: '380,000', image: '⚽' },
-  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: '380,000', image: '🛰️' },
-  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: '150,000', image: '📡' },
-  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: '12,000', image: '🎬' },
-  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: '8,000', image: '🎵' },
+  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: '25,000' },
+  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: '35,000' },
+  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: '20,000' },
+  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: '18,000' },
+  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: '15,000' },
+  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: '22,000' },
+  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: '45,000' },
+  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: '380,000' },
+  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: '380,000' },
+  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: '150,000' },
+  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: '12,000' },
+  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: '8,000' },
 ];
 
 export default function ServicesPage() {
@@ -86,8 +86,12 @@ export default function ServicesPage() {
                 className="group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden"
               >
                 {/* Image area */}
-                <div className="h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center">
-                  <span className="text-6xl group-hover:scale-110 transition-transform">{product.image}</span>
+                <div className="h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/default-product.svg"
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
                 {/* Info */}
                 <div className="p-5">

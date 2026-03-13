@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#060b18;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5a623;stop-opacity:0.25" />
+      <stop offset="100%" style="stop-color:#d4891a;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="125" r="55" fill="url(#gold)" stroke="#f5a623" stroke-opacity="0.15" stroke-width="1"/>
+  <!-- Satellite dish -->
+  <ellipse cx="200" cy="120" rx="30" ry="18" fill="none" stroke="#f5a623" stroke-opacity="0.5" stroke-width="1.5" transform="rotate(-20, 200, 120)"/>
+  <line x1="200" y1="120" x2="200" y2="160" stroke="#f5a623" stroke-opacity="0.5" stroke-width="1.5"/>
+  <line x1="188" y1="158" x2="212" y2="158" stroke="#f5a623" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Signal waves -->
+  <path d="M220 100 Q230 90 225 80" fill="none" stroke="#f5a623" stroke-opacity="0.3" stroke-width="1" stroke-linecap="round"/>
+  <path d="M225 105 Q240 90 233 75" fill="none" stroke="#f5a623" stroke-opacity="0.2" stroke-width="1" stroke-linecap="round"/>
+  <text x="200" y="195" text-anchor="middle" fill="#4a5568" font-family="sans-serif" font-size="13" opacity="0.6">Starlink</text>
+</svg>
