@@ -2,20 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { adminApi } from '@/lib/api';
-import type { Customization } from '@/lib/types';
-import { Settings, Save, Loader2, Palette, Globe, MessageSquare } from 'lucide-react';
+import type { Customization, PaymentGateway } from '@/lib/types';
+import { Settings, Save, Loader2, Palette, Globe, MessageSquare, CreditCard, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function SettingsAdminPage() {
   const [settings, setSettings] = useState<Customization>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [gateways, setGateways] = useState<PaymentGateway[]>([]);
+  const [showAddGateway, setShowAddGateway] = useState(false);
+  const [newGateway, setNewGateway] = useState({ name: '', account_number: '', full_name: '', receipt_note: '' });
+  const [gatewayLoading, setGatewayLoading] = useState(false);
+
+  const loadGateways = async () => {
+    try {
+      const data = await adminApi.getPaymentGateways();
+      setGateways(Array.isArray(data) ? data : data?.gateways || []);
+    } catch { /* empty */ }
+  };
 
   useEffect(() => {
-    adminApi.getCustomization()
-      .then(data => setSettings(data?.customization || {}))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      adminApi.getCustomization()
+        .then(data => setSettings(data?.customization || {}))
+        .catch(() => {}),
+      loadGateways(),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
@@ -34,6 +47,60 @@ export default function SettingsAdminPage() {
 
   const update = (key: keyof Customization, value: string | boolean) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleAddGateway = async () => {
+    if (!newGateway.name || !newGateway.account_number || !newGateway.full_name) return;
+    setGatewayLoading(true);
+    try {
+      await adminApi.createPaymentGateway({
+        name: newGateway.name,
+        type: 'bankak',
+        logo: 'https://6990ab01681c79fa0bccfe99.imgix.net/bank.png',
+        config: {
+          account_number: newGateway.account_number,
+          full_name: newGateway.full_name,
+          receipt_note: newGateway.receipt_note,
+        },
+      });
+      setNewGateway({ name: '', account_number: '', full_name: '', receipt_note: '' });
+      setShowAddGateway(false);
+      await loadGateways();
+    } catch {
+      alert('حدث خطأ أثناء إضافة البوابة');
+    } finally {
+      setGatewayLoading(false);
+    }
+  };
+
+  const handleToggleGateway = async (id: number) => {
+    try {
+      await adminApi.togglePaymentGateway(id);
+      await loadGateways();
+    } catch {
+      alert('حدث خطأ');
+    }
+  };
+
+  const handleDeleteGateway = async (id: number) => {
+    if (!confirm('هل أنت متأكد من حذف هذه البوابة؟')) return;
+    try {
+      await adminApi.deletePaymentGateway(id);
+      await loadGateways();
+    } catch {
+      alert('حدث خطأ أثناء الحذف');
+    }
+  };
+
+  const handleUpdateGatewayConfig = async (gw: PaymentGateway, field: string, value: string) => {
+    try {
+      await adminApi.updatePaymentGateway(gw.id, {
+        config: { ...gw.config, [field]: value },
+      });
+      await loadGateways();
+    } catch {
+      alert('حدث خطأ أثناء التحديث');
+    }
   };
 
   if (loading) {
@@ -228,6 +295,162 @@ export default function SettingsAdminPage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Payment Gateways */}
+      <div className="bg-navy-900/60 border border-navy-700/40 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-bold text-lg flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-gold-500" />
+            بوابات الدفع
+          </h2>
+          <button
+            onClick={() => setShowAddGateway(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-gold-500/10 text-gold-500 font-bold rounded-xl hover:bg-gold-500/20 transition-all text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة بوابة
+          </button>
+        </div>
+
+        {/* Add Gateway Form */}
+        {showAddGateway && (
+          <div className="bg-navy-800/60 border border-navy-700/50 rounded-xl p-5 space-y-4">
+            <h3 className="text-white font-bold text-sm">إضافة بوابة بنكك</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">اسم البوابة</label>
+                <input
+                  value={newGateway.name}
+                  onChange={e => setNewGateway(p => ({ ...p, name: e.target.value }))}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="مثال: بنكك - بنك الخرطوم"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">رقم الحساب</label>
+                <input
+                  value={newGateway.account_number}
+                  onChange={e => setNewGateway(p => ({ ...p, account_number: e.target.value }))}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="رقم حساب بنكك"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">اسم صاحب الحساب</label>
+                <input
+                  value={newGateway.full_name}
+                  onChange={e => setNewGateway(p => ({ ...p, full_name: e.target.value }))}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="الاسم الكامل لصاحب الحساب"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">تعليق في الايصال</label>
+                <input
+                  value={newGateway.receipt_note}
+                  onChange={e => setNewGateway(p => ({ ...p, receipt_note: e.target.value }))}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="ملاحظة تظهر للعميل عند الدفع"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleAddGateway}
+                disabled={gatewayLoading || !newGateway.name || !newGateway.account_number || !newGateway.full_name}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gold-500 text-navy-950 font-bold rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50 text-sm"
+              >
+                {gatewayLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                إضافة
+              </button>
+              <button
+                onClick={() => setShowAddGateway(false)}
+                className="px-5 py-2.5 text-navy-400 hover:text-white font-bold rounded-xl transition-all text-sm"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Gateways List */}
+        {gateways.length === 0 && !showAddGateway ? (
+          <p className="text-navy-500 text-sm text-center py-8">لا توجد بوابات دفع. أضف بوابة جديدة للبدء.</p>
+        ) : (
+          <div className="space-y-3">
+            {gateways.map(gw => (
+              <div key={gw.id} className="bg-navy-800/40 border border-navy-700/30 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {gw.logo && (
+                      <img src={gw.logo} alt={gw.name} className="w-8 h-8 rounded-lg object-contain" />
+                    )}
+                    <div>
+                      <h4 className="text-white font-bold text-sm">{gw.name}</h4>
+                      <span className={`text-xs font-bold ${gw.is_enabled ? 'text-emerald-400' : 'text-navy-500'}`}>
+                        {gw.is_enabled ? 'مفعّلة' : 'معطّلة'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleGateway(gw.id)}
+                      className={`p-2 rounded-lg transition-all ${gw.is_enabled ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-navy-500 hover:bg-navy-700/50'}`}
+                      title={gw.is_enabled ? 'تعطيل' : 'تفعيل'}
+                    >
+                      {gw.is_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGateway(gw.id)}
+                      className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs text-navy-400 font-bold mb-1 block">رقم الحساب</label>
+                    <input
+                      defaultValue={gw.config?.account_number || ''}
+                      onBlur={e => {
+                        if (e.target.value !== (gw.config?.account_number || ''))
+                          handleUpdateGatewayConfig(gw, 'account_number', e.target.value);
+                      }}
+                      className="w-full px-3 py-2 bg-navy-900/60 border border-navy-700/40 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-navy-400 font-bold mb-1 block">اسم صاحب الحساب</label>
+                    <input
+                      defaultValue={gw.config?.full_name || ''}
+                      onBlur={e => {
+                        if (e.target.value !== (gw.config?.full_name || ''))
+                          handleUpdateGatewayConfig(gw, 'full_name', e.target.value);
+                      }}
+                      className="w-full px-3 py-2 bg-navy-900/60 border border-navy-700/40 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-navy-400 font-bold mb-1 block">تعليق في الايصال</label>
+                    <input
+                      defaultValue={gw.config?.receipt_note || ''}
+                      onBlur={e => {
+                        if (e.target.value !== (gw.config?.receipt_note || ''))
+                          handleUpdateGatewayConfig(gw, 'receipt_note', e.target.value);
+                      }}
+                      className="w-full px-3 py-2 bg-navy-900/60 border border-navy-700/40 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

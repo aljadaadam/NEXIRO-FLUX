@@ -5,7 +5,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
 import { storeApi } from '@/lib/api';
-import { Search, ShoppingCart, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import type { PaymentGateway } from '@/lib/types';
+import { Search, ShoppingCart, Loader2, X, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 
 const fallbackProducts = [
   { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png', custom_fields: [] },
@@ -54,6 +55,14 @@ export default function ServicesPage() {
   const [orderSuccess, setOrderSuccess] = useState('');
   const [orderError, setOrderError] = useState('');
 
+  // Payment method state
+  const [enabledGateways, setEnabledGateways] = useState<PaymentGateway[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'bankak'>('wallet');
+  const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
+  const [receiptRef, setReceiptRef] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string>('');
+
   useEffect(() => {
     fetch('/api/products/public')
       .then(r => r.ok ? r.json() : null)
@@ -86,6 +95,14 @@ export default function ServicesPage() {
         setCategories(cats);
       })
       .finally(() => setLoading(false));
+
+    // Load enabled payment gateways
+    storeApi.getEnabledGateways()
+      .then(data => {
+        const list = Array.isArray(data) ? data : data?.gateways || [];
+        setEnabledGateways(list);
+      })
+      .catch(() => {});
   }, []);
 
   const filtered = products.filter((p) => {
@@ -105,6 +122,11 @@ export default function ServicesPage() {
     setFieldValues({});
     setOrderSuccess('');
     setOrderError('');
+    setPaymentMethod('wallet');
+    setSelectedGateway(null);
+    setReceiptRef('');
+    setReceiptFile(null);
+    setReceiptPreview('');
   };
 
   const handleSubmitOrder = async () => {
@@ -117,22 +139,43 @@ export default function ServicesPage() {
         return;
       }
     }
+    // Validate bankak receipt
+    if (paymentMethod === 'bankak') {
+      if (!receiptRef.trim() && !receiptFile) {
+        setOrderError('يرجى إدخال رقم الإيصال أو إرفاق صورة الإيصال');
+        return;
+      }
+    }
     setOrderLoading(true);
     setOrderError('');
     // Build notes with field values
     const fieldParts = fields
       .filter(f => fieldValues[f.name]?.trim())
       .map(f => `${f.label}: ${fieldValues[f.name].trim()}`);
+    // Add bankak receipt info to notes
+    if (paymentMethod === 'bankak') {
+      if (selectedGateway) {
+        fieldParts.push(`بوابة الدفع: ${selectedGateway.name}`);
+      }
+      if (receiptRef.trim()) {
+        fieldParts.push(`رقم الإيصال: ${receiptRef.trim()}`);
+      }
+      if (receiptFile) {
+        fieldParts.push(`مرفق: صورة إيصال`);
+      }
+    }
     const allNotes = [...fieldParts, ...(orderNotes.trim() ? [orderNotes.trim()] : [])].join('\n');
     try {
       await storeApi.createOrder({
         product_id: orderProduct.id,
         product_name: orderProduct.name,
         quantity: 1,
-        payment_method: 'wallet',
+        payment_method: paymentMethod,
         notes: allNotes || undefined,
       });
-      setOrderSuccess('تم تقديم الطلب بنجاح! يمكنك متابعته من صفحة حسابي.');
+      setOrderSuccess(paymentMethod === 'bankak'
+        ? 'تم تقديم الطلب بنجاح! سيتم مراجعة الإيصال وتأكيد الطلب.'
+        : 'تم تقديم الطلب بنجاح! يمكنك متابعته من صفحة حسابي.');
     } catch (e: unknown) {
       if (e instanceof Error && e.message.includes('انتهت الجلسة')) {
         setOrderProduct(null);
@@ -261,10 +304,120 @@ export default function ServicesPage() {
               {/* Payment method */}
               <div className="mb-4">
                 <label className="block text-navy-400 text-sm mb-2">طريقة الدفع</label>
-                <div className="p-3 bg-navy-800/50 border border-gold-500/30 rounded-xl text-gold-500 text-sm font-medium">
-                  المحفظة (خصم من الرصيد)
+                <div className="space-y-2">
+                  {/* Wallet option */}
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMethod('wallet'); setSelectedGateway(null); }}
+                    className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
+                      paymentMethod === 'wallet'
+                        ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
+                        : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'wallet' ? 'border-gold-500' : 'border-navy-600'}`}>
+                      {paymentMethod === 'wallet' && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                    </div>
+                    المحفظة (خصم من الرصيد)
+                  </button>
+
+                  {/* Bankak gateways */}
+                  {enabledGateways.map(gw => (
+                    <button
+                      key={gw.id}
+                      type="button"
+                      onClick={() => { setPaymentMethod('bankak'); setSelectedGateway(gw); }}
+                      className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
+                        paymentMethod === 'bankak' && selectedGateway?.id === gw.id
+                          ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
+                          : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'bankak' && selectedGateway?.id === gw.id ? 'border-gold-500' : 'border-navy-600'}`}>
+                        {paymentMethod === 'bankak' && selectedGateway?.id === gw.id && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                      </div>
+                      {gw.logo && <img src={gw.logo} alt={gw.name} className="w-6 h-6 rounded object-contain" />}
+                      {gw.name}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Bankak Bank Details */}
+              {paymentMethod === 'bankak' && selectedGateway && (
+                <div className="mb-4 p-4 bg-navy-800/50 border border-gold-500/20 rounded-xl space-y-3">
+                  <h4 className="text-gold-500 font-bold text-sm flex items-center gap-2">
+                    {selectedGateway.logo && <img src={selectedGateway.logo} alt="" className="w-5 h-5 rounded object-contain" />}
+                    بيانات التحويل
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-navy-400">رقم الحساب:</span>
+                      <span className="text-white font-bold" dir="ltr">{selectedGateway.config?.account_number}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-navy-400">اسم الحساب:</span>
+                      <span className="text-white font-bold">{selectedGateway.config?.full_name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-navy-400">المبلغ المطلوب:</span>
+                      <span className="text-gold-500 font-black">{orderProduct.price.toLocaleString()} SDG</span>
+                    </div>
+                    {selectedGateway.config?.receipt_note && (
+                      <div className="mt-2 p-2 bg-gold-500/5 border border-gold-500/10 rounded-lg text-navy-300 text-xs">
+                        💡 {selectedGateway.config.receipt_note}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Receipt reference */}
+                  <div className="pt-2">
+                    <label className="block text-navy-400 text-xs mb-1.5">رقم الإيصال / مرجع التحويل <span className="text-red-400">*</span></label>
+                    <input
+                      value={receiptRef}
+                      onChange={e => setReceiptRef(e.target.value)}
+                      placeholder="أدخل رقم الإيصال أو مرجع العملية"
+                      className="w-full px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  {/* Receipt image upload */}
+                  <div>
+                    <label className="block text-navy-400 text-xs mb-1.5">صورة الإيصال (اختياري)</label>
+                    <label className="flex items-center gap-2 px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-navy-400 hover:border-gold-500/30 transition-all cursor-pointer text-sm">
+                      <Upload className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{receiptFile ? receiptFile.name : 'اختر صورة الإيصال'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setReceiptFile(file);
+                            const reader = new FileReader();
+                            reader.onload = () => setReceiptPreview(reader.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {receiptPreview && (
+                      <div className="mt-2 relative">
+                        <img src={receiptPreview} alt="إيصال" className="w-full max-h-40 object-contain rounded-lg border border-navy-700/30" />
+                        <button
+                          type="button"
+                          onClick={() => { setReceiptFile(null); setReceiptPreview(''); }}
+                          className="absolute top-1 left-1 p-1 bg-navy-900/80 rounded-full text-navy-400 hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Custom Fields */}
               {orderProduct.custom_fields && orderProduct.custom_fields.length > 0 && (

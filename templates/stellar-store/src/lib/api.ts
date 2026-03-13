@@ -163,6 +163,17 @@ export const adminApi = {
   getCustomization: () => adminFetch('/customization'),
   updateCustomization: (data: Record<string, unknown>) =>
     adminFetch('/customization', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Payment Gateways
+  getPaymentGateways: () => adminFetch('/payment-gateways'),
+  createPaymentGateway: (data: Record<string, unknown>) =>
+    adminFetch('/payment-gateways', { method: 'POST', body: JSON.stringify(data) }),
+  updatePaymentGateway: (id: number, data: Record<string, unknown>) =>
+    adminFetch(`/payment-gateways/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePaymentGateway: (id: number) =>
+    adminFetch(`/payment-gateways/${id}`, { method: 'DELETE' }),
+  togglePaymentGateway: (id: number) =>
+    adminFetch(`/payment-gateways/${id}/toggle`, { method: 'PATCH' }),
 };
 
 // ─── Demo Customer Data ───
@@ -263,6 +274,18 @@ export const storeApi = {
 
   getProducts: () =>
     fetch('/api/products/public').then(r => r.ok ? r.json() : []),
+
+  getEnabledGateways: () =>
+    fetch('/api/payment-gateways/enabled').then(r => r.ok ? r.json() : []),
+
+  initCheckout: (data: { gateway_id: number; amount: number; type?: string }) =>
+    customerFetch('/checkout/init', { method: 'POST', body: JSON.stringify(data) }),
+
+  uploadReceipt: (paymentId: number, data: { receipt_url: string; notes?: string }) =>
+    customerFetch(`/checkout/receipt/${paymentId}`, { method: 'POST', body: JSON.stringify(data) }),
+
+  checkPaymentStatus: (paymentId: number) =>
+    fetch(`/api/checkout/status/${paymentId}`).then(r => r.ok ? r.json() : null),
 };
 
 export function mapBackendProduct(p: Record<string, unknown>): Product {

@@ -88,6 +88,21 @@ export interface Notification {
   created_at?: string;
 }
 
+export interface PaymentGateway {
+  id: number;
+  name: string;
+  type: 'bankak' | 'bank_transfer' | 'paypal' | 'usdt' | 'binance' | 'wallet';
+  is_enabled: boolean;
+  config?: {
+    account_number?: string;
+    full_name?: string;
+    receipt_note?: string;
+    [key: string]: unknown;
+  };
+  logo?: string;
+  created_at?: string;
+}
+
 export interface Customization {
   theme_id?: string;
   primary_color?: string;
