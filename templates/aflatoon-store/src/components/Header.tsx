@@ -1,0 +1,119 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
+
+const navLinks = [
+  { label: 'الرئيسية', href: '/' },
+  { label: 'التفعيلات', href: '/services' },
+  { label: 'ستارلينك', href: '/services?cat=starlink' },
+  { label: 'beIN', href: '/services?cat=bein' },
+  { label: 'ألعاب', href: '/services?cat=games' },
+  { label: 'حسابي', href: '/profile' },
+  { label: 'عروض خاصة', href: '/services?cat=offers' },
+  { label: 'من نحن', href: '/about' },
+  { label: 'آراء العملاء', href: '/reviews' },
+];
+
+export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <header
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-navy-950/95 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-navy-700/50'
+          : 'bg-transparent'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <span className="text-gold-500 text-xs font-bold bg-gold-500/10 border border-gold-500/30 rounded px-1.5 py-0.5">STORE</span>
+            <span className="text-xl font-black text-white">
+              متجر <span className="text-gold-gradient">الأفلاطون</span>
+            </span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="px-3 py-2 text-sm text-navy-200 hover:text-gold-500 transition-colors rounded-lg hover:bg-navy-800/50"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Auth Buttons */}
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={onLoginClick}
+              className="px-4 py-2 text-sm text-navy-200 hover:text-white transition-colors"
+            >
+              تسجيل الدخول
+            </button>
+            <button
+              onClick={onLoginClick}
+              className="px-5 py-2 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-lg hover:from-gold-400 hover:to-gold-300 transition-all shadow-md shadow-gold-500/20"
+            >
+              إنشاء حساب
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="lg:hidden p-2 text-navy-200 hover:text-gold-500 transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer */}
+      {mobileOpen && (
+        <div className="lg:hidden bg-navy-900/98 backdrop-blur-xl border-t border-navy-700/50 animate-fadeIn">
+          <nav className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 text-navy-200 hover:text-gold-500 hover:bg-navy-800/50 rounded-xl transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-4 border-t border-navy-700/50 flex gap-3">
+              <button
+                onClick={() => { setMobileOpen(false); onLoginClick(); }}
+                className="flex-1 py-3 text-sm text-navy-200 border border-navy-600 rounded-xl hover:border-gold-500/50 transition-colors"
+              >
+                تسجيل الدخول
+              </button>
+              <button
+                onClick={() => { setMobileOpen(false); onLoginClick(); }}
+                className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl"
+              >
+                إنشاء حساب
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
