@@ -38,7 +38,7 @@ export default function StarlinkSection() {
               {/* Satellite dish image */}
               <div className="relative h-36 bg-gradient-to-b from-navy-800/50 to-navy-900 overflow-hidden">
                 <img
-                  src="/images/starlink.svg"
+                  src="/images/starlink-default.png"
                   alt={`ستارلينك ${country.name}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />

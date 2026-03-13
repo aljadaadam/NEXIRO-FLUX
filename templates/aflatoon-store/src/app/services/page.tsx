@@ -15,8 +15,8 @@ const fallbackProducts = [
   { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/default-product.svg' },
   { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/default-product.svg' },
   { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: 380000, image: '/images/default-product.svg' },
-  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/default-product.svg' },
-  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/default-product.svg' },
+  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
+  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/starlink-default.png' },
   { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/default-product.svg' },
   { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/default-product.svg' },
 ];
