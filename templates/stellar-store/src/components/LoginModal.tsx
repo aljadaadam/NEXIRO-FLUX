@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, Loader2, CheckCircle, Sparkles } from 'lucide-react';
 import { storeApi } from '@/lib/api';
 
 type Tab = 'login' | 'register' | 'forgot';
@@ -94,6 +94,15 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'خطأ في إنشاء الحساب');
     } finally { setLoading(false); }
+  };
+
+  const handleDemoLogin = () => {
+    sessionStorage.setItem('demo_mode', '1');
+    const demoCustomer = { id: 1, name: 'أحمد محمد', email: 'demo@stellar.store', phone: '+249912345678', wallet_balance: 500000, country: 'السودان', is_verified: true };
+    localStorage.setItem('auth_token', 'demo-token-stellar');
+    localStorage.setItem('customer', JSON.stringify(demoCustomer));
+    setSuccess('تم الدخول بحساب تجريبي');
+    setTimeout(() => { onAuth?.(); onClose(); }, 600);
   };
 
   const handleForgot = async () => {
@@ -193,6 +202,14 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
               </div>
               <button onClick={handleLogin} disabled={loading} className={btnClass}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'دخول'}
+              </button>
+              <div className="relative flex items-center my-2">
+                <div className="flex-1 border-t border-navy-700/50"></div>
+                <span className="px-3 text-navy-500 text-xs">أو</span>
+                <div className="flex-1 border-t border-navy-700/50"></div>
+              </div>
+              <button onClick={handleDemoLogin} className="w-full py-3 text-sm font-bold text-gold-500 bg-gold-500/10 border border-gold-500/30 rounded-xl hover:bg-gold-500/20 transition-all flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4" /> جرّب بحساب تجريبي
               </button>
             </>
           )}

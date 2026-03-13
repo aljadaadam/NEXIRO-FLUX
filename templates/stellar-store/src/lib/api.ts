@@ -90,9 +90,54 @@ export const adminApi = {
     adminFetch('/upload/image', { method: 'POST', body: JSON.stringify({ image: base64 }) }),
 };
 
+// ─── Demo Customer Data ───
+const DEMO_CUSTOMER = {
+  id: 1, name: 'أحمد محمد', email: 'demo@stellar.store',
+  phone: '+249912345678', wallet_balance: 500000, country: 'السودان', is_verified: true,
+};
+
+const DEMO_ORDERS = [
+  { id: 101, order_number: 'ORD-2026-001', product_name: 'تفعيل ويندوز 11 برو', quantity: 1, total_price: 25000, status: 'completed', payment_method: 'wallet', notes: '', response: 'XXXX-XXXX-XXXX-XXXX', created_at: '2026-03-10T14:30:00Z' },
+  { id: 102, order_number: 'ORD-2026-002', product_name: 'شحن PUBG 660 UC', quantity: 1, total_price: 18000, status: 'processing', payment_method: 'wallet', notes: 'Player ID: 51234567', response: '', created_at: '2026-03-12T09:15:00Z' },
+  { id: 103, order_number: 'ORD-2026-003', product_name: 'اشتراك beIN شهري', quantity: 1, total_price: 45000, status: 'completed', payment_method: 'wallet', notes: '', response: 'تم تفعيل الاشتراك بنجاح', created_at: '2026-03-08T18:00:00Z' },
+];
+
+function getDemoCustomerResponse(endpoint: string, method: string, body?: string) {
+  const ep = endpoint.replace(/^\//, '');
+
+  if (ep === 'customers/login' && method === 'POST')
+    return Promise.resolve({ token: 'demo-token-stellar', customer: DEMO_CUSTOMER });
+  if (ep === 'customers/register' && method === 'POST')
+    return Promise.resolve({ token: 'demo-token-stellar', customer: DEMO_CUSTOMER });
+  if (ep === 'customers/me' && method === 'GET')
+    return Promise.resolve({ customer: DEMO_CUSTOMER });
+  if (ep === 'customers/me' && method === 'PUT')
+    return Promise.resolve({ customer: DEMO_CUSTOMER, message: 'تم التحديث بنجاح' });
+  if (ep === 'customers/orders' && method === 'GET')
+    return Promise.resolve({ orders: DEMO_ORDERS });
+  if (ep === 'customers/orders' && method === 'POST') {
+    const parsed = body ? JSON.parse(body) : {};
+    const newOrder = {
+      id: Date.now(), order_number: `ORD-2026-${String(Date.now()).slice(-3)}`,
+      product_name: parsed.product_name || 'منتج تجريبي', quantity: 1,
+      total_price: 0, status: 'pending', payment_method: 'wallet',
+      notes: parsed.notes || '', response: '', created_at: new Date().toISOString(),
+    };
+    return Promise.resolve({ order: newOrder, message: 'تم تقديم الطلب بنجاح (وضع تجريبي)' });
+  }
+  if (ep === 'customers/verify-otp') return Promise.resolve({ token: 'demo-token-stellar', customer: DEMO_CUSTOMER });
+  if (ep === 'customers/forgot-password') return Promise.resolve({ message: 'تم إرسال رابط إعادة التعيين (وضع تجريبي)' });
+
+  return Promise.resolve({});
+}
+
 // ─── Customer-facing API ───
 
 async function customerFetch(endpoint: string, options: RequestInit = {}) {
+  if (isDemoMode()) {
+    return getDemoCustomerResponse(endpoint, options.method || 'GET', options.body as string);
+  }
+
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
