@@ -5,6 +5,7 @@ import { ShoppingCart, ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 const fallbackProducts = [
+  { id: 0, name: 'ستارلينك', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
   { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png' },
   { id: 2, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/pubg.jpg' },
   { id: 3, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/bein.jpg' },
