@@ -33,7 +33,29 @@ export default function FeaturesSection() {
   return (
     <section className="py-16 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Mobile: horizontal scroll strip */}
+        <div className="md:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          {features.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={i}
+                className={`flex items-center gap-3 p-4 rounded-xl bg-navy-900/60 border ${feature.border} min-w-[260px] shrink-0`}
+              >
+                <div className={`w-11 h-11 rounded-lg ${feature.bg} flex items-center justify-center shrink-0`}>
+                  <Icon className={`w-5 h-5 ${feature.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white mb-0.5">{feature.title}</h3>
+                  <p className="text-navy-400 text-[11px] leading-relaxed">{feature.description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop: grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-6">
           {features.map((feature, i) => {
             const Icon = feature.icon;
             return (

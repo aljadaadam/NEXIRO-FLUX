@@ -55,48 +55,25 @@ export default function CategoriesSection() {
           </p>
         </div>
 
-        {/* Mobile: 2-row horizontal scroll */}
-        <div className="sm:hidden flex gap-3 overflow-x-auto pb-3 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex flex-col gap-3 min-w-max">
-            <div className="flex gap-3">
-              {categories.slice(0, 2).map((cat, i) => {
-                const Icon = cat.icon;
-                return (
-                  <a
-                    key={i}
-                    href="/services"
-                    className={`group relative p-4 w-44 rounded-xl bg-gradient-to-b ${cat.color} bg-navy-900/60 border ${cat.borderColor} transition-all`}
-                  >
-                    <div className="mb-2">
-                      <Icon className={`w-7 h-7 ${cat.iconColor}`} />
-                    </div>
-                    <h3 className="text-white font-bold text-sm mb-1">{cat.title}</h3>
-                    <p className="text-navy-400 text-[11px] leading-relaxed mb-1.5 line-clamp-2">{cat.description}</p>
-                    <span className="text-[10px] text-navy-500 font-medium">{cat.count}</span>
-                  </a>
-                );
-              })}
-            </div>
-            <div className="flex gap-3">
-              {categories.slice(2, 4).map((cat, i) => {
-                const Icon = cat.icon;
-                return (
-                  <a
-                    key={i}
-                    href="/services"
-                    className={`group relative p-4 w-44 rounded-xl bg-gradient-to-b ${cat.color} bg-navy-900/60 border ${cat.borderColor} transition-all`}
-                  >
-                    <div className="mb-2">
-                      <Icon className={`w-7 h-7 ${cat.iconColor}`} />
-                    </div>
-                    <h3 className="text-white font-bold text-sm mb-1">{cat.title}</h3>
-                    <p className="text-navy-400 text-[11px] leading-relaxed mb-1.5 line-clamp-2">{cat.description}</p>
-                    <span className="text-[10px] text-navy-500 font-medium">{cat.count}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
+        {/* Mobile: single horizontal scroll strip */}
+        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          {categories.map((cat, i) => {
+            const Icon = cat.icon;
+            return (
+              <a
+                key={i}
+                href="/services"
+                className={`group relative p-3 min-w-[140px] shrink-0 rounded-xl bg-gradient-to-b ${cat.color} bg-navy-900/60 border ${cat.borderColor} transition-all text-center`}
+              >
+                <div className="flex justify-center mb-2">
+                  <Icon className={`w-7 h-7 ${cat.iconColor}`} />
+                </div>
+                <h3 className="text-white font-bold text-sm mb-1">{cat.title}</h3>
+                <p className="text-navy-400 text-[10px] leading-relaxed mb-1 line-clamp-2">{cat.description}</p>
+                <span className="text-[10px] text-navy-500 font-medium">{cat.count}</span>
+              </a>
+            );
+          })}
         </div>
 
         {/* Desktop: grid layout */}
