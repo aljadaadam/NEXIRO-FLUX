@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 
 const navLinks = [
   { label: 'الرئيسية', href: '/' },
@@ -19,12 +19,39 @@ const navLinks = [
 export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [customer, setCustomer] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Check auth
+    const stored = localStorage.getItem('customer');
+    if (stored) {
+      try { setCustomer(JSON.parse(stored)); } catch { /* ignore */ }
+    }
+
+    // Listen for auth changes
+    const onStorage = () => {
+      const s = localStorage.getItem('customer');
+      setCustomer(s ? JSON.parse(s) : null);
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('auth-change', onStorage);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('auth-change', onStorage);
+    };
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('customer');
+    setCustomer(null);
+    window.dispatchEvent(new Event('auth-change'));
+  };
 
   return (
     <header
@@ -59,18 +86,26 @@ export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <button
-              onClick={onLoginClick}
-              className="px-4 py-2 text-sm text-navy-200 hover:text-white transition-colors"
-            >
-              تسجيل الدخول
-            </button>
-            <button
-              onClick={onLoginClick}
-              className="px-5 py-2 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-lg hover:from-gold-400 hover:to-gold-300 transition-all shadow-md shadow-gold-500/20"
-            >
-              إنشاء حساب
-            </button>
+            {customer ? (
+              <>
+                <Link href="/profile" className="flex items-center gap-2 text-sm text-navy-200 hover:text-gold-500 transition-colors">
+                  <User className="w-4 h-4" />
+                  {customer.name}
+                </Link>
+                <button onClick={handleLogout} className="p-2 text-navy-400 hover:text-red-400 transition-colors" title="تسجيل خروج">
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={onLoginClick} className="px-4 py-2 text-sm text-navy-200 hover:text-white transition-colors">
+                  تسجيل الدخول
+                </button>
+                <button onClick={onLoginClick} className="px-5 py-2 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-lg hover:from-gold-400 hover:to-gold-300 transition-all shadow-md shadow-gold-500/20">
+                  إنشاء حساب
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -97,19 +132,26 @@ export default function Header({ onLoginClick }: { onLoginClick: () => void }) {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-4 border-t border-navy-700/50 flex gap-3">
-              <button
-                onClick={() => { setMobileOpen(false); onLoginClick(); }}
-                className="flex-1 py-3 text-sm text-navy-200 border border-navy-600 rounded-xl hover:border-gold-500/50 transition-colors"
-              >
-                تسجيل الدخول
-              </button>
-              <button
-                onClick={() => { setMobileOpen(false); onLoginClick(); }}
-                className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl"
-              >
-                إنشاء حساب
-              </button>
+            <div className="pt-4 border-t border-navy-700/50">
+              {customer ? (
+                <div className="flex gap-3">
+                  <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-sm text-center text-gold-500 border border-gold-500/30 rounded-xl">
+                    {customer.name}
+                  </Link>
+                  <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="py-3 px-4 text-sm text-red-400 border border-red-500/30 rounded-xl">
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button onClick={() => { setMobileOpen(false); onLoginClick(); }} className="flex-1 py-3 text-sm text-navy-200 border border-navy-600 rounded-xl hover:border-gold-500/50 transition-colors">
+                    تسجيل الدخول
+                  </button>
+                  <button onClick={() => { setMobileOpen(false); onLoginClick(); }} className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl">
+                    إنشاء حساب
+                  </button>
+                </div>
+              )}
             </div>
           </nav>
         </div>

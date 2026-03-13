@@ -40,7 +40,7 @@ export default function AboutPage() {
         </div>
       </main>
       <Footer />
-      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} onAuth={() => window.dispatchEvent(new Event('auth-change'))} />
     </>
   );
 }

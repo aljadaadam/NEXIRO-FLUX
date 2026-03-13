@@ -90,6 +90,61 @@ export const adminApi = {
     adminFetch('/upload/image', { method: 'POST', body: JSON.stringify({ image: base64 }) }),
 };
 
+// ─── Customer-facing API ───
+
+async function customerFetch(endpoint: string, options: RequestInit = {}) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`/api${endpoint}`, { ...options, headers });
+
+  if (res.status === 401 || res.status === 403) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('customer');
+      if (res.status === 403) localStorage.setItem('account_blocked', '1');
+    }
+    throw new Error(res.status === 403 ? 'الحساب محظور' : 'انتهت الجلسة - يرجى تسجيل الدخول');
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || data.error || `خطأ ${res.status}`);
+  }
+  return res.json();
+}
+
+export const storeApi = {
+  register: (data: { name: string; email: string; password: string; phone?: string }) =>
+    customerFetch('/customers/register', { method: 'POST', body: JSON.stringify(data) }),
+
+  login: (data: { email: string; password: string }) =>
+    customerFetch('/customers/login', { method: 'POST', body: JSON.stringify(data) }),
+
+  verifyOtp: (data: { email: string; code: string }) =>
+    customerFetch('/customers/verify-otp', { method: 'POST', body: JSON.stringify(data) }),
+
+  forgotPassword: (email: string) =>
+    customerFetch('/customers/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  getProfile: () => customerFetch('/customers/me'),
+
+  updateProfile: (data: Record<string, unknown>) =>
+    customerFetch('/customers/me', { method: 'PUT', body: JSON.stringify(data) }),
+
+  getOrders: () => customerFetch('/customers/orders'),
+
+  createOrder: (data: { product_id: number; product_name: string; quantity?: number; payment_method: string; notes?: string }) =>
+    customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
+
+  getProducts: () =>
+    fetch('/api/products/public').then(r => r.ok ? r.json() : []),
+};
+
 export function mapBackendProduct(p: Record<string, unknown>) {
   return {
     id: p.id as number,
