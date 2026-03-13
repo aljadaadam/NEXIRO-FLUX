@@ -1,0 +1,108 @@
+const DEMO_PRODUCTS = [
+  { id: 1, name: 'Windows 11 Pro', arabic_name: 'تفعيل ويندوز 11 برو', price: 25000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 50 },
+  { id: 2, name: 'Office 365', arabic_name: 'تفعيل أوفيس 365', price: 35000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 30 },
+  { id: 3, name: 'Kaspersky', arabic_name: 'تفعيل كاسبرسكي', price: 20000, category: 'تفعيلات', group_name: 'تفعيلات', image: '/images/default-product.svg', status: 'active', qnt: 20 },
+  { id: 4, name: 'PUBG 660 UC', arabic_name: 'شحن PUBG 660 UC', price: 18000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/default-product.svg', status: 'active', qnt: 100 },
+  { id: 5, name: 'Free Fire 1080', arabic_name: 'شحن فري فاير 1080 جوهرة', price: 15000, category: 'ألعاب', group_name: 'ألعاب', image: '/images/default-product.svg', status: 'active', qnt: 80 },
+  { id: 6, name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', price: 45000, category: 'beIN Sports', group_name: 'beIN Sports', image: '/images/default-product.svg', status: 'active', qnt: 15 },
+];
+
+const DEMO_STATS = { totalProducts: 12, totalOrders: 156, totalRevenue: 2450000, totalCustomers: 89 };
+
+function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem('demo_mode') === '1';
+}
+
+async function adminFetch(endpoint: string, options: RequestInit = {}) {
+  if (isDemoMode()) {
+    return getDemoResponse(endpoint, options.method || 'GET');
+  }
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_key') : null;
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Don't set Content-Type for FormData (browser sets boundary automatically)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(`/api${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_key');
+    }
+    throw new Error('غير مصرح - يرجى تسجيل الدخول');
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || data.error || `خطأ ${res.status}`);
+  }
+
+  return res.json();
+}
+
+function getDemoResponse(endpoint: string, method: string) {
+  if (endpoint.includes('/dashboard/stats')) return Promise.resolve(DEMO_STATS);
+  if (endpoint.includes('/products') && method === 'GET') return Promise.resolve(DEMO_PRODUCTS);
+  if (method === 'POST') return Promise.resolve({ id: Date.now(), success: true });
+  if (method === 'PUT') return Promise.resolve({ success: true });
+  if (method === 'DELETE') return Promise.resolve({ success: true });
+  return Promise.resolve({});
+}
+
+export const adminApi = {
+  // Auth
+  login: (email: string, password: string) =>
+    adminFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+
+  // Dashboard
+  getStats: () => adminFetch('/dashboard/stats'),
+
+  // Products
+  getProducts: () => adminFetch('/products'),
+  createProduct: (data: Record<string, unknown>) =>
+    adminFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
+  updateProduct: (id: number, data: Record<string, unknown>) =>
+    adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteProduct: (id: number) =>
+    adminFetch(`/products/${id}`, { method: 'DELETE' }),
+
+  // Categories (via products groups)
+  renameGroup: (oldName: string, newName: string) =>
+    adminFetch('/products/groups/rename', { method: 'PUT', body: JSON.stringify({ oldName, newName }) }),
+  deleteGroup: (name: string) =>
+    adminFetch(`/products/groups/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
+  // Image upload (base64)
+  uploadImage: (base64: string) =>
+    adminFetch('/upload/image', { method: 'POST', body: JSON.stringify({ image: base64 }) }),
+};
+
+export function mapBackendProduct(p: Record<string, unknown>) {
+  return {
+    id: p.id as number,
+    name: (p.arabic_name || p.name) as string,
+    arabic_name: p.arabic_name as string,
+    price: (p.final_price || p.price) as number,
+    description: p.description as string,
+    category: (p.group_name || p.category || '') as string,
+    group_name: (p.group_name || p.category || '') as string,
+    image: (p.image || '/images/default-product.svg') as string,
+    status: (p.status || 'active') as string,
+    qnt: (p.qnt || 0) as number,
+    service_type: p.service_type as string,
+    created_at: p.created_at as string,
+  };
+}

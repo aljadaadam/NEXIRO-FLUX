@@ -1,34 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
-import { Search, Filter, ShoppingCart } from 'lucide-react';
+import { Search, ShoppingCart, Loader2 } from 'lucide-react';
 
-const categories = ['الكل', 'تفعيلات', 'ألعاب', 'beIN Sports', 'ستارلينك', 'اشتراكات', 'عروض خاصة'];
-
-const demoProducts = [
-  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: '25,000' },
-  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: '35,000' },
-  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: '20,000' },
-  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: '18,000' },
-  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: '15,000' },
-  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: '22,000' },
-  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: '45,000' },
-  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: '380,000' },
-  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: '380,000' },
-  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: '150,000' },
-  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: '12,000' },
-  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: '8,000' },
+const fallbackProducts = [
+  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/default-product.svg' },
+  { id: 2, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/default-product.svg' },
+  { id: 3, name: 'تفعيل كاسبرسكي', category: 'تفعيلات', price: 20000, image: '/images/default-product.svg' },
+  { id: 4, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/default-product.svg' },
+  { id: 5, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: 15000, image: '/images/default-product.svg' },
+  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/default-product.svg' },
+  { id: 7, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/default-product.svg' },
+  { id: 8, name: 'اشتراك beIN سنوي', category: 'beIN Sports', price: 380000, image: '/images/default-product.svg' },
+  { id: 9, name: 'ستارلينك اليمن', category: 'ستارلينك', price: 380000, image: '/images/default-product.svg' },
+  { id: 10, name: 'ستارلينك نيجيريا', category: 'ستارلينك', price: 150000, image: '/images/default-product.svg' },
+  { id: 11, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/default-product.svg' },
+  { id: 12, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/default-product.svg' },
 ];
+
+interface DisplayProduct {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  image: string;
+}
 
 export default function ServicesPage() {
   const [showLogin, setShowLogin] = useState(false);
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [search, setSearch] = useState('');
+  const [products, setProducts] = useState<DisplayProduct[]>(fallbackProducts);
+  const [categories, setCategories] = useState<string[]>(['الكل']);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = demoProducts.filter((p) => {
+  useEffect(() => {
+    fetch('/api/products/public')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((p: Record<string, unknown>) => ({
+            id: p.id as number,
+            name: (p.arabic_name || p.name) as string,
+            category: (p.group_name || p.category || '') as string,
+            price: (p.final_price || p.price) as number,
+            image: (p.image || '/images/default-product.svg') as string,
+          }));
+          setProducts(mapped);
+          const cats = ['الكل', ...Array.from(new Set(mapped.map((p: DisplayProduct) => p.category).filter(Boolean)))];
+          setCategories(cats as string[]);
+        } else {
+          const cats = ['الكل', ...Array.from(new Set(fallbackProducts.map(p => p.category)))];
+          setCategories(cats);
+        }
+      })
+      .catch(() => {
+        const cats = ['الكل', ...Array.from(new Set(fallbackProducts.map(p => p.category)))];
+        setCategories(cats);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = products.filter((p) => {
     const matchCategory = activeCategory === 'الكل' || p.category === activeCategory;
     const matchSearch = p.name.includes(search);
     return matchCategory && matchSearch;
@@ -89,7 +125,7 @@ export default function ServicesPage() {
                 {/* Image area */}
                 <div className="h-40 bg-gradient-to-b from-navy-800/60 to-navy-900 flex items-center justify-center overflow-hidden">
                   <img
-                    src="/images/default-product.svg"
+                    src={product.image || '/images/default-product.svg'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -101,7 +137,7 @@ export default function ServicesPage() {
                   </span>
                   <h3 className="text-white font-bold mt-3 mb-2">{product.name}</h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-gold-500 font-black text-lg">{product.price} <span className="text-xs text-navy-500">SDG</span></span>
+                    <span className="text-gold-500 font-black text-lg">{product.price.toLocaleString()} <span className="text-xs text-navy-500">SDG</span></span>
                     <button className="w-10 h-10 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 hover:bg-gold-500 hover:text-navy-950 transition-all flex items-center justify-center">
                       <ShoppingCart className="w-5 h-5" />
                     </button>
