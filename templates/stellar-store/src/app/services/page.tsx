@@ -395,6 +395,10 @@ export default function ServicesPage() {
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              setOrderError('حجم الصورة يجب أن يكون أقل من 5MB');
+                              return;
+                            }
                             setReceiptFile(file);
                             const reader = new FileReader();
                             reader.onload = () => setReceiptPreview(reader.result as string);

@@ -354,6 +354,7 @@ export default function ProfilePage() {
                                 <button
                                   onClick={() => {
                                     if (!chargeAmount || Number(chargeAmount) <= 0) { setChargeError('أدخل مبلغ صحيح'); return; }
+                                    if (Number(chargeAmount) > 10000000) { setChargeError('الحد الأقصى للشحن 10,000,000 SDG'); return; }
                                     if (!selectedGateway) { setChargeError('اختر بوابة دفع'); return; }
                                     setChargeError('');
                                     setChargeStep('pay');
@@ -418,6 +419,10 @@ export default function ProfilePage() {
                                     onChange={e => {
                                       const file = e.target.files?.[0];
                                       if (file) {
+                                        if (file.size > 5 * 1024 * 1024) {
+                                          setChargeError('حجم الصورة يجب أن يكون أقل من 5MB');
+                                          return;
+                                        }
                                         setChargeReceiptFile(file);
                                         const reader = new FileReader();
                                         reader.onload = () => setChargeReceiptPreview(reader.result as string);

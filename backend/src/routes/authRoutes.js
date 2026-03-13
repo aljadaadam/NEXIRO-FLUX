@@ -17,16 +17,17 @@ const {
 } = require('../controllers/authController');
 const { authenticateToken, requireRole } = require('../middlewares/authMiddleware');
 const { validateSite } = require('../middlewares/siteValidationMiddleware');
+const { validateLogin, validateRegister, validateForgotPassword } = require('../validators/authValidator');
 
 // التحقق من الموقع قبل أي عملية
 router.use(validateSite);
 
 // ===== مسارات عامة (بدون مصادقة) =====
-router.post('/login', login);
-router.post('/register', registerUser); // تسجيل مستخدم جديد (عام — من صفحة التسجيل)
+router.post('/login', validateLogin, login);
+router.post('/register', authenticateToken, requireRole('admin'), validateRegister, registerUser);
 router.post('/register-admin', registerAdmin); // محمي: يعمل فقط إذا لا يوجد أدمن مسجل
 router.post('/google', googleLogin);
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', validateForgotPassword, forgotPassword);
 router.post('/reset-password', resetPassword);
 
 // ===== مسارات الأدمن فقط (توكن أدمن/يوزر — ليس زبون) =====
