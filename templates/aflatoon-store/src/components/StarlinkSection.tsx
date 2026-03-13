@@ -18,7 +18,7 @@ export default function StarlinkSection() {
     <section className="py-20 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-left mb-12">
+        <div className="text-right mb-12">
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
             دعم <span className="text-gold-gradient">ستارلينك</span>
           </h2>
