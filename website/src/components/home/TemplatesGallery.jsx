@@ -114,6 +114,7 @@ export default function TemplatesGallery() {
                 <img
                   src={template.image}
                   alt={isRTL ? template.name : template.nameEn}
+                  loading="lazy"
                   className={`w-full h-full object-cover transition-transform duration-700 ${template.comingSoon ? 'grayscale opacity-60' : 'group-hover:scale-110'}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/20 to-transparent" />

@@ -72,6 +72,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-500/20 border border-white/5 hover:border-primary-500/30 flex items-center justify-center text-dark-400 hover:text-primary-400 transition-all duration-300"
+                  aria-label={Icon.displayName || 'رابط اجتماعي'}
                 >
                   <Icon className="w-4 h-4" />
                 </a>

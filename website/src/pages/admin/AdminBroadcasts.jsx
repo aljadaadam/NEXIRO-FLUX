@@ -210,7 +210,7 @@ export default function AdminBroadcasts() {
   return (
     <div className="space-y-6">
       {/* Inject HeroBanner animation CSS */}
-      <style dangerouslySetInnerHTML={{ __html: heroBannerCSS }} />
+      <style>{heroBannerCSS}</style>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-white flex items-center gap-3">

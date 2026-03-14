@@ -123,6 +123,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden p-2 rounded-lg text-dark-400 hover:text-white hover:bg-white/5 transition-all"
+            aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

@@ -67,6 +67,7 @@ export default function TestimonialsSection() {
                   <img
                     src={testimonials[active].avatar}
                     alt={isRTL ? testimonials[active].name : testimonials[active].nameEn}
+                    loading="lazy"
                     className="w-11 h-11 sm:w-14 sm:h-14 rounded-full border-2 border-primary-500/30 object-cover"
                   />
                   <div>
@@ -84,12 +85,14 @@ export default function TestimonialsSection() {
                   <button
                     onClick={prev}
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
+                    aria-label="الشهادة السابقة"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
                   <button
                     onClick={next}
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass flex items-center justify-center text-dark-400 hover:text-white hover:bg-white/10 transition-all"
+                    aria-label="الشهادة التالية"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -103,6 +106,7 @@ export default function TestimonialsSection() {
                 <button
                   key={i}
                   onClick={() => setActive(i)}
+                  aria-label={`الانتقال للشهادة ${i + 1}`}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     i === active ? 'w-8 bg-primary-500' : 'w-2 bg-dark-600 hover:bg-dark-500'
                   }`}

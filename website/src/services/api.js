@@ -682,12 +682,8 @@ class ApiService {
 
   // ─── Platform: Banner Templates (قوالب البنرات) ───
 
-  async getBannerTemplates() {
-    return this.request('/platform/banner-templates');
-  }
-
   async getBannerPurchaseStats() {
-    return this.request('/platform/banner-templates');
+    return this.request('/platform/banner-purchase-stats');
   }
 
   async createBannerTemplate(data) {

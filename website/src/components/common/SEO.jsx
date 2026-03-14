@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const SITE_URL = 'https://nexiroflux.com';
 const SITE_NAME = 'NEXIRO-FLUX';
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.svg`;
 
 /**
  * SEO Component — يضيف meta tags و Open Graph و Twitter Cards و JSON-LD Schema
