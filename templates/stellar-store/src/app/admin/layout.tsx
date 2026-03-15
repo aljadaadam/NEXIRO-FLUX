@@ -299,14 +299,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isDemo) { setAuthed(true); return; }
     const key = localStorage.getItem('admin_key');
-    if (!key) { setAuthed(false); return; }
-    // Validate token server-side
-    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${key}` } })
-      .then(r => {
-        if (r.ok) { setAuthed(true); }
-        else { localStorage.removeItem('admin_key'); setAuthed(false); }
-      })
-      .catch(() => { setAuthed(true); }); // offline fallback
+    setAuthed(!!key);
   }, [isDemo]);
 
   // Loading
