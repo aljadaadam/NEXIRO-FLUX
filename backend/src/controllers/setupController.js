@@ -428,6 +428,37 @@ async function provisionSite(req, res) {
         [site_key, store_name, primary_color || '#7c5cff', '#a78bfa', logo_url || null, 1, 'rounded-xl', 'default', 1, 'Tajawal', admin_slug]
       );
 
+      // ─── 5.1 إضافة منتجات افتراضية لقالب stellar-store ───
+      if (template_id === 'stellar-store') {
+        const defaultProducts = [
+          { name: 'PUBG Mobile 60 UC', arabic_name: 'ببجي موبايل 60 UC', description: 'شحن 60 UC لحساب ببجي موبايل', price: 0.990, category: 'digital-services', group_name: 'ببجي موبايل' },
+          { name: 'PUBG Mobile 325 UC', arabic_name: 'ببجي موبايل 325 UC', description: 'شحن 325 UC لحساب ببجي موبايل', price: 4.990, category: 'digital-services', group_name: 'ببجي موبايل' },
+          { name: 'PUBG Mobile 660 UC', arabic_name: 'ببجي موبايل 660 UC', description: 'شحن 660 UC لحساب ببجي موبايل', price: 9.990, category: 'digital-services', group_name: 'ببجي موبايل' },
+          { name: 'PUBG Mobile 1800 UC', arabic_name: 'ببجي موبايل 1800 UC', description: 'شحن 1800 UC لحساب ببجي موبايل', price: 24.990, category: 'digital-services', group_name: 'ببجي موبايل' },
+          { name: 'Fortnite 1000 V-Bucks', arabic_name: 'فورتنايت 1000 V-Bucks', description: 'شحن 1000 V-Bucks لحساب فورتنايت', price: 7.990, category: 'digital-services', group_name: 'فورتنايت' },
+          { name: 'Fortnite 2800 V-Bucks', arabic_name: 'فورتنايت 2800 V-Bucks', description: 'شحن 2800 V-Bucks لحساب فورتنايت', price: 19.990, category: 'digital-services', group_name: 'فورتنايت' },
+          { name: 'Fortnite 5000 V-Bucks', arabic_name: 'فورتنايت 5000 V-Bucks', description: 'شحن 5000 V-Bucks لحساب فورتنايت', price: 31.990, category: 'digital-services', group_name: 'فورتنايت' },
+          { name: 'Free Fire 100 Diamonds', arabic_name: 'فري فاير 100 جوهرة', description: 'شحن 100 جوهرة لحساب فري فاير', price: 0.990, category: 'digital-services', group_name: 'فري فاير' },
+          { name: 'Free Fire 520 Diamonds', arabic_name: 'فري فاير 520 جوهرة', description: 'شحن 520 جوهرة لحساب فري فاير', price: 4.990, category: 'digital-services', group_name: 'فري فاير' },
+          { name: 'Roblox 400 Robux', arabic_name: 'روبلوكس 400 Robux', description: 'شحن 400 Robux لحساب روبلوكس', price: 4.990, category: 'digital-services', group_name: 'روبلوكس' },
+          { name: 'Roblox 800 Robux', arabic_name: 'روبلوكس 800 Robux', description: 'شحن 800 Robux لحساب روبلوكس', price: 9.990, category: 'digital-services', group_name: 'روبلوكس' },
+          { name: 'Valorant 475 VP', arabic_name: 'فالورانت 475 VP', description: 'شحن 475 VP لحساب فالورانت', price: 4.990, category: 'digital-services', group_name: 'فالورانت' },
+          { name: 'Valorant 1000 VP', arabic_name: 'فالورانت 1000 VP', description: 'شحن 1000 VP لحساب فالورانت', price: 9.990, category: 'digital-services', group_name: 'فالورانت' },
+          { name: 'iTunes $10', arabic_name: 'بطاقة ايتونز 10 دولار', description: 'بطاقة ايتونز بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+          { name: 'iTunes $25', arabic_name: 'بطاقة ايتونز 25 دولار', description: 'بطاقة ايتونز بقيمة 25 دولار', price: 26.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+          { name: 'Google Play $10', arabic_name: 'بطاقة قوقل بلاي 10 دولار', description: 'بطاقة قوقل بلاي بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+          { name: 'PlayStation $10', arabic_name: 'بطاقة بلايستيشن 10 دولار', description: 'بطاقة بلايستيشن ستور بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+          { name: 'Steam $20', arabic_name: 'بطاقة ستيم 20 دولار', description: 'بطاقة ستيم بقيمة 20 دولار', price: 21.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+        ];
+        for (const p of defaultProducts) {
+          await connection.query(
+            `INSERT INTO products (site_key, name, arabic_name, description, price, service_type, category, status, group_name)
+             VALUES (?, ?, ?, ?, ?, 'SERVER', ?, 'active', ?)`,
+            [site_key, p.name, p.arabic_name, p.description, p.price, p.category, p.group_name]
+          );
+        }
+      }
+
       // ─── COMMIT ───
       await connection.commit();
     } catch (txError) {
