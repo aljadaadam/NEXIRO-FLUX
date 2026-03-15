@@ -73,8 +73,9 @@ function ServicesContent() {
   useEffect(() => {
     storeApi.getProducts()
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((p: Record<string, unknown>) => {
+        const list = Array.isArray(data) ? data : data?.products || [];
+        if (list.length > 0) {
+          const mapped = list.map((p: Record<string, unknown>) => {
             let custom_fields = p.requires_custom_json || p.customFields || p.custom_fields;
             if (typeof custom_fields === 'string') {
               try { custom_fields = JSON.parse(custom_fields); } catch { custom_fields = []; }
