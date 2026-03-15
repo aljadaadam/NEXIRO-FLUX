@@ -33,6 +33,8 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
   // Forgot field
   const [forgotEmail, setForgotEmail] = useState('');
 
+  const isDemo = typeof window !== 'undefined' && sessionStorage.getItem('demo_mode') === '1';
+
   // OTP
   const [otpMode, setOtpMode] = useState(false);
   const [otpEmail, setOtpEmail] = useState('');
@@ -209,6 +211,8 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
               <button onClick={handleLogin} disabled={loading} className={btnClass}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'دخول'}
               </button>
+              {isDemo && (
+              <>
               <div className="relative flex items-center my-2">
                 <div className="flex-1 border-t border-navy-700/50"></div>
                 <span className="px-3 text-navy-500 text-xs">أو</span>
@@ -217,6 +221,8 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
               <button onClick={handleDemoLogin} className="w-full py-3 text-sm font-bold text-gold-500 bg-gold-500/10 border border-gold-500/30 rounded-xl hover:bg-gold-500/20 transition-all flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" /> جرّب بحساب تجريبي
               </button>
+              </>
+              )}
             </>
           )}
 
