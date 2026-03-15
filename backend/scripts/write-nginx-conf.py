@@ -2,10 +2,23 @@
 """Write Nginx config for a tenant site"""
 import sys
 
+# Template → Next.js port mapping
+TEMPLATE_PORTS = {
+    'digital-services-store': 4000,
+    'game-topup-store':       4000,
+    'gx-vault':               4001,
+    'hardware-tools-store':   4002,
+    'car-dealership-store':   4003,
+    'smm-store':              4004,
+    'stellar-store':          4005,
+}
+
 domain = sys.argv[1] if len(sys.argv) > 1 else "magicdesign3.com"
+template_id = sys.argv[2] if len(sys.argv) > 2 else None
+store_port = TEMPLATE_PORTS.get(template_id, 4000)
 www_domain = f"www.{domain}"
 
-conf = f"""# --- NEXIRO-FLUX Tenant: {domain} ---
+conf = f"""# --- NEXIRO-FLUX Tenant: {domain} (template: {template_id or 'default'}, port: {store_port}) ---
 server {{
     listen 80;
     server_name {domain} {www_domain};
@@ -27,9 +40,9 @@ server {{
         client_max_body_size 50M;
     }}
 
-    # Everything else -> Next.js store (port 4000)
+    # Everything else -> Next.js store (port {store_port})
     location / {{
-        proxy_pass http://127.0.0.1:4000;
+        proxy_pass http://127.0.0.1:{store_port};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";

@@ -495,12 +495,12 @@ async function provisionSite(req, res) {
         try {
           const { execFileSync } = require('child_process');
           const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
-          const output = execFileSync('python3', [scriptPath, domain], {
+          const output = execFileSync('python3', [scriptPath, domain, template_id], {
             timeout: 150000,
             encoding: 'utf-8'
           });
           infrastructureResult = JSON.parse(output.trim());
-          console.log(`✅ Infrastructure provisioned for ${domain}:`, infrastructureResult);
+          console.log(`✅ Infrastructure provisioned for ${domain} (template: ${template_id}):`, infrastructureResult);
         } catch (infraErr) {
           console.error(`⚠️ Infrastructure provisioning failed for ${domain} (non-blocking):`, infraErr.message);
           infrastructureResult = { success: false, error: infraErr.message };
@@ -784,12 +784,12 @@ async function updateCustomDomain(req, res) {
       try {
         const { execFileSync } = require('child_process');
         const scriptPath = require('path').resolve(__dirname, '../../scripts/provision-site.py');
-        const output = execFileSync('python3', [scriptPath, domain], {
+        const output = execFileSync('python3', [scriptPath, domain, site.template_id], {
           timeout: 150000,
           encoding: 'utf-8'
         });
         infrastructureResult = JSON.parse(output.trim());
-        console.log(`✅ Infrastructure provisioned for custom domain ${domain}:`, infrastructureResult);
+        console.log(`✅ Infrastructure provisioned for custom domain ${domain} (template: ${site.template_id}):`, infrastructureResult);
       } catch (infraErr) {
         console.error(`⚠️ Infrastructure provisioning failed for custom domain ${domain} (non-blocking):`, infraErr.message);
         infrastructureResult = { success: false, error: infraErr.message };

@@ -25,8 +25,18 @@ import subprocess
 import json
 import re
 
-STORE_PORT = 4000    # Next.js store port
-BACKEND_PORT = 3000  # Express API port
+# Template → Next.js port mapping
+TEMPLATE_PORTS = {
+    'digital-services-store': 4000,
+    'game-topup-store':       4000,
+    'gx-vault':               4001,
+    'hardware-tools-store':   4002,
+    'car-dealership-store':   4003,
+    'smm-store':              4004,
+    'stellar-store':          4005,
+}
+DEFAULT_STORE_PORT = 4000  # fallback
+BACKEND_PORT = 3000        # Express API port
 CERTBOT_EMAIL = "admin@nexiroflux.com"
 
 def validate_domain(domain):
@@ -34,10 +44,11 @@ def validate_domain(domain):
     pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$'
     return bool(re.match(pattern, domain)) and len(domain) <= 253
 
-def write_nginx_conf(domain):
+def write_nginx_conf(domain, template_id=None):
     """Write Nginx config for a tenant"""
+    STORE_PORT = TEMPLATE_PORTS.get(template_id, DEFAULT_STORE_PORT)
     www = f"www.{domain}"
-    conf = f"""# --- NEXIRO-FLUX Tenant: {domain} ---
+    conf = f"""# --- NEXIRO-FLUX Tenant: {domain} (template: {template_id or 'default'}, port: {STORE_PORT}) ---
 server {{
     listen 80;
     server_name {domain} {www};
@@ -136,10 +147,11 @@ def issue_ssl(domain):
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"success": False, "error": "Usage: provision-site.py <domain>"}))
+        print(json.dumps({"success": False, "error": "Usage: provision-site.py <domain> [template_id]"}))
         sys.exit(1)
     
     domain = sys.argv[1].lower().strip()
+    template_id = sys.argv[2] if len(sys.argv) > 2 else None
     
     if not validate_domain(domain):
         print(json.dumps({"success": False, "error": f"Invalid domain: {domain}"}))
@@ -149,8 +161,9 @@ def main():
     
     try:
         # Step 1: Write Nginx config
-        conf_path = write_nginx_conf(domain)
-        steps.append(f"Nginx config written: {conf_path}")
+        conf_path = write_nginx_conf(domain, template_id)
+        store_port = TEMPLATE_PORTS.get(template_id, DEFAULT_STORE_PORT)
+        steps.append(f"Nginx config written: {conf_path} (port: {store_port})")
         
         # Step 2: Enable site
         enable_site(domain)
