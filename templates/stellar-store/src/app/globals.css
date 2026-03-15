@@ -38,6 +38,10 @@ body {
 ::-webkit-scrollbar-track { background: var(--color-navy-900); }
 ::-webkit-scrollbar-thumb { background: var(--color-gold-500); border-radius: 9999px; }
 
+/* ─── Scrollbar Hide ─── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ─── Gold gradient text ─── */
 .text-gold-gradient {
   background: linear-gradient(135deg, #f5a623 0%, #fad080 50%, #f5a623 100%);

@@ -90,7 +90,7 @@ export default function OrdersAdminPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 w-full overflow-hidden">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-white flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function OrdersAdminPage() {
       ) : (
         <div className="bg-navy-900/60 border border-navy-700/50 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[800px]">
               <thead>
                 <tr className="border-b border-navy-700/50">
                   {['الطلب', 'المنتج', 'العميل', 'الكمية', 'المبلغ', 'الحالة', 'التاريخ', ''].map((h, i) => (
@@ -159,7 +159,7 @@ export default function OrdersAdminPage() {
                           value={order.status}
                           onChange={e => handleStatusChange(order.id, e.target.value)}
                           disabled={updatingId === order.id}
-                          className={`appearance-none pl-6 pr-2 py-1 rounded-lg text-[11px] font-bold cursor-pointer border-none outline-none ${statusColors[order.status] || 'bg-navy-700/30 text-navy-300'}`}
+                          className={`appearance-none pl-6 pr-2 py-2 rounded-lg text-xs font-bold cursor-pointer border-none outline-none ${statusColors[order.status] || 'bg-navy-700/30 text-navy-300'}`}
                         >
                           {statusOptions.map(s => <option key={s} value={s}>{statusLabels[s] || s}</option>)}
                         </select>

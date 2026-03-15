@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { adminApi } from '@/lib/api';
-import { Search, Users, Eye, X, Ban, CheckCircle, Wallet, RefreshCw, Loader2, UserPlus, ShieldCheck, ShieldOff, Mail, Phone, Globe, Clock, TrendingUp, ArrowUpRight, DollarSign } from 'lucide-react';
+import { Search, Users, Eye, X, Ban, CheckCircle, Wallet, RefreshCw, Loader2, UserPlus, ShieldCheck, ShieldOff, Mail, Phone, Globe, Clock, TrendingUp, DollarSign } from 'lucide-react';
 
 interface Customer {
   id: number;
@@ -110,10 +110,10 @@ export default function CustomersPage() {
   }
 
   const statCards = [
-    { label: 'إجمالي العملاء', value: customers.length, icon: Users, color: 'text-gold-500', bg: 'bg-gold-500/10', border: 'border-gold-500/20', change: '+12%' },
-    { label: 'العملاء النشطين', value: totalActive, icon: ShieldCheck, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', change: '+8%' },
-    { label: 'إجمالي المحافظ', value: totalWallet, isCurrency: true, icon: Wallet, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20', change: '+24%' },
-    { label: 'نشط هذا الأسبوع', value: recentCount || customers.length, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20', change: '+5%' },
+    { label: 'إجمالي العملاء', value: customers.length, icon: Users, color: 'text-gold-500', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
+    { label: 'العملاء النشطين', value: totalActive, icon: ShieldCheck, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' },
+    { label: 'إجمالي المحافظ', value: totalWallet, isCurrency: true, icon: Wallet, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20' },
+    { label: 'نشط هذا الأسبوع', value: recentCount || customers.length, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' },
   ];
 
   const getInitials = (name: string) => name.split(' ').slice(0, 2).map(w => w[0]).join('');
@@ -155,10 +155,6 @@ export default function CustomersPage() {
                 <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center ring-1 ring-white/5`}>
                   <Icon className={`w-5 h-5 ${card.color}`} />
                 </div>
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-400/10 text-emerald-400 text-xs font-bold">
-                  <ArrowUpRight className="w-3 h-3" />
-                  {card.change}
-                </div>
               </div>
               <p className="text-2xl font-black text-white animate-countUp" style={{ animationDelay: `${i * 0.15 + 0.2}s` }}>
                 {card.isCurrency ? (
@@ -184,7 +180,7 @@ export default function CustomersPage() {
           />
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
             { key: 'all' as const, label: 'الكل', count: customers.length },
             { key: 'active' as const, label: 'نشط', count: totalActive },
