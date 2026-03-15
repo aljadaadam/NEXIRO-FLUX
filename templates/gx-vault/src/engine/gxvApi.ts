@@ -33,7 +33,7 @@ async function gxvAdminFetch(endpoint: string, options: RequestInit = {}) {
     return getGxvDemoResponse(endpoint, method);
   }
 
-  const token = gxvGetAdminKey() || gxvGetAuthToken();
+  const token = gxvGetAdminKey();
   const res = await fetch(`${GXV_API_BASE}${endpoint}`, {
     ...options,
     headers: {
@@ -47,7 +47,8 @@ async function gxvAdminFetch(endpoint: string, options: RequestInit = {}) {
       const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
       if (!isDemoMode) {
         localStorage.removeItem('admin_key');
-        window.location.href = '/login';
+        const slug = sessionStorage.getItem('gxv_admin_slug') || '';
+        window.location.href = slug ? `/admin?key=${slug}` : '/admin';
       }
     }
     throw new Error('Unauthorized');

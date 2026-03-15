@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXIRO-FLUX — إعلان تيك توك | قالب سيارات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #e63946;
+      --primary-light: #ff6b6b;
+      --primary-bg: rgba(230,57,70,0.06);
+      --accent: #f77f00;
+      --teal: #0d7377;
+      --teal-light: #14b8a6;
+      --dark: #0f172a;
+      --darker: #080d1a;
+      --gray: #94a3b8;
+      --light: #f8fafc;
+      --green: #059669;
+      --gold: #f59e0b;
+    }
+
+    body {
+      background: #111;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh;
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      overflow-y: auto;
+    }
+
+    /* ═══ TikTok Frame 1080×1920 scaled ═══ */
+    .ad {
+      width: 1080px; height: 1920px;
+      transform: scale(0.45);
+      transform-origin: top center;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    /* ═══ Decorative Corner Lines ═══ */
+    .corner-tl, .corner-tr, .corner-bl, .corner-br {
+      position: absolute; z-index: 50;
+      width: 70px; height: 70px;
+      border-color: var(--primary);
+      border-style: solid;
+      border-width: 0;
+      opacity: 0;
+      animation: fadeIn 0.5s 0.3s ease forwards;
+    }
+    .corner-tl { top: 40px; right: 40px; border-top-width: 5px; border-right-width: 5px; border-radius: 0 16px 0 0; }
+    .corner-tr { top: 40px; left: 40px; border-top-width: 5px; border-left-width: 5px; border-radius: 16px 0 0 0; }
+    .corner-bl { bottom: 40px; right: 40px; border-bottom-width: 5px; border-right-width: 5px; border-radius: 0 0 16px 0; }
+    .corner-br { bottom: 40px; left: 40px; border-bottom-width: 5px; border-left-width: 5px; border-radius: 0 0 0 16px; }
+
+    /* Grid overlay */
+    .grid-bg {
+      position: absolute; inset: 0; z-index: 1;
+      background-image:
+        linear-gradient(rgba(230,57,70,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(230,57,70,0.03) 1px, transparent 1px);
+      background-size: 90px 90px;
+      opacity: 0;
+      animation: fadeIn 1s 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* ════════════════════════════════════════
+       SHARED ANIMATIONS
+       ════════════════════════════════════════ */
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideRight { to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideLeft { to { opacity: 1; transform: translateX(0); } }
+    @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+    @keyframes sceneIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes sceneOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+    @keyframes typewrite { from { width: 0; } to { width: 100%; } }
+    @keyframes blink { 0%,100%{border-color:var(--primary)} 50%{border-color:transparent} }
+    @keyframes revealRTL { to { clip-path: inset(0 0 0 0); } }
+    @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes zoomSnap { to { opacity: 1; transform: scale(1); } }
+    @keyframes lineGrow { to { width: 240px; } }
+    @keyframes carDrive { 0%{transform:translateX(120%)} 100%{transform:translateX(-120%)} }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    @keyframes shine {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+
+    .scene {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      z-index: 10;
+      background: #fff;
+      padding: 60px 50px;
+    }
+
+    /*
+      ══════════════════════════════════════════════════
+      التوقيت — TikTok Ad (45 ثانية)
+      ══════════════════════════════════════════════════
+      S1:  0.0s  →  5.0s   — السؤال
+      S2:  5.0s  → 10.0s   — المشاكل
+      S3:  10.0s → 14.0s   — لحظة!
+      S4:  14.0s → 20.0s   — الحل NEXIRO-FLUX
+      S5:  20.0s → 26.0s   — المميزات
+      S6:  26.0s → 32.0s   — السعر
+      S7:  32.0s → 38.0s   — شهادات
+      S8:  38.0s → 45.0s   — CTA
+    */
+
+    /* ════════════════════════════════════════
+       S1 — السؤال (0–5s)
+       ════════════════════════════════════════ */
+    .s1 {
+      animation: sceneOut 0.35s 5.0s ease forwards;
+      text-align: center;
+      background: linear-gradient(170deg, #fff 60%, rgba(230,57,70,0.04) 100%);
+    }
+    .s1-emoji {
+      font-size: 120px;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .s1-q {
+      font-size: 64px; font-weight: 900; color: var(--dark);
+      line-height: 1.5;
+      margin-top: 40px;
+      opacity: 0; transform: translateY(30px);
+      animation: slideUp 0.7s 0.8s ease forwards;
+    }
+    .s1-q em { font-style: normal; color: var(--primary); }
+    .s1-sub {
+      font-size: 36px; color: var(--gray); font-weight: 700;
+      margin-top: 30px;
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.5s 2.0s ease forwards;
+    }
+    .s1-car-icon {
+      font-size: 80px;
+      margin-top: 40px;
+      opacity: 0;
+      animation: fadeIn 0.01s 3.0s forwards;
+    }
+    .s1-car-icon span {
+      display: inline-block;
+      animation: carDrive 3s 3.0s ease-in-out forwards;
+    }
+    .s1-dots {
+      display: flex; gap: 12px; margin-top: 40px;
+      justify-content: center;
+    }
+    .s1-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--primary); opacity: 0;
+    }
+    .s1-dot:nth-child(1) { animation: popIn 0.3s 3.6s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s1-dot:nth-child(2) { animation: popIn 0.3s 3.9s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s1-dot:nth-child(3) { animation: popIn 0.3s 4.2s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+
+    /* ════════════════════════════════════════
+       S2 — المشاكل (5–10s)
+       ════════════════════════════════════════ */
+    .s2 {
+      opacity: 0;
+      animation: sceneIn 0.3s 5.0s ease forwards, sceneOut 0.35s 10.0s ease forwards;
+      text-align: center;
+    }
+    .s2-title {
+      font-size: 48px; color: var(--dark); font-weight: 900;
+      opacity: 0; animation: slideUp 0.5s 5.3s ease forwards;
+      transform: translateY(25px);
+      line-height: 1.5;
+    }
+    .s2-title em { font-style: normal; color: var(--primary); }
+    .s2-problems {
+      display: flex; flex-direction: column;
+      gap: 24px; margin-top: 50px;
+      width: 100%; max-width: 900px;
+    }
+    .s2-prob {
+      display: flex; align-items: center; gap: 24px;
+      padding: 30px 36px;
+      border-radius: 20px;
+      border: 3px solid rgba(230,57,70,0.12);
+      background: rgba(230,57,70,0.03);
+      opacity: 0; transform: translateX(50px);
+      text-align: right;
+    }
+    .s2-prob:nth-child(1) { animation: slideRight 0.5s 5.8s ease forwards; }
+    .s2-prob:nth-child(2) { animation: slideRight 0.5s 6.4s ease forwards; }
+    .s2-prob:nth-child(3) { animation: slideRight 0.5s 7.0s ease forwards; }
+    .s2-prob:nth-child(4) { animation: slideRight 0.5s 7.6s ease forwards; }
+    .s2-prob .prob-icon { font-size: 50px; flex-shrink: 0; }
+    .s2-prob .prob-text h4 { font-size: 28px; color: var(--dark); font-weight: 800; }
+    .s2-prob .prob-text p { font-size: 22px; color: var(--gray); font-weight: 600; margin-top: 4px; }
+
+    .s2-x-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(3);
+    }
+    @keyframes xStamp { to { opacity: 1; transform: scale(1); } }
+    .s2-big-x {
+      font-size: 500px; color: var(--primary); font-weight: 900;
+      opacity: 0; transform: scale(3);
+      animation: xStamp 0.3s 8.8s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    /* ════════════════════════════════════════
+       S3 — لحظة! (10–14s)
+       ════════════════════════════════════════ */
+    .s3 {
+      opacity: 0;
+      animation: sceneIn 0.15s 10.0s ease forwards, sceneOut 0.35s 14.0s ease forwards;
+    }
+    .s3-flash {
+      position: absolute; inset: 0;
+      background: var(--primary);
+      opacity: 0;
+      animation: flashRed 0.5s 10.1s ease forwards;
+    }
+    @keyframes flashRed { 0%{opacity:0} 15%{opacity:0.85} 100%{opacity:0} }
+    .s3 h2 {
+      font-size: 120px; font-weight: 900; color: var(--primary);
+      opacity: 0; transform: scale(3);
+      animation: zoomSnap 0.4s 10.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .s3-sub {
+      font-size: 44px; color: var(--dark); font-weight: 800;
+      margin-top: 30px;
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.5s 11.2s ease forwards;
+    }
+    .s3-sub em { font-style: normal; color: var(--primary); }
+    .s3-arrow {
+      font-size: 80px;
+      margin-top: 30px;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.4s 12.0s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    /* ════════════════════════════════════════
+       S4 — الحل NEXIRO-FLUX (14–20s)
+       ════════════════════════════════════════ */
+    .s4 {
+      opacity: 0;
+      animation: sceneIn 0.4s 14.0s ease forwards, sceneOut 0.35s 20.0s ease forwards;
+      background: linear-gradient(170deg, #fff 50%, rgba(13,115,119,0.04) 100%);
+    }
+    .s4-sparkle {
+      font-size: 50px; position: absolute; opacity: 0;
+    }
+    .sp4-1 { top: 200px; right: 120px; animation: popIn 0.3s 14.8s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .sp4-2 { top: 280px; left: 140px; animation: popIn 0.3s 15.1s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .sp4-3 { bottom: 300px; right: 180px; animation: popIn 0.3s 15.4s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .sp4-4 { bottom: 250px; left: 100px; animation: popIn 0.3s 15.7s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+
+    .s4-small {
+      font-size: 30px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.4s 14.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s4-logo {
+      font-size: 90px; font-weight: 900; color: var(--dark);
+      margin-top: 16px;
+      opacity: 0; transform: translateY(40px);
+      animation: slideUp 0.7s 14.8s ease forwards;
+    }
+    .s4-logo span { color: var(--teal); }
+    .s4-line {
+      width: 0; height: 5px;
+      background: linear-gradient(to right, var(--primary), var(--teal));
+      border-radius: 4px;
+      margin-top: 20px;
+      animation: lineGrow 0.6s 15.6s ease forwards;
+    }
+    .s4-desc {
+      font-size: 38px; color: var(--dark); font-weight: 800;
+      margin-top: 40px; text-align: center; line-height: 1.7;
+      opacity: 0; animation: slideUp 0.5s 16.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s4-desc em { font-style: normal; color: var(--teal); }
+    .s4-desc2 {
+      font-size: 32px; color: var(--gray); font-weight: 700;
+      margin-top: 24px; text-align: center; line-height: 1.6;
+      opacity: 0; animation: slideUp 0.5s 17.2s ease forwards;
+      transform: translateY(15px);
+    }
+    .s4-car-emoji {
+      font-size: 100px;
+      margin-top: 40px;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.5s 18.0s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    /* ════════════════════════════════════════
+       S5 — المميزات (20–26s)
+       ════════════════════════════════════════ */
+    .s5 {
+      opacity: 0;
+      animation: sceneIn 0.3s 20.0s ease forwards, sceneOut 0.35s 26.0s ease forwards;
+    }
+    .s5 h2 {
+      font-size: 52px; font-weight: 900; color: var(--dark);
+      margin-bottom: 40px;
+      opacity: 0; animation: slideUp 0.5s 20.3s ease forwards;
+      transform: translateY(25px);
+    }
+    .s5 h2 em { font-style: normal; color: var(--primary); }
+    .s5-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 24px; max-width: 900px; width: 100%;
+    }
+    .s5-card {
+      padding: 36px 28px;
+      border-radius: 24px;
+      border: 3px solid rgba(13,115,119,0.1);
+      background: rgba(13,115,119,0.03);
+      text-align: center;
+      opacity: 0; transform: scale(0.7);
+    }
+    .s5-card:nth-child(1) { animation: popIn 0.4s 20.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card:nth-child(2) { animation: popIn 0.4s 21.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card:nth-child(3) { animation: popIn 0.4s 21.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card:nth-child(4) { animation: popIn 0.4s 21.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card:nth-child(5) { animation: popIn 0.4s 22.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card:nth-child(6) { animation: popIn 0.4s 22.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s5-card .fi { font-size: 44px; margin-bottom: 12px; }
+    .s5-card h4 { font-size: 26px; color: var(--dark); font-weight: 800; }
+    .s5-card p { font-size: 20px; color: var(--gray); margin-top: 6px; font-weight: 600; }
+
+    .s5-checks {
+      display: flex; flex-direction: column; gap: 16px; margin-top: 36px;
+    }
+    .s5-check {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 26px; color: var(--teal); font-weight: 700;
+      opacity: 0;
+    }
+    .s5-check:nth-child(1) { animation: slideUp 0.3s 23.0s ease forwards; transform: translateY(10px); }
+    .s5-check:nth-child(2) { animation: slideUp 0.3s 23.3s ease forwards; transform: translateY(10px); }
+    .s5-check:nth-child(3) { animation: slideUp 0.3s 23.6s ease forwards; transform: translateY(10px); }
+
+    /* ════════════════════════════════════════
+       S6 — السعر (26–32s)
+       ════════════════════════════════════════ */
+    .s6 {
+      opacity: 0;
+      animation: sceneIn 0.3s 26.0s ease forwards, sceneOut 0.35s 32.0s ease forwards;
+      background: linear-gradient(170deg, #fff 40%, rgba(5,150,105,0.05) 100%);
+    }
+    .s6 h2 {
+      font-size: 52px; font-weight: 900; color: var(--dark);
+      opacity: 0; animation: slideUp 0.5s 26.3s ease forwards;
+      transform: translateY(25px);
+    }
+    .s6 h2 em { font-style: normal; color: var(--green); }
+
+    .s6-price-card {
+      margin-top: 50px;
+      padding: 50px 60px;
+      border-radius: 30px;
+      border: 4px solid rgba(5,150,105,0.2);
+      background: rgba(5,150,105,0.04);
+      text-align: center;
+      opacity: 0; transform: translateY(40px);
+      animation: slideUp 0.6s 26.8s ease forwards;
+      position: relative;
+      overflow: hidden;
+    }
+    .s6-price-card::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: shine 3s 27.5s ease infinite;
+    }
+    .s6-label {
+      font-size: 28px; color: var(--gray); font-weight: 700;
+    }
+    .s6-amount {
+      font-size: 120px; font-weight: 900; color: var(--green);
+      margin: 10px 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .s6-currency {
+      font-size: 40px; font-weight: 800; color: var(--green);
+    }
+    .s6-period {
+      font-size: 30px; color: var(--gray); font-weight: 700;
+      margin-top: 8px;
+    }
+    .s6-badge {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 12px 36px;
+      border-radius: 50px;
+      background: var(--green);
+      color: #fff;
+      font-size: 24px; font-weight: 800;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.4s 28.0s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    .s6-compare {
+      display: flex; gap: 20px; margin-top: 40px;
+      align-items: center;
+      opacity: 0; animation: slideUp 0.4s 28.6s ease forwards;
+      transform: translateY(15px);
+    }
+    .s6-vs-old {
+      font-size: 36px; color: var(--primary); font-weight: 800;
+      text-decoration: line-through;
+    }
+    .s6-vs-arrow { font-size: 40px; }
+    .s6-vs-new {
+      font-size: 36px; color: var(--green); font-weight: 900;
+    }
+
+    .s6-note {
+      font-size: 24px; color: var(--gray); font-weight: 600;
+      margin-top: 30px;
+      opacity: 0; animation: slideUp 0.4s 29.4s ease forwards;
+      transform: translateY(10px);
+    }
+
+    /* ════════════════════════════════════════
+       S7 — لماذا نكسيرو فلكس؟ (32–38s)
+       ════════════════════════════════════════ */
+    .s7 {
+      opacity: 0;
+      animation: sceneIn 0.3s 32.0s ease forwards, sceneOut 0.35s 38.0s ease forwards;
+    }
+    .s7 h2 {
+      font-size: 52px; font-weight: 900; color: var(--dark);
+      margin-bottom: 36px;
+      opacity: 0; animation: slideUp 0.5s 32.3s ease forwards;
+      transform: translateY(25px);
+    }
+    .s7 h2 em { font-style: normal; color: var(--teal); }
+
+    .s7-stats {
+      display: flex; flex-direction: column; gap: 28px;
+      width: 100%; max-width: 800px;
+    }
+    .s7-stat {
+      display: flex; align-items: center; gap: 24px;
+      padding: 28px 36px;
+      border-radius: 20px;
+      border: 3px solid rgba(13,115,119,0.1);
+      background: rgba(13,115,119,0.03);
+      opacity: 0; transform: translateY(30px);
+    }
+    .s7-stat:nth-child(1) { animation: slideUp 0.5s 32.8s ease forwards; }
+    .s7-stat:nth-child(2) { animation: slideUp 0.5s 33.4s ease forwards; }
+    .s7-stat:nth-child(3) { animation: slideUp 0.5s 34.0s ease forwards; }
+    .s7-stat:nth-child(4) { animation: slideUp 0.5s 34.6s ease forwards; }
+    .s7-stat .st-icon { font-size: 48px; flex-shrink: 0; }
+    .s7-stat .st-num { font-size: 44px; font-weight: 900; color: var(--teal); flex-shrink: 0; min-width: 120px; }
+    .s7-stat .st-label { font-size: 26px; color: var(--dark); font-weight: 700; }
+
+    .s7-trust {
+      margin-top: 40px;
+      font-size: 30px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.4s 35.5s ease forwards;
+      transform: translateY(15px);
+    }
+    .s7-trust em { font-style: normal; color: var(--gold); }
+
+    /* ════════════════════════════════════════
+       S8 — CTA (38–45s)
+       ════════════════════════════════════════ */
+    .s8 {
+      opacity: 0;
+      animation: sceneIn 0.4s 38.0s ease forwards;
+      background: linear-gradient(170deg, #fff 40%, rgba(230,57,70,0.04) 100%);
+    }
+    .s8-sparkle {
+      font-size: 60px; position: absolute; opacity: 0;
+    }
+    .s8-sp1 { top: 200px; right: 120px; animation: popIn 0.3s 38.6s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s8-sp2 { bottom: 300px; left: 130px; animation: popIn 0.3s 38.9s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s8-sp3 { top: 350px; left: 180px; animation: popIn 0.3s 39.2s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s8-sp4 { bottom: 400px; right: 150px; animation: popIn 0.3s 39.5s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+
+    .s8-small {
+      font-size: 32px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.4s 38.3s ease forwards;
+      transform: translateY(15px);
+    }
+    .s8-big {
+      font-size: 72px; font-weight: 900; color: var(--dark);
+      margin-top: 16px; text-align: center; line-height: 1.5;
+      opacity: 0; transform: scale(0.5);
+      animation: popIn 0.7s 38.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .s8-big em { font-style: normal; color: var(--primary); }
+
+    .s8-free {
+      margin-top: 36px;
+      padding: 20px 50px;
+      border-radius: 20px;
+      border: 4px solid rgba(5,150,105,0.3);
+      background: rgba(5,150,105,0.06);
+      opacity: 0; animation: slideUp 0.4s 39.8s ease forwards;
+      transform: translateY(15px);
+    }
+    .s8-free-text {
+      font-size: 36px; color: var(--green); font-weight: 900;
+    }
+
+    .s8-btn {
+      margin-top: 40px;
+      padding: 28px 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: #fff;
+      font-size: 36px; font-weight: 900;
+      border: none; cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 15px 40px rgba(230,57,70,0.3);
+      opacity: 0; transform: translateY(25px);
+      animation: slideUp 0.5s 40.5s ease forwards, btnPulse 2s 41.5s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    .s8-btn::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shine 2.5s 41s ease infinite;
+    }
+    @keyframes btnPulse { 0%,100%{transform:translateY(0);box-shadow:0 15px 40px rgba(230,57,70,0.3)} 50%{transform:translateY(-6px);box-shadow:0 20px 50px rgba(230,57,70,0.4)} }
+
+    .s8-url {
+      margin-top: 20px;
+      font-size: 26px; color: var(--gray); font-weight: 700;
+      letter-spacing: 3px;
+      opacity: 0; animation: slideUp 0.3s 41.2s ease forwards;
+      transform: translateY(10px);
+    }
+
+    .s8-badges {
+      display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap; justify-content: center;
+    }
+    .s8-bdg {
+      padding: 10px 22px; border-radius: 50px;
+      border: 2px solid rgba(13,115,119,0.12);
+      color: var(--teal); font-size: 20px; font-weight: 700;
+      opacity: 0;
+    }
+    .s8-bdg:nth-child(1) { animation: slideUp 0.3s 41.8s ease forwards; transform: translateY(10px); }
+    .s8-bdg:nth-child(2) { animation: slideUp 0.3s 42.0s ease forwards; transform: translateY(10px); }
+    .s8-bdg:nth-child(3) { animation: slideUp 0.3s 42.2s ease forwards; transform: translateY(10px); }
+    .s8-bdg:nth-child(4) { animation: slideUp 0.3s 42.4s ease forwards; transform: translateY(10px); }
+
+    .s8-car {
+      font-size: 80px;
+      margin-top: 30px;
+      opacity: 0;
+      animation: fadeIn 0.01s 43.0s forwards;
+    }
+    .s8-car span {
+      display: inline-block;
+      animation: pulse 1.5s 43.0s ease infinite;
+    }
+
+    /* ═══ Controls ═══ */
+    .ctrl-bar { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
+    .ctrl { padding: 10px 28px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.2s; }
+    .ctrl:hover { background: #334155; }
+    .ctrl.rep { background: var(--primary); border-color: var(--primary); }
+    .pbar { width: 486px; height: 3px; background: #e2e8f0; border-radius: 2px; margin-top: 12px; overflow: hidden; }
+    .pfill { height: 100%; width: 0%; background: linear-gradient(to right, var(--primary), var(--teal)); animation: prog 45s linear forwards; }
+    @keyframes prog { to { width: 100%; } }
+    .info { color: #64748b; font-size: 12px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="ad" id="adFrame">
+  <div class="grid-bg"></div>
+  <div class="corner-tl"></div>
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
+  <div class="corner-br"></div>
+
+  <!-- S1: السؤال (0-5s) -->
+  <div class="scene s1">
+    <div class="s1-emoji">🚗</div>
+    <div class="s1-q">هل تبحث عن<br><em>موقع لمعرض سيارات؟</em></div>
+    <div class="s1-sub">تصميم احترافي... بتكلفة أقل</div>
+    <div class="s1-car-icon"><span>🏎️</span></div>
+    <div class="s1-dots"><div class="s1-dot"></div><div class="s1-dot"></div><div class="s1-dot"></div></div>
+  </div>
+
+  <!-- S2: المشاكل (5-10s) -->
+  <div class="scene s2">
+    <div class="s2-title">المشكلة اللي يواجهها <em>كل صاحب معرض</em></div>
+    <div class="s2-problems">
+      <div class="s2-prob">
+        <span class="prob-icon">💸</span>
+        <div class="prob-text">
+          <h4>تكلفة تصميم عالية</h4>
+          <p>مبرمج يطلب آلاف الدراهم!</p>
+        </div>
+      </div>
+      <div class="s2-prob">
+        <span class="prob-icon">⏳</span>
+        <div class="prob-text">
+          <h4>انتظار طويل</h4>
+          <p>أسابيع وشهور بدون نتيجة</p>
+        </div>
+      </div>
+      <div class="s2-prob">
+        <span class="prob-icon">😫</span>
+        <div class="prob-text">
+          <h4>تصاميم قديمة</h4>
+          <p>مواقع بشكل غير احترافي</p>
+        </div>
+      </div>
+      <div class="s2-prob">
+        <span class="prob-icon">🔧</span>
+        <div class="prob-text">
+          <h4>صيانة معقدة</h4>
+          <p>كل تعديل يحتاج مبرمج!</p>
+        </div>
+      </div>
+    </div>
+    <div class="s2-big-x">✕</div>
+  </div>
+
+  <!-- S3: لحظة! (10-14s) -->
+  <div class="scene s3">
+    <div class="s3-flash"></div>
+    <h2>لحظة! ✋</h2>
+    <div class="s3-sub">عندنا <em>الحل المثالي</em> لك</div>
+    <div class="s3-arrow">⬇️</div>
+  </div>
+
+  <!-- S4: الحل (14-20s) -->
+  <div class="scene s4">
+    <div class="s4-sparkle sp4-1">✨</div>
+    <div class="s4-sparkle sp4-2">⭐</div>
+    <div class="s4-sparkle sp4-3">✨</div>
+    <div class="s4-sparkle sp4-4">⭐</div>
+    <div class="s4-small">اكتشف الآن</div>
+    <div class="s4-logo">NEXIRO-<span>FLUX</span></div>
+    <div class="s4-line"></div>
+    <div class="s4-desc">نوفر لك <em>تصميم موقع سيارات</em><br>حديث وأكثر احترافية</div>
+    <div class="s4-desc2">قوالب جاهزة — تخصيص كامل<br>إطلاق في دقائق مو أيام!</div>
+    <div class="s4-car-emoji">🚘</div>
+  </div>
+
+  <!-- S5: المميزات (20-26s) -->
+  <div class="scene s5">
+    <h2>ليش قالب <em>معرض السيارات</em>؟</h2>
+    <div class="s5-grid">
+      <div class="s5-card"><div class="fi">🚗</div><h4>عرض السيارات</h4><p>صور وتفاصيل كاملة</p></div>
+      <div class="s5-card"><div class="fi">🏢</div><h4>صفحة الفروع</h4><p>خريطة + معلومات</p></div>
+      <div class="s5-card"><div class="fi">📱</div><h4>متجاوب 100%</h4><p>موبايل + ديسكتوب</p></div>
+      <div class="s5-card"><div class="fi">🎨</div><h4>ألوان متعددة</h4><p>خصّص حسب هويتك</p></div>
+      <div class="s5-card"><div class="fi">🌐</div><h4>عربي + إنجليزي</h4><p>دعم لغتين كامل</p></div>
+      <div class="s5-card"><div class="fi">📞</div><h4>تواصل مباشر</h4><p>واتساب + نموذج اتصال</p></div>
+    </div>
+    <div class="s5-checks">
+      <div class="s5-check">✅ لوحة تحكم كاملة</div>
+      <div class="s5-check">✅ SSL + حماية مجانية</div>
+      <div class="s5-check">✅ بدون أي خبرة تقنية</div>
+    </div>
+  </div>
+
+  <!-- S6: السعر (26-32s) -->
+  <div class="scene s6">
+    <h2>والسعر؟ <em>أقل مما تتخيل!</em></h2>
+    <div class="s6-price-card">
+      <div class="s6-label">تكلفة الاشتراك الشهري</div>
+      <div class="s6-amount">50</div>
+      <div class="s6-currency">درهم / شهرياً</div>
+      <div class="s6-period">فقط! 🤯</div>
+      <div class="s6-badge">🔥 عرض محدود</div>
+    </div>
+    <div class="s6-compare">
+      <span class="s6-vs-old">مبرمج: 5,000+ درهم</span>
+      <span class="s6-vs-arrow">➡️</span>
+      <span class="s6-vs-new">نكسيرو: 50 درهم/شهر</span>
+    </div>
+    <div class="s6-note">💡 وفّر أكثر من 90% من التكلفة!</div>
+  </div>
+
+  <!-- S7: لماذا نكسيرو؟ (32-38s) -->
+  <div class="scene s7">
+    <h2>لماذا <em>NEXIRO-FLUX</em>؟</h2>
+    <div class="s7-stats">
+      <div class="s7-stat">
+        <span class="st-icon">🎯</span>
+        <span class="st-num" data-count="50">0+</span>
+        <span class="st-label">قالب جاهز ومتنوع</span>
+      </div>
+      <div class="s7-stat">
+        <span class="st-icon">😊</span>
+        <span class="st-num" data-count="2500">0+</span>
+        <span class="st-label">عميل يثق فينا</span>
+      </div>
+      <div class="s7-stat">
+        <span class="st-icon">⚡</span>
+        <span class="st-num">5 دقائق</span>
+        <span class="st-label">لإطلاق موقعك</span>
+      </div>
+      <div class="s7-stat">
+        <span class="st-icon">🛡️</span>
+        <span class="st-num">24/7</span>
+        <span class="st-label">دعم فني مستمر</span>
+      </div>
+    </div>
+    <div class="s7-trust">⭐⭐⭐⭐⭐ تقييم <em>4.9</em> من عملائنا</div>
+  </div>
+
+  <!-- S8: CTA (38-45s) -->
+  <div class="scene s8">
+    <div class="s8-sparkle s8-sp1">🔥</div>
+    <div class="s8-sparkle s8-sp2">✨</div>
+    <div class="s8-sparkle s8-sp3">⭐</div>
+    <div class="s8-sparkle s8-sp4">🔥</div>
+    <div class="s8-small">وش تنتظر؟</div>
+    <div class="s8-big">جرّب الآن<br><em>مجاناً!</em></div>
+    <div class="s8-free">
+      <div class="s8-free-text">🎁 فترة تجريبية مجانية</div>
+    </div>
+    <button class="s8-btn">ابدأ موقعك الآن ←</button>
+    <div class="s8-url">nexiroflux.com</div>
+    <div class="s8-badges">
+      <div class="s8-bdg">🚗 قالب سيارات</div>
+      <div class="s8-bdg">⚡ إطلاق فوري</div>
+      <div class="s8-bdg">🌐 عربي + EN</div>
+      <div class="s8-bdg">🔒 SSL مجاني</div>
+    </div>
+    <div class="s8-car"><span>🏎️</span></div>
+  </div>
+
+</div>
+
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="info">⏱ إعلان قالب معرض السيارات — تيك توك 9:16 — 45 ثانية</div>
+<div class="ctrl-bar">
+  <button class="ctrl rep" onclick="replay()">🔄 إعادة التشغيل</button>
+</div>
+
+<script>
+// ═══ Counter Animations ═══
+function animateCounters() {
+  setTimeout(() => {
+    document.querySelectorAll('.s7-stat .st-num[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count);
+      let current = 0;
+      const step = Math.max(1, Math.ceil(target / 35));
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = current.toLocaleString('en') + '+';
+      }, 50);
+    });
+  }, 32800);
+}
+animateCounters();
+
+function replay() {
+  const f = document.getElementById('adFrame');
+  const p = document.getElementById('pf');
+  const c = f.cloneNode(true);
+  c.id = 'adFrame';
+  f.parentNode.replaceChild(c, f);
+  p.style.animation = 'none';
+  void p.offsetHeight;
+  p.style.animation = 'prog 45s linear forwards';
+  animateCounters();
+}
+</script>
+
+</body>
+</html>

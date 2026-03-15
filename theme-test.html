@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXIRO-FLUX — تجربة ألوان</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-light: #14b8a6;
+      --primary-dark: #0f766e;
+      --accent: #6366f1;
+      --bg: #fafbfc;
+      --card: #ffffff;
+      --card-border: #e5e7eb;
+      --text: #111827;
+      --text-sub: #6b7280;
+      --text-muted: #9ca3af;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', 'Tajawal', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Themes ── */
+    .themes-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border: 1px solid #e5e7eb;
+      z-index: 100;
+    }
+    .theme-dot {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .theme-dot:hover { transform: scale(1.15); }
+    .theme-dot.active { border-color: var(--text); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--text); }
+    .theme-dot .tip {
+      position: absolute;
+      bottom: 44px; left: 50%; transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .theme-dot:hover .tip { opacity: 1; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card);
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--primary); }
+    .nav-links { display: flex; gap: 8px; align-items: center; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg); }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 80px 32px 60px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .hero-chip {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 50px;
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--primary);
+    }
+    .hero p {
+      font-size: 17px;
+      color: var(--text-sub);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 32px 60px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+      border-color: var(--primary);
+    }
+    .card-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card p {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    /* ── Pricing mini ── */
+    .pricing {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 32px 60px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .price-box {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .price-box.pop {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+      position: relative;
+    }
+    .price-box.pop::before {
+      content: 'الأكثر شعبية';
+      position: absolute;
+      top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    .price-box h4 { font-size: 18px; margin-bottom: 8px; }
+    .price-box .amount { font-size: 40px; font-weight: 800; color: var(--primary); }
+    .price-box .amount span { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+    .price-box ul { list-style: none; margin: 20px 0; }
+    .price-box li { padding: 5px 0; font-size: 14px; color: var(--text-sub); }
+    .price-box li::before { content: '✓ '; color: var(--primary); font-weight: 700; }
+    .price-box .btn { width: 100%; margin-top: 12px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--card-border);
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">NEXIRO-<span>FLUX</span></div>
+  <div class="nav-links">
+    <a href="#">الرئيسية</a>
+    <a href="#">القوالب</a>
+    <a href="#">الأسعار</a>
+    <button class="btn btn-primary">ابدأ الآن</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-chip">🚀 انطلق بمشروعك</div>
+  <h1>أنشئ متجرك <em>الاحترافي</em> بدون كود</h1>
+  <p>اختر قالبك المفضل، خصّصه بلمسة واحدة، وابدأ البيع مباشرة. كل ما تحتاجه في منصة واحدة.</p>
+  <div class="hero-actions">
+    <button class="btn btn-primary">احجز الآن ←</button>
+    <button class="btn btn-outline">شاهد القوالب</button>
+  </div>
+</section>
+
+<!-- Features -->
+<div class="cards">
+  <div class="card">
+    <div class="card-icon">⚡</div>
+    <h3>إطلاق سريع</h3>
+    <p>موقعك جاهز خلال 5 دقائق فقط بدون أي خبرة تقنية.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🎨</div>
+    <h3>تصاميم عصرية</h3>
+    <p>قوالب مصممة بأعلى المعايير لجذب عملائك.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🔒</div>
+    <h3>أمان متكامل</h3>
+    <p>شهادة SSL ونسخ احتياطي تلقائي يومياً.</p>
+  </div>
+</div>
+
+<!-- Pricing -->
+<div class="pricing">
+  <div class="price-box">
+    <h4>أساسي</h4>
+    <div class="amount">$0<span>/شهر</span></div>
+    <ul>
+      <li>قالب واحد</li>
+      <li>10 منتجات</li>
+      <li>دعم بالبريد</li>
+    </ul>
+    <button class="btn btn-outline">ابدأ مجاناً</button>
+  </div>
+  <div class="price-box pop">
+    <h4>احترافي</h4>
+    <div class="amount">$29<span>/شهر</span></div>
+    <ul>
+      <li>كل القوالب</li>
+      <li>منتجات غير محدودة</li>
+      <li>دعم 24/7</li>
+    </ul>
+    <button class="btn btn-primary">اشترك الآن</button>
+  </div>
+</div>
+
+<footer>© 2026 NEXIRO-FLUX — جميع الحقوق محفوظة</footer>
+
+<!-- ═══ Theme Switcher ═══ -->
+<div class="themes-bar">
+  <div class="theme-dot active" style="background:linear-gradient(135deg,#0d9488,#14b8a6)" onclick="setTheme('teal')"><span class="tip">Teal تيل</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#2563eb,#3b82f6)" onclick="setTheme('blue')"><span class="tip">Blue أزرق</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)" onclick="setTheme('violet')"><span class="tip">Violet بنفسجي</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#059669,#10b981)" onclick="setTheme('green')"><span class="tip">Green أخضر</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#dc2626,#ef4444)" onclick="setTheme('red')"><span class="tip">Red أحمر</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#d97706,#f59e0b)" onclick="setTheme('amber')"><span class="tip">Amber عنبري</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#0891b2,#06b6d4)" onclick="setTheme('cyan')"><span class="tip">Cyan سماوي</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#c026d3,#d946ef)" onclick="setTheme('fuchsia')"><span class="tip">Fuchsia فوشيا</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#4f46e5,#6366f1)" onclick="setTheme('indigo')"><span class="tip">Indigo نيلي</span></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#0f172a,#334155)" onclick="setTheme('slate-dark')"><span class="tip">Dark داكن</span></div>
+</div>
+
+<script>
+const s = document.documentElement.style;
+const themes = {
+  teal:  { p:'#0d9488', pl:'#14b8a6', pd:'#0f766e', bg:'#fafbfc', card:'#ffffff', border:'#e5e7eb', text:'#111827', sub:'#6b7280' },
+  blue:  { p:'#2563eb', pl:'#3b82f6', pd:'#1d4ed8', bg:'#f8fafc', card:'#ffffff', border:'#e2e8f0', text:'#0f172a', sub:'#64748b' },
+  violet:{ p:'#7c3aed', pl:'#8b5cf6', pd:'#6d28d9', bg:'#faf5ff', card:'#ffffff', border:'#e9d5ff', text:'#1e1b4b', sub:'#7c7494' },
+  green: { p:'#059669', pl:'#10b981', pd:'#047857', bg:'#f0fdf4', card:'#ffffff', border:'#d1fae5', text:'#064e3b', sub:'#6b8f71' },
+  red:   { p:'#dc2626', pl:'#ef4444', pd:'#b91c1c', bg:'#fef2f2', card:'#ffffff', border:'#fecaca', text:'#1c1917', sub:'#78716c' },
+  amber: { p:'#d97706', pl:'#f59e0b', pd:'#b45309', bg:'#fffbeb', card:'#ffffff', border:'#fde68a', text:'#1c1917', sub:'#78716c' },
+  cyan:  { p:'#0891b2', pl:'#06b6d4', pd:'#0e7490', bg:'#f0fdfa', card:'#ffffff', border:'#cffafe', text:'#164e63', sub:'#6b9aaa' },
+  fuchsia:{ p:'#c026d3', pl:'#d946ef', pd:'#a21caf', bg:'#fdf4ff', card:'#ffffff', border:'#f5d0fe', text:'#4a044e', sub:'#8b6d8e' },
+  indigo:{ p:'#4f46e5', pl:'#6366f1', pd:'#4338ca', bg:'#f5f3ff', card:'#ffffff', border:'#ddd6fe', text:'#1e1b4b', sub:'#6b6894' },
+  'slate-dark': { p:'#38bdf8', pl:'#7dd3fc', pd:'#0284c7', bg:'#0f172a', card:'#1e293b', border:'#334155', text:'#f1f5f9', sub:'#94a3b8' },
+};
+
+function setTheme(name) {
+  const t = themes[name];
+  s.setProperty('--primary', t.p);
+  s.setProperty('--primary-light', t.pl);
+  s.setProperty('--primary-dark', t.pd);
+  s.setProperty('--bg', t.bg);
+  s.setProperty('--card', t.card);
+  s.setProperty('--card-border', t.border);
+  s.setProperty('--text', t.text);
+  s.setProperty('--text-sub', t.sub);
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+</script>
+
+</body>
+</html>

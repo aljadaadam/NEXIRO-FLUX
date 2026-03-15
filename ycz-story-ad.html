@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXIRO-FLUX — إعلان قالب سيرفر سوفت وير</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal: #0d7377;
+      --teal-light: #14b8a6;
+      --teal-bg: rgba(13,115,119,0.06);
+      --red: #dc2626;
+      --green: #059669;
+      --dark: #0f172a;
+      --gray: #94a3b8;
+      --light: #f0fdfa;
+    }
+
+    body {
+      background: #111;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh;
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      overflow: hidden;
+    }
+
+    .ad {
+      width: 1080px; height: 608px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    /* ═══ Decorative Brackets — z-index عالي فوق كل المشاهد ═══ */
+    .bracket-tl, .bracket-tr, .bracket-bl, .bracket-br {
+      position: absolute; z-index: 50;
+      width: 50px; height: 50px;
+      border-color: var(--teal-light);
+      border-style: solid;
+      border-width: 0;
+      opacity: 0;
+      animation: fadeIn 0.5s 0.3s ease forwards;
+    }
+    .bracket-tl { top: 30px; right: 30px; border-top-width: 4px; border-right-width: 4px; border-radius: 0 12px 0 0; }
+    .bracket-tr { top: 30px; left: 30px; border-top-width: 4px; border-left-width: 4px; border-radius: 12px 0 0 0; }
+    .bracket-bl { bottom: 30px; right: 30px; border-bottom-width: 4px; border-right-width: 4px; border-radius: 0 0 12px 0; }
+    .bracket-br { bottom: 30px; left: 30px; border-bottom-width: 4px; border-left-width: 4px; border-radius: 0 0 0 12px; }
+
+    /* Grid background */
+    .grid-bg {
+      position: absolute; inset: 0; z-index: 1;
+      background-image:
+        linear-gradient(rgba(13,115,119,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(13,115,119,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+      opacity: 0;
+      animation: fadeIn 1s 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* ════════════════════════════════════════
+       SHARED ANIMATIONS
+       ════════════════════════════════════════ */
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideRight { to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideLeft { to { opacity: 1; transform: translateX(0); } }
+    @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+    @keyframes sceneIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes sceneOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+    @keyframes typewrite { from { width: 0; } to { width: 100%; } }
+    @keyframes blink { 0%,100%{border-color:var(--teal)} 50%{border-color:transparent} }
+
+    /* كل مشهد يغطي المشهد اللي تحته بخلفية بيضاء */
+    .scene {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      z-index: 10;
+      background: #fff;
+    }
+
+    /*
+      ══════════════════════════════════════════════════
+      التوقيت — بدون فجوات + fade ناعم 0.35s
+      ══════════════════════════════════════════════════
+      S1:   0.0s →  5.0s
+      S2:   5.0s → 10.0s
+      S3:  10.0s → 16.0s
+      S4:  16.0s → 20.0s
+      S5:  20.0s → 22.5s
+      S6:  22.5s → 27.0s
+      S6b: 27.0s → 32.0s  (Dhru Fusion)
+      S7:  32.0s → 38.0s
+      S8:  38.0s → 45.0s
+      S9:  45.0s → 52.0s
+      S10: 52.0s → 58.0s
+      S11: 58.0s → END
+    */
+
+    /* ════════════════════════════════════════
+       S1 — "كل يوم..." (0–5s)
+       ════════════════════════════════════════ */
+    .s1 {
+      animation: sceneOut 0.35s 5.0s ease forwards;
+      text-align: center;
+    }
+    .s1-small {
+      font-size: 22px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.5s 0.4s ease forwards;
+      transform: translateY(15px);
+    }
+    .s1-big-wrap {
+      margin-top: 10;
+      overflow: hidden;
+      display: inline-block;
+      opacity: 0;
+      animation: fadeIn 0.01s 1.0s forwards;
+    }
+    .s1-big {
+      font-size: 72px; font-weight: 900; color: var(--teal);
+      white-space: nowrap;
+      display: inline-block;
+      clip-path: inset(0 100% 0 0);
+      animation: revealRTL 1.4s 1.0s ease forwards;
+    }
+    @keyframes revealRTL { to { clip-path: inset(0 0 0 0); } }
+    .s1-cursor {
+      display: inline-block; width: 4px; height: 60px;
+      background: var(--teal); vertical-align: middle;
+      margin-right: 8px;
+      animation: cursorBlink 0.6s 1.0s step-end 5;
+    }
+    @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .s1-sub {
+      font-size: 28px; color: var(--dark); font-weight: 800;
+      margin-top: 20px;
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.6s 2.8s ease forwards;
+    }
+    .s1-sub em { font-style: normal; color: var(--teal); }
+    .s1-dots {
+      display: flex; gap: 8px; margin-top: 20px;
+      justify-content: center;
+    }
+    .s1-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--teal-light); opacity: 0;
+    }
+    .s1-dot:nth-child(1) { animation: popIn 0.3s 3.6s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s1-dot:nth-child(2) { animation: popIn 0.3s 3.9s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s1-dot:nth-child(3) { animation: popIn 0.3s 4.2s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+
+    /* ════════════════════════════════════════
+       S2 — "يدوّرون على..." (5–10s)
+       ════════════════════════════════════════ */
+    .s2 {
+      opacity: 0;
+      animation: sceneIn 0.3s 5.0s ease forwards, sceneOut 0.35s 10.0s ease forwards;
+    }
+    .s2-title {
+      font-size: 36px; color: var(--dark); font-weight: 900;
+      opacity: 0; animation: slideUp 0.5s 5.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .search-box {
+      margin-top: 24px;
+      width: 500px; padding: 16px 24px;
+      border-radius: 14px;
+      border: 2px solid rgba(13,115,119,0.15);
+      background: var(--teal-bg);
+      display: flex; align-items: center; gap: 12px;
+      opacity: 0; animation: slideUp 0.4s 5.8s ease forwards;
+      transform: translateY(15px);
+    }
+    .search-icon { font-size: 22px; }
+    .search-text {
+      font-size: 18px; color: var(--dark); font-weight: 600;
+      overflow: hidden; white-space: nowrap; width: 0;
+      border-left: 2px solid var(--teal);
+      animation: typewrite 1.8s 6.3s steps(30) forwards, blink 0.7s 6.3s step-end 5;
+    }
+    .s2-tags {
+      display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; justify-content: center;
+    }
+    .s2-tag {
+      padding: 8px 20px; border-radius: 50px;
+      border: 2px solid rgba(13,115,119,0.12);
+      color: var(--teal); font-size: 15px; font-weight: 700;
+      opacity: 0; transform: scale(0);
+    }
+    .s2-tag:nth-child(1) { animation: popIn 0.3s 8.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s2-tag:nth-child(2) { animation: popIn 0.3s 8.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s2-tag:nth-child(3) { animation: popIn 0.3s 8.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s2-tag:nth-child(4) { animation: popIn 0.3s 9.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+    /* ════════════════════════════════════════
+       S3 — "يجرّبون..." cards (10–16s)
+       ════════════════════════════════════════ */
+    .s3 {
+      opacity: 0;
+      animation: sceneIn 0.3s 10.0s ease forwards, sceneOut 0.35s 16.0s ease forwards;
+    }
+    .s3-title {
+      font-size: 36px; color: var(--dark); font-weight: 900;
+      margin-bottom: 28px;
+      opacity: 0; animation: slideUp 0.5s 10.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s3-title em { font-style: normal; color: var(--red); }
+    .s3-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; max-width: 700px;
+    }
+    .s3-card {
+      padding: 24px 20px;
+      border-radius: 16px;
+      border: 2px solid rgba(13,115,119,0.1);
+      background: #fff;
+      text-align: center;
+      opacity: 0; transform: translateY(30px);
+      position: relative;
+    }
+    .s3-card:nth-child(1) { animation: slideUp 0.5s 10.8s ease forwards; }
+    .s3-card:nth-child(2) { animation: slideUp 0.5s 11.3s ease forwards; }
+    .s3-card:nth-child(3) { animation: slideUp 0.5s 11.8s ease forwards; }
+    .s3-card .ico { font-size: 36px; margin-bottom: 10px; }
+    .s3-card h4 { font-size: 18px; color: var(--dark); font-weight: 800; }
+    .s3-card p { font-size: 13px; color: var(--gray); margin-top: 4px; font-weight: 600; }
+    /* علامة X بحركة stamp */
+    .s3-card .x-mark {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 80px; color: var(--red);
+      opacity: 0; transform: scale(2.5);
+    }
+    @keyframes xStamp { to { opacity: 1; transform: scale(1); } }
+    .s3-card:nth-child(1) .x-mark { animation: xStamp 0.2s 12.8s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .s3-card:nth-child(2) .x-mark { animation: xStamp 0.2s 13.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .s3-card:nth-child(3) .x-mark { animation: xStamp 0.2s 13.8s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .s3-bottom {
+      margin-top: 24px;
+      font-size: 24px; color: var(--red); font-weight: 900;
+      opacity: 0; animation: slideUp 0.5s 14.5s ease forwards;
+      transform: translateY(15px);
+    }
+
+    /* ════════════════════════════════════════
+       S4 — Counter "كم ضاع عليك؟" (16–20s)
+       ════════════════════════════════════════ */
+    .s4 {
+      opacity: 0;
+      animation: sceneIn 0.3s 16.0s ease forwards, sceneOut 0.35s 20.0s ease forwards;
+    }
+    .s4 h2 {
+      font-size: 38px; color: var(--dark); font-weight: 900;
+      opacity: 0; animation: slideUp 0.5s 16.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s4-counters {
+      display: flex; gap: 50px; margin-top: 30px;
+    }
+    .s4-counter {
+      text-align: center;
+      opacity: 0; transform: translateY(25px);
+    }
+    .s4-counter:nth-child(1) { animation: slideUp 0.5s 16.8s ease forwards; }
+    .s4-counter:nth-child(2) { animation: slideUp 0.5s 17.3s ease forwards; }
+    .s4-num {
+      font-size: 64px; font-weight: 900; color: var(--red);
+      font-variant-numeric: tabular-nums;
+    }
+    .s4-label {
+      font-size: 16px; color: var(--gray); font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* ════════════════════════════════════════
+       S5 — "لحظة!" flash (20–22.5s)
+       ════════════════════════════════════════ */
+    .s5 {
+      opacity: 0;
+      animation: sceneIn 0.1s 20.0s ease forwards, sceneOut 0.3s 22.5s ease forwards;
+    }
+    .s5-flash {
+      position: absolute; inset: 0;
+      background: var(--teal);
+      opacity: 0;
+      animation: flashTeal 0.5s 20.1s ease forwards;
+    }
+    @keyframes flashTeal { 0%{opacity:0} 15%{opacity:0.85} 100%{opacity:0} }
+    .s5 h2 {
+      font-size: 80px; font-weight: 900; color: var(--teal);
+      opacity: 0; transform: scale(3);
+      animation: zoomSnap 0.4s 20.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes zoomSnap { to { opacity: 1; transform: scale(1); } }
+    .s5-hand {
+      font-size: 60px;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.4s 21.0s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    /* ════════════════════════════════════════
+       S6 — "اكتشف NEXIRO-FLUX" (22.5–27s)
+       ════════════════════════════════════════ */
+    .s6 {
+      opacity: 0;
+      animation: sceneIn 0.4s 22.5s ease forwards, sceneOut 0.35s 27.0s ease forwards;
+    }
+    .s6-small {
+      font-size: 20px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.4s 22.8s ease forwards;
+      transform: translateY(15px);
+    }
+    .s6-logo {
+      font-size: 68px; font-weight: 900; color: var(--dark);
+      margin-top: 8px;
+      opacity: 0; transform: translateY(30px);
+      animation: slideUp 0.7s 23.3s ease forwards;
+    }
+    .s6-logo span { color: var(--teal); }
+    .s6-line {
+      width: 0; height: 4px;
+      background: linear-gradient(to right, var(--teal), var(--teal-light));
+      border-radius: 4px;
+      margin-top: 16px;
+      animation: lineGrow 0.6s 24.1s ease forwards;
+    }
+    @keyframes lineGrow { to { width: 200px; } }
+    .s6-desc {
+      font-size: 22px; color: var(--dark); font-weight: 700;
+      margin-top: 20px;
+      opacity: 0; animation: slideUp 0.5s 24.8s ease forwards;
+      transform: translateY(15px);
+    }
+    .s6-desc em { font-style: normal; color: var(--teal); }
+    .s6-sparkle {
+      font-size: 30px; position: absolute; opacity: 0;
+    }
+    .sp-1 { top: 150px; right: 200px; animation: popIn 0.3s 24.3s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .sp-2 { top: 180px; left: 220px; animation: popIn 0.3s 24.6s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .sp-3 { bottom: 160px; right: 280px; animation: popIn 0.3s 24.9s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+
+    /* ════════════════════════════════════════
+       S6b — Dhru Fusion (27–32s)
+       ════════════════════════════════════════ */
+    .s6b {
+      opacity: 0;
+      animation: sceneIn 0.4s 27.0s ease forwards, sceneOut 0.35s 32.0s ease forwards;
+    }
+    .s6b-logo {
+      opacity: 0; transform: scale(0.5);
+      animation: popIn 0.6s 27.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .s6b-logo img {
+      height: 80px; width: auto;
+      filter: drop-shadow(0 8px 20px rgba(13,115,119,0.15));
+    }
+    .s6b-title {
+      font-size: 36px; font-weight: 900; color: var(--dark);
+      margin-top: 20px; text-align: center; line-height: 1.5;
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.5s 28.0s ease forwards;
+    }
+    .s6b-title em { font-style: normal; color: var(--teal); }
+    .s6b-features {
+      display: flex; gap: 16px; margin-top: 28px;
+    }
+    .s6b-feat {
+      padding: 14px 24px;
+      border-radius: 14px;
+      border: 2px solid rgba(13,115,119,0.12);
+      background: var(--teal-bg);
+      text-align: center;
+      opacity: 0; transform: translateY(20px);
+    }
+    .s6b-feat:nth-child(1) { animation: slideUp 0.4s 28.8s ease forwards; }
+    .s6b-feat:nth-child(2) { animation: slideUp 0.4s 29.2s ease forwards; }
+    .s6b-feat:nth-child(3) { animation: slideUp 0.4s 29.6s ease forwards; }
+    .s6b-feat .feat-ico { font-size: 30px; margin-bottom: 6px; }
+    .s6b-feat h4 { font-size: 16px; color: var(--dark); font-weight: 800; }
+    .s6b-feat p { font-size: 12px; color: var(--gray); font-weight: 600; }
+    .s6b-sub {
+      font-size: 20px; color: var(--gray); font-weight: 700;
+      margin-top: 24px;
+      opacity: 0; transform: translateY(15px);
+      animation: slideUp 0.4s 30.2s ease forwards;
+    }
+    .s6b-sub em { font-style: normal; color: var(--teal); font-weight: 800; }
+
+    /* ════════════════════════════════════════
+       S7 — Screenshot Hero (32–38s)
+       ════════════════════════════════════════ */
+    .s7 {
+      opacity: 0;
+      animation: sceneIn 0.4s 32.0s ease forwards, sceneOut 0.35s 38.0s ease forwards;
+      padding: 0 50px; flex-direction: row; gap: 40px;
+    }
+    .s7-txt { flex: 1; text-align: right; }
+    .s7 h2 {
+      font-size: 34px; font-weight: 900; color: var(--dark);
+      line-height: 1.4;
+      opacity: 0; transform: translateX(40px);
+      animation: slideRight 0.6s 32.4s ease forwards;
+    }
+    .s7 h2 em { font-style: normal; color: var(--teal); }
+    .s7 p {
+      font-size: 16px; color: var(--gray); font-weight: 600;
+      line-height: 1.8; margin-top: 14px;
+      opacity: 0; transform: translateX(40px);
+      animation: slideRight 0.5s 33.0s ease forwards;
+    }
+    .s7-screen {
+      width: 460px; height: 300px;
+      border-radius: 16px; overflow: hidden;
+      border: 3px solid rgba(13,115,119,0.15);
+      box-shadow: 0 20px 50px rgba(13,115,119,0.1);
+      opacity: 0; transform: translateX(-40px) scale(0.95);
+      animation: screenSlide 0.7s 32.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    @keyframes screenSlide { to { opacity: 1; transform: translateX(0) scale(1); } }
+    .s7-screen img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    @keyframes scrollDown { 0%{top:0} 100%{top:-40%} }
+
+    /* ════════════════════════════════════════
+       S8 — Products + Admin (38–45s)
+       ════════════════════════════════════════ */
+    .s8 {
+      opacity: 0;
+      animation: sceneIn 0.4s 38.0s ease forwards, sceneOut 0.35s 45.0s ease forwards;
+    }
+    .s8 h2 {
+      font-size: 34px; font-weight: 900; color: var(--dark);
+      margin-bottom: 20px;
+      opacity: 0; animation: slideUp 0.5s 38.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s8 h2 em { font-style: normal; color: var(--teal); }
+    .s8-screens {
+      display: flex; gap: 20px;
+    }
+    .s8-img {
+      border-radius: 14px; overflow: hidden;
+      border: 2px solid rgba(13,115,119,0.1);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+      opacity: 0; transform: translateY(30px);
+    }
+    .s8-img:nth-child(1) { width: 420px; height: 260px; animation: slideUp 0.6s 38.8s ease forwards; }
+    .s8-img:nth-child(2) { width: 300px; height: 260px; animation: slideUp 0.6s 39.5s ease forwards; }
+    .s8-img:nth-child(3) { width: 160px; height: 260px; animation: slideUp 0.6s 40.2s ease forwards; }
+    .s8-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+    /* ════════════════════════════════════════
+       S9 — Features Cards (45–52s)
+       ════════════════════════════════════════ */
+    .s9 {
+      opacity: 0;
+      animation: sceneIn 0.3s 45.0s ease forwards, sceneOut 0.35s 52.0s ease forwards;
+    }
+    .s9 h2 {
+      font-size: 36px; font-weight: 900; color: var(--dark);
+      margin-bottom: 24px;
+      opacity: 0; animation: slideUp 0.5s 45.3s ease forwards;
+      transform: translateY(20px);
+    }
+    .s9 h2 em { font-style: normal; color: var(--teal); }
+    .s9-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; max-width: 750px;
+    }
+    .s9-card {
+      padding: 20px;
+      border-radius: 16px;
+      border: 2px solid rgba(13,115,119,0.1);
+      background: var(--teal-bg);
+      text-align: center;
+      opacity: 0; transform: scale(0.7);
+    }
+    .s9-card:nth-child(1) { animation: popIn 0.4s 45.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card:nth-child(2) { animation: popIn 0.4s 46.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card:nth-child(3) { animation: popIn 0.4s 46.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card:nth-child(4) { animation: popIn 0.4s 46.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card:nth-child(5) { animation: popIn 0.4s 47.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card:nth-child(6) { animation: popIn 0.4s 47.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .s9-card .fi { font-size: 28px; margin-bottom: 8px; }
+    .s9-card h4 { font-size: 15px; color: var(--dark); font-weight: 800; }
+    .s9-card p { font-size: 11px; color: var(--gray); margin-top: 2px; font-weight: 600; }
+    .s9-check {
+      display: flex; gap: 24px; margin-top: 20px;
+    }
+    .s9-check-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; color: var(--teal); font-weight: 700;
+      opacity: 0;
+    }
+    .s9-check-item:nth-child(1) { animation: slideUp 0.3s 48.2s ease forwards; transform: translateY(10px); }
+    .s9-check-item:nth-child(2) { animation: slideUp 0.3s 48.5s ease forwards; transform: translateY(10px); }
+    .s9-check-item:nth-child(3) { animation: slideUp 0.3s 48.8s ease forwards; transform: translateY(10px); }
+
+    /* ════════════════════════════════════════
+       S10 — مقارنة (52–58s)
+       ════════════════════════════════════════ */
+    .s10 {
+      opacity: 0;
+      animation: sceneIn 0.3s 52.0s ease forwards, sceneOut 0.35s 58.0s ease forwards;
+    }
+    .s10 h2 {
+      font-size: 34px; font-weight: 900; color: var(--dark);
+      opacity: 0; animation: slideUp 0.5s 52.3s ease forwards;
+      transform: translateY(20px);
+      margin-bottom: 28px;
+    }
+    .s10 h2 em { font-style: normal; color: var(--teal); }
+    .s10-compare {
+      display: flex; gap: 24px; width: 100%; max-width: 900px;
+    }
+    .s10-col {
+      flex: 1;
+      border-radius: 20px;
+      padding: 28px 24px;
+      opacity: 0; transform: translateY(30px);
+    }
+    .s10-col.old {
+      border: 3px solid rgba(220,38,38,0.15);
+      background: rgba(220,38,38,0.03);
+      animation: slideUp 0.5s 52.8s ease forwards;
+    }
+    .s10-col.new {
+      border: 3px solid rgba(13,115,119,0.2);
+      background: rgba(13,115,119,0.04);
+      animation: slideUp 0.5s 53.6s ease forwards;
+    }
+    .s10-col-title {
+      font-size: 20px; font-weight: 900;
+      text-align: center;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid rgba(0,0,0,0.06);
+    }
+    .s10-col.old .s10-col-title { color: var(--red); }
+    .s10-col.new .s10-col-title { color: var(--teal); }
+    .s10-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+      font-size: 15px; font-weight: 700;
+      color: var(--dark);
+    }
+    .s10-row .ico { font-size: 18px; flex-shrink: 0; }
+    .s10-vs {
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0);
+      animation: popIn 0.4s 54.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .s10-vs span {
+      font-size: 28px; font-weight: 900; color: var(--teal);
+      background: var(--teal-bg);
+      padding: 8px 16px; border-radius: 50%;
+    }
+
+    /* ════════════════════════════════════════
+       S11 — CTA Final (58–67s)
+       ════════════════════════════════════════ */
+    .s11 {
+      opacity: 0;
+      animation: sceneIn 0.4s 58.0s ease forwards;
+    }
+    .s11-sparkle {
+      font-size: 40px; position: absolute; opacity: 0;
+    }
+    .s11-sp1 { top: 120px; right: 180px; animation: popIn 0.3s 58.6s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s11-sp2 { bottom: 140px; left: 200px; animation: popIn 0.3s 58.9s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s11-sp3 { top: 160px; left: 250px; animation: popIn 0.3s 59.2s cubic-bezier(0.34,1.56,0.64,1) forwards; transform: scale(0); }
+    .s11-small {
+      font-size: 20px; color: var(--gray); font-weight: 700;
+      opacity: 0; animation: slideUp 0.4s 58.3s ease forwards;
+      transform: translateY(15px);
+    }
+    .s11-big {
+      font-size: 60px; font-weight: 900; color: var(--dark);
+      margin-top: 8px;
+      opacity: 0; transform: scale(0.5);
+      animation: popIn 0.7s 58.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .s11-big em { font-style: normal; color: var(--teal); }
+    .s11-offer {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 20px; padding: 12px 28px;
+      border-radius: 14px; border: 2px solid rgba(5,150,105,0.2);
+      background: rgba(5,150,105,0.06);
+      opacity: 0; animation: slideUp 0.4s 59.6s ease forwards;
+      transform: translateY(15px);
+    }
+    .s11-old { font-size: 22px; color: var(--red); font-weight: 800; text-decoration: line-through; }
+    .s11-new { font-size: 34px; color: var(--green); font-weight: 900; }
+    .s11-pct { padding: 4px 14px; border-radius: 8px; background: var(--green); color: #fff; font-size: 14px; font-weight: 800; }
+    .s11-btn {
+      margin-top: 24px;
+      padding: 16px 56px;
+      border-radius: 14px;
+      background: var(--teal);
+      color: #fff;
+      font-size: 22px; font-weight: 900;
+      border: none; cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 10px 30px rgba(13,115,119,0.25);
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.5s 60.3s ease forwards, btnPulse 2s 61s ease infinite;
+    }
+    @keyframes btnPulse { 0%,100%{transform:translateY(0);box-shadow:0 10px 30px rgba(13,115,119,0.25)} 50%{transform:translateY(-4px);box-shadow:0 14px 40px rgba(13,115,119,0.35)} }
+    .s11-url {
+      margin-top: 12px;
+      font-size: 16px; color: var(--gray); font-weight: 700;
+      letter-spacing: 2px;
+      opacity: 0; animation: slideUp 0.3s 61.0s ease forwards;
+      transform: translateY(10px);
+    }
+    .s11-badges {
+      display: flex; gap: 10px; margin-top: 16px;
+    }
+    .s11-bdg {
+      padding: 6px 14px; border-radius: 50px;
+      border: 2px solid rgba(13,115,119,0.1);
+      color: var(--teal); font-size: 12px; font-weight: 700;
+      opacity: 0;
+    }
+    .s11-bdg:nth-child(1) { animation: slideUp 0.3s 61.5s ease forwards; transform: translateY(10px); }
+    .s11-bdg:nth-child(2) { animation: slideUp 0.3s 61.7s ease forwards; transform: translateY(10px); }
+    .s11-bdg:nth-child(3) { animation: slideUp 0.3s 61.9s ease forwards; transform: translateY(10px); }
+    .s11-bdg:nth-child(4) { animation: slideUp 0.3s 62.1s ease forwards; transform: translateY(10px); }
+
+    /* ═══ Controls ═══ */
+    .ctrl-bar { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
+    .ctrl { padding: 10px 28px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.2s; }
+    .ctrl:hover { background: #334155; }
+    .ctrl.rep { background: var(--teal); border-color: var(--teal); }
+    .pbar { width: 1080px; height: 3px; background: #e2e8f0; border-radius: 2px; margin-top: 12px; overflow: hidden; }
+    .pfill { height: 100%; width: 0%; background: linear-gradient(to right, var(--teal), var(--teal-light)); animation: prog 67s linear forwards; }
+    @keyframes prog { to { width: 100%; } }
+    .info { color: #64748b; font-size: 12px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="ad" id="adFrame">
+  <div class="grid-bg"></div>
+  <div class="bracket-tl"></div>
+  <div class="bracket-tr"></div>
+  <div class="bracket-bl"></div>
+  <div class="bracket-br"></div>
+
+  <!-- S1: كل يوم (0-5s) -->
+  <div class="scene s1">
+    <div class="s1-small">هل تبحث عن</div>
+    <div class="s1-big-wrap"><span class="s1-cursor"></span><span class="s1-big">سيرفر لخدمات السوفت وير؟</span></div>
+    <div class="s1-sub">موقع <em>احترافي</em> لتفعيل البرامج والخدمات الرقمية</div>
+    <div class="s1-dots"><div class="s1-dot"></div><div class="s1-dot"></div><div class="s1-dot"></div></div>
+  </div>
+
+  <!-- S2: يدورون (5-10s) -->
+  <div class="scene s2">
+    <div class="s2-title">الكل يبحث عن الحل المثالي...</div>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <div class="search-text">أفضل سكربت سيرفر تفعيل برامج احترافي</div>
+    </div>
+    <div class="s2-tags">
+      <div class="s2-tag">سيرفر سوفت وير</div>
+      <div class="s2-tag">Dhru Fusion API</div>
+      <div class="s2-tag">بوابة دفع USDT</div>
+      <div class="s2-tag">داشبورد متكامل</div>
+    </div>
+  </div>
+
+  <!-- S3: يجربون (10-16s) -->
+  <div class="scene s3">
+    <div class="s3-title">يجرّبون... وكل مرة <em>نفس المشاكل</em></div>
+    <div class="s3-grid">
+      <div class="s3-card">
+        <div class="ico">💸</div>
+        <h4>برمجة من الصفر</h4>
+        <p>$2,000+ وشهور تطوير!</p>
+        <div class="x-mark">✕</div>
+      </div>
+      <div class="s3-card">
+        <div class="ico">🔌</div>
+        <h4>بدون ربط API</h4>
+        <p>كل طلب يدوي... متعب!</p>
+        <div class="x-mark">✕</div>
+      </div>
+      <div class="s3-card">
+        <div class="ico">🚫</div>
+        <h4>بدون بوابة دفع</h4>
+        <p>لا كريبتو ولا فيزا!</p>
+        <div class="x-mark">✕</div>
+      </div>
+    </div>
+    <div class="s3-bottom">😤 ضيّعت وقتك ومالك على حلول ناقصة!</div>
+  </div>
+
+  <!-- S4: كم ضاع (16-20s) -->
+  <div class="scene s4">
+    <h2>تكلفة البرمجة التقليدية 📈</h2>
+    <div class="s4-counters">
+      <div class="s4-counter">
+        <div class="s4-num" data-target="2000" data-suffix="$+">0</div>
+        <div class="s4-label">💰 تكلفة تطوير سيرفر مخصص</div>
+      </div>
+      <div class="s4-counter">
+        <div class="s4-num" data-target="90" data-suffix=" يوم">0</div>
+        <div class="s4-label">⏰ وقت التطوير من الصفر</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: لحظة! (20-22.5s) -->
+  <div class="scene s5">
+    <div class="s5-flash"></div>
+    <h2>لحظة! ✋</h2>
+    <div class="s5-hand"></div>
+  </div>
+
+  <!-- S6: اكتشف (22.5-27s) -->
+  <div class="scene s6">
+    <div class="s6-sparkle sp-1">✨</div>
+    <div class="s6-sparkle sp-2">✨</div>
+    <div class="s6-sparkle sp-3">✨</div>
+    <div class="s6-small">اكتشف الآن...</div>
+    <div class="s6-logo">NEXIRO-<span>FLUX</span></div>
+    <div class="s6-line"></div>
+    <div class="s6-desc">سيرفرك <em>جاهز في دقائق</em> — بكل المميزات!</div>
+  </div>
+
+  <!-- S6b: Dhru Fusion (27-32s) -->
+  <div class="scene s6b">
+    <div class="s6b-logo"><img src="https://6990ab01681c79fa0bccfe99.imgix.net/ic_logo.svg" alt="Dhru Fusion"></div>
+    <div class="s6b-title">يمكنك الاتصال بجميع سيرفرات<br><em>Dhru Fusion</em></div>
+    <div class="s6b-features">
+      <div class="s6b-feat">
+        <div class="feat-ico">🔗</div>
+        <h4>ربط API مباشر</h4>
+        <p>اتصال فوري بالمصادر</p>
+      </div>
+      <div class="s6b-feat">
+        <div class="feat-ico">⚡</div>
+        <h4>تنفيذ تلقائي</h4>
+        <p>طلبات مباشرة بدون تدخل</p>
+      </div>
+      <div class="s6b-feat">
+        <div class="feat-ico">📦</div>
+        <h4>تقديم طلبات</h4>
+        <p>تفعيل فوري للعملاء</p>
+      </div>
+    </div>
+    <div class="s6b-sub">🚀 تقديم طلبات <em>مباشرة</em> بدون أي تدخل يدوي</div>
+  </div>
+
+  <!-- S7: Screenshot (32-38s) -->
+  <div class="scene s7">
+    <div class="s7-txt">
+      <h2>واجهة أمامية<br><em>احترافية</em> بالكامل</h2>
+      <p>صفحة عرض الخدمات — تصنيفات منظمة<br>طلب تلقائي — عربي وإنجليزي</p>
+    </div>
+    <div class="s7-screen">
+      <img src="https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-14%20194315.png" alt="">
+    </div>
+  </div>
+
+  <!-- S8: الداشبورد + المصادر (33-40s) -->
+  <div class="scene s8">
+    <h2>داشبورد <em>متكامل</em> + ربط مصادر مباشر</h2>
+    <div class="s8-screens">
+      <div class="s8-img"><img src="https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-14%20194436.png" alt="لوحة التحكم"></div>
+      <div class="s8-img"><img src="https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-14%20194541.png" alt="إدارة الخدمات"></div>
+      <div class="s8-img"><img src="https://6990ab01681c79fa0bccfe99.imgix.net/Screenshot%202026-03-14%20194649.png" alt="واجهة الموبايل"></div>
+    </div>
+  </div>
+
+  <!-- S9: المميزات (40-47s) -->
+  <div class="scene s9">
+    <h2>ليش <em>قالب السيرفر</em>؟</h2>
+    <div class="s9-grid">
+      <div class="s9-card"><div class="fi">🔗</div><h4>Dhru Fusion</h4><p>ربط API مباشر</p></div>
+      <div class="s9-card"><div class="fi">💳</div><h4>USDT + Binance</h4><p>بوابة دفع كريبتو مجانية</p></div>
+      <div class="s9-card"><div class="fi">💎</div><h4>Visa / MasterCard</h4><p>دفع بالفيزا مباشر</p></div>
+      <div class="s9-card"><div class="fi">📊</div><h4>داشبورد كامل</h4><p>إدارة طلبات + عملاء</p></div>
+      <div class="s9-card"><div class="fi">⚡</div><h4>تفعيل تلقائي</h4><p>الطلبات تتنفذ فوراً</p></div>
+      <div class="s9-card"><div class="fi">🔒</div><h4>SSL + Backup</h4><p>حماية ونسخ تلقائي</p></div>
+    </div>
+    <div class="s9-check">
+      <div class="s9-check-item">✅ عربي + إنجليزي</div>
+      <div class="s9-check-item">✅ واجهة أمامية كاملة</div>
+      <div class="s9-check-item">✅ لوحة تحكم متكاملة</div>
+    </div>
+  </div>
+
+  <!-- S10: مقارنة (52-58s) -->
+  <div class="scene s10">
+    <h2>الفرق <em>واضح</em></h2>
+    <div class="s10-compare">
+      <div class="s10-col old">
+        <div class="s10-col-title">❌ بدون NEXIRO-FLUX</div>
+        <div class="s10-row"><span class="ico">💸</span> تكلفة $2,000+ للتطوير</div>
+        <div class="s10-row"><span class="ico">⏳</span> 3 شهور انتظار</div>
+        <div class="s10-row"><span class="ico">🔧</span> ربط API يدوي معقد</div>
+        <div class="s10-row"><span class="ico">🚫</span> بدون بوابة دفع</div>
+        <div class="s10-row"><span class="ico">😟</span> صيانة مستمرة مكلفة</div>
+      </div>
+      <div class="s10-vs"><span>VS</span></div>
+      <div class="s10-col new">
+        <div class="s10-col-title">✅ مع NEXIRO-FLUX</div>
+        <div class="s10-row"><span class="ico">💰</span> تبدأ من $10/شهر فقط</div>
+        <div class="s10-row"><span class="ico">⚡</span> جاهز في 5 دقائق</div>
+        <div class="s10-row"><span class="ico">🔗</span> Dhru Fusion جاهز للربط</div>
+        <div class="s10-row"><span class="ico">💳</span> USDT + Visa + Binance</div>
+        <div class="s10-row"><span class="ico">🚀</span> تحديثات مجانية دائمة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S11: CTA (58-67s) -->
+  <div class="scene s11">
+    <div class="s11-sparkle s11-sp1">✨</div>
+    <div class="s11-sparkle s11-sp2">✨</div>
+    <div class="s11-sparkle s11-sp3">✨</div>
+    <div class="s11-small">جاهز تبدأ؟</div>
+    <div class="s11-big">احصل على <em>سيرفرك</em> الآن</div>
+    <div class="s11-offer">
+      <span class="s11-new" style="font-size:28px">التكلفة الشهرية تبدأ من</span>
+      <span class="s11-new">$10</span>
+      <span class="s11-pct">فقط!</span>
+    </div>
+    <button class="s11-btn">أطلق سيرفرك الآن ←</button>
+    <div class="s11-url">nexiroflux.com</div>
+    <div class="s11-badges">
+      <div class="s11-bdg">🔗 Dhru Fusion</div>
+      <div class="s11-bdg">💳 USDT + Visa</div>
+      <div class="s11-bdg">🌐 عربي + EN</div>
+      <div class="s11-bdg">🔒 SSL مجاني</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="info">⏱ إعلان قالب سيرفر سوفت وير — قصة بأسلوب Kinetic Typography — 67 ثانية</div>
+<div class="ctrl-bar">
+  <button class="ctrl rep" onclick="replay()">🔄 إعادة التشغيل</button>
+  <button class="ctrl" onclick="toggleMusic()" id="mBtn">🔇 إيقاف الموسيقى</button>
+</div>
+
+<script>
+// ═══ Background Music (Web Audio API) ═══
+let audioCtx, musicOn = true, gainNode, musicStarted = false;
+
+function createBgMusic() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.4;
+  gainNode.connect(audioCtx.destination);
+
+  // باد ناعم — صوت ambient هادئ بدون حدة
+  function playPad(freq, start, dur, vol = 0.06) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    // فلتر يمنع الترددات العالية المزعجة
+    filter.type = 'lowpass';
+    filter.frequency.value = 800;
+    filter.Q.value = 0.5;
+    // Fade in/out طويل وناعم
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(vol, start + dur * 0.3);
+    g.gain.setValueAtTime(vol, start + dur * 0.7);
+    g.gain.linearRampToValueAtTime(0, start + dur);
+    osc.connect(filter);
+    filter.connect(g);
+    g.connect(gainNode);
+    osc.start(start);
+    osc.stop(start + dur);
+  }
+
+  // نغمة لطيفة خفيفة — مثل بيانو بعيد
+  function playNote(freq, start, dur, vol = 0.04) {
+    const osc = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2.01; // هارمونيك خفيف
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200;
+    filter.Q.value = 0.3;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(vol, start + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(filter);
+    osc2.connect(filter);
+    filter.connect(g);
+    g.connect(gainNode);
+    osc.start(start);
+    osc.stop(start + dur);
+    osc2.start(start);
+    osc2.stop(start + dur);
+  }
+
+  const now = audioCtx.currentTime + 0.1;
+  const totalDur = 72;
+
+  // باد خلفي مستمر — أكورد ناعم يتغير كل 8 ثواني
+  const pads = [
+    [130.8, 164.8, 196.0],  // C3
+    [110.0, 138.6, 164.8],  // A2
+    [116.5, 146.8, 174.6],  // Bb2
+    [98.0, 123.5, 146.8],   // G2
+  ];
+
+  for (let t = 0; t < totalDur; t += 8) {
+    const pad = pads[(t / 8) % pads.length];
+    pad.forEach(f => playPad(f, now + t, 9, 0.07));
+  }
+
+  // ميلودي خفيف — نغمات بيانو هادئة متباعدة
+  const melody = [
+    [0, 523.3, 2.5],  [3, 493.9, 2],   [6, 440.0, 2.5],
+    [9, 392.0, 2],    [12, 349.2, 3],   [16, 440.0, 2],
+    [19, 392.0, 2.5], [22, 523.3, 2],   [25, 493.9, 2.5],
+    [28, 440.0, 2],   [31, 523.3, 3],   [35, 392.0, 2],
+    [38, 349.2, 2.5], [41, 440.0, 2],   [44, 493.9, 2.5],
+    [47, 523.3, 2],   [50, 440.0, 3],   [54, 392.0, 2],
+    [57, 349.2, 2.5], [60, 440.0, 2],   [63, 523.3, 3],
+    [67, 493.9, 2],
+  ];
+
+  melody.forEach(([t, f, d]) => playNote(f, now + t, d, 0.035));
+
+  // تأثير ناعم "شيمر" عند المشاهد المهمة
+  function shimmer(time) {
+    playNote(784.0, now + time, 3, 0.02);
+    playNote(659.3, now + time + 0.3, 2.5, 0.018);
+    playNote(523.3, now + time + 0.6, 2, 0.015);
+  }
+  shimmer(22.5); // اكتشف NEXIRO-FLUX
+  shimmer(27);   // Dhru Fusion
+  shimmer(58);   // CTA
+
+  musicStarted = true;
+}
+
+// محاولة تشغيل الموسيقى
+function startMusic() {
+  if (musicStarted && audioCtx) {
+    // AudioContext موجود لكن معلّق — نفعّله
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return;
+  }
+  createBgMusic();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+try { startMusic(); } catch(e) {}
+// المتصفح يمنع الصوت بدون نقرة — نشغّل عند أول تفاعل
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  document.addEventListener(evt, function once() {
+    startMusic();
+    ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, once));
+  });
+});
+
+function toggleMusic() {
+  musicOn = !musicOn;
+  if (gainNode) gainNode.gain.value = musicOn ? 0.4 : 0;
+  document.getElementById('mBtn').textContent = musicOn ? '🔇 إيقاف الموسيقى' : '🎵 تشغيل الموسيقى';
+}
+
+// ═══ Counter Animations ═══
+function animateCounters() {
+  setTimeout(() => {
+    document.querySelectorAll('.s4-num').forEach(el => {
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let current = 0;
+      const step = Math.ceil(target / 40);
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = current.toLocaleString('en') + suffix;
+      }, 40);
+    });
+  }, 16800);
+}
+animateCounters();
+
+function replay() {
+  const f = document.getElementById('adFrame');
+  const p = document.getElementById('pf');
+  const c = f.cloneNode(true);
+  c.id = 'adFrame';
+  f.parentNode.replaceChild(c, f);
+  p.style.animation = 'none';
+  void p.offsetHeight;
+  p.style.animation = 'prog 67s linear forwards';
+  if (audioCtx) audioCtx.close();
+  musicStarted = false;
+  createBgMusic();
+  animateCounters();
+}
+</script>
+
+</body>
+</html>

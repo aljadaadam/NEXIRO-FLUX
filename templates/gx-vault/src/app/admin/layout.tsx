@@ -52,7 +52,8 @@ export default function GxvAdminLayout({ children }: { children: React.ReactNode
 
     const token = localStorage.getItem('admin_key');
     if (!token) {
-      window.location.href = '/login';
+      const slug = sessionStorage.getItem('gxv_admin_slug') || '';
+      window.location.href = slug ? `/admin?key=${slug}` : '/admin';
     } else {
       setAuthorized(true);
     }

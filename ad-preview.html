@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXIRO-FLUX — إعلان تجريبي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Inter', 'Tajawal', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Ad Container ── */
+    .ad-frame {
+      width: 960px;
+      height: 540px;
+      background: #020617;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 80px rgba(13,148,136,0.15);
+    }
+
+    /* ── Mesh Background ── */
+    .mesh {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(13,148,136,0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(99,102,241,0.12) 0%, transparent 50%);
+      opacity: 0;
+      animation: meshIn 1.5s 0.3s ease forwards;
+    }
+    @keyframes meshIn { to { opacity: 1; } }
+
+    /* ── Grid overlay ── */
+    .grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0;
+      animation: meshIn 2s 0.5s ease forwards;
+    }
+
+    /* ══════════════════════
+       SCENE 1 — Logo Intro
+       ══════════════════════ */
+    .scene-1 {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      animation: sceneShow 0s forwards, sceneHide 0s 3s forwards;
+    }
+    .logo-box {
+      width: 80px; height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 24px;
+      opacity: 0;
+      transform: scale(0) rotate(-180deg);
+      animation: logoSpin 0.8s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes logoSpin {
+      to { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    .logo-text-anim {
+      margin-top: 20px;
+      font-size: 36px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideUp 0.6s 1.2s ease forwards;
+    }
+    .logo-text-anim span { color: #14b8a6; }
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .logo-line {
+      width: 0;
+      height: 2px;
+      background: linear-gradient(to right, #0d9488, #6366f1);
+      margin-top: 16px;
+      animation: lineGrow 0.5s 1.8s ease forwards;
+    }
+    @keyframes lineGrow { to { width: 120px; } }
+
+    /* ══════════════════════
+       SCENE 2 — Problem
+       ══════════════════════ */
+    .scene-2 {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      opacity: 0;
+      animation: sceneIn 0.6s 3.2s ease forwards, sceneHide 0s 7s forwards;
+    }
+    .scene-2 .emoji {
+      font-size: 60px;
+      opacity: 0;
+      transform: scale(0);
+      animation: popIn 0.5s 3.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .scene-2 h2 {
+      font-size: 38px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 24px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideUp 0.6s 4s ease forwards;
+    }
+    .scene-2 h2 em {
+      font-style: normal;
+      color: #f87171;
+      text-decoration: line-through;
+      text-decoration-thickness: 3px;
+    }
+    .scene-2 p {
+      font-size: 18px;
+      color: #94a3b8;
+      margin-top: 12px;
+      opacity: 0;
+      animation: slideUp 0.5s 4.5s ease forwards;
+    }
+    @keyframes popIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ══════════════════════
+       SCENE 3 — Solution (Mockup)
+       ══════════════════════ */
+    .scene-3 {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 0 60px;
+      opacity: 0;
+      animation: sceneIn 0.6s 7.2s ease forwards, sceneHide 0s 11.5s forwards;
+    }
+    .scene-3 .text-side {
+      flex: 1;
+      text-align: right;
+    }
+    .scene-3 h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.3;
+      opacity: 0;
+      transform: translateX(40px);
+      animation: slideLeft 0.6s 7.8s ease forwards;
+    }
+    .scene-3 h2 em { font-style: normal; color: #14b8a6; }
+    .scene-3 p {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-top: 12px;
+      line-height: 1.7;
+      opacity: 0;
+      transform: translateX(40px);
+      animation: slideLeft 0.6s 8.2s ease forwards;
+    }
+    @keyframes slideLeft {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .mockup {
+      width: 380px;
+      height: 260px;
+      background: #0f172a;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-40px) scale(0.9);
+      animation: mockupIn 0.8s 8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      position: relative;
+    }
+    @keyframes mockupIn {
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    .mock-nav {
+      height: 32px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 6px;
+    }
+    .mock-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .mock-dot:nth-child(1) { background: #f87171; }
+    .mock-dot:nth-child(2) { background: #fbbf24; }
+    .mock-dot:nth-child(3) { background: #34d399; }
+    .mock-url {
+      flex: 1;
+      height: 18px;
+      border-radius: 4px;
+      background: #334155;
+      margin-right: 20px;
+    }
+    .mock-body { padding: 16px; }
+    .mock-hero-bar {
+      height: 12px; width: 60%; border-radius: 4px;
+      background: linear-gradient(to right, #14b8a6, #6366f1);
+      margin-bottom: 10px;
+      opacity: 0; transform: scaleX(0); transform-origin: right;
+      animation: barGrow 0.5s 8.8s ease forwards;
+    }
+    .mock-sub-bar {
+      height: 8px; width: 80%; border-radius: 3px;
+      background: #334155; margin-bottom: 8px;
+      opacity: 0; animation: slideUp 0.3s 9s ease forwards;
+    }
+    .mock-sub-bar2 {
+      height: 8px; width: 50%; border-radius: 3px;
+      background: #334155; margin-bottom: 16px;
+      opacity: 0; animation: slideUp 0.3s 9.1s ease forwards;
+    }
+    .mock-cards {
+      display: flex; gap: 8px;
+    }
+    .mock-card {
+      flex: 1;
+      height: 80px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    .mock-card:nth-child(1) { animation: slideUp 0.4s 9.3s ease forwards; }
+    .mock-card:nth-child(2) { animation: slideUp 0.4s 9.5s ease forwards; }
+    .mock-card:nth-child(3) { animation: slideUp 0.4s 9.7s ease forwards; }
+    @keyframes barGrow {
+      to { opacity: 1; transform: scaleX(1); }
+    }
+
+    /* glow pulse on mockup */
+    .mockup::after {
+      content: '';
+      position: absolute; inset: -2px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      z-index: -1;
+      opacity: 0;
+      animation: glowPulse 1.5s 9s ease infinite;
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.35; }
+    }
+
+    /* ══════════════════════
+       SCENE 4 — Features
+       ══════════════════════ */
+    .scene-4 {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      opacity: 0;
+      animation: sceneIn 0.6s 11.7s ease forwards, sceneHide 0s 15.5s forwards;
+    }
+    .feat {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    .feat:nth-child(1) { animation: slideUp 0.5s 12s ease forwards; }
+    .feat:nth-child(2) { animation: slideUp 0.5s 12.4s ease forwards; }
+    .feat:nth-child(3) { animation: slideUp 0.5s 12.8s ease forwards; }
+    .feat-icon {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 14px;
+    }
+    .feat h3 { color: #fff; font-size: 18px; font-weight: 700; }
+    .feat p { color: #94a3b8; font-size: 13px; margin-top: 6px; max-width: 160px; }
+
+    /* ══════════════════════
+       SCENE 5 — CTA Final
+       ══════════════════════ */
+    .scene-5 {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      opacity: 0;
+      animation: sceneIn 0.6s 15.7s ease forwards;
+    }
+    .cta-title {
+      font-size: 44px;
+      font-weight: 900;
+      color: #fff;
+      opacity: 0;
+      transform: scale(0.8);
+      animation: ctaPop 0.7s 16s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .cta-title em { font-style: normal; color: #14b8a6; }
+    @keyframes ctaPop {
+      to { opacity: 1; transform: scale(1); }
+    }
+    .cta-btn {
+      margin-top: 28px;
+      padding: 16px 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideUp 0.5s 16.5s ease forwards, ctaBtnPulse 2s 17s ease infinite;
+      box-shadow: 0 8px 30px rgba(13,148,136,0.3);
+    }
+    @keyframes ctaBtnPulse {
+      0%, 100% { box-shadow: 0 8px 30px rgba(13,148,136,0.3); transform: translateY(0); }
+      50% { box-shadow: 0 12px 40px rgba(13,148,136,0.5); transform: translateY(-3px); }
+    }
+    .cta-url {
+      margin-top: 16px;
+      color: #64748b;
+      font-size: 16px;
+      font-weight: 500;
+      opacity: 0;
+      animation: slideUp 0.4s 17s ease forwards;
+      letter-spacing: 1px;
+    }
+
+    /* ── Scene transitions ── */
+    @keyframes sceneIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes sceneHide {
+      to { opacity: 0; pointer-events: none; }
+    }
+    @keyframes sceneShow {
+      to { opacity: 1; }
+    }
+
+    /* ── Particles ── */
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: #14b8a6;
+      opacity: 0;
+    }
+    .p1 { top: 20%; right: 15%; animation: float 4s 1s ease-in-out infinite; }
+    .p2 { top: 60%; right: 80%; animation: float 5s 2s ease-in-out infinite; background: #6366f1; }
+    .p3 { top: 80%; right: 30%; animation: float 3.5s 0.5s ease-in-out infinite; }
+    .p4 { top: 30%; right: 70%; animation: float 4.5s 1.5s ease-in-out infinite; background: #6366f1; }
+    .p5 { top: 50%; right: 50%; animation: float 3s 3s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+      50% { opacity: 0.6; transform: translateY(-20px) scale(1.5); }
+    }
+
+    /* ── Controls ── */
+    .controls {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+    }
+    .ctrl-btn {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover { background: #334155; }
+    .ctrl-btn.replay {
+      background: #0d9488;
+      border-color: #0d9488;
+    }
+    .ctrl-btn.replay:hover { background: #0f766e; }
+
+    .progress-bar {
+      width: 960px;
+      height: 3px;
+      background: #1e293b;
+      border-radius: 2px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, #0d9488, #6366f1);
+      width: 0%;
+      animation: progressGo 19s linear forwards;
+    }
+    @keyframes progressGo {
+      to { width: 100%; }
+    }
+    .label {
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="ad-frame" id="adFrame">
+  <div class="mesh"></div>
+  <div class="grid-bg"></div>
+
+  <!-- Particles -->
+  <div class="particle p1"></div>
+  <div class="particle p2"></div>
+  <div class="particle p3"></div>
+  <div class="particle p4"></div>
+  <div class="particle p5"></div>
+
+  <!-- Scene 1: Logo -->
+  <div class="scene-1">
+    <div class="logo-box">NF</div>
+    <div class="logo-text-anim">NEXIRO-<span>FLUX</span></div>
+    <div class="logo-line"></div>
+  </div>
+
+  <!-- Scene 2: Problem -->
+  <div class="scene-2">
+    <div class="emoji">😩</div>
+    <h2>تصميم المتاجر <em>صعب ومكلف</em>؟</h2>
+    <p>مبرمج... مصمم... استضافة... وأسابيع انتظار 😤</p>
+  </div>
+
+  <!-- Scene 3: Solution -->
+  <div class="scene-3">
+    <div class="text-side">
+      <h2>مع NEXIRO-FLUX<br>متجرك <em>جاهز في دقائق</em></h2>
+      <p>قوالب احترافية جاهزة، لوحة تحكم متكاملة،<br>ودعم عربي كامل. بدون كود!</p>
+    </div>
+    <div class="mockup">
+      <div class="mock-nav">
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+        <div class="mock-url"></div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-hero-bar"></div>
+        <div class="mock-sub-bar"></div>
+        <div class="mock-sub-bar2"></div>
+        <div class="mock-cards">
+          <div class="mock-card"></div>
+          <div class="mock-card"></div>
+          <div class="mock-card"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 4: Features -->
+  <div class="scene-4">
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(13,148,136,0.15);color:#14b8a6;">⚡</div>
+      <h3>إطلاق فوري</h3>
+      <p>جاهز خلال 5 دقائق</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;">🎨</div>
+      <h3>تصاميم مذهلة</h3>
+      <p>قوالب بمعايير عالمية</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(251,191,36,0.15);color:#fbbf24;">🔒</div>
+      <h3>أمان + نسخ احتياطي</h3>
+      <p>SSL + Backup تلقائي</p>
+    </div>
+  </div>
+
+  <!-- Scene 5: CTA -->
+  <div class="scene-5">
+    <div class="cta-title">ابدأ <em>مجاناً</em> الآن</div>
+    <button class="cta-btn">احجز متجرك ←</button>
+    <div class="cta-url">nexiroflux.com</div>
+  </div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="label">⏱ إعلان تجريبي — 19 ثانية</div>
+
+<div class="controls">
+  <button class="ctrl-btn replay" onclick="replay()">🔄 إعادة التشغيل</button>
+</div>
+
+<script>
+function replay() {
+  const frame = document.getElementById('adFrame');
+  const progress = document.getElementById('progressFill');
+  const clone = frame.cloneNode(true);
+  clone.id = 'adFrame';
+  frame.parentNode.replaceChild(clone, frame);
+  progress.style.animation = 'none';
+  void progress.offsetHeight;
+  progress.style.animation = 'progressGo 19s linear forwards';
+}
+</script>
+
+</body>
+</html>
