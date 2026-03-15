@@ -57,6 +57,7 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) { setError('يرجى ملء جميع الحقول'); return; }
     setLoading(true); setError('');
+    sessionStorage.removeItem('demo_mode');
     try {
       const res = await storeApi.login({ email: loginEmail, password: loginPassword });
       if (res.otpRequired) {
@@ -77,6 +78,7 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
   const handleOtp = async () => {
     if (!otpCode) { setError('أدخل رمز التحقق'); return; }
     setLoading(true); setError('');
+    sessionStorage.removeItem('demo_mode');
     try {
       const res = await storeApi.verifyOtp({ email: otpEmail, code: otpCode });
       localStorage.setItem('auth_token', res.token);
@@ -93,6 +95,7 @@ export default function LoginModal({ isOpen, onClose, onAuth, defaultTab }: Prop
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) { setError('يرجى إدخال بريد إلكتروني صحيح'); return; }
     if (regPassword.length < 8) { setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
     setLoading(true); setError('');
+    sessionStorage.removeItem('demo_mode');
     try {
       const res = await storeApi.register({ name: regName, email: regEmail, password: regPassword, phone: regPhone || undefined });
       localStorage.setItem('auth_token', res.token);
