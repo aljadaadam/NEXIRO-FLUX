@@ -331,7 +331,8 @@ export default function ProductsPage() {
   const loadProducts = async () => {
     try {
       const data = await adminApi.getProducts();
-      const mapped = Array.isArray(data) ? data.map((p: Record<string, unknown>) => mapBackendProduct(p)) : [];
+      const list = Array.isArray(data) ? data : data?.products || [];
+      const mapped = list.map((p: Record<string, unknown>) => mapBackendProduct(p));
       setProducts(mapped);
     } catch {
       setProducts([]);

@@ -16,7 +16,8 @@ export default function CategoriesPage() {
   const loadCategories = async () => {
     try {
       const data = await adminApi.getProducts();
-      const products = Array.isArray(data) ? data.map((p: Record<string, unknown>) => mapBackendProduct(p)) : [];
+      const list = Array.isArray(data) ? data : data?.products || [];
+      const products = list.map((p: Record<string, unknown>) => mapBackendProduct(p));
       // Extract categories from products
       const catMap: Record<string, number> = {};
       products.forEach((p: Product) => {
