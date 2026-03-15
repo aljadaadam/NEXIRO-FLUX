@@ -108,10 +108,10 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-navy-700/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
-          <p className="text-navy-500 text-xs">
-            © متجر ستيلار. جميع الحقوق محفوظة {new Date().getFullYear()}.
+          <p className="text-navy-300 text-xs">
+            © متجر ستيلار. جميع الحقوق محفوظة {new Date().getFullYear()}. صُنع بواسطة <a href="https://nexiroflux.com" target="_blank" rel="noopener noreferrer" className="text-gold-500 hover:text-gold-400 transition-colors">NEXIRO FLUX</a>
           </p>
-          <p className="text-navy-600 text-xs hidden sm:block">
+          <p className="text-navy-400 text-xs hidden sm:block">
             تصميم فاخر لتجارب رقمية مميزة.
           </p>
         </div>
