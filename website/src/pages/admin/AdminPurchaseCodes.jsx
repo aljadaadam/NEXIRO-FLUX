@@ -8,16 +8,18 @@ import { useLanguage } from '../../context/LanguageContext';
 import api from '../../services/api';
 
 const templateOptions = [
-  { id: 'digital-services-store', ar: 'متجر خدمات رقمية', en: 'Digital Services Store' },
-  { id: 'game-topup-store',       ar: 'متجر شحن ألعاب',  en: 'Game Top-Up Store' },
-  { id: 'hardware-tools-store',   ar: 'متجر أدوات صيانة', en: 'Hardware Tools Store' },
-  { id: 'car-dealership-store',   ar: 'معرض سيارات',      en: 'Car Dealership Store' },
-  { id: 'ecommerce-pro',          ar: 'متجر إلكتروني',    en: 'E-Commerce Pro' },
-  { id: 'restaurant-starter',     ar: 'موقع مطعم',        en: 'Restaurant Starter' },
-  { id: 'portfolio-creative',     ar: 'بورتفوليو إبداعي', en: 'Creative Portfolio' },
-  { id: 'saas-dashboard',         ar: 'لوحة تحكم SaaS',   en: 'SaaS Dashboard' },
-  { id: 'landing-starter',        ar: 'صفحة هبوط',        en: 'Marketing Landing' },
-  { id: 'medical-clinic',         ar: 'عيادة طبية',       en: 'Medical Clinic' },
+  { id: 'digital-services-store', ar: 'متجر خدمات رقمية',            en: 'Digital Services Store' },
+  { id: 'game-topup-store',       ar: 'متجر شحن ألعاب',             en: 'Game Top-Up Store' },
+  { id: 'hardware-tools-store',   ar: 'متجر أدوات صيانة',           en: 'Hardware Tools Store' },
+  { id: 'car-dealership-store',   ar: 'معرض سيارات',                en: 'Car Dealership Store' },
+  { id: 'smm-store',              ar: 'متجر خدمات سوشيال ميديا',    en: 'SMM Services Store' },
+  { id: 'stellar-store',          ar: 'متجر ستيلار',                en: 'Stellar Store' },
+  { id: 'ecommerce-pro',          ar: 'متجر إلكتروني',              en: 'E-Commerce Pro' },
+  { id: 'restaurant-starter',     ar: 'موقع مطعم',                  en: 'Restaurant Starter' },
+  { id: 'portfolio-creative',     ar: 'بورتفوليو إبداعي',           en: 'Creative Portfolio' },
+  { id: 'saas-dashboard',         ar: 'لوحة تحكم SaaS',             en: 'SaaS Dashboard' },
+  { id: 'landing-starter',        ar: 'صفحة هبوط',                  en: 'Marketing Landing' },
+  { id: 'medical-clinic',         ar: 'عيادة طبية',                 en: 'Medical Clinic' },
 ];
 
 const discountLabels = {
