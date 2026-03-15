@@ -283,7 +283,7 @@ function ServicesContent() {
           ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filtered.map((product, idx) => {
-              const outOfStock = product.qnt !== undefined && product.qnt <= 0;
+              const outOfStock = product.qnt != null && product.qnt <= 0;
               return (
               <div
                 key={product.id}
