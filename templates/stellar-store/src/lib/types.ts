@@ -34,6 +34,13 @@ export interface DashboardStats {
   totalOrders: number;
   totalRevenue: number;
   totalCustomers: number;
+  pendingOrders?: number;
+  completedOrders?: number;
+  ordersToday?: number;
+  todayRevenue?: number;
+  revenueToday?: number;
+  totalProfit?: number;
+  todayProfit?: number;
 }
 
 export interface Customer {
