@@ -431,30 +431,39 @@ async function provisionSite(req, res) {
       // ─── 5.1 إضافة منتجات افتراضية لقالب stellar-store ───
       if (template_id === 'stellar-store') {
         const defaultProducts = [
-          { name: 'PUBG Mobile 60 UC', arabic_name: 'ببجي موبايل 60 UC', description: 'شحن 60 UC لحساب ببجي موبايل', price: 0.990, category: 'digital-services', group_name: 'ببجي موبايل' },
-          { name: 'PUBG Mobile 325 UC', arabic_name: 'ببجي موبايل 325 UC', description: 'شحن 325 UC لحساب ببجي موبايل', price: 4.990, category: 'digital-services', group_name: 'ببجي موبايل' },
-          { name: 'PUBG Mobile 660 UC', arabic_name: 'ببجي موبايل 660 UC', description: 'شحن 660 UC لحساب ببجي موبايل', price: 9.990, category: 'digital-services', group_name: 'ببجي موبايل' },
-          { name: 'PUBG Mobile 1800 UC', arabic_name: 'ببجي موبايل 1800 UC', description: 'شحن 1800 UC لحساب ببجي موبايل', price: 24.990, category: 'digital-services', group_name: 'ببجي موبايل' },
-          { name: 'Fortnite 1000 V-Bucks', arabic_name: 'فورتنايت 1000 V-Bucks', description: 'شحن 1000 V-Bucks لحساب فورتنايت', price: 7.990, category: 'digital-services', group_name: 'فورتنايت' },
-          { name: 'Fortnite 2800 V-Bucks', arabic_name: 'فورتنايت 2800 V-Bucks', description: 'شحن 2800 V-Bucks لحساب فورتنايت', price: 19.990, category: 'digital-services', group_name: 'فورتنايت' },
-          { name: 'Fortnite 5000 V-Bucks', arabic_name: 'فورتنايت 5000 V-Bucks', description: 'شحن 5000 V-Bucks لحساب فورتنايت', price: 31.990, category: 'digital-services', group_name: 'فورتنايت' },
-          { name: 'Free Fire 100 Diamonds', arabic_name: 'فري فاير 100 جوهرة', description: 'شحن 100 جوهرة لحساب فري فاير', price: 0.990, category: 'digital-services', group_name: 'فري فاير' },
-          { name: 'Free Fire 520 Diamonds', arabic_name: 'فري فاير 520 جوهرة', description: 'شحن 520 جوهرة لحساب فري فاير', price: 4.990, category: 'digital-services', group_name: 'فري فاير' },
-          { name: 'Roblox 400 Robux', arabic_name: 'روبلوكس 400 Robux', description: 'شحن 400 Robux لحساب روبلوكس', price: 4.990, category: 'digital-services', group_name: 'روبلوكس' },
-          { name: 'Roblox 800 Robux', arabic_name: 'روبلوكس 800 Robux', description: 'شحن 800 Robux لحساب روبلوكس', price: 9.990, category: 'digital-services', group_name: 'روبلوكس' },
-          { name: 'Valorant 475 VP', arabic_name: 'فالورانت 475 VP', description: 'شحن 475 VP لحساب فالورانت', price: 4.990, category: 'digital-services', group_name: 'فالورانت' },
-          { name: 'Valorant 1000 VP', arabic_name: 'فالورانت 1000 VP', description: 'شحن 1000 VP لحساب فالورانت', price: 9.990, category: 'digital-services', group_name: 'فالورانت' },
-          { name: 'iTunes $10', arabic_name: 'بطاقة ايتونز 10 دولار', description: 'بطاقة ايتونز بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
-          { name: 'iTunes $25', arabic_name: 'بطاقة ايتونز 25 دولار', description: 'بطاقة ايتونز بقيمة 25 دولار', price: 26.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
-          { name: 'Google Play $10', arabic_name: 'بطاقة قوقل بلاي 10 دولار', description: 'بطاقة قوقل بلاي بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
-          { name: 'PlayStation $10', arabic_name: 'بطاقة بلايستيشن 10 دولار', description: 'بطاقة بلايستيشن ستور بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
-          { name: 'Steam $20', arabic_name: 'بطاقة ستيم 20 دولار', description: 'بطاقة ستيم بقيمة 20 دولار', price: 21.990, category: 'digital-services', group_name: 'بطاقات رقمية' },
+          { name: 'Windows 11 Pro Activation', arabic_name: 'تفعيل ويندوز 11 برو', description: 'تفعيل ويندوز 11 برو مدى الحياة', price: 25000, category: 'digital-services', group_name: 'تفعيلات', image: '/images/windows.png' },
+          { name: 'Office 365 Activation', arabic_name: 'تفعيل أوفيس 365', description: 'تفعيل مايكروسوفت أوفيس 365 مدى الحياة', price: 35000, category: 'digital-services', group_name: 'تفعيلات', image: '/images/office.png' },
+          { name: 'Kaspersky Activation', arabic_name: 'تفعيل كاسبرسكي', description: 'تفعيل كاسبرسكي انتي فايروس سنة كاملة', price: 20000, category: 'digital-services', group_name: 'تفعيلات', image: '/images/default-product.svg' },
+          { name: 'PUBG Mobile 60 UC', arabic_name: 'ببجي موبايل 60 UC', description: 'شحن 60 UC لحساب ببجي موبايل', price: 0.990, category: 'digital-services', group_name: 'ببجي موبايل', image: '/images/pubg.jpg' },
+          { name: 'PUBG Mobile 325 UC', arabic_name: 'ببجي موبايل 325 UC', description: 'شحن 325 UC لحساب ببجي موبايل', price: 4.990, category: 'digital-services', group_name: 'ببجي موبايل', image: '/images/pubg.jpg' },
+          { name: 'PUBG Mobile 660 UC', arabic_name: 'ببجي موبايل 660 UC', description: 'شحن 660 UC لحساب ببجي موبايل', price: 9.990, category: 'digital-services', group_name: 'ببجي موبايل', image: '/images/pubg.jpg' },
+          { name: 'PUBG Mobile 1800 UC', arabic_name: 'ببجي موبايل 1800 UC', description: 'شحن 1800 UC لحساب ببجي موبايل', price: 24.990, category: 'digital-services', group_name: 'ببجي موبايل', image: '/images/pubg.jpg' },
+          { name: 'Fortnite 1000 V-Bucks', arabic_name: 'فورتنايت 1000 V-Bucks', description: 'شحن 1000 V-Bucks لحساب فورتنايت', price: 7.990, category: 'digital-services', group_name: 'فورتنايت', image: '/images/default-product.svg' },
+          { name: 'Fortnite 2800 V-Bucks', arabic_name: 'فورتنايت 2800 V-Bucks', description: 'شحن 2800 V-Bucks لحساب فورتنايت', price: 19.990, category: 'digital-services', group_name: 'فورتنايت', image: '/images/default-product.svg' },
+          { name: 'Fortnite 5000 V-Bucks', arabic_name: 'فورتنايت 5000 V-Bucks', description: 'شحن 5000 V-Bucks لحساب فورتنايت', price: 31.990, category: 'digital-services', group_name: 'فورتنايت', image: '/images/default-product.svg' },
+          { name: 'Free Fire 100 Diamonds', arabic_name: 'فري فاير 100 جوهرة', description: 'شحن 100 جوهرة لحساب فري فاير', price: 0.990, category: 'digital-services', group_name: 'فري فاير', image: '/images/freefire.jpg' },
+          { name: 'Free Fire 520 Diamonds', arabic_name: 'فري فاير 520 جوهرة', description: 'شحن 520 جوهرة لحساب فري فاير', price: 4.990, category: 'digital-services', group_name: 'فري فاير', image: '/images/freefire.jpg' },
+          { name: 'Roblox 400 Robux', arabic_name: 'روبلوكس 400 Robux', description: 'شحن 400 Robux لحساب روبلوكس', price: 4.990, category: 'digital-services', group_name: 'روبلوكس', image: '/images/default-product.svg' },
+          { name: 'Roblox 800 Robux', arabic_name: 'روبلوكس 800 Robux', description: 'شحن 800 Robux لحساب روبلوكس', price: 9.990, category: 'digital-services', group_name: 'روبلوكس', image: '/images/default-product.svg' },
+          { name: 'Valorant 475 VP', arabic_name: 'فالورانت 475 VP', description: 'شحن 475 VP لحساب فالورانت', price: 4.990, category: 'digital-services', group_name: 'فالورانت', image: '/images/default-product.svg' },
+          { name: 'Valorant 1000 VP', arabic_name: 'فالورانت 1000 VP', description: 'شحن 1000 VP لحساب فالورانت', price: 9.990, category: 'digital-services', group_name: 'فالورانت', image: '/images/default-product.svg' },
+          { name: 'iTunes $10', arabic_name: 'بطاقة ايتونز 10 دولار', description: 'بطاقة ايتونز بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية', image: '/images/default-product.svg' },
+          { name: 'iTunes $25', arabic_name: 'بطاقة ايتونز 25 دولار', description: 'بطاقة ايتونز بقيمة 25 دولار', price: 26.990, category: 'digital-services', group_name: 'بطاقات رقمية', image: '/images/default-product.svg' },
+          { name: 'Google Play $10', arabic_name: 'بطاقة قوقل بلاي 10 دولار', description: 'بطاقة قوقل بلاي بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية', image: '/images/default-product.svg' },
+          { name: 'PlayStation $10', arabic_name: 'بطاقة بلايستيشن 10 دولار', description: 'بطاقة بلايستيشن ستور بقيمة 10 دولار', price: 10.990, category: 'digital-services', group_name: 'بطاقات رقمية', image: '/images/playstation.jpg' },
+          { name: 'Steam $20', arabic_name: 'بطاقة ستيم 20 دولار', description: 'بطاقة ستيم بقيمة 20 دولار', price: 21.990, category: 'digital-services', group_name: 'بطاقات رقمية', image: '/images/default-product.svg' },
+          { name: 'beIN Monthly', arabic_name: 'اشتراك beIN شهري', description: 'اشتراك beIN Sports شهري', price: 45000, category: 'digital-services', group_name: 'beIN Sports', image: '/images/bein.jpg' },
+          { name: 'beIN Yearly', arabic_name: 'اشتراك beIN سنوي', description: 'اشتراك beIN Sports سنوي', price: 380000, category: 'digital-services', group_name: 'beIN Sports', image: '/images/bein.jpg' },
+          { name: 'Starlink Yemen', arabic_name: 'ستارلينك اليمن', description: 'خدمة ستارلينك للإنترنت - اليمن', price: 380000, category: 'digital-services', group_name: 'ستارلينك', image: '/images/starlink-default.png' },
+          { name: 'Starlink Nigeria', arabic_name: 'ستارلينك نيجيريا', description: 'خدمة ستارلينك للإنترنت - نيجيريا', price: 150000, category: 'digital-services', group_name: 'ستارلينك', image: '/images/starlink-default.png' },
+          { name: 'Netflix Monthly', arabic_name: 'نتفلكس شهر', description: 'اشتراك نتفلكس شهري', price: 12000, category: 'digital-services', group_name: 'اشتراكات', image: '/images/netflix.jpg' },
+          { name: 'Spotify Premium', arabic_name: 'سبوتيفاي بريميوم', description: 'اشتراك سبوتيفاي بريميوم شهري', price: 8000, category: 'digital-services', group_name: 'اشتراكات', image: '/images/spotify.jpg' },
         ];
         for (const p of defaultProducts) {
           await connection.query(
-            `INSERT INTO products (site_key, name, arabic_name, description, price, service_type, category, status, group_name)
-             VALUES (?, ?, ?, ?, ?, 'SERVER', ?, 'active', ?)`,
-            [site_key, p.name, p.arabic_name, p.description, p.price, p.category, p.group_name]
+            `INSERT INTO products (site_key, name, arabic_name, description, price, service_type, category, status, group_name, image)
+             VALUES (?, ?, ?, ?, ?, 'SERVER', ?, 'active', ?, ?)`,
+            [site_key, p.name, p.arabic_name, p.description, p.price, p.category, p.group_name, p.image]
           );
         }
       }
