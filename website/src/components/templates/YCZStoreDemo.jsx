@@ -61,12 +61,12 @@ export default function YCZStoreDemo() {
 
   return (
     <>
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back */}
         <Link
           to="/templates"
-          className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group tpl-entrance tpl-d1"
+          className="inline-flex items-center gap-2 text-dark-500 hover:text-dark-800 mb-8 transition-colors group tpl-entrance tpl-d1"
         >
           <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للقوالب' : 'Back to Templates'}
@@ -75,20 +75,20 @@ export default function YCZStoreDemo() {
         {/* Hero Section */}
         <div className="mb-12 tpl-entrance tpl-d2">
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">
+            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-200">
               {isRTL ? '⭐ جديد' : '⭐ New'}
             </span>
-            <span className="px-3 py-1 rounded-full bg-primary-500/10 text-primary-400 text-xs font-bold border border-primary-500/20">
+            <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-bold border border-primary-200">
               Next.js 15
             </span>
-            <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-bold border border-yellow-500/20">
+            <span className="px-3 py-1 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-200">
               {isRTL ? '🔥 الأكثر مبيعاً' : '🔥 Best Seller'}
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white mb-3">
+          <h1 className="text-4xl md:text-5xl font-display font-black text-dark-800 mb-3">
             {isRTL ? 'متجر خدمات رقمية' : 'Digital Services Store'}
           </h1>
-          <p className="text-dark-400 text-lg max-w-2xl">
+          <p className="text-dark-500 text-lg max-w-2xl">
             {isRTL 
               ? 'قالب متجر إلكتروني احترافي متكامل مبني بتقنية Next.js 15 — مصمم خصيصاً للمتاجر العربية مع لوحة تحكم كاملة.'
               : 'A complete professional e-commerce template built with Next.js 15 — designed for Arabic stores with full admin dashboard.'
@@ -107,25 +107,25 @@ export default function YCZStoreDemo() {
                 href="/demo/ycz-store"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-primary-500/50 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center">
                       <Globe className="w-6 h-6 text-white" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-dark-500 group-hover:text-primary-400 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
+                    <ArrowUpRight className="w-5 h-5 text-dark-400 group-hover:text-primary-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">
+                  <h3 className="text-lg font-bold text-dark-800 mb-1">
                     {isRTL ? 'تصفّح المتجر' : 'Browse Store'}
                   </h3>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {isRTL ? 'جرّب المتجر بالكامل كما يراه الزبون — تصفح، طلبات، محفظة' : 'Experience the full store as a customer — browse, order, wallet'}
                   </p>
                   <div className="mt-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-emerald-400 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-emerald-600 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
                   </div>
                 </div>
               </a>
@@ -135,36 +135,36 @@ export default function YCZStoreDemo() {
                 href="/demo/ycz-dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-blue-500/50 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-500 flex items-center justify-center">
                       <BarChart3 className="w-6 h-6 text-white" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-dark-500 group-hover:text-blue-400 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
+                    <ArrowUpRight className="w-5 h-5 text-dark-400 group-hover:text-blue-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">
+                  <h3 className="text-lg font-bold text-dark-800 mb-1">
                     {isRTL ? 'تصفّح لوحة التحكم' : 'Browse Dashboard'}
                   </h3>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {isRTL ? 'لوحة إدارية كاملة — منتجات، طلبات، مستخدمين، إحصائيات' : 'Full admin panel — products, orders, users, analytics'}
                   </p>
                   <div className="mt-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                    <span className="text-blue-400 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
+                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-blue-600 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
                   </div>
                 </div>
               </a>
             </div>
 
             {/* What's Included */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d4">
-              <h3 className="text-xl font-bold text-white mb-2">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d4">
+              <h3 className="text-xl font-bold text-dark-800 mb-2">
                 {isRTL ? 'ماذا يتضمن القالب؟' : "What's Included?"}
               </h3>
-              <p className="text-dark-400 text-sm mb-6">
+              <p className="text-dark-500 text-sm mb-6">
                 {isRTL ? 'كل ما تحتاجه لإطلاق متجرك الرقمي الاحترافي' : 'Everything you need to launch your professional digital store'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -182,22 +182,22 @@ export default function YCZStoreDemo() {
                   { icon: '📢', name: isRTL ? 'الإعلانات' : 'Announcements' },
                   { icon: '⚙️', name: isRTL ? 'إعدادات الدفع' : 'Payment Settings' },
                 ].map((page, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 border border-white/5">
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                     <span className="text-lg">{page.icon}</span>
-                    <span className="text-dark-300 text-sm">{page.name}</span>
+                    <span className="text-dark-600 text-sm font-medium">{page.name}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Tech Stack */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d5">
-              <h3 className="text-xl font-bold text-white mb-4">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d5">
+              <h3 className="text-xl font-bold text-dark-800 mb-4">
                 {isRTL ? 'التقنيات المستخدمة' : 'Tech Stack'}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {['Next.js 15', 'React 19', 'TypeScript', 'Prisma ORM', 'PostgreSQL', 'NextAuth.js', 'CSS Custom'].map(tech => (
-                  <span key={tech} className="px-4 py-2 rounded-xl bg-dark-800 text-dark-300 text-sm font-medium border border-white/5">
+                  <span key={tech} className="px-4 py-2 rounded-xl bg-gray-50 text-dark-600 text-sm font-medium border border-gray-200">
                     {tech}
                   </span>
                 ))}
@@ -205,11 +205,11 @@ export default function YCZStoreDemo() {
             </div>
 
             {/* Description */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d6">
-              <h3 className="text-xl font-bold text-white mb-4">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d6">
+              <h3 className="text-xl font-bold text-dark-800 mb-4">
                 {isRTL ? 'وصف القالب' : 'Template Description'}
               </h3>
-              <p className="text-dark-300 leading-relaxed text-lg">
+              <p className="text-dark-500 leading-relaxed text-lg">
                 {isRTL 
                   ? 'قالب متجر إلكتروني احترافي متكامل مبني بتقنية Next.js 15 مع TypeScript. مصمم خصيصاً للمتاجر العربية مع دعم كامل للـ RTL. يتضمن نظام طلبات، محفظة إلكترونية، بوابات دفع متعددة (Binance, PayPal, تحويل بنكي)، لوحة تحكم إدارية متقدمة، ونظام دعم فني بالتذاكر.'
                   : 'A complete professional e-commerce template built with Next.js 15 and TypeScript. Designed specifically for Arabic stores with full RTL support. Includes order system, e-wallet, multiple payment gateways (Binance, PayPal, Bank Transfer), advanced admin dashboard, and support ticket system.'
@@ -222,13 +222,13 @@ export default function YCZStoreDemo() {
           <div className="lg:col-span-1 tpl-entrance tpl-d4">
             <div className="sticky top-28 space-y-6">
               {/* Pricing Card */}
-              <div className="glass p-6 rounded-2xl border border-white/10">
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
                 {/* Price Display */}
                 <div className="text-center mb-6">
-                  <div className="text-5xl font-display font-black text-white mb-1">
+                  <div className="text-5xl font-display font-black text-dark-800 mb-1">
                     ${prices[billingCycle].price}
                   </div>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {prices[billingCycle].label}
                     {billingCycle === 'lifetime' && (isRTL ? ' — دفعة واحدة' : ' — one-time')}
                     {billingCycle !== 'lifetime' && prices[billingCycle].suffix}
@@ -243,24 +243,24 @@ export default function YCZStoreDemo() {
                       onClick={() => setBillingCycle(key)}
                       className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                         billingCycle === key
-                          ? 'border-primary-500 bg-primary-500/10 shadow-lg shadow-primary-500/5'
-                          : 'border-white/5 hover:border-white/10'
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          billingCycle === key ? 'border-primary-500 bg-primary-500' : 'border-dark-500'
+                          billingCycle === key ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
                         }`}>
                           {billingCycle === key && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
-                        <span className="text-white font-medium text-sm">{data.label}</span>
+                        <span className="text-dark-700 font-medium text-sm">{data.label}</span>
                         {data.save && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-200">
                             {data.save}
                           </span>
                         )}
                       </div>
-                      <span className="font-display font-bold text-white text-sm">
+                      <span className="font-display font-bold text-dark-800 text-sm">
                         ${data.price}
                       </span>
                     </button>
@@ -281,7 +281,7 @@ export default function YCZStoreDemo() {
                 {/* Reservation Button */}
                 <button
                   onClick={() => setShowReservation(true)}
-                  className="w-full py-3 rounded-xl border-2 border-primary-500/30 hover:border-primary-500/60 text-primary-400 hover:text-primary-300 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
+                  className="w-full py-3 rounded-xl border-2 border-primary-500 hover:border-primary-600 text-primary-600 hover:text-primary-700 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <CalendarCheck className="w-4 h-4" />
@@ -290,7 +290,7 @@ export default function YCZStoreDemo() {
                 </button>
 
                 {/* Trust Badges */}
-                <div className="mt-4 flex items-center justify-center gap-4 text-dark-500 text-xs">
+                <div className="mt-4 flex items-center justify-center gap-4 text-dark-400 text-xs">
                   <span className="flex items-center gap-1">
                     <Shield className="w-3.5 h-3.5" />
                     {isRTL ? 'دفع آمن' : 'Secure'}
@@ -307,9 +307,9 @@ export default function YCZStoreDemo() {
               </div>
 
               {/* What You Get */}
-              <div className="glass p-6 rounded-2xl">
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <BadgeCheck className="w-4 h-4 text-primary-400" />
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="text-sm font-bold text-dark-800 mb-4 flex items-center gap-2">
+                  <BadgeCheck className="w-4 h-4 text-primary-500" />
                   {isRTL ? 'يشمل الباقة' : 'Package Includes'}
                 </h3>
                 <ul className="space-y-2.5">
@@ -321,8 +321,8 @@ export default function YCZStoreDemo() {
                     isRTL ? 'لوحة تحكم إدارية' : 'Admin Dashboard',
                     isRTL ? 'شهادة SSL مجانية' : 'Free SSL Certificate',
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-dark-300">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <li key={i} className="flex items-center gap-2.5 text-dark-600">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                       <span className="text-sm">{item}</span>
                     </li>
                   ))}
@@ -330,17 +330,17 @@ export default function YCZStoreDemo() {
               </div>
 
               {/* Features */}
-              <div className="glass p-6 rounded-2xl">
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary-400" />
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="text-sm font-bold text-dark-800 mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary-500" />
                   {isRTL ? 'المميزات الرئيسية' : 'Key Features'}
                 </h3>
                 <ul className="space-y-2.5">
                   {features.map((feature, i) => {
                     const Icon = feature.icon;
                     return (
-                      <li key={i} className="flex items-center gap-2.5 text-dark-300">
-                        <Icon className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                      <li key={i} className="flex items-center gap-2.5 text-dark-600">
+                        <Icon className="w-4 h-4 text-primary-500 flex-shrink-0" />
                         <span className="text-sm">{feature.label}</span>
                       </li>
                     );
@@ -349,13 +349,13 @@ export default function YCZStoreDemo() {
               </div>
 
               {/* Rating */}
-              <div className="glass p-5 rounded-2xl text-center">
+              <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-dark-400 text-sm">
+                <p className="text-dark-500 text-sm">
                   {isRTL ? '4.9 من 5 — 127 تقييم' : '4.9 out of 5 — 127 reviews'}
                 </p>
               </div>

@@ -37,7 +37,7 @@ export default function Footer() {
 
   return (
     <>
-    <footer className="relative bg-dark-950 border-t border-white/5">
+    <footer className="relative bg-gray-900">
       {/* Gradient top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
 
@@ -47,16 +47,16 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-display font-bold">
                 <span className="text-white">NEXIRO</span>
                 <span className="text-primary-400">-</span>
-                <span className="gradient-text">FLUX</span>
+                <span className="text-primary-300">FLUX</span>
               </span>
             </Link>
-            <p className="text-dark-400 text-sm leading-relaxed mb-6 max-w-xs">
+            <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-xs">
               {t('footer.description')}
             </p>
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export default function Footer() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-500/20 border border-white/5 hover:border-primary-500/30 flex items-center justify-center text-dark-400 hover:text-primary-400 transition-all duration-300"
+                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/30 flex items-center justify-center text-gray-400 hover:text-primary-400 transition-all duration-300"
                   aria-label={Icon.displayName || 'رابط اجتماعي'}
                 >
                   <Icon className="w-4 h-4" />
@@ -92,21 +92,21 @@ export default function Footer() {
                     {link.to.startsWith('mailto:') ? (
                       <a
                         href={link.to}
-                        className="text-dark-400 hover:text-primary-400 text-sm transition-colors duration-300"
+                        className="text-gray-400 hover:text-primary-400 text-sm transition-colors duration-300"
                       >
                         {link.label}
                       </a>
                     ) : link.action ? (
                       <button
                         onClick={link.action}
-                        className="text-dark-400 hover:text-primary-400 text-sm transition-colors duration-300"
+                        className="text-gray-400 hover:text-primary-400 text-sm transition-colors duration-300"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <Link
                         to={link.to}
-                        className="text-dark-400 hover:text-primary-400 text-sm transition-colors duration-300"
+                        className="text-gray-400 hover:text-primary-400 text-sm transition-colors duration-300"
                       >
                         {link.label}
                       </Link>
@@ -119,12 +119,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="py-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-dark-500 text-sm">
+        <div className="py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-gray-500 text-sm">
             © {new Date().getFullYear()} NEXIRO-FLUX. {t('footer.rights')}.
           </p>
           <div className="flex items-center gap-6">
-            <a href="mailto:info@nexiro-flux.com" className="flex items-center gap-2 text-dark-500 hover:text-dark-300 text-sm transition-colors">
+            <a href="mailto:info@nexiro-flux.com" className="flex items-center gap-2 text-gray-500 hover:text-gray-300 text-sm transition-colors">
               <Mail className="w-3.5 h-3.5" />
               info@nexiro-flux.com
             </a>

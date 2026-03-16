@@ -96,22 +96,21 @@ export default function TutorialsSection() {
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
-    <section id="tutorials" className="section-padding relative overflow-hidden" ref={ref}>
+    <section id="tutorials" className="section-padding relative overflow-hidden bg-white" ref={ref}>
       {/* Background decorations */}
-      <div className="absolute inset-0 bg-dark-900/50" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-50/50 rounded-full blur-3xl" />
 
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <div className={`text-center mb-16 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-300 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 border border-primary-200 text-primary-600 text-sm font-medium mb-6">
             <BookOpen className="w-4 h-4" />
             {t('tutorials.badge')}
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black mb-6">
-            <span className="text-white">{t('tutorials.title')}</span>
+            <span className="text-dark-800">{t('tutorials.title')}</span>
           </h2>
-          <p className="text-dark-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-dark-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
             {t('tutorials.subtitle')}
           </p>
         </div>
@@ -124,27 +123,24 @@ export default function TutorialsSection() {
               <Link
                 to={`/tutorials/${tutorial.slug}`}
                 key={i}
-                className={`group relative glass p-8 card-hover transition-all duration-700 cursor-pointer block ${
+                className={`group relative bg-white p-8 rounded-2xl border border-gray-100 shadow-sm card-hover transition-all duration-700 cursor-pointer block ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
                 style={{ transitionDelay: `${(i + 2) * 120}ms` }}
               >
-                {/* Glow effect on hover */}
-                <div className={`absolute inset-0 rounded-2xl ${tutorial.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
                 <div className="relative z-10">
                   {/* Top Row: Icon + Read Time */}
                   <div className="flex items-center justify-between mb-6">
                     <div className={`w-14 h-14 rounded-2xl ${tutorial.bg} border ${tutorial.border} flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
                       <Icon className="w-7 h-7" style={{ color: tutorial.iconColor }} />
                     </div>
-                    <span className="text-xs text-dark-400 bg-dark-800/50 px-3 py-1 rounded-full">
+                    <span className="text-xs text-dark-400 bg-gray-100 px-3 py-1 rounded-full">
                       {tutorial.readTime}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary-300 transition-colors leading-tight">
+                  <h3 className="text-xl font-bold text-dark-800 mb-3 group-hover:text-primary-600 transition-colors leading-tight">
                     {tutorial.title}
                   </h3>
 
@@ -158,7 +154,7 @@ export default function TutorialsSection() {
                     {(tutorial.tags || '').split(',').map((tag, j) => (
                       <span
                         key={j}
-                        className={`text-xs px-2.5 py-1 rounded-full ${tutorial.bg} ${tutorial.border} border text-dark-200`}
+                        className={`text-xs px-2.5 py-1 rounded-full ${tutorial.bg} ${tutorial.border} border text-dark-600`}
                       >
                         {tag.trim()}
                       </span>
@@ -166,7 +162,7 @@ export default function TutorialsSection() {
                   </div>
 
                   {/* Read More */}
-                  <div className="flex items-center gap-2 text-primary-400 text-sm font-medium group-hover:gap-3 transition-all">
+                  <div className="flex items-center gap-2 text-primary-500 text-sm font-medium group-hover:gap-3 transition-all">
                     <span>{t('tutorials.readMore')}</span>
                     <Arrow className="w-4 h-4" />
                   </div>
@@ -177,12 +173,12 @@ export default function TutorialsSection() {
         </div>
 
         {/* SEO Rich Content Block */}
-        <div className={`glass p-8 md:p-12 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '900ms' }}>
+        <div className={`bg-white p-8 md:p-12 rounded-2xl border border-gray-100 shadow-sm transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '900ms' }}>
           <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-6">
+            <h3 className="text-2xl md:text-3xl font-bold text-dark-800 mb-6">
               {t('tutorials.seoTitle')}
             </h3>
-            <p className="text-dark-300 text-base md:text-lg leading-relaxed mb-4">
+            <p className="text-dark-500 text-base md:text-lg leading-relaxed mb-4">
               {t('tutorials.seoText1')}
             </p>
             <p className="text-dark-400 text-sm md:text-base leading-relaxed">

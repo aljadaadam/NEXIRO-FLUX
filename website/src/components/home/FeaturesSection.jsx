@@ -69,16 +69,14 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section id="features" className="section-padding relative" ref={ref}>
-      <div className="absolute inset-0 bg-dark-900/50" />
-      
+    <section id="features" className="section-padding relative bg-gray-50" ref={ref}>
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <div className={`text-center mb-20 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black mb-6">
-            <span className="text-white">{t('features.title')}</span>
+            <span className="text-dark-800">{t('features.title')}</span>
           </h2>
-          <p className="text-dark-300 text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="text-dark-400 text-lg md:text-xl max-w-2xl mx-auto">
             {t('features.subtitle')}
           </p>
         </div>
@@ -90,22 +88,18 @@ export default function FeaturesSection() {
             return (
               <div
                 key={i}
-                className={`group relative glass p-8 card-hover transition-all duration-700 ${
+                className={`group relative bg-white p-8 rounded-2xl border border-gray-100 shadow-sm card-hover transition-all duration-700 ${
                   visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
                 style={{ transitionDelay: `${(i + 2) * 100}ms` }}
               >
-                {/* Glow effect on hover */}
-                <div className={`absolute inset-0 rounded-2xl ${feature.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
                 <div className="relative z-10">
                   {/* Icon */}
                   <div className={`w-14 h-14 rounded-2xl ${feature.bg} border ${feature.border} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500`}>
-                    <Icon className={`w-7 h-7 bg-gradient-to-br ${feature.color} bg-clip-text`} style={{ color: 'transparent', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }} />
-                    <Icon className={`w-7 h-7 absolute`} style={{ color: feature.color.includes('yellow') ? '#facc15' : feature.color.includes('pink') ? '#f472b6' : feature.color.includes('green') ? '#4ade80' : feature.color.includes('blue') ? '#60a5fa' : feature.color.includes('cyan') ? '#22d3ee' : '#a78bfa' }} />
+                    <Icon className="w-7 h-7" style={{ color: feature.color.includes('yellow') ? '#f59e0b' : feature.color.includes('pink') ? '#ec4899' : feature.color.includes('green') ? '#10b981' : feature.color.includes('blue') ? '#3b82f6' : feature.color.includes('cyan') ? '#06b6d4' : '#8b5cf6' }} />
                   </div>
 
-                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary-300 transition-colors">
+                  <h3 className="text-xl font-bold text-dark-800 mb-3 group-hover:text-primary-600 transition-colors">
                     {feature.title}
                   </h3>
                   <p className="text-dark-400 leading-relaxed text-sm">

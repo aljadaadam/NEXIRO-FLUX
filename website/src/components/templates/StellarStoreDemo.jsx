@@ -72,12 +72,12 @@ export default function StellarStoreDemo() {
 
   return (
     <>
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen pt-24 pb-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back */}
         <Link
           to="/templates"
-          className="inline-flex items-center gap-2 text-dark-400 hover:text-white mb-8 transition-colors group tpl-entrance tpl-d1"
+          className="inline-flex items-center gap-2 text-dark-500 hover:text-dark-800 mb-8 transition-colors group tpl-entrance tpl-d1"
         >
           <ChevronLeft className="w-5 h-5 rtl:rotate-180 group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
           {isRTL ? 'العودة للقوالب' : 'Back to Templates'}
@@ -86,20 +86,20 @@ export default function StellarStoreDemo() {
         {/* Hero Section */}
         <div className="mb-12 tpl-entrance tpl-d2">
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
+            <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-bold border border-amber-200">
               🏪 {isRTL ? 'جديد' : 'New'}
             </span>
-            <span className="px-3 py-1 rounded-full bg-primary-500/10 text-primary-400 text-xs font-bold border border-primary-500/20">
+            <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-bold border border-primary-200">
               Next.js 15
             </span>
-            <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-bold border border-yellow-500/20">
+            <span className="px-3 py-1 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-200">
               {isRTL ? '🔑 تفعيلات وألعاب' : '🔑 Activations & Games'}
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white mb-3">
+          <h1 className="text-4xl md:text-5xl font-display font-black text-dark-800 mb-3">
             {isRTL ? 'متجر ستيلار' : 'Stellar Store'}
           </h1>
-          <p className="text-dark-400 text-lg max-w-2xl">
+          <p className="text-dark-500 text-lg max-w-2xl">
             {isRTL 
               ? 'قالب متجر خدمات رقمية احترافي لبيع التفعيلات والاشتراكات والألعاب وخدمات beIN و ستارلينك — مع مركز ألعاب ونظام طلبات فوري ولوحة تحكم شاملة.'
               : 'Professional digital services store template for selling activations, subscriptions, games, beIN & Starlink services — with game center, instant orders, and full admin dashboard.'
@@ -118,25 +118,25 @@ export default function StellarStoreDemo() {
                 href="/demo/stellar-store"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-amber-500/50 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:shadow-lg hover:border-amber-500/50 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 to-yellow-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-yellow-50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
                       <Globe className="w-6 h-6 text-white" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-dark-500 group-hover:text-amber-400 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
+                    <ArrowUpRight className="w-5 h-5 text-dark-400 group-hover:text-amber-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">
+                  <h3 className="text-lg font-bold text-dark-800 mb-1">
                     {isRTL ? 'تصفّح المتجر' : 'Browse Store'}
                   </h3>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {isRTL ? 'جرّب المتجر بالكامل — تصفح التفعيلات، الألعاب، خدمات beIN' : 'Experience the full store — browse activations, games, beIN services'}
                   </p>
                   <div className="mt-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-emerald-400 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-emerald-600 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
                   </div>
                 </div>
               </a>
@@ -146,54 +146,54 @@ export default function StellarStoreDemo() {
                 href="/demo/stellar-dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-yellow-500/50 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:shadow-lg hover:border-yellow-500/50 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
                       <BarChart3 className="w-6 h-6 text-white" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-dark-500 group-hover:text-yellow-400 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
+                    <ArrowUpRight className="w-5 h-5 text-dark-400 group-hover:text-yellow-500 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">
+                  <h3 className="text-lg font-bold text-dark-800 mb-1">
                     {isRTL ? 'تصفّح لوحة التحكم' : 'Browse Dashboard'}
                   </h3>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {isRTL ? 'لوحة إدارية شاملة — منتجات، طلبات، مستخدمين، إحصائيات' : 'Full admin panel — products, orders, users, analytics'}
                   </p>
                   <div className="mt-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                    <span className="text-yellow-400 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
+                    <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                    <span className="text-yellow-600 text-xs font-medium">{isRTL ? 'ديمو حي' : 'Live Demo'}</span>
                   </div>
                 </div>
               </a>
             </div>
 
             {/* Service Categories */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d4">
-              <h3 className="text-xl font-bold text-white mb-2">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d4">
+              <h3 className="text-xl font-bold text-dark-800 mb-2">
                 {isRTL ? 'أقسام الخدمات' : 'Service Categories'}
               </h3>
-              <p className="text-dark-400 text-sm mb-6">
+              <p className="text-dark-500 text-sm mb-6">
                 {isRTL ? 'تفعيلات، ألعاب، اشتراكات، بطاقات شحن والمزيد' : 'Activations, games, subscriptions, top-up cards & more'}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {serviceCategories.map((cat, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-dark-800/50 border border-white/5 hover:border-amber-500/30 transition-all group">
+                  <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-amber-500/30 transition-all group">
                     <span className="text-2xl">{cat.icon}</span>
-                    <span className="text-dark-300 text-sm font-medium group-hover:text-white transition-colors">{cat.name}</span>
+                    <span className="text-dark-600 text-sm font-medium group-hover:text-dark-800 transition-colors">{cat.name}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* What's Included */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d5">
-              <h3 className="text-xl font-bold text-white mb-2">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d5">
+              <h3 className="text-xl font-bold text-dark-800 mb-2">
                 {isRTL ? 'ماذا يتضمن القالب؟' : "What's Included?"}
               </h3>
-              <p className="text-dark-400 text-sm mb-6">
+              <p className="text-dark-500 text-sm mb-6">
                 {isRTL ? 'كل ما تحتاجه لإطلاق متجر خدمات رقمية متكامل' : 'Everything you need to launch your digital services store'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -215,22 +215,22 @@ export default function StellarStoreDemo() {
                   { icon: '🎨', name: isRTL ? 'تخصيص المتجر' : 'Store Customization' },
                   { icon: '⚙️', name: isRTL ? 'إعدادات الدفع' : 'Payment Settings' },
                 ].map((page, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 border border-white/5">
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                     <span className="text-lg">{page.icon}</span>
-                    <span className="text-dark-300 text-sm">{page.name}</span>
+                    <span className="text-dark-600 text-sm">{page.name}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Tech Stack */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d6">
-              <h3 className="text-xl font-bold text-white mb-4">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d6">
+              <h3 className="text-xl font-bold text-dark-800 mb-4">
                 {isRTL ? 'التقنيات المستخدمة' : 'Tech Stack'}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {['Next.js 15', 'React 19', 'TypeScript', 'Tailwind CSS', 'Framer Motion', 'REST API', 'RTL Support'].map(tech => (
-                  <span key={tech} className="px-4 py-2 rounded-xl bg-dark-800 text-dark-300 text-sm font-medium border border-white/5">
+                  <span key={tech} className="px-4 py-2 rounded-xl bg-gray-50 text-dark-600 text-sm font-medium border border-gray-200">
                     {tech}
                   </span>
                 ))}
@@ -238,11 +238,11 @@ export default function StellarStoreDemo() {
             </div>
 
             {/* Description */}
-            <div className="glass p-8 rounded-2xl tpl-entrance tpl-d7">
-              <h3 className="text-xl font-bold text-white mb-4">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm tpl-entrance tpl-d7">
+              <h3 className="text-xl font-bold text-dark-800 mb-4">
                 {isRTL ? 'وصف القالب' : 'Template Description'}
               </h3>
-              <p className="text-dark-300 leading-relaxed text-lg">
+              <p className="text-dark-500 leading-relaxed text-lg">
                 {isRTL 
                   ? 'قالب متجر ستيلار هو قالب خدمات رقمية متكامل مبني بتقنية Next.js 15 مع TypeScript. مصمم لبيع التفعيلات والاشتراكات الرقمية والألعاب وخدمات beIN Sports و ستارلينك. يتميز بتصميم داكن احترافي مع ألوان ذهبية (Amber) وتجربة مستخدم سلسة. يتضمن مركز ألعاب متكامل، نظام طلبات فوري، محفظة إلكترونية، لوحة تحكم إدارية شاملة، وبوابات دفع متعددة.'
                   : 'Stellar Store is a complete digital services template built with Next.js 15 and TypeScript. Designed for selling digital activations, subscriptions, games, beIN Sports & Starlink services. Features a professional dark design with golden (Amber) accents and smooth UX. Includes a full game center, instant order system, e-wallet, comprehensive admin dashboard, and multiple payment gateways.'
@@ -255,12 +255,12 @@ export default function StellarStoreDemo() {
           <div className="lg:col-span-1 tpl-entrance tpl-d4">
             <div className="sticky top-28 space-y-6">
               {/* Pricing Card */}
-              <div className="glass p-6 rounded-2xl border border-white/10">
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
                 <div className="text-center mb-6">
-                  <div className="text-5xl font-display font-black text-white mb-1">
+                  <div className="text-5xl font-display font-black text-dark-800 mb-1">
                     ${prices[billingCycle].price}
                   </div>
-                  <p className="text-dark-400 text-sm">
+                  <p className="text-dark-500 text-sm">
                     {prices[billingCycle].label}
                     {billingCycle === 'lifetime' && (isRTL ? ' — دفعة واحدة' : ' — one-time')}
                     {billingCycle !== 'lifetime' && prices[billingCycle].suffix}
@@ -274,24 +274,24 @@ export default function StellarStoreDemo() {
                       onClick={() => setBillingCycle(key)}
                       className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                         billingCycle === key
-                          ? 'border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/5'
-                          : 'border-white/5 hover:border-white/10'
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          billingCycle === key ? 'border-amber-500 bg-amber-500' : 'border-dark-500'
+                          billingCycle === key ? 'border-amber-500 bg-amber-500' : 'border-gray-300'
                         }`}>
                           {billingCycle === key && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
-                        <span className="text-white font-medium text-sm">{data.label}</span>
+                        <span className="text-dark-700 font-medium text-sm">{data.label}</span>
                         {data.save && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-200">
                             {data.save}
                           </span>
                         )}
                       </div>
-                      <span className="font-display font-bold text-white text-sm">
+                      <span className="font-display font-bold text-dark-800 text-sm">
                         ${data.price}
                       </span>
                     </button>
@@ -310,7 +310,7 @@ export default function StellarStoreDemo() {
 
                 <button
                   onClick={() => setShowReservation(true)}
-                  className="w-full py-3 rounded-xl border-2 border-amber-500/30 hover:border-amber-500/60 text-amber-400 hover:text-amber-300 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
+                  className="w-full py-3 rounded-xl border-2 border-amber-500 hover:border-amber-600 text-amber-600 hover:text-amber-700 font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 mt-3"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <CalendarCheck className="w-4 h-4" />
@@ -318,7 +318,7 @@ export default function StellarStoreDemo() {
                   </div>
                 </button>
 
-                <div className="mt-4 flex items-center justify-center gap-4 text-dark-500 text-xs">
+                <div className="mt-4 flex items-center justify-center gap-4 text-dark-400 text-xs">
                   <span className="flex items-center gap-1">
                     <Shield className="w-3.5 h-3.5" />
                     {isRTL ? 'دفع آمن' : 'Secure'}
@@ -335,9 +335,9 @@ export default function StellarStoreDemo() {
               </div>
 
               {/* What You Get */}
-              <div className="glass p-6 rounded-2xl">
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <BadgeCheck className="w-4 h-4 text-amber-400" />
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="text-sm font-bold text-dark-800 mb-4 flex items-center gap-2">
+                  <BadgeCheck className="w-4 h-4 text-amber-500" />
                   {isRTL ? 'يشمل الباقة' : 'Package Includes'}
                 </h3>
                 <ul className="space-y-2.5">
@@ -349,8 +349,8 @@ export default function StellarStoreDemo() {
                     isRTL ? 'لوحة تحكم إدارية' : 'Admin Dashboard',
                     isRTL ? 'شهادة SSL مجانية' : 'Free SSL Certificate',
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2.5 text-dark-300">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <li key={i} className="flex items-center gap-2.5 text-dark-600">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                       <span className="text-sm">{item}</span>
                     </li>
                   ))}
@@ -358,17 +358,17 @@ export default function StellarStoreDemo() {
               </div>
 
               {/* Features */}
-              <div className="glass p-6 rounded-2xl">
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+              <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="text-sm font-bold text-dark-800 mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
                   {isRTL ? 'المميزات الرئيسية' : 'Key Features'}
                 </h3>
                 <ul className="space-y-2.5">
                   {features.map((feature, i) => {
                     const Icon = feature.icon;
                     return (
-                      <li key={i} className="flex items-center gap-2.5 text-dark-300">
-                        <Icon className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                      <li key={i} className="flex items-center gap-2.5 text-dark-600">
+                        <Icon className="w-4 h-4 text-amber-500 flex-shrink-0" />
                         <span className="text-sm">{feature.label}</span>
                       </li>
                     );
@@ -377,13 +377,13 @@ export default function StellarStoreDemo() {
               </div>
 
               {/* Rating */}
-              <div className="glass p-5 rounded-2xl text-center">
+              <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-dark-400 text-sm">
+                <p className="text-dark-500 text-sm">
                   {isRTL ? '4.9 من 5 — 64 تقييم' : '4.9 out of 5 — 64 reviews'}
                 </p>
               </div>

@@ -31,8 +31,12 @@ export default function PricingSection() {
         ? ['قالب واحد', 'SSL مجاني', 'نطاق فرعي مجاني', 'دعم بالبريد', '5GB تخزين', 'تحديثات مستمرة', 'تصميم متجاوب', 'حماية أساسية']
         : ['1 Template', 'Free SSL', 'Free Subdomain', 'Email Support', '5GB Storage', 'Continuous Updates', 'Responsive Design', 'Basic Protection'],
       popular: false,
-      color: 'from-dark-700 to-dark-800',
-      buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
+      color: 'bg-white',
+      textColor: 'text-dark-800',
+      descColor: 'text-dark-400',
+      priceColor: 'text-dark-800',
+      borderColor: 'border-gray-200',
+      buttonColor: 'bg-gray-100 hover:bg-gray-200 text-dark-700',
       billingCycle: 'monthly',
     },
     {
@@ -45,8 +49,12 @@ export default function PricingSection() {
         ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي 24/7', '50GB تخزين', 'تحديثات مستمرة', 'تحليلات متقدمة', 'بدون إعلانات', 'نسخ احتياطية يومية', 'تحسين SEO']
         : ['1 Template', 'Free SSL', 'Custom Domain', 'Priority 24/7 Support', '50GB Storage', 'Continuous Updates', 'Advanced Analytics', 'No Ads', 'Daily Backups', 'SEO Optimization'],
       popular: true,
-      color: 'from-primary-600 to-primary-700',
-      buttonColor: 'bg-white text-primary-600 hover:bg-dark-100',
+      color: 'bg-primary-500',
+      textColor: 'text-white',
+      descColor: 'text-primary-100',
+      priceColor: 'text-white',
+      borderColor: 'border-primary-400',
+      buttonColor: 'bg-white text-primary-600 hover:bg-gray-50',
       billingCycle: 'yearly',
     },
     {
@@ -58,23 +66,25 @@ export default function PricingSection() {
         ? ['قالب واحد', 'SSL مجاني', 'نطاق مخصص', 'دعم أولوي مدى الحياة', 'تخزين غير محدود', 'تحديثات مدى الحياة', 'تحليلات متقدمة', 'بدون إعلانات', 'API كامل', 'نسخ احتياطية يومية', 'CDN عالمي', 'حماية DDoS']
         : ['1 Template', 'Free SSL', 'Custom Domain', 'Lifetime Priority Support', 'Unlimited Storage', 'Lifetime Updates', 'Advanced Analytics', 'No Ads', 'Full API', 'Daily Backups', 'Global CDN', 'DDoS Protection'],
       popular: false,
-      color: 'from-dark-700 to-dark-800',
-      buttonColor: 'bg-white/10 hover:bg-white/20 text-white',
+      color: 'bg-white',
+      textColor: 'text-dark-800',
+      descColor: 'text-dark-400',
+      priceColor: 'text-dark-800',
+      borderColor: 'border-gray-200',
+      buttonColor: 'bg-gray-100 hover:bg-gray-200 text-dark-700',
       billingCycle: 'lifetime',
     },
   ];
 
   return (
-    <section id="pricing" className="section-padding relative" ref={ref}>
-      <div className="absolute inset-0 bg-mesh opacity-30" />
-
+    <section id="pricing" className="section-padding relative bg-gray-50" ref={ref}>
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <div className={`text-center mb-16 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black mb-6">
             <span className="gradient-text">{t('pricing.title')}</span>
           </h2>
-          <p className="text-dark-300 text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="text-dark-400 text-lg md:text-xl max-w-2xl mx-auto">
             {t('pricing.subtitle')}
           </p>
         </div>
@@ -91,7 +101,7 @@ export default function PricingSection() {
             >
               {/* Popular badge */}
               {plan.popular && (
-                <div className="absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-primary-500 to-accent-500 text-center text-sm font-bold text-white flex items-center justify-center gap-2">
+                <div className="absolute top-0 left-0 right-0 py-2 bg-primary-600 text-center text-sm font-bold text-white flex items-center justify-center gap-2 rounded-t-3xl">
                   <Sparkles className="w-4 h-4" />
                   {t('pricing.popular')}
                 </div>
@@ -99,22 +109,22 @@ export default function PricingSection() {
 
               {/* Save badge */}
               {plan.saveBadge && !plan.popular && (
-                <div className="absolute top-0 left-0 right-0 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-center text-sm font-bold text-white">
+                <div className="absolute top-0 left-0 right-0 py-2 bg-emerald-500 text-center text-sm font-bold text-white rounded-t-3xl">
                   {plan.saveBadge}
                 </div>
               )}
 
-              <div className={`h-full p-8 ${plan.popular || plan.saveBadge ? 'pt-14' : ''} bg-gradient-to-b ${plan.color} border ${plan.popular ? 'border-primary-500/30' : 'border-white/5'} rounded-3xl`}>
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <p className="text-dark-400 text-sm mb-6">{plan.description}</p>
+              <div className={`h-full p-8 ${plan.popular || plan.saveBadge ? 'pt-14' : ''} ${plan.color} border ${plan.borderColor} rounded-3xl`}>
+                <h3 className={`text-2xl font-bold ${plan.textColor} mb-2`}>{plan.name}</h3>
+                <p className={`${plan.descColor} text-sm mb-6`}>{plan.description}</p>
 
                 <div className="mb-2">
-                  <span className="text-dark-400 text-xs font-medium">{isRTL ? 'يبدأ من' : 'Starts from'}</span>
+                  <span className={`${plan.descColor} text-xs font-medium`}>{isRTL ? 'يبدأ من' : 'Starts from'}</span>
                 </div>
                 <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-5xl font-display font-black text-white">${plan.startPrice}</span>
-                  {plan.suffix && <span className="text-dark-400 text-sm">{plan.suffix}</span>}
-                  {!plan.suffix && <span className="text-dark-400 text-sm">{isRTL ? 'دفعة واحدة' : 'one-time'}</span>}
+                  <span className={`text-5xl font-display font-black ${plan.priceColor}`}>${plan.startPrice}</span>
+                  {plan.suffix && <span className={`${plan.descColor} text-sm`}>{plan.suffix}</span>}
+                  {!plan.suffix && <span className={`${plan.descColor} text-sm`}>{isRTL ? 'دفعة واحدة' : 'one-time'}</span>}
                 </div>
 
                 <button
@@ -125,13 +135,13 @@ export default function PricingSection() {
                 </button>
 
                 <div>
-                  <p className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-4">
+                  <p className={`text-xs font-semibold ${plan.descColor} uppercase tracking-wider mb-4`}>
                     {t('pricing.features')}
                   </p>
                   <ul className="space-y-3">
                     {plan.features.map((feature, j) => (
-                      <li key={j} className="flex items-center gap-3 text-sm text-dark-300">
-                        <Check className={`w-4 h-4 flex-shrink-0 ${plan.popular ? 'text-primary-400' : 'text-green-400'}`} />
+                      <li key={j} className={`flex items-center gap-3 text-sm ${plan.popular ? 'text-primary-100' : 'text-dark-500'}`}>
+                        <Check className={`w-4 h-4 flex-shrink-0 ${plan.popular ? 'text-white' : 'text-primary-500'}`} />
                         {feature}
                       </li>
                     ))}
