@@ -8,7 +8,7 @@ const navLinks = [
   { label: 'الرئيسية', href: '/' },
   { label: 'التفعيلات', href: '/services' },
   { label: 'ستارلينك', href: '/services?cat=starlink' },
-  { label: 'beIN', href: '/services?cat=bein' },
+  { label: 'شحن المحفظة', href: '/profile?tab=wallet' },
   { label: 'ألعاب', href: '/services?cat=games' },
   { label: 'حسابي', href: '/profile' },
   { label: 'عروض خاصة', href: '/services?cat=offers' },
