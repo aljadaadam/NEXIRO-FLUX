@@ -10,6 +10,8 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
   const [preview, setPreview] = useState(currentImage);
   const [uploading, setUploading] = useState(false);
 
+  const hasImage = preview && preview !== '/images/default-product.svg';
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -28,6 +30,13 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
     reader.readAsDataURL(file);
   };
 
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreview('');
+    onImageChange('');
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
   return (
     <div>
       <label className="text-sm text-navy-300 font-bold mb-1.5 block">صورة المنتج</label>
@@ -35,7 +44,7 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
         onClick={() => inputRef.current?.click()}
         className="relative w-full h-40 rounded-xl border-2 border-dashed border-navy-700/50 hover:border-gold-500/40 bg-navy-800/40 flex items-center justify-center cursor-pointer transition-all overflow-hidden group"
       >
-        {preview && preview !== '/images/default-product.svg' ? (
+        {hasImage ? (
           <img src={preview} alt="preview" className="w-full h-full object-cover" />
         ) : (
           <div className="text-center">
@@ -51,10 +60,20 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
             )}
           </div>
         )}
-        {preview && preview !== '/images/default-product.svg' && (
+        {hasImage && (
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Upload className="w-6 h-6 text-white" />
           </div>
+        )}
+        {hasImage && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="absolute top-2 left-2 w-7 h-7 rounded-lg bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center transition-all z-10"
+            title="حذف الصورة"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         )}
       </div>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFile} className="hidden" />
