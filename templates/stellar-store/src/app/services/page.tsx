@@ -360,209 +360,239 @@ function ServicesContent() {
       {/* Order Confirmation Modal */}
       {orderProduct && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop" onClick={() => !orderLoading && setOrderProduct(null)} role="dialog" aria-modal="true" aria-label="تأكيد الطلب">
-          <div className="relative w-full max-w-md rounded-2xl bg-navy-900/95 backdrop-blur-2xl border border-navy-700/60 shadow-2xl shadow-black/40 animate-fadeInUp" onClick={e => e.stopPropagation()}>
-            <button onClick={() => !orderLoading && setOrderProduct(null)} className="absolute top-4 left-4 p-1.5 text-navy-400 hover:text-white transition-colors rounded-lg hover:bg-navy-800/50">
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="p-6">
-              <h2 className="text-xl font-black text-white mb-6 text-center">
-                تأكيد <span className="text-gold-gradient">الطلب</span>
-              </h2>
-
-              {/* Product summary */}
-              <div className="flex items-center gap-4 p-4 bg-navy-800/50 rounded-xl mb-6">
-                <img src={orderProduct.image} alt={orderProduct.name} className="w-16 h-16 rounded-xl object-cover" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-sm truncate">{orderProduct.name}</h3>
-                  <p className="text-navy-400 text-xs">{orderProduct.category}</p>
-                  <p className="text-gold-500 font-black mt-1">{orderProduct.price.toLocaleString()} SDG</p>
+          <div className="relative w-full max-w-md rounded-2xl bg-navy-900/95 backdrop-blur-2xl border border-navy-700/60 shadow-2xl shadow-black/40 animate-fadeInUp overflow-hidden" onClick={e => e.stopPropagation()}>
+            {orderSuccess ? (
+              /* ─── Success View ─── */
+              <div className="flex flex-col items-center justify-center p-8 min-h-[400px] relative">
+                {/* Background glow */}
+                <div className="absolute inset-0 bg-gradient-to-b from-green-500/10 via-green-500/5 to-transparent pointer-events-none" />
+                
+                {/* Large success checkmark */}
+                <div className="relative mb-6">
+                  <div className="w-28 h-28 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center animate-fadeInUp">
+                    <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <svg className="w-12 h-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  {/* Decorative rings */}
+                  <div className="absolute -inset-3 rounded-full border border-green-500/10 animate-ping" style={{ animationDuration: '2s' }} />
                 </div>
-              </div>
 
-              {/* Payment method */}
-              <div className="mb-4">
-                <label className="block text-navy-400 text-sm mb-2">طريقة الدفع</label>
-                <div className="space-y-2">
-                  {/* Wallet option */}
-                  <button
-                    type="button"
-                    onClick={() => { setPaymentMethod('wallet'); setSelectedGateway(null); }}
-                    className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
-                      paymentMethod === 'wallet'
-                        ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
-                        : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'wallet' ? 'border-gold-500' : 'border-navy-600'}`}>
-                      {paymentMethod === 'wallet' && <div className="w-2 h-2 rounded-full bg-gold-500" />}
-                    </div>
-                    المحفظة (خصم من الرصيد)
-                  </button>
+                <h3 className="text-2xl font-black text-white mb-2 text-center relative">تم بنجاح!</h3>
+                <p className="text-green-400 text-sm font-medium mb-2 text-center relative">{orderSuccess}</p>
+                <p className="text-navy-400 text-xs text-center mb-8 relative">سيتم مراجعة طلبك والرد عليك في أقرب وقت</p>
 
-                  {/* Bankak gateways */}
-                  {enabledGateways.map(gw => (
-                    <button
-                      key={gw.id}
-                      type="button"
-                      onClick={() => { setPaymentMethod('bankak'); setSelectedGateway(gw); }}
-                      className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
-                        paymentMethod === 'bankak' && selectedGateway?.id === gw.id
-                          ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
-                          : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'bankak' && selectedGateway?.id === gw.id ? 'border-gold-500' : 'border-navy-600'}`}>
-                        {paymentMethod === 'bankak' && selectedGateway?.id === gw.id && <div className="w-2 h-2 rounded-full bg-gold-500" />}
-                      </div>
-                      {gw.logo && <img src={gw.logo} alt={gw.name} className="w-6 h-6 rounded object-contain" />}
-                      {gw.name}
-                    </button>
-                  ))}
+                {/* Product mini summary */}
+                <div className="flex items-center gap-3 p-3 bg-navy-800/40 rounded-xl mb-6 w-full max-w-xs relative">
+                  <img src={orderProduct.image} alt={orderProduct.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-white font-bold text-xs truncate">{orderProduct.name}</h4>
+                    <p className="text-gold-500 font-black text-sm">{orderProduct.price.toLocaleString()} SDG</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Bankak Bank Details */}
-              {paymentMethod === 'bankak' && selectedGateway && (
-                <div className="mb-4 p-4 bg-navy-800/50 border border-gold-500/20 rounded-xl space-y-3">
-                  <h4 className="text-gold-500 font-bold text-sm flex items-center gap-2">
-                    {selectedGateway.logo && <img src={selectedGateway.logo} alt="" className="w-5 h-5 rounded object-contain" />}
-                    بيانات التحويل
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-navy-400">رقم الحساب:</span>
-                      <span className="text-white font-bold" dir="ltr">{selectedGateway.config?.account_number}</span>
+                <button onClick={() => setOrderProduct(null)} className="w-full max-w-xs py-3.5 text-base font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl hover:from-gold-400 hover:to-gold-300 transition-all relative">
+                  إغلاق
+                </button>
+              </div>
+            ) : (
+              /* ─── Order Form ─── */
+              <>
+                <button onClick={() => !orderLoading && setOrderProduct(null)} className="absolute top-4 left-4 z-10 p-1.5 text-navy-400 hover:text-white transition-colors rounded-lg hover:bg-navy-800/50">
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="p-6 max-h-[85vh] overflow-y-auto">
+                  <h2 className="text-xl font-black text-white mb-6 text-center">
+                    تأكيد <span className="text-gold-gradient">الطلب</span>
+                  </h2>
+
+                  {/* Product summary */}
+                  <div className="flex items-center gap-4 p-4 bg-navy-800/50 rounded-xl mb-6">
+                    <img src={orderProduct.image} alt={orderProduct.name} className="w-16 h-16 rounded-xl object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-bold text-sm truncate">{orderProduct.name}</h3>
+                      <p className="text-navy-400 text-xs">{orderProduct.category}</p>
+                      <p className="text-gold-500 font-black mt-1">{orderProduct.price.toLocaleString()} SDG</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-navy-400">اسم الحساب:</span>
-                      <span className="text-white font-bold">{selectedGateway.config?.full_name}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-navy-400">المبلغ المطلوب:</span>
-                      <span className="text-gold-500 font-black">{orderProduct.price.toLocaleString()} SDG</span>
-                    </div>
-                    {selectedGateway.config?.receipt_note && (
-                      <div className="mt-2 p-2 bg-gold-500/5 border border-gold-500/10 rounded-lg text-navy-300 text-xs">
-                        💡 {selectedGateway.config.receipt_note}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Receipt reference */}
-                  <div className="pt-2">
-                    <label className="block text-navy-400 text-xs mb-1.5">رقم الإيصال / مرجع التحويل <span className="text-red-400">*</span></label>
-                    <input
-                      value={receiptRef}
-                      onChange={e => setReceiptRef(e.target.value)}
-                      placeholder="أدخل رقم الإيصال أو مرجع العملية"
-                      className="w-full px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
-                      dir="ltr"
+                  {/* Payment method */}
+                  <div className="mb-4">
+                    <label className="block text-navy-400 text-sm mb-2">طريقة الدفع</label>
+                    <div className="space-y-2">
+                      {/* Wallet option */}
+                      <button
+                        type="button"
+                        onClick={() => { setPaymentMethod('wallet'); setSelectedGateway(null); }}
+                        className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
+                          paymentMethod === 'wallet'
+                            ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
+                            : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'wallet' ? 'border-gold-500' : 'border-navy-600'}`}>
+                          {paymentMethod === 'wallet' && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                        </div>
+                        المحفظة (خصم من الرصيد)
+                      </button>
+
+                      {/* Bankak gateways */}
+                      {enabledGateways.map(gw => (
+                        <button
+                          key={gw.id}
+                          type="button"
+                          onClick={() => { setPaymentMethod('bankak'); setSelectedGateway(gw); }}
+                          className={`w-full p-3 rounded-xl text-sm font-medium text-right flex items-center gap-3 transition-all ${
+                            paymentMethod === 'bankak' && selectedGateway?.id === gw.id
+                              ? 'bg-navy-800/50 border-2 border-gold-500/50 text-gold-500'
+                              : 'bg-navy-800/30 border border-navy-700/40 text-navy-300 hover:border-navy-600'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'bankak' && selectedGateway?.id === gw.id ? 'border-gold-500' : 'border-navy-600'}`}>
+                            {paymentMethod === 'bankak' && selectedGateway?.id === gw.id && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                          </div>
+                          {gw.logo && <img src={gw.logo} alt={gw.name} className="w-6 h-6 rounded object-contain" />}
+                          {gw.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bankak Bank Details */}
+                  {paymentMethod === 'bankak' && selectedGateway && (
+                    <div className="mb-4 p-4 bg-navy-800/50 border border-gold-500/20 rounded-xl space-y-3">
+                      <h4 className="text-gold-500 font-bold text-sm flex items-center gap-2">
+                        {selectedGateway.logo && <img src={selectedGateway.logo} alt="" className="w-5 h-5 rounded object-contain" />}
+                        بيانات التحويل
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-navy-400">رقم الحساب:</span>
+                          <span className="text-white font-bold" dir="ltr">{selectedGateway.config?.account_number}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-navy-400">اسم الحساب:</span>
+                          <span className="text-white font-bold">{selectedGateway.config?.full_name}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-navy-400">المبلغ المطلوب:</span>
+                          <span className="text-gold-500 font-black">{orderProduct.price.toLocaleString()} SDG</span>
+                        </div>
+                        {selectedGateway.config?.receipt_note && (
+                          <div className="mt-2 p-2 bg-gold-500/5 border border-gold-500/10 rounded-lg text-navy-300 text-xs">
+                            💡 {selectedGateway.config.receipt_note}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Receipt reference */}
+                      <div className="pt-2">
+                        <label className="block text-navy-400 text-xs mb-1.5">رقم الإيصال / مرجع التحويل <span className="text-red-400">*</span></label>
+                        <input
+                          value={receiptRef}
+                          onChange={e => setReceiptRef(e.target.value)}
+                          placeholder="أدخل رقم الإيصال أو مرجع العملية"
+                          className="w-full px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                          dir="ltr"
+                        />
+                      </div>
+
+                      {/* Receipt image upload */}
+                      <div>
+                        <label className="block text-navy-400 text-xs mb-1.5">صورة الإيصال (اختياري)</label>
+                        <label className="flex items-center gap-2 px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-navy-400 hover:border-gold-500/30 transition-all cursor-pointer text-sm">
+                          <Upload className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{receiptFile ? receiptFile.name : 'اختر صورة الإيصال'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (file.size > 5 * 1024 * 1024) {
+                                  setOrderError('حجم الصورة يجب أن يكون أقل من 5MB');
+                                  return;
+                                }
+                                setReceiptFile(file);
+                                const reader = new FileReader();
+                                reader.onload = () => setReceiptPreview(reader.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                        {receiptPreview && (
+                          <div className="mt-2 relative">
+                            <img src={receiptPreview} alt="إيصال" className="w-full max-h-40 object-contain rounded-lg border border-navy-700/30" />
+                            <button
+                              type="button"
+                              onClick={() => { setReceiptFile(null); setReceiptPreview(''); }}
+                              className="absolute top-1 left-1 p-1 bg-navy-900/80 rounded-full text-navy-400 hover:text-white"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Custom Fields */}
+                  {orderProduct.custom_fields && orderProduct.custom_fields.length > 0 && (
+                    <div className="mb-4 space-y-3">
+                      {orderProduct.custom_fields.map((field) => (
+                        <div key={field.name}>
+                          <label className="block text-navy-400 text-sm mb-2">
+                            {field.label} {field.required !== false && <span className="text-red-400">*</span>}
+                          </label>
+                          <input
+                            type={field.type || 'text'}
+                            value={fieldValues[field.name] || ''}
+                            onChange={e => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                            placeholder={field.label}
+                            required={field.required !== false}
+                            className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  <div className="mb-6">
+                    <label className="block text-navy-400 text-sm mb-2">ملاحظات (اختياري)</label>
+                    <textarea
+                      value={orderNotes}
+                      onChange={e => setOrderNotes(e.target.value)}
+                      placeholder="أي ملاحظات إضافية..."
+                      rows={2}
+                      className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all resize-none text-sm"
                     />
                   </div>
 
-                  {/* Receipt image upload */}
-                  <div>
-                    <label className="block text-navy-400 text-xs mb-1.5">صورة الإيصال (اختياري)</label>
-                    <label className="flex items-center gap-2 px-3 py-2.5 bg-navy-900/60 border border-navy-700/40 rounded-xl text-navy-400 hover:border-gold-500/30 transition-all cursor-pointer text-sm">
-                      <Upload className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{receiptFile ? receiptFile.name : 'اختر صورة الإيصال'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              setOrderError('حجم الصورة يجب أن يكون أقل من 5MB');
-                              return;
-                            }
-                            setReceiptFile(file);
-                            const reader = new FileReader();
-                            reader.onload = () => setReceiptPreview(reader.result as string);
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
-                    {receiptPreview && (
-                      <div className="mt-2 relative">
-                        <img src={receiptPreview} alt="إيصال" className="w-full max-h-40 object-contain rounded-lg border border-navy-700/30" />
-                        <button
-                          type="button"
-                          onClick={() => { setReceiptFile(null); setReceiptPreview(''); }}
-                          className="absolute top-1 left-1 p-1 bg-navy-900/80 rounded-full text-navy-400 hover:text-white"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
+                  {/* Error message */}
+                  {orderError && (
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" /> {orderError}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <button onClick={() => setOrderProduct(null)} disabled={orderLoading} className="flex-1 py-3.5 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all">
+                      إلغاء
+                    </button>
+                    <button onClick={handleSubmitOrder} disabled={orderLoading} className="flex-1 py-3.5 text-base font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl hover:from-gold-400 hover:to-gold-300 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 flex items-center justify-center gap-2">
+                      {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'تأكيد الطلب'}
+                    </button>
                   </div>
                 </div>
-              )}
-
-              {/* Custom Fields */}
-              {orderProduct.custom_fields && orderProduct.custom_fields.length > 0 && (
-                <div className="mb-4 space-y-3">
-                  {orderProduct.custom_fields.map((field) => (
-                    <div key={field.name}>
-                      <label className="block text-navy-400 text-sm mb-2">
-                        {field.label} {field.required !== false && <span className="text-red-400">*</span>}
-                      </label>
-                      <input
-                        type={field.type || 'text'}
-                        value={fieldValues[field.name] || ''}
-                        onChange={e => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
-                        placeholder={field.label}
-                        required={field.required !== false}
-                        className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Notes */}
-              <div className="mb-6">
-                <label className="block text-navy-400 text-sm mb-2">ملاحظات (اختياري)</label>
-                <textarea
-                  value={orderNotes}
-                  onChange={e => setOrderNotes(e.target.value)}
-                  placeholder="أي ملاحظات إضافية..."
-                  rows={2}
-                  className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all resize-none text-sm"
-                />
-              </div>
-
-              {/* Messages */}
-              {orderError && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" /> {orderError}
-                </div>
-              )}
-              {orderSuccess && (
-                <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 shrink-0" /> {orderSuccess}
-                </div>
-              )}
-
-              {/* Actions */}
-              {orderSuccess ? (
-                <button onClick={() => setOrderProduct(null)} className="w-full py-3.5 text-base font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl hover:from-gold-400 hover:to-gold-300 transition-all">
-                  إغلاق
-                </button>
-              ) : (
-                <div className="flex gap-3">
-                  <button onClick={() => setOrderProduct(null)} disabled={orderLoading} className="flex-1 py-3.5 text-sm font-bold text-navy-300 bg-navy-800/60 border border-navy-600/50 rounded-xl hover:text-white transition-all">
-                    إلغاء
-                  </button>
-                  <button onClick={handleSubmitOrder} disabled={orderLoading} className="flex-1 py-3.5 text-base font-bold text-navy-950 bg-gradient-to-l from-gold-500 to-gold-400 rounded-xl hover:from-gold-400 hover:to-gold-300 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 flex items-center justify-center gap-2">
-                    {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'تأكيد الطلب'}
-                  </button>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
