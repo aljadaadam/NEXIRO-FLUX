@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Pencil, Trash2, X, Upload, Loader2, ImageIcon, Package } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, X, Upload, Loader2, ImageIcon, Package, Star, Filter } from 'lucide-react';
 import { adminApi, mapBackendProduct } from '@/lib/api';
 import type { Product, ProductField } from '@/lib/types';
 
@@ -324,9 +324,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('الكل');
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [togglingFeatured, setTogglingFeatured] = useState<number | null>(null);
 
   const loadProducts = async () => {
     try {
@@ -343,12 +345,24 @@ export default function ProductsPage() {
 
   useEffect(() => { loadProducts(); }, []);
 
-  const filtered = products.filter(p =>
-    (p.name || '').includes(search) || (p.arabic_name || '').includes(search) || (p.category || '').includes(search)
-  );
+  const filtered = products.filter(p => {
+    const matchSearch = !search || (p.name || '').includes(search) || (p.arabic_name || '').includes(search) || (p.category || '').includes(search);
+    const cat = p.group_name || p.category || '';
+    const matchCategory = filterCategory === 'الكل' || (filterCategory === 'مميزة' ? p.is_featured : cat === filterCategory);
+    return matchSearch && matchCategory;
+  });
 
   // Extract unique categories from products
   const categories = [...new Set(products.map(p => p.group_name || p.category || '').filter(Boolean))];
+
+  const handleToggleFeatured = async (id: number) => {
+    setTogglingFeatured(id);
+    try {
+      await adminApi.toggleFeatured(id);
+      await loadProducts();
+    } catch { /* empty */ }
+    setTogglingFeatured(null);
+  };
 
   const handleSave = async (data: Record<string, unknown>) => {
     if (editProduct) {
@@ -392,16 +406,41 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="ابحث عن منتج..."
-          className="w-full px-4 py-3 pr-12 bg-navy-900/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-        />
-        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500" />
+      {/* Search & Filter */}
+      <div className="space-y-3">
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="ابحث عن منتج..."
+            className="w-full px-4 py-3 pr-12 bg-navy-900/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+          />
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500" />
+        </div>
+
+        {/* Category Filter */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <Filter className="w-4 h-4 text-navy-500 shrink-0" />
+            {['الكل', 'مميزة', ...categories].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  filterCategory === cat
+                    ? cat === 'مميزة'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : 'bg-gold-500/20 text-gold-500 border border-gold-500/30'
+                    : 'bg-navy-800/60 text-navy-400 border border-navy-700/30 hover:border-navy-600'
+                }`}
+              >
+                {cat === 'مميزة' && <Star className="w-3 h-3 inline ml-1" />}
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Loading */}
@@ -436,6 +475,11 @@ export default function ProductsPage() {
                 }`}>
                   {product.status === 'active' ? 'نشط' : 'غير نشط'}
                 </div>
+                {product.is_featured && (
+                  <div className="absolute top-2 right-2">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  </div>
+                )}
               </div>
 
               {/* Info */}
@@ -451,6 +495,19 @@ export default function ProductsPage() {
                     {(product.price || 0).toLocaleString()} <span className="text-[10px] text-navy-500">SDG</span>
                   </span>
                   <div className="flex gap-1">
+                    <button
+                      onClick={() => handleToggleFeatured(product.id)}
+                      disabled={togglingFeatured === product.id}
+                      aria-label={product.is_featured ? 'إزالة من المميزة' : 'أضف للمميزة'}
+                      title={product.is_featured ? 'إزالة من المميزة' : 'أضف للمميزة'}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-50 ${
+                        product.is_featured
+                          ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                          : 'bg-navy-700/30 text-navy-500 hover:bg-amber-500/10 hover:text-amber-400'
+                      }`}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${product.is_featured ? 'fill-amber-400' : ''}`} />
+                    </button>
                     <button
                       onClick={() => { setEditProduct(product); setShowModal(true); }}
                       aria-label="تعديل المنتج"

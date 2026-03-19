@@ -125,6 +125,8 @@ export const adminApi = {
     adminFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id: number) =>
     adminFetch(`/products/${id}`, { method: 'DELETE' }),
+  toggleFeatured: (id: number) =>
+    adminFetch(`/products/${id}/featured`, { method: 'PATCH' }),
 
   // Categories (via products groups)
   renameGroup: (oldName: string, newName: string) =>
@@ -329,6 +331,7 @@ export function mapBackendProduct(p: Record<string, unknown>): Product {
     status: (p.status || 'active') as string,
     qnt: (p.qnt || 0) as number,
     service_type: p.service_type as string,
+    is_featured: !!(p.is_featured),
     custom_fields: (Array.isArray(custom_fields) ? custom_fields : []) as ProductField[],
     created_at: p.created_at as string,
   };

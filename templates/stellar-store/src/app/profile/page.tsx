@@ -537,7 +537,7 @@ export default function ProfilePage() {
                                           ? `رقم الإيصال: ${chargeReceiptRef.trim()} | مرفق: صورة إيصال`
                                           : `رقم الإيصال: ${chargeReceiptRef.trim()}`;
                                         await storeApi.uploadReceipt(paymentId, {
-                                          receipt_url: chargeReceiptPreview || `ref:${chargeReceiptRef.trim()}`,
+                                          receipt_url: chargeReceiptPreview || '',
                                           notes,
                                         });
                                       }

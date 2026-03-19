@@ -212,10 +212,25 @@ function ServicesContent() {
         payment_method: paymentMethod,
         notes: allNotes || undefined,
       };
-      if (paymentMethod === 'bankak' && receiptPreview) {
-        orderData.receipt_image = receiptPreview;
-      }
       await storeApi.createOrder(orderData as Parameters<typeof storeApi.createOrder>[0]);
+
+      // For bankak: create checkout payment + upload receipt for admin review
+      if (paymentMethod === 'bankak' && selectedGateway && (receiptRef.trim() || receiptPreview)) {
+        try {
+          const checkoutRes = await storeApi.initCheckout({
+            gateway_id: selectedGateway.id,
+            amount: orderProduct.price,
+          });
+          const paymentId = checkoutRes?.paymentId || checkoutRes?.payment?.id;
+          if (paymentId) {
+            await storeApi.uploadReceipt(paymentId, {
+              receipt_url: receiptPreview || '',
+              notes: `طلب منتج: ${orderProduct.name} | رقم الإيصال: ${receiptRef.trim()}`,
+            });
+          }
+        } catch { /* receipt tracking is best-effort, order already created */ }
+      }
+
       setOrderSuccess(paymentMethod === 'bankak'
         ? 'تم تقديم الطلب بنجاح! سيتم مراجعة الإيصال وتأكيد الطلب.'
         : 'تم تقديم الطلب بنجاح! يمكنك متابعته من صفحة حسابي.');

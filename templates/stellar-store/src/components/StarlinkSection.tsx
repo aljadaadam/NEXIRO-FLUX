@@ -33,15 +33,19 @@ export default function FeaturedSection() {
     fetch('/api/products/public')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((p: Record<string, unknown>) => ({
+        const list = Array.isArray(data) ? data : data?.products || [];
+        if (list.length > 0) {
+          // Show only featured products; fallback to first 8 if none featured
+          const mapped = list.map((p: Record<string, unknown>) => ({
             id: p.id as number,
             name: (p.arabic_name || p.name) as string,
             category: (p.group_name || p.category || '') as string,
             price: (p.final_price || p.price) as number,
             image: (p.image || '/images/default-product.svg') as string,
+            is_featured: !!(p.is_featured),
           }));
-          setProducts(mapped);
+          const featured = mapped.filter((p: FeaturedProduct & { is_featured: boolean }) => p.is_featured);
+          setProducts(featured.length > 0 ? featured : mapped.slice(0, 8));
         }
       })
       .catch(() => {});

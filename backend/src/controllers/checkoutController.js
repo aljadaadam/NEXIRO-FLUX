@@ -640,15 +640,18 @@ async function uploadBankReceipt(req, res) {
     const { id } = req.params;
     let { receipt_url, notes } = req.body;
 
-    // Validate receipt_url is a proper HTTP(S) URL
+    // Validate receipt_url: accept HTTP(S) URLs or base64 data URIs
     if (receipt_url) {
-      try {
-        const parsedUrl = new URL(receipt_url);
-        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-          return res.status(400).json({ error: 'رابط الإيصال يجب أن يكون HTTP أو HTTPS' });
+      const isDataUri = typeof receipt_url === 'string' && receipt_url.startsWith('data:image/');
+      if (!isDataUri) {
+        try {
+          const parsedUrl = new URL(receipt_url);
+          if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+            return res.status(400).json({ error: 'رابط الإيصال يجب أن يكون HTTP أو HTTPS أو صورة base64' });
+          }
+        } catch {
+          return res.status(400).json({ error: 'رابط الإيصال غير صالح' });
         }
-      } catch {
-        return res.status(400).json({ error: 'رابط الإيصال غير صالح' });
       }
     }
     // Sanitize notes

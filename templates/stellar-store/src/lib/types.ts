@@ -18,6 +18,7 @@ export interface Product {
   status?: string;
   qnt?: number;
   is_custom_price?: boolean;
+  is_featured?: boolean;
   service_type?: string;
   custom_fields?: ProductField[];
   created_at?: string;
