@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginModal from '@/components/LoginModal';
@@ -21,7 +21,6 @@ const statusMap: Record<string, { label: string; color: string; icon: typeof Clo
 
 export default function ProfilePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [showLogin, setShowLogin] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('info');
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -64,11 +63,12 @@ export default function ProfilePage() {
 
   // Read tab from URL params
   useEffect(() => {
-    const tab = searchParams.get('tab');
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
     if (tab && ['info', 'orders', 'wallet', 'settings'].includes(tab)) {
       setActiveTab(tab as ActiveTab);
     }
-  }, [searchParams]);
+  }, []);
 
   // Escape key closes modals
   useEffect(() => {
