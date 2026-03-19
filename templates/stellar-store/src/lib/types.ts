@@ -82,6 +82,7 @@ export interface Payment {
   payment_method?: string;
   reference?: string;
   receipt_url?: string;
+  meta?: { receipt_url?: string; [key: string]: unknown };
   created_at?: string;
 }
 

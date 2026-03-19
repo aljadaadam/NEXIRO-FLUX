@@ -189,10 +189,10 @@ export default function PaymentsPage() {
                 </div>
               ))}
 
-              {selectedPayment.receipt_url && (
+              {(selectedPayment.receipt_url || selectedPayment.meta?.receipt_url) && (
                 <div className="mt-4">
                   <p className="text-sm font-bold text-navy-400 mb-2">إيصال الدفع</p>
-                  <img src={selectedPayment.receipt_url} alt="receipt" className="w-full rounded-xl border border-navy-700/50" />
+                  <img src={selectedPayment.receipt_url || selectedPayment.meta?.receipt_url} alt="receipt" className="w-full rounded-xl border border-navy-700/50" />
                 </div>
               )}
             </div>
