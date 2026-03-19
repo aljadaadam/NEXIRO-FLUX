@@ -247,18 +247,23 @@ async function customerFetch(endpoint: string, options: RequestInit = {}) {
 
   const res = await fetch(`/api${endpoint}`, { ...options, headers });
 
-  if (res.status === 401 || res.status === 403) {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('customer');
-      if (res.status === 403) localStorage.setItem('account_blocked', '1');
-    }
-    throw new Error(res.status === 403 ? 'الحساب محظور' : 'انتهت الجلسة - يرجى تسجيل الدخول');
-  }
-
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || data.error || `خطأ ${res.status}`);
+    const msg = data.message || data.error;
+
+    // For auth endpoints (login/register/otp), always show the backend message
+    const isAuthEndpoint = endpoint.includes('/login') || endpoint.includes('/register') || endpoint.includes('/verify-otp') || endpoint.includes('/forgot-password');
+
+    if (res.status === 401 || res.status === 403) {
+      if (!isAuthEndpoint && typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('customer');
+        if (res.status === 403) localStorage.setItem('account_blocked', '1');
+      }
+      throw new Error(msg || (res.status === 403 ? 'الحساب محظور' : 'انتهت الجلسة - يرجى تسجيل الدخول'));
+    }
+
+    throw new Error(msg || `خطأ ${res.status}`);
   }
   return res.json();
 }
