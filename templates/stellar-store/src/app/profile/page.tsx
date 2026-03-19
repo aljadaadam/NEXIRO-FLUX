@@ -458,17 +458,6 @@ export default function ProfilePage() {
                               </div>
 
                               <div>
-                                <label className="block text-navy-400 text-xs mb-1.5">رقم الإيصال / مرجع التحويل <span className="text-red-400">*</span></label>
-                                <input
-                                  value={chargeReceiptRef}
-                                  onChange={e => setChargeReceiptRef(e.target.value)}
-                                  placeholder="أدخل رقم الإيصال أو مرجع العملية"
-                                  className="w-full px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
-                                  dir="ltr"
-                                />
-                              </div>
-
-                              <div>
                                 <label className="block text-navy-400 text-xs mb-1.5">صورة الإيصال (اختياري)</label>
                                 <label className="flex items-center gap-2 px-3 py-2.5 bg-navy-800/50 border border-navy-700/50 rounded-xl text-navy-400 hover:border-gold-500/30 transition-all cursor-pointer text-sm">
                                   <Upload className="w-4 h-4 shrink-0" />
@@ -522,7 +511,6 @@ export default function ProfilePage() {
                                 </button>
                                 <button
                                   onClick={async () => {
-                                    if (!chargeReceiptRef.trim()) { setChargeError('أدخل رقم الإيصال'); return; }
                                     setChargeLoading(true);
                                     setChargeError('');
                                     try {
@@ -533,12 +521,9 @@ export default function ProfilePage() {
                                       });
                                       const paymentId = res?.payment?.id || res?.paymentId || res?.id;
                                       if (paymentId) {
-                                        const notes = chargeReceiptFile
-                                          ? `رقم الإيصال: ${chargeReceiptRef.trim()} | مرفق: صورة إيصال`
-                                          : `رقم الإيصال: ${chargeReceiptRef.trim()}`;
                                         await storeApi.uploadReceipt(paymentId, {
                                           receipt_url: chargeReceiptPreview || '',
-                                          notes,
+                                          notes: chargeReceiptFile ? 'مرفق: صورة إيصال' : '',
                                         });
                                       }
                                       setChargeSuccess('تم إرسال طلب الشحن بنجاح! سيتم مراجعة الإيصال وإضافة الرصيد لمحفظتك.');
@@ -548,7 +533,7 @@ export default function ProfilePage() {
                                       setChargeLoading(false);
                                     }
                                   }}
-                                  disabled={chargeLoading || !chargeReceiptRef.trim()}
+                                  disabled={chargeLoading}
                                   className="flex-1 py-3 text-sm font-bold text-navy-950 bg-gold-500 rounded-xl hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                   {chargeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'إرسال الإيصال'}
