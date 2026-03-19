@@ -49,6 +49,11 @@ class Customization {
       flash_font_style: data.flash_font_style,
       product_layout: data.product_layout,
       allow_customer_cancel: data.allow_customer_cancel != null ? (data.allow_customer_cancel ? 1 : 0) : undefined,
+      whatsapp_number: data.whatsapp_number,
+      telegram_link: data.telegram_link,
+      facebook_link: data.facebook_link,
+      instagram_link: data.instagram_link,
+      twitter_link: data.twitter_link,
     };
 
     // تصفية الحقول غير المعرّفة
