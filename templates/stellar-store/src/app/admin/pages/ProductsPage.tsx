@@ -45,6 +45,7 @@ function ImageUploader({ currentImage, onImageChange }: { currentImage: string; 
               <>
                 <Upload className="w-8 h-8 text-navy-500 mx-auto mb-2" />
                 <p className="text-navy-500 text-xs">اضغط لرفع صورة</p>
+                <p className="text-navy-400 text-sm font-bold mt-1.5">الحجم المطلوب: 500×500 بكسل</p>
                 <p className="text-navy-600 text-[10px] mt-1">PNG, JPG, WEBP — أقصى 5MB</p>
               </>
             )}
