@@ -182,6 +182,15 @@ export const adminApi = {
     adminFetch(`/payment-gateways/${id}`, { method: 'DELETE' }),
   togglePaymentGateway: (id: number) =>
     adminFetch(`/payment-gateways/${id}/toggle`, { method: 'PATCH' }),
+
+  // Coupons
+  getCoupons: () => adminFetch('/coupons'),
+  createCoupon: (data: Record<string, unknown>) =>
+    adminFetch('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  updateCoupon: (id: number, data: Record<string, unknown>) =>
+    adminFetch(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCoupon: (id: number) =>
+    adminFetch(`/coupons/${id}`, { method: 'DELETE' }),
 };
 
 // ─── Demo Customer Data ───
@@ -288,7 +297,7 @@ export const storeApi = {
 
   getOrders: () => customerFetch('/customers/orders'),
 
-  createOrder: (data: { product_id: number; product_name: string; quantity?: number; payment_method: string; notes?: string }) =>
+  createOrder: (data: { product_id: number; product_name: string; quantity?: number; payment_method: string; notes?: string; coupon_code?: string }) =>
     customerFetch('/customers/orders', { method: 'POST', body: JSON.stringify(data) }),
 
   cancelOrder: (orderId: number) =>
@@ -317,6 +326,9 @@ export const storeApi = {
     if (isDemoMode()) return Promise.resolve({ customization: { store_name: 'متجر ستيلار', whatsapp_number: '', telegram_link: '', facebook_link: '', instagram_link: '', support_email: '', allow_customer_cancel: false } });
     return fetch('/api/customization/store').then(r => r.ok ? r.json() : {});
   },
+
+  validateCoupon: (code: string, order_amount: number) =>
+    customerFetch('/coupons/validate', { method: 'POST', body: JSON.stringify({ code, order_amount }) }),
 };
 
 export function mapBackendProduct(p: Record<string, unknown>): Product {

@@ -105,6 +105,9 @@ async function createTables() {
     const PurchaseCode = require('../models/PurchaseCode');
     await pool.query(PurchaseCode.getCreateTableSQL());
 
+    const Coupon = require('../models/Coupon');
+    await pool.query(Coupon.getCreateTableSQL());
+
     // ─── Column Migrations (backward compatibility) ───
     await runColumnMigrations(pool);
 

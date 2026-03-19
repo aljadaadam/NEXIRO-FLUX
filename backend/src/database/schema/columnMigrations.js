@@ -126,6 +126,8 @@ async function migrateOrders(pool) {
   await ensureColumn(pool, 'orders', 'external_reference_id', "external_reference_id VARCHAR(100) NULL COMMENT 'رقم المرجع من المصدر الخارجي (DHRU FUSION)'");
   await ensureColumn(pool, 'orders', 'source_id', 'source_id INT NULL COMMENT "معرف المصدر الذي أُرسل له الطلب"');
   await ensureColumn(pool, 'orders', 'source_price', 'source_price DECIMAL(12, 3) NULL COMMENT "سعر التكلفة وقت الطلب"');
+  await ensureColumn(pool, 'orders', 'coupon_code', "coupon_code VARCHAR(50) NULL COMMENT 'كود الخصم المستخدم'");
+  await ensureColumn(pool, 'orders', 'discount_amount', "discount_amount DECIMAL(12, 3) NOT NULL DEFAULT 0 COMMENT 'مبلغ الخصم'");
 }
 
 // ─── Product Indexes ───

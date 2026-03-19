@@ -62,6 +62,13 @@ function ServicesContent() {
   const [orderSuccess, setOrderSuccess] = useState('');
   const [orderError, setOrderError] = useState('');
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
   // Payment method state
   const [enabledGateways, setEnabledGateways] = useState<PaymentGateway[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'bankak'>('wallet');
@@ -154,11 +161,43 @@ function ServicesContent() {
     setFieldValues({});
     setOrderSuccess('');
     setOrderError('');
+    setCouponCode('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError('');
     setPaymentMethod('wallet');
     setSelectedGateway(null);
     setReceiptRef('');
     setReceiptFile(null);
     setReceiptPreview('');
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim() || !orderProduct) return;
+    setCouponValidating(true);
+    setCouponError('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    try {
+      const result = await storeApi.validateCoupon(couponCode.trim(), orderProduct.price);
+      if (result.valid) {
+        setCouponDiscount(result.discount);
+        setCouponApplied(true);
+      } else {
+        setCouponError(result.error || 'كود الخصم غير صالح');
+      }
+    } catch {
+      setCouponError('فشل التحقق من كود الخصم');
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError('');
   };
 
   const handleSubmitOrder = async () => {
@@ -184,7 +223,8 @@ function ServicesContent() {
         const stored = localStorage.getItem('customer');
         if (stored) {
           const cust = JSON.parse(stored);
-          if (typeof cust.wallet_balance === 'number' && cust.wallet_balance < orderProduct.price) {
+          const finalPrice = couponApplied ? orderProduct.price - couponDiscount : orderProduct.price;
+          if (typeof cust.wallet_balance === 'number' && cust.wallet_balance < finalPrice) {
             setOrderError(`رصيد المحفظة غير كافي (${cust.wallet_balance.toLocaleString()} SDG). يرجى شحن المحفظة أولاً.`);
             return;
           }
@@ -214,6 +254,7 @@ function ServicesContent() {
         quantity: 1,
         payment_method: paymentMethod,
         notes: allNotes || undefined,
+        ...(couponApplied && couponCode.trim() ? { coupon_code: couponCode.trim() } : {}),
       };
       await storeApi.createOrder(orderData as Parameters<typeof storeApi.createOrder>[0]);
 
@@ -563,6 +604,57 @@ function ServicesContent() {
                   )}
 
                   {/* Notes */}
+                  <div className="mb-4">
+                    <label className="block text-navy-400 text-sm mb-2">كود خصم (اختياري)</label>
+                    {couponApplied ? (
+                      <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-bold text-sm">✓ {couponCode}</span>
+                          <span className="text-emerald-400/70 text-xs">(-{couponDiscount.toLocaleString()} SDG)</span>
+                        </div>
+                        <button onClick={handleRemoveCoupon} className="text-navy-400 hover:text-red-400 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          value={couponCode}
+                          onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                          placeholder="أدخل كود الخصم"
+                          className="flex-1 px-4 py-3 bg-navy-800/50 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 transition-all text-sm uppercase tracking-wider"
+                          dir="ltr"
+                        />
+                        <button
+                          onClick={handleApplyCoupon}
+                          disabled={couponValidating || !couponCode.trim()}
+                          className="px-4 py-3 bg-gold-500/10 text-gold-500 font-bold rounded-xl hover:bg-gold-500/20 transition-all disabled:opacity-50 text-sm whitespace-nowrap"
+                        >
+                          {couponValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'تطبيق'}
+                        </button>
+                      </div>
+                    )}
+                    {couponError && <p className="text-red-400 text-xs mt-1.5">{couponError}</p>}
+                  </div>
+
+                  {/* Price Summary with Discount */}
+                  {couponApplied && (
+                    <div className="mb-4 p-3 bg-navy-800/40 rounded-xl space-y-1.5 text-sm">
+                      <div className="flex justify-between text-navy-400">
+                        <span>السعر الأصلي</span>
+                        <span>{orderProduct.price.toLocaleString()} SDG</span>
+                      </div>
+                      <div className="flex justify-between text-emerald-400">
+                        <span>الخصم</span>
+                        <span>-{couponDiscount.toLocaleString()} SDG</span>
+                      </div>
+                      <div className="flex justify-between text-white font-bold border-t border-navy-700/50 pt-1.5">
+                        <span>المجموع</span>
+                        <span className="text-gold-500">{(orderProduct.price - couponDiscount).toLocaleString()} SDG</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-6">
                     <label className="block text-navy-400 text-sm mb-2">ملاحظات (اختياري)</label>
                     <textarea

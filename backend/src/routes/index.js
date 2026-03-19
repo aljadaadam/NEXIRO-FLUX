@@ -24,6 +24,7 @@ const blogRoutes = require('./blogRoutes');
 const chatRoutes = require('./chatRoutes');
 const reservationRoutes = require('./reservationRoutes');
 const platformRoutes = require('./platformRoutes');
+const couponRoutes = require('./couponRoutes');
 
 /**
  * Mount all API routes on the Express app
@@ -65,6 +66,7 @@ function mountRoutes(app, { authLimiter, resetLimiter, otpLimiter, provisionLimi
   app.use('/api/blogs', blogRoutes);
   app.use('/api/chat', chatRoutes);
   app.use('/api/reservations', reservationRoutes);
+  app.use('/api/coupons', couponRoutes);
 
   // ─── Platform-only routes (معزولة عن القوالب) ───
   app.use('/api/platform', platformRoutes);

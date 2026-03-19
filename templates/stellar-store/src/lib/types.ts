@@ -30,6 +30,19 @@ export interface Category {
   count: number;
 }
 
+export interface Coupon {
+  id: number;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  max_uses: number | null;
+  used_count: number;
+  min_order_amount: number | null;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at?: string;
+}
+
 export interface DashboardStats {
   totalProducts: number;
   totalOrders: number;

@@ -2,7 +2,7 @@ const { getPool } = require('../config/db');
 
 class Order {
   // إنشاء طلب جديد
-  static async create({ site_key, customer_id, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price }) {
+  static async create({ site_key, customer_id, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price, coupon_code, discount_amount }) {
     const pool = getPool();
 
     // إنشاء رقم طلب فريد — يبدأ من 10000 ويزيد 43 لكل طلب
@@ -18,9 +18,9 @@ class Order {
 
       try {
         const [insertResult] = await pool.query(
-          `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null, source_price ?? null]
+          `INSERT INTO orders (site_key, customer_id, order_number, product_id, product_name, quantity, unit_price, total_price, payment_method, imei, notes, source_price, coupon_code, discount_amount)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [site_key, customer_id, order_number, product_id || null, product_name, quantity || 1, unit_price, total_price, payment_method || null, imei || null, notes || null, source_price ?? null, coupon_code || null, discount_amount || 0]
         );
         result = insertResult;
         break;

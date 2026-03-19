@@ -109,7 +109,22 @@ async function createOrder(req, res) {
     }
 
     const qty = quantity || 1;
-    const total_price = verifiedPrice * qty;
+    let total_price = verifiedPrice * qty;
+    let appliedCouponId = null;
+    let discountAmount = 0;
+
+    // ─── تطبيق كود الخصم إن وُجد ───
+    const coupon_code = req.body.coupon_code;
+    if (coupon_code) {
+      const Coupon = require('../models/Coupon');
+      const couponResult = await Coupon.validate(site_key, coupon_code, total_price);
+      if (!couponResult.valid) {
+        return res.status(400).json({ error: couponResult.error });
+      }
+      discountAmount = couponResult.discount;
+      total_price = couponResult.final_price;
+      appliedCouponId = couponResult.coupon.id;
+    }
 
     // التحقق من رصيد المحفظة وخصمه بأمان (transaction + row lock)
     if (payment_method === 'wallet') {
@@ -162,8 +177,15 @@ async function createOrder(req, res) {
 
     const order = await Order.create({
       site_key, customer_id: effectiveCustomerId, product_id, product_name, quantity: qty,
-      unit_price: verifiedPrice, total_price, payment_method, imei, notes, source_price: productSourcePrice
+      unit_price: verifiedPrice, total_price, payment_method, imei, notes, source_price: productSourcePrice,
+      coupon_code: coupon_code || null, discount_amount: discountAmount
     });
+
+    // زيادة عداد استخدام الكوبون
+    if (appliedCouponId) {
+      const Coupon = require('../models/Coupon');
+      await Coupon.incrementUsage(site_key, appliedCouponId);
+    }
 
     // تسجيل الدفع
     if (payment_method === 'wallet') {
