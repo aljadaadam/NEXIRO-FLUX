@@ -1,21 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, Sparkles } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-const fallbackProducts = [
-  { id: 0, name: 'ستارلينك', category: 'ستارلينك', price: 380000, image: '/images/starlink-default.png' },
-  { id: 1, name: 'تفعيل ويندوز 11 برو', category: 'تفعيلات', price: 25000, image: '/images/windows.png' },
-  { id: 2, name: 'شحن PUBG 660 UC', category: 'ألعاب', price: 18000, image: '/images/pubg.jpg' },
-  { id: 3, name: 'اشتراك beIN شهري', category: 'beIN Sports', price: 45000, image: '/images/bein.jpg' },
-  { id: 4, name: 'تفعيل أوفيس 365', category: 'تفعيلات', price: 35000, image: '/images/office.png' },
-  { id: 5, name: 'نتفلكس شهر', category: 'اشتراكات', price: 12000, image: '/images/netflix.jpg' },
-  { id: 6, name: 'بطاقة PlayStation $10', category: 'ألعاب', price: 22000, image: '/images/playstation.jpg' },
-  { id: 7, name: 'سبوتيفاي بريميوم', category: 'اشتراكات', price: 8000, image: '/images/spotify.jpg' },
-  { id: 8, name: 'شحن فري فاير 1080 جوهرة', category: 'ألعاب', price: 15000, image: '/images/freefire.jpg' },
-];
 
 interface FeaturedProduct {
   id: number;
@@ -26,7 +14,8 @@ interface FeaturedProduct {
 }
 
 export default function FeaturedSection() {
-  const [products, setProducts] = useState<FeaturedProduct[]>(fallbackProducts);
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -48,8 +37,21 @@ export default function FeaturedSection() {
           setProducts(featured.length > 0 ? featured : mapped.slice(0, 8));
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <section className="py-8 sm:py-20 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) return null;
 
   return (
     <section className="py-8 sm:py-20 px-4 sm:px-6">
