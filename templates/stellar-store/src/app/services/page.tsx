@@ -126,9 +126,12 @@ function ServicesContent() {
   // Apply ?cat= param when categories load
   useEffect(() => {
     if (catParam && !catApplied && categories.length > 1) {
+      const decoded = decodeURIComponent(catParam);
       const mapped = CAT_PARAM_MAP[catParam];
       if (mapped && categories.includes(mapped)) {
         setActiveCategory(mapped);
+      } else if (categories.includes(decoded)) {
+        setActiveCategory(decoded);
       }
       setCatApplied(true);
     }

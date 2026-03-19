@@ -82,7 +82,7 @@ export default function FeaturedSection() {
           {products.map((product, i) => (
             <div
               key={product.id}
-              onClick={() => router.push('/services')}
+              onClick={() => router.push(`/services?cat=${encodeURIComponent(product.category)}`)}
               className="group rounded-2xl bg-navy-900/60 border border-navy-700/40 hover:border-gold-500/30 transition-all hover:-translate-y-1 overflow-hidden animate-fadeInUp cursor-pointer"
               style={{ animationDelay: `${i * 0.08}s` }}
             >
