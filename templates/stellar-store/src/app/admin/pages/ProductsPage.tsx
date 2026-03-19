@@ -126,7 +126,7 @@ function ProductModal({ product, onClose, onSave, categories }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
       <div className="absolute inset-0 bg-navy-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-navy-900 border border-navy-700/50 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-navy-900 border border-navy-700/50 rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-navy-700/50 sticky top-0 bg-navy-900 z-10">
           <h3 className="text-lg font-black text-white">
@@ -137,170 +137,178 @@ function ProductModal({ product, onClose, onSave, categories }: {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <ImageUploader currentImage={image} onImageChange={setImage} />
+        <form onSubmit={handleSubmit} className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* ── العمود الأيمن ── */}
+            <div className="space-y-4">
+              <ImageUploader currentImage={image} onImageChange={setImage} />
 
-          <div>
-            <label className="text-sm text-navy-300 font-bold mb-1.5 block">اسم المنتج *</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-              placeholder="مثال: تفعيل ويندوز 11"
-              required
-            />
-          </div>
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">الوصف</label>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 resize-none"
+                  rows={3}
+                  placeholder="وصف المنتج..."
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-navy-300 font-bold mb-1.5 block">السعر (SDG) *</label>
-              <input
-                type="number"
-                value={price}
-                onChange={e => setPrice(e.target.value)}
-                className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-                placeholder="25000"
-                required
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-navy-300 font-bold mb-1.5 block">الكمية</label>
-              <input
-                type="number"
-                value={qnt}
-                onChange={e => setQnt(e.target.value)}
-                className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-                placeholder="0"
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm text-navy-300 font-bold mb-1.5 block">القسم</label>
-            {!showNewCategory ? (
-              <div className="space-y-2">
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">الحالة</label>
                 <select
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
                   className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
                 >
-                  <option value="">اختر القسم</option>
-                  {categories.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
+                  <option value="active">نشط</option>
+                  <option value="inactive">غير نشط</option>
                 </select>
-                <button
-                  type="button"
-                  onClick={() => setShowNewCategory(true)}
-                  className="text-xs text-gold-500 hover:text-gold-400 font-bold"
-                >
-                  + إضافة قسم جديد
-                </button>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <input
-                  value={customCategory}
-                  onChange={e => setCustomCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
-                  placeholder="اسم القسم الجديد..."
-                />
-                <button
-                  type="button"
-                  onClick={() => { setShowNewCategory(false); setCustomCategory(''); }}
-                  className="text-xs text-navy-400 hover:text-navy-300 font-bold"
-                >
-                  ← اختر من الأقسام الموجودة
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="text-sm text-navy-300 font-bold mb-1.5 block">الوصف</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 resize-none"
-              rows={3}
-              placeholder="وصف المنتج..."
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-navy-300 font-bold mb-1.5 block">الحالة</label>
-            <select
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
-            >
-              <option value="active">نشط</option>
-              <option value="inactive">غير نشط</option>
-            </select>
-          </div>
-
-          {/* Custom Fields */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-navy-300 font-bold">حقول مخصصة للعميل</label>
-              <button
-                type="button"
-                onClick={addField}
-                className="flex items-center gap-1 text-xs text-gold-500 hover:text-gold-400 font-bold"
-              >
-                <Plus className="w-3.5 h-3.5" /> إضافة حقل
-              </button>
             </div>
-            <p className="text-navy-500 text-[11px] mb-3">حقول يجب على العميل تعبئتها عند تقديم الطلب</p>
-            {customFields.length > 0 && (
-              <div className="space-y-3">
-                {customFields.map((field, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-3 bg-navy-800/40 border border-navy-700/30 rounded-xl">
-                    <div className="flex-1 space-y-2">
-                      <input
-                        value={field.label}
-                        onChange={e => updateField(idx, 'label', e.target.value)}
-                        className="w-full px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
-                        placeholder="اسم الحقل (مثال: Player ID)"
-                      />
-                      <div className="flex gap-2">
-                        <select
-                          value={field.type || 'text'}
-                          onChange={e => updateField(idx, 'type', e.target.value)}
-                          className="flex-1 px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
-                        >
-                          <option value="text">نص</option>
-                          <option value="email">بريد إلكتروني</option>
-                          <option value="number">رقم</option>
-                          <option value="tel">هاتف</option>
-                        </select>
-                        <label className="flex items-center gap-1.5 text-xs text-navy-400 cursor-pointer whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={field.required !== false}
-                            onChange={e => updateField(idx, 'required', e.target.checked)}
-                            className="accent-gold-500"
-                          />
-                          مطلوب
-                        </label>
-                      </div>
-                    </div>
+
+            {/* ── العمود الأيسر ── */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">اسم المنتج *</label>
+                <input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                  placeholder="مثال: تفعيل ويندوز 11"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-navy-300 font-bold mb-1.5 block">السعر (SDG) *</label>
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={e => setPrice(e.target.value)}
+                    className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                    placeholder="25000"
+                    required
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-navy-300 font-bold mb-1.5 block">الكمية</label>
+                  <input
+                    type="number"
+                    value={qnt}
+                    onChange={e => setQnt(e.target.value)}
+                    className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-navy-300 font-bold mb-1.5 block">القسم</label>
+                {!showNewCategory ? (
+                  <div className="space-y-2">
+                    <select
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                    >
+                      <option value="">اختر القسم</option>
+                      {categories.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                     <button
                       type="button"
-                      onClick={() => removeField(idx)}
-                      className="mt-1 w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all shrink-0"
+                      onClick={() => setShowNewCategory(true)}
+                      className="text-xs text-gold-500 hover:text-gold-400 font-bold"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      + إضافة قسم جديد
                     </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      value={customCategory}
+                      onChange={e => setCustomCategory(e.target.value)}
+                      className="w-full px-4 py-3 bg-navy-800/60 border border-navy-700/50 rounded-xl text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50"
+                      placeholder="اسم القسم الجديد..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setShowNewCategory(false); setCustomCategory(''); }}
+                      className="text-xs text-navy-400 hover:text-navy-300 font-bold"
+                    >
+                      ← اختر من الأقسام الموجودة
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Custom Fields */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-navy-300 font-bold">حقول مخصصة للعميل</label>
+                  <button
+                    type="button"
+                    onClick={addField}
+                    className="flex items-center gap-1 text-xs text-gold-500 hover:text-gold-400 font-bold"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> إضافة حقل
+                  </button>
+                </div>
+                <p className="text-navy-500 text-[11px] mb-3">حقول يجب على العميل تعبئتها عند تقديم الطلب</p>
+                {customFields.length > 0 && (
+                  <div className="space-y-3">
+                    {customFields.map((field, idx) => (
+                      <div key={idx} className="flex items-start gap-2 p-3 bg-navy-800/40 border border-navy-700/30 rounded-xl">
+                        <div className="flex-1 space-y-2">
+                          <input
+                            value={field.label}
+                            onChange={e => updateField(idx, 'label', e.target.value)}
+                            className="w-full px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white placeholder-navy-500 focus:outline-none focus:border-gold-500/50 text-sm"
+                            placeholder="اسم الحقل (مثال: Player ID)"
+                          />
+                          <div className="flex gap-2">
+                            <select
+                              value={field.type || 'text'}
+                              onChange={e => updateField(idx, 'type', e.target.value)}
+                              className="flex-1 px-3 py-2 bg-navy-800/60 border border-navy-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-gold-500/50"
+                            >
+                              <option value="text">نص</option>
+                              <option value="email">بريد إلكتروني</option>
+                              <option value="number">رقم</option>
+                              <option value="tel">هاتف</option>
+                            </select>
+                            <label className="flex items-center gap-1.5 text-xs text-navy-400 cursor-pointer whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={field.required !== false}
+                                onChange={e => updateField(idx, 'required', e.target.checked)}
+                                className="accent-gold-500"
+                              />
+                              مطلوب
+                            </label>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeField(idx)}
+                          className="mt-1 w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-5 mt-5 border-t border-navy-700/30">
             <button
               type="submit"
               disabled={saving}
